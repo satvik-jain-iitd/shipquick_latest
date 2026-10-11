@@ -32,7 +32,7 @@ Raise a PR when the issue is done and tests pass on your machine.
 
 Merge only when all six gates are true:
 
-1. CI is green.
+1. CI is green. The required check is `gate`, which passes only when every CI job passes.
 2. One approval, and the approver is not the author.
 3. Zero unresolved comments.
 4. Branch is up to date with the base branch.
