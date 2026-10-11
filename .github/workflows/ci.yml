@@ -1,12 +1,82 @@
 name: "shipquick_latest CI"
 on:
   push:
-    branches: [dev]
+    branches: [dev, main]
   pull_request:
-    branches: [dev]
+    branches: [dev, main]
 jobs:
+  pre-commit:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check file sizes
+        run: |
+          LARGE=$(find . -path ./.git -prune -o -type f -size +500k -print)
+          if [ -n "$LARGE" ]; then
+            echo "Files over 500KB found:"
+            echo "$LARGE"
+            exit 1
+          fi
+      - name: Check for merge conflicts
+        run: |
+          if grep -r "<<<<<<<\|=======\|>>>>>>>" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.md" . | grep -v ".git/"; then
+            echo "Merge conflict markers found"
+            exit 1
+          fi
+      - name: Check markdown code blocks
+        run: |
+          python3 -c "
+          import glob, sys
+          bad = []
+          for f in glob.glob('**/*.md', recursive=True):
+              if '.git/' in f:
+                  continue
+              ticks = open(f).read().count('\`\`\`')
+              if ticks % 2 != 0:
+                  bad.append(f)
+          if bad:
+              print('Unclosed code blocks in:', bad)
+              sys.exit(1)
+          print('Markdown blocks OK')
+          "
+  commit-msg:
+    runs-on: macos-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate commit messages
+        run: |
+          BASE="${{ github.base_ref }}"
+          git fetch origin "$BASE"
+          BAD=$(git log "origin/$BASE..HEAD" --pretty=%s | grep -vE "^(feat|fix|docs|test|chore|refactor|style|perf|ci|build)(\(.+\))?: .+" || true)
+          if [ -n "$BAD" ]; then
+            echo "Non-conventional commits found:"
+            echo "$BAD"
+            exit 1
+          fi
+          echo "Commit messages OK"
+  pr-size:
+    runs-on: macos-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check PR size
+        run: |
+          BASE="${{ github.base_ref }}"
+          git fetch origin "$BASE"
+          COUNT=$(git diff --name-only "origin/$BASE...HEAD" | wc -l | tr -d ' ')
+          echo "Changed files: $COUNT"
+          if [ "$COUNT" -gt 50 ]; then
+            echo "PR too large ($COUNT files, max 50). Split it."
+            exit 1
+          fi
   test:
     runs-on: macos-latest
+    needs: [pre-commit]
     strategy:
       matrix:
         python-version: ["3.12"]
