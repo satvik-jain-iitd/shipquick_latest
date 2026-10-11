@@ -3,7 +3,7 @@ import re
 import sys
 
 PATTERN = re.compile(
-    r"^(feat|fix|docs|test|chore|refactor|style|perf|ci|build)"
+    r"^(feat|fix|docs|design|test|chore|refactor|style|perf|ci|build)"
     r"(\(.+\))?: .+"
 )
 
