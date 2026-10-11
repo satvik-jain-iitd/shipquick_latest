@@ -147,7 +147,7 @@ shipquick_latest/
 
 | Legacy DLS Element | Material 3 Replacement | Action |
 |---|---|---|
-| `@americanexpress/dls-icons` | Material Symbols (SVG outline) | **REPLACE** |
+| `@enterprise/dls-icons` | Material Symbols (SVG outline) | **REPLACE** |
 | `text-primary` class | `md-primary` or `<PRIMARY_COLOR>` | **REPLACE** |
 | `text-on-surface` class | `md-on-surface` or `<TEXT_COLOR>` | **REPLACE** |
 | `Benton Sans` font | `Roboto` or `<PRIMARY_FONT>` | **REPLACE** |
