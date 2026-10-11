@@ -56,8 +56,9 @@ If any gate is false, do not merge.
 
 ## 7. Auto-merge
 
-- Auto-merge is on for feature -> dev.
-- Auto-merge is off for dev -> main. The owner merges that one.
+- Auto-merge is off.
+- The owner reviews, comments, approves, then merges by hand.
+- Nothing merges without the owner's approval. The owner is always the last step.
 
 ## 8. Coverage
 
