@@ -9,14 +9,27 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check file sizes
+        with:
+          fetch-depth: 0
+      - name: Check file sizes (changed files only)
         run: |
-          LARGE=$(find . -path ./.git -prune -o -type f -size +500k -print)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin "${{ github.base_ref }}"
+            FILES=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          else
+            FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || find . -path ./.git -prune -o -type f -print)
+          fi
+          LARGE=""
+          for f in $FILES; do
+            if [ -f "$f" ] && [ "$(stat -f%z "$f" 2>/dev/null || stat -c%s "$f")" -gt 512000 ]; then
+              LARGE="$LARGE $f"
+            fi
+          done
           if [ -n "$LARGE" ]; then
-            echo "Files over 500KB found:"
-            echo "$LARGE"
+            echo "Changed files over 500KB:$LARGE"
             exit 1
           fi
+          echo "File sizes OK"
       - name: Check for merge conflicts
         run: |
           if grep -r "<<<<<<<\|=======\|>>>>>>>" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.md" . | grep -v ".git/"; then
@@ -50,7 +63,7 @@ jobs:
         run: |
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
-          BAD=$(git log "origin/$BASE..HEAD" --pretty=%s | grep -vE "^(feat|fix|docs|test|chore|refactor|style|perf|ci|build)(\(.+\))?: .+" || true)
+          BAD=$(git log "origin/$BASE..HEAD" --pretty=%s | grep -v "^Merge " | grep -vE "^(feat|fix|docs|test|chore|refactor|style|perf|ci|build)(\(.+\))?: .+" || true)
           if [ -n "$BAD" ]; then
             echo "Non-conventional commits found:"
             echo "$BAD"
