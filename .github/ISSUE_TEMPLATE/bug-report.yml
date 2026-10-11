@@ -1,0 +1,50 @@
+name: Bug Report
+description: Something is not working as expected
+labels: ["bug"]
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence. What broke?
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options: [critical, high, medium, low]
+    validations:
+      required: true
+  - type: dropdown
+    id: user-story
+    attributes:
+      label: User Story
+      description: Which story does this break? See docs/test-cases.md.
+      options: ["S0.1 Repo and branches", "S0.2 Docs tree", "S0.3 CI", "S0.4 Issues", "Other"]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Numbered. What did you do?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Screenshot, log, test output, URL
