@@ -1,19 +1,18 @@
-# shipquick_latest - EASE-Full Architecture & Front-End Postmortem
+# shipquick_latest - Material Design 3 Architecture & Process Template
 
-A retained and sanitized repository from American Express EASE-Full project, 
-generalized for use as a design system and process template for any future project.
+A retained and generalized repository from a design system postmortem, 
+ready for use as a Material Design 3 template for any future project.
 
 ## Repository Purpose
 This repository contains the complete architecture and front-end design system 
-from American Express EASE-Full project, sanitized to remove American Express-
-specific dependencies and generalized for use in any project.
+sanitized to remove brand-specific dependencies and generalized for use in any project.
 
 ## Key Features
 - ✅ **Material Design 3 Integration** - Ready to use M3 design tokens and components
 - ✅ **Process Template** - CLAUDE.md standing rules, TDD, process trace
 - ✅ **Architecture Documentation** - ADRs, component patterns, design guidelines
 - ✅ **Front-End System** - React/TypeScript components with design tokens
-- ✅ **Generalized** - All Amex-specific content removed, replaced with placeholders
+- ✅ **Generalized** - All brand-specific content removed, replaced with placeholders
 
 ## Repository Structure
 
@@ -33,16 +32,16 @@ shipquick_latest/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                               # CI configuration
-├── architecture/                                # EASE-Full architecture (SANITIZED)
+├── architecture/                                # Architecture (Material 3)
 │   ├── AGENTS.md
 │   ├── CLAUDE.md
-│   ├── architecture-portal/                     # Vendored AmEx Portal
+│   ├── architecture-portal/                     # Vendored Material Portal
 │   │   ├── docs/                                # ADRs by domain
 │   │   ├── src/                                 # React/TS components
 │   │   ├── package.json                         # @material/web dependency
 │   │   └── __mocks__/                           # Material Symbols icons
-│   └── amex-archives-index.md                 # ( sanitized - general index)
-└── frontend/                                    # EASE-Full front-end (SANITIZED)
+│   └── general-index.md                 # Generalized index
+└── frontend/                                    # Front-End (Material 3)
     ├── AGENTS.md
     ├── CLAUDE.md
     ├── skills-lock.json                         # Material 3 restrictions
@@ -351,7 +350,7 @@ document.adoptedStyleSheets.push(mdStyles.styleSheet);
 - [ ] No `@americanexpress` references remain
 - [ ] No `dls-icons` references remain
 - [ ] No `Benton Sans` font references
-- [ ] No `#006FCF` or Amex color values
+- [ ] No hardcoded brand color values
 - [ ] All tokens use `<PLACEHOLDER>` format
 - [ ] All icons use Material Symbols SVG
 - [ ] All folder names lowercase, no special chars

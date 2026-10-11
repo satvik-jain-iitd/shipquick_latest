@@ -1,6 +1,6 @@
 # Design Tokens for shipquick_latest
 
-> Generalized from Material 3 Design System and American Express DLS
+> Generalized from Material 3 Design System and Legacy DLS
 
 ## Color Palette
 
@@ -68,4 +68,4 @@
 
 **Replace all `<PLACEHOLDER>` values** with your project-specific assets before starting development.
 
-**Inspired by**: American Express DESIGN.md (colors #006FCF, Benton Sans typography, 8px spacing increments) and Google Material Design 3 design tokens.
+**Inspired by**: Legacy design system and Google Material Design 3 design tokens.

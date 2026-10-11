@@ -63,9 +63,9 @@ shipquick_latest/
 ├── scripts/             # One script per OS (macos/, windows/)
 ├── docs/                # All documentation
 ├── .github/             # CI and GitHub config
-├── architecture/        # EASE-Full architecture (SANITIZED)
+├── architecture/        # Architecture (Material 3)
 │   └── architecture-portal/  # Vendored portal (Material 3 tokens)
-└── frontend/            # EASE-Full front-end (SANITIZED)
+└── frontend/            # Front-End (Material 3)
     └── UI components (React/TypeScript)
 ```
 
@@ -77,7 +77,7 @@ shipquick_latest/
 | **Offline-first** | No network calls at runtime | Models in zip |
 | **Material 3** | Use Material Design 3 system | Replace `<PLACEHOLDERS>` with your brand |
 | **Apple-silicon native** | arm64 only, no Rosetta | Python ≥ 3.12 < 3.14 |
-| **One process** | Single thread + audio callback | Like bhavna-ai dictate.py |
+| **One process** | Single thread + audio callback | Like a single-process audio callback app |
 | **Resilient design** | Graceful failure, not crashing | Basic error handling |
 
 ### Material 3 Design Token Zones
@@ -145,21 +145,21 @@ shipquick_latest/
 
 ## Material Design 3 Replacement Summary
 
-| Amex DLS Element | Material 3 Replacement | Action |
+| Legacy DLS Element | Material 3 Replacement | Action |
 |---|---|---|
 | `@americanexpress/dls-icons` | Material Symbols (SVG outline) | **REPLACE** |
-| `text-amex-blue` class | `md-primary` or `<PRIMARY_COLOR>` | **REPLACE** |
-| `text-amex-gray-900` class | `md-on-surface` or `<TEXT_COLOR>` | **REPLACE** |
+| `text-primary` class | `md-primary` or `<PRIMARY_COLOR>` | **REPLACE** |
+| `text-on-surface` class | `md-on-surface` or `<TEXT_COLOR>` | **REPLACE** |
 | `Benton Sans` font | `Roboto` or `<PRIMARY_FONT>` | **REPLACE** |
 | 8px spacing | 4px base (8px grid) | **REPLACE** |
 | DLS component mocks | Material component mocks | **REPLACE** |
-| Amex design tokens | Material 3 design tokens | **REPLACE** |
+| Legacy design tokens | Material 3 design tokens | **REPLACE** |
 
 ## Quick Reference: Material Design 3 Color Palette
 
-| Color | Amex Value | Material 3 Value | Your Value |
+| Color | Legacy Value | Material 3 Value | Your Value |
 |---|---|---|---|
-| Primary | `#006FCF` | `#3B82F6` (Blue-500) | `#XXXXXX` |
+| Primary | `<PRIMARY_COLOR>` | `#3B82F6` (Blue-500) | `#XXXXXX` |
 | Primary Dark | `#00509E` | `#2563EB` (Blue-600) | `#XXXXXX` |
 | Text | `#1374D4` | `#1F2937` (Gray-800) | `#XXXXXX` |
 | Background | `#FFFFFF` | `#FFFFFF` (White) | `#XXXXXX` |
@@ -216,4 +216,4 @@ Example CSS usage:
 
 **Replace all `<PLACEHOLDER>` values** with your project-specific assets before starting development.
 
-**Inspired by**: American Express DESIGN.md (colors #006FCF, Benton Sans typography, 8px spacing increments) and Google Material Design 3 (open source, Apache-2.0 license).
+| Inspired by: Material Design 3 design tokens (open source, Apache-2.0 license).
