@@ -1,33 +1,49 @@
 # shipquick_latest
 
-A ready-to-use starter kit for building websites and web applications using Google's Material Design 3 (M3) system.
+A ready-to-use starter kit for building web and mobile applications using Google's Material Design 3 (M3) system.
 
 ## What is this?
 
-**shipquick_latest** is a pre-built foundation that gives you everything you need to start a web project immediately. Think of it like a "starter kit" or "toolbox" for building websites.
+**shipquick_latest** is a pre-built foundation that gives you everything you need to start a software project immediately. Think of it like a "starter kit" or "toolbox" for building apps.
 
 Inside, you get:
-- A organized folder structure
+- An organized folder structure
 - Design tools (colors, fonts, spacing)
 - Ready-made user interface components
-- Guidelines for how to build your project
+- Architecture patterns for backend and frontend
+- A safe development workflow (feature branches, automatic checks, releases)
 
 ## Who is this for?
 
-This is for anyone who wants to build a website or web application quickly and consistently. Whether you are:
+This is for anyone who wants to build an app quickly and consistently. Whether you are:
 - A designer wanting to use a professional design system
 - A developer wanting to start fast without building everything from scratch
 - A team wanting to follow consistent patterns
 
 ## What problem does it solve?
 
-Building a website from scratch takes a lot of time. You have to:
+Building an app from scratch takes a lot of time. You have to:
 - Decide on colors and fonts
 - Create a folder structure
 - Build basic components (buttons, forms, etc.)
 - Set up design rules
+- Set up safe ways to add new features without breaking old ones
 
 **shipquick_latest** already has all of this set up. You just need to customize it with your own brand colors and fonts.
+
+## What can you build?
+
+Not just websites. You can build for many platforms:
+
+| Platform | How | Status |
+|---|---|---|
+| **Web app** | React + Material Design 3 web components | Ready now |
+| **Progressive Web App (PWA)** | Same web code, runs like a mobile app | Ready now |
+| **Android app** | Material Design 3 Android components, same design tokens | Design ready, code next |
+| **iOS app** | Material Design 3 iOS components, same design tokens | Design ready, code next |
+| **Flutter app** | Material Design 3 Flutter widgets, same design tokens | Design ready, code next |
+
+The design tokens (colors, fonts, spacing) stay the same everywhere. Only the code changes per platform.
 
 ## What's inside?
 
@@ -37,30 +53,69 @@ Here is the folder structure explained simply:
 shipquick_latest/
 ├── README.md          ← This file (tells you what everything is)
 ├── CLAUDE.md          ← Rules to follow when working on the project
+├── COMMIT_GUIDELINES.md ← How to write commit messages
+├── .gitignore         ← Files that stay out of git (models, logs, secrets)
+├── .editorconfig      ← Code formatting rules
+├── .pre-commit-config.yaml ← Automatic checks before every commit
+├── scripts/           ← Helper scripts (commit checks, markdown checks)
 ├── docs/              ← All documentation (guides, plans, decisions)
 │   ├── architecture.md← How the system is organized
 │   ├── design-tokens.md ← Colors, fonts, spacing values (replace with your own)
 │   ├── PLAN.md        ← The step-by-step plan for building your project
 │   ├── process-trace.md ← What has been done so far (updated each session)
-│   └── test-cases.md  ← How to test your project
-├── .github/           ← Automatic testing setup
-│   └── workflows/     │   └── ci.yml   ← Runs tests automatically
-├── architecture/      ← System design and portal components
-│   └── architecture-portal/ ← Pre-built interface components
-│       ├── docs/      ← Design records
-│       ├── src/       ← React code components
-│       ├── package.json ← Tool dependencies (Material Design 3)
-│       └── __mocks__/ ← Test icons
-├── frontend/          ← Front-end setup and patterns
+│   ├── test-cases.md  ← How to test your project
+│   └── decisions/     ← Architecture decisions (ADR files)
+├── .github/           ← Automatic testing and releases
+│   ├── workflows/
+│   │   ├── ci.yml     ← Runs checks and tests on every change
+│   │   └── cd.yml     ← Creates releases at each demo
+│   └── PULL_REQUEST_TEMPLATE.md ← Checklist for every change request
+├── architecture/      ← System design and architecture patterns
 │   ├── AGENTS.md      ← Rules for AI assistants
 │   ├── CLAUDE.md      ← Session rules
-│   ├── skills-lock.json ← Material Design 3 restrictions
-│   └── resy_web_onboarding_journey.md ← Onboarding flow guide
+│   └── architecture-portal/
+│       ├── ARCHITECTURE_PATTERNS.md ← Backend and frontend patterns
+│       ├── USAGE_GUIDE.md ← What to use vs what to study only
+│       └── docs/      ← Design records by domain (Database, Events, API, AI/ML...)
+└── frontend/          ← Front-end setup and patterns
+    ├── AGENTS.md      ← Rules for AI assistants
+    ├── CLAUDE.md      ← Session rules
+    ├── skills-lock.json ← Material Design 3 restrictions
+    └── resy_web_onboarding_journey.md ← Onboarding flow guide
 ```
+
+## Safe Development Workflow
+
+Every change goes through branches so a broken feature never breaks the rest:
+
+```
+feat/<issue>-<slug>  →  dev  →  main
+   (your work)      (testing)   (release)
+```
+
+| Branch | Purpose | Rule |
+|---|---|---|
+| `main` | Release-ready code | Protected. Only the owner merges. Never push direct. |
+| `dev` | Integration and testing | Protected. Changes arrive only via pull requests. |
+| `feat/<issue>-<slug>` | One feature at a time | Branched from `dev`. Deleted after merge. |
+
+If a feature breaks, only its branch is affected. Roll back by closing its pull request.
+
+### Automatic Checks
+
+Every change is checked automatically:
+
+| Check | What it does |
+|---|---|
+| Pre-commit | No secrets, no files over 500KB, no merge markers |
+| Commit message | Must follow `COMMIT_GUIDELINES.md` (e.g. `feat(auth): add login`) |
+| PR size | Max 50 files per request, so reviews stay easy |
+| Tests | Python tests run on every push |
+| Releases | Tags like `D0`, `D1` need matching demo notes |
 
 ## Design Tokens (Colors and Fonts)
 
-The system uses **Design Tokens** - these are named values for colors, fonts, and spacing that you can use throughout your project.
+The system uses **Design Tokens** - these are named values for colors, fonts, and spacing that you can use on every platform.
 
 ### Current Tokens (Replace with your own):
 
@@ -73,7 +128,7 @@ The system uses **Design Tokens** - these are named values for colors, fonts, an
 | `<PRIMARY_FONT>` | Font family for text | `YourFontName` |
 | `<SPACING_UNIT>` | Base spacing size | `4` or `8` |
 
-**To change these**: Open `docs/design-tokens.md` and replace the `<PLACEHOLDER>` values with your brand's colors and fonts.
+**To change these**: Open `docs/design-tokens.md` and replace the `<PLACEHOLDER>` values with your brand's colors and fonts. The same values work on web, Android, iOS, and Flutter.
 
 ## Material Design 3
 
@@ -81,6 +136,7 @@ This project uses **Material Design 3** - a design system created by Google. It 
 - Professional, modern-looking components
 - Consistent design patterns that work on all devices
 - Pre-built buttons, forms, dialogs, and more
+- Ready libraries for web, Android, iOS, and Flutter
 
 ### Key Material Design 3 Components
 
@@ -100,6 +156,23 @@ You can use these ready-made components in your project:
 
 **To use these**: You need to install the Material Design package. See the Quick Start section below.
 
+## Architecture Patterns
+
+The `architecture/` folder holds proven patterns for backend and frontend:
+
+| Domain | What you get |
+|---|---|
+| Database | Schema and review patterns |
+| Event Brokers | Async messaging patterns |
+| API Integration | Gateway and contract patterns |
+| Big Data | Batch and stream patterns |
+| Observability | Monitoring and audit patterns |
+| AI/ML | Model versioning and eval patterns |
+| Build vs Buy | Decision templates |
+| Front-End and Mobile | Shared design system patterns |
+
+Read `architecture/architecture-portal/USAGE_GUIDE.md` first — it tells you what to use directly and what to study only.
+
 ## Quick Start
 
 ### 1. Get the project
@@ -112,14 +185,22 @@ git clone <url> <your-project-name>
 cd <your-project-name>
 ```
 
-### 2. Install the design tools
+### 2. Create your feature branch
+
+```bash
+# Always branch from dev, never from main
+git checkout dev
+git checkout -b feat/1-my-first-feature
+```
+
+### 3. Install the design tools
 
 ```bash
 # Install Material Design components
 npm install @material/web
 ```
 
-### 3. Start building
+### 4. Start building
 
 You can now start using the components and design tokens. Here's a simple example:
 
@@ -132,6 +213,14 @@ You can now start using the components and design tokens. Here's a simple exampl
   Click Me
 </button>
 ```
+
+### 5. Send your change for review
+
+```bash
+git push origin feat/1-my-first-feature
+```
+
+Then open a pull request to `dev`. Checks run automatically.
 
 ## How to Customize for Your Brand
 
@@ -148,7 +237,7 @@ The system comes with default Material Design 3 colors. You can change these to 
 
 ### Step 3: Follow the Guidelines
 
-- **Use design tokens** instead of hardcoded colors (e.g., use `var(----md-primary)` instead of `#0066CC`)
+- **Use design tokens** instead of hardcoded colors (e.g., use `var(--md-primary)` instead of `#0066CC`)
 - **Use Material Components** for buttons, forms, and other UI elements
 - **Follow the folder structure** - keep new files in the appropriate folders
 - **Read `docs/process-trace.md`** first in every working session
@@ -161,10 +250,10 @@ Here's how to know where to put things:
 | Folder | What goes here? | Example |
 |---|---|---|
 | `docs/` | Documentation, guides, plans | `architecture.md`, `design-tokens.md` |
-| `architecture/` | System design and portal components | Admin panels, system architecture |
+| `architecture/` | System design and architecture patterns | ADRs, usage guides, domain docs |
 | `frontend/` | Front-end setup and patterns | React components, onboarding flows |
-| `.github/` | Automatic testing and CI | Test configurations |
-| `architecture/architecture-portal/src/` | Reusable code components | Buttons, forms, layouts |
+| `.github/` | Automatic testing and releases | CI config, PR template |
+| `scripts/` | Helper scripts | Commit checks, markdown checks |
 
 ## What Will You Build?
 
@@ -173,13 +262,15 @@ With **shipquick_latest**, you can build:
 - A business landing page
 - An internal tool or dashboard
 - A customer-facing web application
-- Any website that needs a professional, consistent design
+- A mobile app (Android, iOS, Flutter) sharing the same design
+- Any app that needs a professional, consistent design
 
 ## Need Help?
 
 - Read `docs/process-trace.md` first (this is the most important rule)
 - Check `CLAUDE.md` for session rules
 - Look at `docs/architecture.md` for system guidelines
+- Read `architecture/architecture-portal/USAGE_GUIDE.md` before using patterns
 - Replace design tokens in `docs/design-tokens.md` with your brand values
 - Use the Material Design components listed above
 
@@ -187,10 +278,10 @@ With **shipquick_latest**, you can build:
 
 This repository is stored at:
 ```
-/Users/yourname/Documents/shipquick_latest/
+https://github.com/satvik-jain-iitd/shipquick_latest
 ```
 
-It will remain in your Documents folder and can be cloned to start new projects.
+Clone it to start new projects.
 
 ---
 

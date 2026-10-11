@@ -1,0 +1,31 @@
+name: "shipquick_latest CD"
+on:
+  push:
+    branches: [main]
+    tags: ["D*"]
+jobs:
+  tag-check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify demo notes exist for tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/D* ]]; then
+            TAG="${{ github.ref_name }}"
+            if [ ! -f "docs/demos/$TAG.md" ]; then
+              echo "Missing docs/demos/$TAG.md for tag $TAG"
+              exit 1
+            fi
+            echo "Demo notes found for $TAG"
+          fi
+  release:
+    runs-on: macos-latest
+    needs: [tag-check]
+    if: startsWith(github.ref, 'refs/tags/D')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create release notes
+        run: |
+          TAG="${{ github.ref_name }}"
+          echo "Release $TAG"
+          ls "docs/demos/$TAG.md"

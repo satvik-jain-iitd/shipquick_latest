@@ -1,0 +1,26 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: detect-aws-credentials
+        args: ["--allow-missing-credentials"]
+      - id: check-case-conflict
+  - repo: local
+    hooks:
+      - id: commit-msg-check
+        name: Conventional Commits check
+        entry: python3 scripts/check_commit_msg.py
+        language: system
+        stages: [commit-msg]
+      - id: md-block-check
+        name: Markdown code block check
+        entry: python3 scripts/check_md_blocks.py
+        language: system
+        types: [markdown]

@@ -19,7 +19,11 @@ This file is the process plan for the shipquick_latest repository. It shows how 
 - PR feat → dev: opened by Claude, self-reviewed with a checklist comment (tests first, Gherkin mapped, ponytail review, docs updated), merged by Claude after CI is green.
 - PR dev → main: opened by Claude at each increment (D1 … D6) with the demo notes. The owner merges.
 - PR template: issue link, what changed, scenarios covered, test output pasted, demo (gif or stdout), decisions made (ADR link), ideas noted.
-- Commits: Conventional Commits, English, short. Co-author line as required.
+- Commits: Conventional Commits, English, short. Co-author line as required. See `COMMIT_GUIDELINES.md`.
+- Branch protection: `main` and `dev` require PR and green CI. No direct pushes.
+- Pre-commit: `.pre-commit-config.yaml` runs on every commit (no secrets, max 500KB files, markdown blocks closed).
+- CI jobs: pre-commit checks, commit-msg validation, PR size limit (50 files), pytest on Python 3.12.
+- CD: tags `D*` require matching `docs/demos/<tag>.md` before release.
 
 ### D3. Test-driven development, strictly
 For every story:
