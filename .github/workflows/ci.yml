@@ -108,6 +108,7 @@ jobs:
           pip install pytest
       - name: Run tests
         run: |
+          mkdir -p logs
           pytest --tb=short
       - name: Upload test results
         uses: actions/upload-artifact@v4
