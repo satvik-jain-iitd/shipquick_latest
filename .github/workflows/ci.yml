@@ -63,7 +63,7 @@ jobs:
         run: |
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
-          BAD=$(git log "origin/$BASE..HEAD" --pretty=%s | grep -v "^Merge " | grep -vE "^(feat|fix|docs|test|chore|refactor|style|perf|ci|build)(\(.+\))?: .+" || true)
+          BAD=$(git log "origin/$BASE..HEAD" --pretty=%s | grep -v "^Merge " | grep -vE "^(feat|fix|docs|design|test|chore|refactor|style|perf|ci|build)(\(.+\))?: .+" || true)
           if [ -n "$BAD" ]; then
             echo "Non-conventional commits found:"
             echo "$BAD"

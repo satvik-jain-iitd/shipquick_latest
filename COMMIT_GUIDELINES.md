@@ -15,6 +15,7 @@ type(scope): description
 | `feat` | New feature |
 | `fix` | Bug fix |
 | `docs` | Docs only |
+| `design` | Design system, tokens, components |
 | `test` | Tests only |
 | `chore` | Maintenance |
 | `refactor` | Code change, same behavior |
