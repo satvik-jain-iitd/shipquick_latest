@@ -16,3 +16,4 @@ Standing rules, every session:
 11. Branches: `main` is protected, never push direct. `dev` is integration. Feature branches `feat/<issue>-<slug>` come from `dev`, merge back via PR.
 12. PRs stay small: max 50 files. CI must be green before merge. Commits follow `COMMIT_GUIDELINES.md`.
 13. Pre-commit runs on every commit: no secrets, no files over 500KB, no merge markers, markdown blocks closed.
+14. Branch prefixes: `feat/` features, `fix/` bugs, `docs/` docs, `design/` design system, `test/` tests, `chore/` maintenance, `ci/` pipelines. Design changes get `docs/decisions/ADR-NNN.md` in the same PR.
