@@ -64,7 +64,19 @@ shipquick_latest/
 │   ├── PLAN.md        ← The step-by-step plan for building your project
 │   ├── process-trace.md ← What has been done so far (updated each session)
 │   ├── test-cases.md  ← How to test your project
-│   └── decisions/     ← Architecture decisions (ADR files)
+│   ├── decisions/     ← Architecture decisions (ADR files)
+│   └── design-system.md ← Master design reference (platforms, tokens, options)
+├── design/            ← Design system (Material Design 3)
+│   ├── AGENTS.md      ← Rules for AI assistants
+│   ├── CLAUDE.md      ← Session rules
+│   ├── USAGE_GUIDE.md ← What to use vs study only
+│   ├── UPDATE_PROCESS.md ← How upstream updates reach this repo
+│   └── material-design-3/ ← Vendored guides
+│       ├── REPOSITORIES.md ← All 10 repos indexed
+│       ├── web/         ← Web setup guides
+│       ├── mdc-web/     ← Web integration guides
+│       ├── android/     ← Android setup guides
+│       └── ios / flutter READMEs ← Mobile overviews
 ├── .github/           ← Automatic testing and releases
 │   ├── workflows/
 │   │   ├── ci.yml     ← Runs checks and tests on every change
@@ -132,7 +144,7 @@ The system uses **Design Tokens** - these are named values for colors, fonts, an
 
 ## Material Design 3
 
-This project uses **Material Design 3** - a design system created by Google. It provides:
+This project uses **Material Design 3** - a design system created by Google. Full reference: `docs/design-system.md` and `design/material-design-3/REPOSITORIES.md` (all 10 repos indexed). It provides:
 - Professional, modern-looking components
 - Consistent design patterns that work on all devices
 - Pre-built buttons, forms, dialogs, and more
