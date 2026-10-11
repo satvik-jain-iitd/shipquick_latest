@@ -17,3 +17,6 @@ Standing rules, every session:
 12. PRs stay small: max 50 files. CI must be green before merge. Commits follow `COMMIT_GUIDELINES.md`.
 13. Pre-commit runs on every commit: no secrets, no files over 500KB, no merge markers, markdown blocks closed.
 14. Branch prefixes: `feat/` features, `fix/` bugs, `docs/` docs, `design/` design system, `test/` tests, `chore/` maintenance, `ci/` pipelines. Design changes get `docs/decisions/ADR-NNN.md` in the same PR.
+15. One bug = one issue. Never club unrelated bugs. Every bug gets severity + user story + owner + milestone before any fix work.
+16. Triage before fixing: read, assign severity, link user story, assign owner, add `triaged`, move on board. Update `docs/bugs/ACTIVE_BUGS.md` on every status change.
+17. Every issue and PR gets a milestone (D0-D6) and an assignee. Demo artifacts stay labeled and closed; they are placeholders, not real work.
