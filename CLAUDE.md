@@ -14,7 +14,7 @@ Standing rules, every session:
 9. Apple-silicon native only. Never Rosetta. Python >= 3.12 < 3.14 (ADR-008).
 10. Models live in `models/` (gitignored, shipped in the zip). Never download at run time (ADR-007).
 11. Branches: `main` is protected, never push direct. `dev` is integration. Feature branches `feat/<issue>-<slug>` come from `dev`, merge back via PR.
-12. PRs stay small: max 50 files. CI must be green before merge. Commits follow `COMMIT_GUIDELINES.md`.
+12. PRs stay small: max 50 files. Commits follow `COMMIT_GUIDELINES.md`. Merge only when all gates pass: green CI, one approval (not the author), zero unresolved comments, branch up to date, not a Draft, issue linked with `Closes #N`. Full rules in `docs/PR_RULES.md`. Coverage tracked in `docs/PR_COVERAGE.md`.
 13. Pre-commit runs on every commit: no secrets, no files over 500KB, no merge markers, markdown blocks closed.
 14. Branch prefixes: `feat/` features, `fix/` bugs, `docs/` docs, `design/` design system, `test/` tests, `chore/` maintenance, `ci/` pipelines. Design changes get `docs/decisions/ADR-NNN.md` in the same PR.
 15. One bug = one issue. Never club unrelated bugs. Every bug gets severity + user story + owner + milestone before any fix work.
