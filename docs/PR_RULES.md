@@ -13,6 +13,7 @@ Raise a PR when the issue is done and tests pass on your machine.
 ## 2. How big a PR should be
 
 - Max 50 files.
+- Moved files (renames) do not count. Only added and changed files count.
 - Target about 400 lines changed.
 - Bigger than that means split it.
 

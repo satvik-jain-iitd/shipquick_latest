@@ -15,10 +15,12 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 ### Added
 - PM and agile layer under `pm/agile/` (guides and templates).
 - `CHANGELOG.md` and the release guide.
+- Machine-enforced PR merge gates: `gate` CI job, `docs/PR_RULES.md`, `docs/PR_COVERAGE.md`, ADR-002.
 
 ### Changed
 - Renamed `architecture/` to `backend/`.
 - CD now checks the changelog for `v*` release tags.
+- PR size and file-size checks ignore renames. A moved file is not new review surface.
 
 ## [0.0.0] - skeleton
 ### Added
