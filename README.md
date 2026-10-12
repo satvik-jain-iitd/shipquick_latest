@@ -62,6 +62,7 @@ shipquick_latest/
 │   ├── architecture.md← How the system is organized
 │   ├── design-tokens.md ← Colors, fonts, spacing values (replace with your own)
 │   ├── PLAN.md        ← The step-by-step plan for building your project
+│   ├── development-flow.md ← How development works (diagram + plain words)
 │   ├── process-trace.md ← What has been done so far (updated each session)
 │   ├── test-cases.md  ← How to test your project
 │   ├── decisions/     ← Architecture decisions (ADR files)
@@ -102,6 +103,37 @@ shipquick_latest/
         └── sprints/            ← One folder per sprint (plan, review, retro)
 ```
 
+## How Development Works (the flow)
+
+This is the repeatable process. It is the same for every feature and every bug.
+It works the same whether you write the code by hand or an AI writes it for you.
+
+```mermaid
+flowchart TD
+    A(["Idea or bug"]) --> B["Open a GitHub issue"]
+    B --> C{"Refined?<br/>clear, small, testable"}
+    C -->|"No"| D["Add detail or split it"]
+    D --> C
+    C -->|"Yes"| E["Sprint planning<br/>pick issues, set one goal"]
+    E --> F["Make a branch<br/>feat/issue-slug from dev"]
+    F --> G["Write a failing test first"]
+    G --> H["Write code until it passes"]
+    H --> I["Open a pull request to dev"]
+    I --> J{"All gates pass?<br/>CI green + 1 approval<br/>+ comments resolved"}
+    J -->|"No"| H
+    J -->|"Yes"| K["Owner merges the pull request"]
+    K --> L["Issue closes, card goes to Done"]
+    L --> M{"Sprint goal met?<br/>end of the week"}
+    M -->|"Yes"| N["Sprint review and retrospective"]
+    N --> O["Release: tag vX.Y.Z"]
+    O --> A
+```
+
+In one line: **idea → issue → refine → plan → branch → test first → pull request → gates → owner merges → release.**
+The loop repeats every week (one sprint).
+
+New to GitHub? Read the full walkthrough in `docs/development-flow.md`. It explains every word in plain English.
+
 ## Safe Development Workflow
 
 Every change goes through branches so a broken feature never breaks the rest:
@@ -129,7 +161,7 @@ Every change is checked automatically:
 | Commit message | Must follow `COMMIT_GUIDELINES.md` (e.g. `feat(auth): add login`) |
 | PR size | Max 50 files per request, so reviews stay easy |
 | Tests | Python tests run on every push |
-| Releases | Tags like `D0`, `D1` need matching demo notes |
+| Releases | Tags like `v0.4.0` need a demo note and a changelog entry. See `pm/agile/RELEASE_GUIDE.md` |
 
 ## Design Tokens (Colors and Fonts)
 

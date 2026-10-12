@@ -28,4 +28,6 @@ Rule: read this first in every session, append before saying done.
 | 20 | agent | Size checks now ignore renames; PR #29 CI green incl gate | ci.yml | none |
 | 21 | agent | Created agile labels and sprint milestone S01 | none | none |
 | 22 | agent | Board creation blocked: owner PAT lacks Projects:write | none | asked |
+| 23 | owner | Asked to show the repeatable process as a Mermaid diagram and save it; it must show in the README for first-time users | chat | volunteered |
+| 24 | agent | Created docs/development-flow.md and embedded the flow diagram in README | docs/development-flow.md, README.md | none |
 | $LAST_STEP$ | agent | Awaiting owner approval on PR #29 | none | asked |

@@ -16,6 +16,7 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 - PM and agile layer under `pm/agile/` (guides and templates).
 - `CHANGELOG.md` and the release guide.
 - Machine-enforced PR merge gates: `gate` CI job, `docs/PR_RULES.md`, `docs/PR_COVERAGE.md`, ADR-002.
+- Development flow: a Mermaid diagram in the README and a plain-word walkthrough in `docs/development-flow.md`.
 
 ### Changed
 - Renamed `architecture/` to `backend/`.
