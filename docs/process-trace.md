@@ -17,4 +17,15 @@ Rule: read this first in every session, append before saying done.
 | 9 | agent | Set required check `gate`, conversation resolution, auto-merge, delete-branch-on-merge | none | reviewed |
 | 10 | agent | Created issue #24, opened PR #25 (Closes #24) | issue #24, PR #25 | none |
 | 11 | agent | Verified gates: PR #26 and #27 (intentional failures) both blocked, then closed | none | none |
-| $LAST_STEP$ | agent | Linked PR #23 metadata, recorded discussion log | docs | none |
+| 12 | agent | Linked PR #23 metadata, recorded discussion log | docs | none |
+| 13 | owner | Confirmed folder mapping, pm/agile layer, one PR; design/ and frontend/ stay | chat | asked |
+| 14 | agent | Renamed architecture/ to backend/ and updated all references | backend/ | none |
+| 15 | agent | Created pm/agile layer: guides, templates, sprints folder | pm/agile/ | none |
+| 16 | agent | Added CHANGELOG.md and SemVer changelog check in CD | CHANGELOG.md, cd.yml | none |
+| 17 | agent | Updated README, ROADMAP, PROGRESS, PLAN D10, CLAUDE.md rule 18 | docs | none |
+| 18 | agent | Created issue #28 and opened PR #29 | issue #28, PR #29 | none |
+| 19 | agent | Folded PR #25 into PR #29; closed #25 as superseded | PR #29 | reviewed |
+| 20 | agent | Size checks now ignore renames; PR #29 CI green incl gate | ci.yml | none |
+| 21 | agent | Created agile labels and sprint milestone S01 | none | none |
+| 22 | agent | Board creation blocked: owner PAT lacks Projects:write | none | asked |
+| $LAST_STEP$ | agent | Awaiting owner approval on PR #29 | none | asked |
