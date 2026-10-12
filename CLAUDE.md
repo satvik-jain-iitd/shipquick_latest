@@ -20,3 +20,4 @@ Standing rules, every session:
 15. One bug = one issue. Never club unrelated bugs. Every bug gets severity + user story + owner + milestone before any fix work.
 16. Triage before fixing: read, assign severity, link user story, assign owner, add `triaged`, move on board. Update `docs/bugs/ACTIVE_BUGS.md` on every status change.
 17. Every issue and PR gets a milestone (D0-D6) and an assignee. Demo artifacts stay labeled and closed; they are placeholders, not real work.
+18. PM and agile process lives in `pm/agile/`. A sprint is one week and one GitHub milestone (`S<nn>`). A PI is a D increment (an epic). Rank work by value only, never hours or story points. Size is T-shirt only (`XS, S, M, L, XL`). Write the sprint plan, review, and retro in `pm/agile/sprints/S<nn>/`. Versions use SemVer `vX.Y.Z`.

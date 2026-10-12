@@ -7,7 +7,7 @@ What is delivered, what is now, what is next.
 | Increment | What | Status |
 |---|---|---|
 | D0 | Repo, branches, CI, docs | Done |
-| D1 | Architecture patterns, ADRs | Done |
+| D1 | Architecture patterns, ADRs (now `backend/`) | Done |
 | D2 | Design system (M3), tokens | Done |
 | D3 | CI hardening, protection, hygiene tests | Done |
 
@@ -15,7 +15,7 @@ What is delivered, what is now, what is next.
 
 | Increment | What | Status |
 |---|---|---|
-| D4 | Bug tracking workflow | In progress |
+| D4 | Bug tracking workflow + PM/agile layer | In progress |
 | D5 | Demo showcase (epics, stories, bugs) | In progress |
 
 ## Next
@@ -30,6 +30,7 @@ What is delivered, what is now, what is next.
 |---|---|
 | PRs merged | 5 |
 | CI status | All green |
-| Labels | 18 |
-| Milestones | 7 (D0-D6) |
+| Labels | see repo |
+| Milestones | D0-D6 (increments) + S<nn> (sprints) |
 | Tests | 3 passing |
+| Sprint cadence | 1 week (lightweight Scrum) |

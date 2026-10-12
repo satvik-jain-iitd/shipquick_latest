@@ -72,3 +72,13 @@ Done is not the end. Each increment is followed by a measurement window and a st
 - **Standing rule for every future chat on this project:** the first action of a session is to read the trace; the last action before any "done" is to append the session's steps to it. Every owner message that changes direction, every question asked, every document created, every PR, every demo, every measurement window: one row each, same columns, numbered on from the last row. This holds until the playbook is written and after it, so the process can be retraced at any time. The rule is written into the project `CLAUDE.md` at repo creation so no session can miss it.
 - The trace marks the three kinds of owner contact: **asked** (the agent stopped and asked, with options), **volunteered** (the owner sent input mid-work), **reviewed** (the owner read a document and gave feedback). The playbook turns the first kind into fixed checkpoints and the second kind into "expect this; keep a discussion log".
 - `PLAYBOOK.md` is the final deliverable of the project (S11.2) and lives at the repo root next to `IDEA.md` (S11.3). It is the prompt for the next project.
+
+### D10. PM and agile layer
+Product management and agile process live in `pm/agile/`. This is how planning runs.
+- **Model.** A PI is a D increment (an epic). A sprint is one week and one GitHub milestone (`S<nn>`). A story or bug is one issue and one PR.
+- **Cadence.** PI planning, then weekly refinement, then sprint planning (day 1), a daily board check, sprint review (last day), and a retrospective.
+- **Prioritization.** Value first, effort-free. Rank by Impact, Urgency, Dependencies, Risk. No hours, no story points, because the AI writes the code and the real limit is review bandwidth.
+- **Sizing.** T-shirt size only (`XS, S, M, L, XL`). Size means change surface and risk, not time.
+- **Board.** Columns: Backlog, Refined, Sprint Ready, In Progress, Review, Done. Max 2 items In Progress.
+- **Versioning.** SemVer `vX.Y.Z`. A D increment is a MINOR bump. Release steps are in `pm/agile/RELEASE_GUIDE.md`.
+- **Records.** Sprint plans, reviews, and retros live in `pm/agile/sprints/S<nn>/`. PI goals live in `docs/pis/D<n>.md`.

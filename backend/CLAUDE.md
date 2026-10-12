@@ -1,4 +1,4 @@
-# shipquick_latest — architecture/ Notes
+# shipquick_latest — backend/ Notes
 
 > Folder-specific notes only. Root `CLAUDE.md` standing rules still apply here.
 

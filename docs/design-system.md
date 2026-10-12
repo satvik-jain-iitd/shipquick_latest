@@ -15,7 +15,7 @@ Google Material Design 3 (M3). Open source, Apache 2.0. One system for web, Andr
 | Repo index (all 10 repos) | `design/material-design-3/REPOSITORIES.md` |
 | Usage rules | `design/USAGE_GUIDE.md` |
 | Update steps | `design/UPDATE_PROCESS.md` |
-| Pattern summaries | `architecture/architecture-portal/ARCHITECTURE_PATTERNS.md` |
+| Pattern summaries | `backend/architecture-portal/ARCHITECTURE_PATTERNS.md` |
 
 ## Platforms
 
