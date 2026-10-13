@@ -1,0 +1,36 @@
+name: User Story
+description: A testable story linked to an epic
+labels: ["user-story"]
+body:
+  - type: input
+    id: epic
+    attributes:
+      label: Epic
+      description: Which epic does this belong to?
+    validations:
+      required: true
+  - type: input
+    id: persona
+    attributes:
+      label: Persona
+      description: Who benefits? Name the persona and FR.
+    validations:
+      required: true
+  - type: textarea
+    id: scenarios
+    attributes:
+      label: Gherkin Scenarios
+      description: Copy scenarios here and into matching test names.
+    validations:
+      required: true
+  - type: checkboxes
+    id: dor
+    attributes:
+      label: Definition of Ready
+      options:
+        - label: GitHub issue linked to its epic, Gherkin copied in
+        - label: Every scenario testable (unit, fixture, or matrix row)
+        - label: Persona and FR named
+        - label: Dependencies listed and available
+        - label: Ponytail check written
+        - label: Owner has seen the issue
