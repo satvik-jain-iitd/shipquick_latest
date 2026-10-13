@@ -17,8 +17,11 @@ jobs:
             git fetch origin "${{ github.base_ref }}"
             # Moved files are not new content, so skip renames.
             FILES=$(git diff --name-status -M "origin/${{ github.base_ref }}...HEAD" | grep -v '^R' | cut -f2-)
+          elif git rev-parse --verify -q HEAD~1 >/dev/null; then
+            # Push event: same rule, skip renames.
+            FILES=$(git diff --name-status -M HEAD~1 HEAD | grep -v '^R' | cut -f2-)
           else
-            FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || find . -path ./.git -prune -o -type f -print)
+            FILES=$(find . -path ./.git -prune -o -type f -print)
           fi
           LARGE=""
           while IFS= read -r f; do
