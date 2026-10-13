@@ -15,16 +15,17 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch origin "${{ github.base_ref }}"
-            FILES=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+            # Moved files are not new content, so skip renames.
+            FILES=$(git diff --name-status -M "origin/${{ github.base_ref }}...HEAD" | grep -v '^R' | cut -f2-)
           else
             FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || find . -path ./.git -prune -o -type f -print)
           fi
           LARGE=""
-          for f in $FILES; do
+          while IFS= read -r f; do
             if [ -f "$f" ] && [ "$(stat -f%z "$f" 2>/dev/null || stat -c%s "$f")" -gt 512000 ]; then
               LARGE="$LARGE $f"
             fi
-          done
+          done <<< "$FILES"
           if [ -n "$LARGE" ]; then
             echo "Changed files over 500KB:$LARGE"
             exit 1
@@ -81,10 +82,12 @@ jobs:
         run: |
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
-          COUNT=$(git diff --name-only "origin/$BASE...HEAD" | wc -l | tr -d ' ')
-          echo "Changed files: $COUNT"
+          # Moved files are not new review surface, so renames do not count.
+          COUNT=$(git diff --name-status -M "origin/$BASE...HEAD" | grep -vc '^R')
+          RENAMES=$(git diff --name-status -M "origin/$BASE...HEAD" | grep -c '^R')
+          echo "Counted files: $COUNT (ignoring $RENAMES renames)"
           if [ "$COUNT" -gt 50 ]; then
-            echo "PR too large ($COUNT files, max 50). Split it."
+            echo "PR too large ($COUNT files, max 50, excluding renames). Split it."
             exit 1
           fi
   test:
@@ -115,3 +118,20 @@ jobs:
         with:
           name: test-results
           path: logs/
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    needs: [pre-commit, commit-msg, pr-size, test]
+    if: always()
+    steps:
+      - name: Check all job results
+        run: |
+          echo "pre-commit: ${{ needs.pre-commit.result }}"
+          echo "commit-msg: ${{ needs.commit-msg.result }}"
+          echo "pr-size: ${{ needs.pr-size.result }}"
+          echo "test: ${{ needs.test.result }}"
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more jobs failed or were cancelled"
+            exit 1
+          fi
+          echo "All required jobs passed"

@@ -63,7 +63,7 @@ shipquick_latest/
 ├── scripts/             # One script per OS (macos/, windows/)
 ├── docs/                # All documentation
 ├── .github/             # CI and GitHub config
-├── architecture/        # Architecture (Material 3)
+├── backend/             # Backend architecture and patterns
 │   └── architecture-portal/  # Vendored portal (Material 3 tokens)
 └── frontend/            # Front-End (Material 3)
     └── UI components (React/TypeScript)

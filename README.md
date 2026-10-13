@@ -62,6 +62,7 @@ shipquick_latest/
 │   ├── architecture.md← How the system is organized
 │   ├── design-tokens.md ← Colors, fonts, spacing values (replace with your own)
 │   ├── PLAN.md        ← The step-by-step plan for building your project
+│   ├── development-flow.md ← How development works (diagram + plain words)
 │   ├── process-trace.md ← What has been done so far (updated each session)
 │   ├── test-cases.md  ← How to test your project
 │   ├── decisions/     ← Architecture decisions (ADR files)
@@ -82,19 +83,56 @@ shipquick_latest/
 │   │   ├── ci.yml     ← Runs checks and tests on every change
 │   │   └── cd.yml     ← Creates releases at each demo
 │   └── PULL_REQUEST_TEMPLATE.md ← Checklist for every change request
-├── architecture/      ← System design and architecture patterns
+├── backend/           ← Backend architecture and patterns
 │   ├── AGENTS.md      ← Rules for AI assistants
 │   ├── CLAUDE.md      ← Session rules
 │   └── architecture-portal/
 │       ├── ARCHITECTURE_PATTERNS.md ← Backend and frontend patterns
 │       ├── USAGE_GUIDE.md ← What to use vs what to study only
 │       └── docs/      ← Design records by domain (Database, Events, API, AI/ML...)
-└── frontend/          ← Front-end setup and patterns
-    ├── AGENTS.md      ← Rules for AI assistants
-    ├── CLAUDE.md      ← Session rules
-    ├── skills-lock.json ← Material Design 3 restrictions
-    └── resy_web_onboarding_journey.md ← Onboarding flow guide
+├── frontend/          ← Front-end setup and patterns
+│   ├── AGENTS.md      ← Rules for AI assistants
+│   ├── CLAUDE.md      ← Session rules
+│   ├── skills-lock.json ← Material Design 3 restrictions
+│   └── resy_web_onboarding_journey.md ← Onboarding flow guide
+└── pm/                ← Product management and agile
+    └── agile/         ← Guides, templates, sprint records
+        ├── AGILE_GUIDE.md      ← The process model
+        ├── PRIORITIZATION.md   ← Value-first ranking
+        ├── templates/          ← Story, sprint, retro, release templates
+        └── sprints/            ← One folder per sprint (plan, review, retro)
 ```
+
+## How Development Works (the flow)
+
+This is the repeatable process. It is the same for every feature and every bug.
+It works the same whether you write the code by hand or an AI writes it for you.
+
+```mermaid
+flowchart TD
+    A(["Idea or bug"]) --> B["Open a GitHub issue"]
+    B --> C{"Refined?<br/>clear, small, testable"}
+    C -->|"No"| D["Add detail or split it"]
+    D --> C
+    C -->|"Yes"| E["Sprint planning<br/>pick issues, set one goal"]
+    E --> F["Make a branch<br/>feat/issue-slug from dev"]
+    F --> G["Write a failing test first"]
+    G --> H["Write code until it passes"]
+    H --> I["Open a pull request to dev"]
+    I --> J{"All gates pass?<br/>CI green + 1 approval<br/>+ comments resolved"}
+    J -->|"No"| H
+    J -->|"Yes"| K["Owner merges the pull request"]
+    K --> L["Issue closes, card goes to Done"]
+    L --> M{"Sprint goal met?<br/>end of the week"}
+    M -->|"Yes"| N["Sprint review and retrospective"]
+    N --> O["Release: tag vX.Y.Z"]
+    O --> A
+```
+
+In one line: **idea → issue → refine → plan → branch → test first → pull request → gates → owner merges → release.**
+The loop repeats every week (one sprint).
+
+New to GitHub? Read the full walkthrough in `docs/development-flow.md`. It explains every word in plain English.
 
 ## Safe Development Workflow
 
@@ -123,7 +161,7 @@ Every change is checked automatically:
 | Commit message | Must follow `COMMIT_GUIDELINES.md` (e.g. `feat(auth): add login`) |
 | PR size | Max 50 files per request, so reviews stay easy |
 | Tests | Python tests run on every push |
-| Releases | Tags like `D0`, `D1` need matching demo notes |
+| Releases | Tags like `v0.4.0` need a demo note and a changelog entry. See `pm/agile/RELEASE_GUIDE.md` |
 
 ## Design Tokens (Colors and Fonts)
 
@@ -170,7 +208,7 @@ You can use these ready-made components in your project:
 
 ## Architecture Patterns
 
-The `architecture/` folder holds proven patterns for backend and frontend:
+The `backend/` folder holds proven architecture patterns for backend and frontend:
 
 | Domain | What you get |
 |---|---|
@@ -183,7 +221,18 @@ The `architecture/` folder holds proven patterns for backend and frontend:
 | Build vs Buy | Decision templates |
 | Front-End and Mobile | Shared design system patterns |
 
-Read `architecture/architecture-portal/USAGE_GUIDE.md` first — it tells you what to use directly and what to study only.
+Read `backend/architecture-portal/USAGE_GUIDE.md` first — it tells you what to use directly and what to study only.
+
+## PM and Agile
+
+Planning and process live in `pm/agile/`. It is lightweight Scrum.
+
+- A **PI** is a D increment (an epic). A **sprint** is one week and one GitHub milestone. A **story** is one issue and one PR.
+- Work is ranked by **value**, not by time. AI writes the code, so the real limit is review bandwidth. No hours, no story points.
+- Size is a **T-shirt** (`XS, S, M, L, XL`). Size means change surface and risk.
+- Versions use **SemVer** `vX.Y.Z`. A D increment is a minor bump.
+
+Start with `pm/agile/AGILE_GUIDE.md`. Templates are in `pm/agile/templates/`.
 
 ## Quick Start
 
@@ -262,8 +311,9 @@ Here's how to know where to put things:
 | Folder | What goes here? | Example |
 |---|---|---|
 | `docs/` | Documentation, guides, plans | `architecture.md`, `design-tokens.md` |
-| `architecture/` | System design and architecture patterns | ADRs, usage guides, domain docs |
+| `backend/` | Backend architecture and patterns | ADRs, usage guides, domain docs |
 | `frontend/` | Front-end setup and patterns | React components, onboarding flows |
+| `pm/agile/` | Product management and agile process | Sprint plans, retros, templates |
 | `.github/` | Automatic testing and releases | CI config, PR template |
 | `scripts/` | Helper scripts | Commit checks, markdown checks |
 
@@ -282,7 +332,7 @@ With **shipquick_latest**, you can build:
 - Read `docs/process-trace.md` first (this is the most important rule)
 - Check `CLAUDE.md` for session rules
 - Look at `docs/architecture.md` for system guidelines
-- Read `architecture/architecture-portal/USAGE_GUIDE.md` before using patterns
+- Read `backend/architecture-portal/USAGE_GUIDE.md` before using patterns
 - Replace design tokens in `docs/design-tokens.md` with your brand values
 - Use the Material Design components listed above
 

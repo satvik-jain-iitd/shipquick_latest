@@ -1,6 +1,6 @@
 ## Issue
 
-- Link:
+- Closes #(required, write `Closes #N` so GitHub auto-closes on merge)
 
 ## What Changed
 
@@ -30,8 +30,11 @@
 
 ## Checklist
 
+- [ ] Issue linked with `Closes #N`
 - [ ] Tests written first and green
 - [ ] Scenarios mapped to tests
 - [ ] Docs updated in same PR
 - [ ] Ponytail review done
 - [ ] Commit messages follow Conventional Commits
+- [ ] Milestone (D0-D6) and assignee set
+- [ ] All merge gates pass (see `docs/PR_RULES.md`)
