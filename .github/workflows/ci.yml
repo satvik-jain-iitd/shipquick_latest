@@ -16,10 +16,10 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             git fetch origin "${{ github.base_ref }}"
             # Moved files are not new content, so skip renames.
-            FILES=$(git diff --name-status -M "origin/${{ github.base_ref }}...HEAD" | grep -v '^R' | cut -f2-)
+            FILES=$(git diff --name-status -M "origin/${{ github.base_ref }}...HEAD" | awk -F'\t' '$1 !~ /^R/ {print $2}')
           elif git rev-parse --verify -q HEAD~1 >/dev/null; then
             # Push event: same rule, skip renames.
-            FILES=$(git diff --name-status -M HEAD~1 HEAD | grep -v '^R' | cut -f2-)
+            FILES=$(git diff --name-status -M HEAD~1 HEAD | awk -F'\t' '$1 !~ /^R/ {print $2}')
           else
             FILES=$(find . -path ./.git -prune -o -type f -print)
           fi
@@ -86,8 +86,8 @@ jobs:
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
           # Moved files are not new review surface, so renames do not count.
-          COUNT=$(git diff --name-status -M "origin/$BASE...HEAD" | grep -vc '^R')
-          RENAMES=$(git diff --name-status -M "origin/$BASE...HEAD" | grep -c '^R')
+          COUNT=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 !~ /^R/' | wc -l | tr -d ' ')
+          RENAMES=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 ~ /^R/' | wc -l | tr -d ' ')
           echo "Counted files: $COUNT (ignoring $RENAMES renames)"
           if [ "$COUNT" -gt 50 ]; then
             echo "PR too large ($COUNT files, max 50, excluding renames). Split it."
