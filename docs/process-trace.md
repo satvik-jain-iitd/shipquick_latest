@@ -35,4 +35,5 @@ Rule: read this first in every session, append before saying done.
 | 27 | agent | Merged PR #29 (squash) to dev and PR #23 (merge commit) to main | PR #29, PR #23 | none |
 | 28 | agent | Fixed push-event file-size check to ignore renames; pushed to dev | ci.yml | none |
 | 29 | agent | Closed issue #24; verified main CI green; restored protections and delete-branch | none | none |
-| $LAST_STEP$ | agent | Opened a follow-up doc PR to record the merge; awaiting owner approval | docs | asked |
+| 30 | agent | Fixed a bug: pr-size and file-size checks failed when a PR had no renames (grep -c exits 1 under bash -e). Switched to awk | ci.yml | none |
+| $LAST_STEP$ | agent | Syncing dev to main and restoring protection after the ci.yml fix | ci.yml | none |
