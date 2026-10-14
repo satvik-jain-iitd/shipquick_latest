@@ -35,3 +35,18 @@ Scenario: CI runs tests
 Scenario: every epic and story exists as an issue with labels, on a board
   (Backlog / Doing / Review / Done).
 ```
+
+**S0.5 Linked issues close after a merge into dev.**
+```gherkin
+Scenario: linked story issues close by hand when a PR merges into a non-default branch
+  Given a PR with "Closes #N" lines in its body
+  When the PR state is MERGED and the base is not the default branch
+  Then a dry run lists each open story issue it would close and each one it skips
+  And closes nothing
+  When the owner says yes
+  Then each open story issue is closed with the comment "Done in PR #X (squash-merged to <base>)."
+  And epics are never closed
+  And nothing is closed when the PR is open, or closed without a merge
+  And nothing is closed when the base is the default branch, GitHub does that
+```
+Tests: `tests/test_close_linked_issues.py`.

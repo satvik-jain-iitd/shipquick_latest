@@ -36,4 +36,9 @@ Rule: read this first in every session, append before saying done.
 | 28 | agent | Fixed push-event file-size check to ignore renames; pushed to dev | ci.yml | none |
 | 29 | agent | Closed issue #24; verified main CI green; restored protections and delete-branch | none | none |
 | 30 | agent | Fixed a bug: pr-size and file-size checks failed when a PR had no renames (grep -c exits 1 under bash -e). Switched to awk | ci.yml | none |
-| $LAST_STEP$ | agent | Syncing dev to main and restoring protection after the ci.yml fix | ci.yml | none |
+| 31 | agent | Synced dev to main and restored protection after the ci.yml fix | ci.yml | none |
+| 32 | owner | Asked to fix the issue-closing rule: Closes #N does not close on a merge into dev (GoServe #39 to #54 stayed open) | chat | volunteered |
+| 33 | agent | Wrote failing test tests/test_close_linked_issues.py (S0.5), then scripts/close_linked_issues.py: dry run by default, --yes closes, skips epics and closed issues, refuses open or unmerged PRs | scripts/, tests/ | none |
+| 34 | agent | Dry-ran the script on real PRs #29 (dev) and #23 (main) | none | none |
+| 35 | agent | Updated PR template, PR_RULES section 6, CLAUDE.md rule 12, PLAN.md, development-flow.md, test-cases S0.5; wrote ADR-003 | docs | none |
+| 36 | agent | Created issue #32, branch feat/32-close-linked-issues, opened PR to dev | issue #32 | asked |

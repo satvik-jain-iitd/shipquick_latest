@@ -21,7 +21,7 @@ This file is the process plan for the shipquick_latest repository. It shows how 
 - PR template: issue link, what changed, scenarios covered, test output pasted, demo (gif or stdout), decisions made (ADR link), ideas noted.
 - Commits: Conventional Commits, English, short. Co-author line as required. See `COMMIT_GUIDELINES.md`.
 - Branch protection: `main` and `dev` require PR and green CI. No direct pushes. Required check: `gate` (aggregates pre-commit, commit-msg, pr-size, test). Conversation resolution is required.
-- Merge gates: green CI, one approval (not the author), zero unresolved comments, branch up to date, not a Draft, issue linked with `Closes #N`. Rule of thumb in `docs/PR_RULES.md`.
+- Merge gates: green CI, one approval (not the author), zero unresolved comments, branch up to date, not a Draft, issue linked with `Closes #N`. GitHub auto-closes only on a merge into `main`; after a merge into `dev`, `scripts/close_linked_issues.py` closes the linked story issues after one owner yes. Rule of thumb in `docs/PR_RULES.md`.
 - Auto-merge: off. The owner reviews, comments, approves, then merges by hand. Branch deleted on merge.
 - Pre-commit: `.pre-commit-config.yaml` runs on every commit (no secrets, max 500KB files, markdown blocks closed).
 - CI jobs: pre-commit checks, commit-msg validation, PR size limit (50 files), pytest on Python 3.12.
