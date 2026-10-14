@@ -38,7 +38,7 @@ flowchart TD
     I --> J{"All gates pass?<br/>CI green + 1 approval<br/>+ comments resolved"}
     J -->|"No"| H
     J -->|"Yes"| K["Owner merges the pull request"]
-    K --> L["Issue closes, card goes to Done"]
+    K --> L["Close the issue<br/>main: GitHub does it<br/>dev: close_linked_issues.py"]
     L --> M{"Sprint goal met?<br/>end of the week"}
     M -->|"Yes"| N["Sprint review and retrospective"]
     N --> O["Release: tag vX.Y.Z"]
@@ -54,7 +54,7 @@ flowchart TD
 5. **Write the test first.** Watch it fail. Then write code until it passes.
 6. **Open a pull request to `dev`.** Checks run on GitHub by themselves.
 7. **Pass the gates.** Green CI, one approval (not the author), no open comments.
-8. **The owner merges.** Then the issue closes and the card moves to Done.
+8. **The owner merges.** Into `main`, GitHub closes the issue. Into `dev`, GitHub does not. Run `python3 scripts/close_linked_issues.py <pr>` to list the linked story issues, get one yes from the owner, then close them with `--yes`. The card moves to Done.
 9. **At week end, review and retrospect.** Show what works. Note what to change.
 10. **Release.** Tag a version like `v0.4.0`. Start the next loop.
 
