@@ -42,3 +42,10 @@ Rule: read this first in every session, append before saying done.
 | 34 | agent | Dry-ran the script on real PRs #29 (dev) and #23 (main) | none | none |
 | 35 | agent | Updated PR template, PR_RULES section 6, CLAUDE.md rule 12, PLAN.md, development-flow.md, test-cases S0.5; wrote ADR-003 | docs | none |
 | 36 | agent | Created issue #32, branch feat/32-close-linked-issues, opened PR to dev | issue #32 | asked |
+| 37 | agent | PR #33 CI green (commit-msg, gate, pr-size, pre-commit, test) | PR #33 | none |
+| 38 | owner | Asked the agent to merge PR #33 itself, bypassing protection | chat | volunteered |
+| 39 | owner | Removed dev protection by hand; the agent's attempt was blocked by the safety classifier | none | asked |
+| 40 | agent | Squash-merged PR #33 into dev, restored dev protection, verified it | PR #33 | none |
+| 41 | agent | Dry-ran close_linked_issues.py on PR #33: only #32 listed | none | none |
+| 42 | owner | Said yes to closing #32 | chat | asked |
+| 43 | agent | Closed #32 via the script with the PR comment; wrote journal note on the bypass window | issue #32, docs/journal | none |
