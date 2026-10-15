@@ -50,3 +50,15 @@ Scenario: linked story issues close by hand when a PR merges into a non-default 
   And nothing is closed when the base is the default branch, GitHub does that
 ```
 Tests: `tests/test_close_linked_issues.py`.
+
+**S0.6 Teammate block checked by code.**
+```gherkin
+Scenario: a teammate block is checked by code before it is relayed
+  Given a block "To <role>, from <role>, re <ref>:" with numbered lines and a last line "Need from you: ..."
+  When I run scripts/check_block.py on it
+  Then it prints "Block OK" and exits 0
+  When the block is empty, has a bad header, no numbered line, a bad last line, over 120 words, or a secret
+  Then it prints one reason and exits 1
+  And CI runs the same check on the "## For the reviewer" section of every PR body
+```
+Tests: `tests/test_check_block.py`.

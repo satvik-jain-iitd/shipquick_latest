@@ -28,6 +28,7 @@ Raise a PR when the issue is done and tests pass on your machine.
 - The reviewer must not be the author.
 - In this repo the reviewer is the second account.
 - All comments must be resolved.
+- The coder's block to the reviewer sits in the PR body under `## For the reviewer`. The CI job `team-block` checks its shape with `scripts/check_block.py`.
 - The reviewer's block to the coder is the review body (the approve or comment review). Shape: `To coder, from reviewer, re PR #N:`, numbered, last line = what the reviewer needs. See `docs/TEAM_PROTOCOL.md`.
 
 ## 5. When to merge
