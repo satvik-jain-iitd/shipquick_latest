@@ -53,3 +53,8 @@ Rule: read this first in every session, append before saying done.
 | 45 | agent | Logged idea ID096; created issue #35 | issue #35 | none |
 | 46 | agent | Added docs/TEAM_PROTOCOL.md, CLAUDE.md rule 19, PR template "For the reviewer", PR_RULES review-body rule, PLAN.md inherit paragraph, docs/LEARNINGS.md | docs | none |
 | 47 | agent | Opened PR docs/team-protocol -> dev; the owner merges | PR | asked |
+| 48 | owner | Asked for a plan to generalise the team protocol to any multi-agent situation | chat | volunteered |
+| 49 | agent | Surveyed existing handoff rules on the Mac; owner chose scope (global skill + ShipQuick), hub relay only, validator in CI | plan | asked |
+| 50 | agent | Logged idea ID097; created issue #37; branch feat/37-team-protocol-v2 from docs/team-protocol | issue #37 | none |
+| 51 | agent | Wrote failing tests/test_check_block.py (S0.6), then scripts/check_block.py; 10 of 10 green | scripts/, tests/ | none |
+| 52 | agent | TEAM_PROTOCOL.md v2, TEAM_ROSTER.md, CI job team-block, CLAUDE.md rule 19, PR_RULES, PLAN.md, ADR-004 | docs, ci.yml | none |

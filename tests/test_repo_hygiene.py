@@ -29,6 +29,8 @@ def test_required_files_exist():
         "docs/design-tokens.md",
         ".github/workflows/ci.yml",
         ".github/PULL_REQUEST_TEMPLATE.md",
+        "docs/TEAM_PROTOCOL.md",
+        "docs/TEAM_ROSTER.md",
     ):
         assert (ROOT / rel).is_file(), f"missing {rel}"
 

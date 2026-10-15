@@ -12,3 +12,4 @@ short. Say what happened and what to do next time.
 |---|---|---|---|
 | 2026-10-14 | GitHub | `Closes #N` did not close issues. Feature PRs merge into `dev`, and GitHub auto-closes only on a merge into the default branch. | Run `scripts/close_linked_issues.py <pr>` after a merge into `dev`. See ADR-003. |
 | 2026-10-15 | Team | The owner relayed messages between the coder and the reviewer by hand, with no fixed shape. Things got lost and chat was the only record. | End every unit of work with one fenced block per other teammate. The coder's block to the reviewer lives in the PR body, the reviewer's in the review body. See `docs/TEAM_PROTOCOL.md`. |
+| 2026-10-15 | Team | Three copies of the handoff rule lived on the Mac and said different things (block vs paragraph, English vs Hindi, STATE.md that never existed). | One canonical skill, copies only by full sync, pointers everywhere else. A regex check in CI keeps the shape honest. See ADR-004. |

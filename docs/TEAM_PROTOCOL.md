@@ -1,76 +1,105 @@
 # Team Protocol: Teammate Blocks
 
-The owner is the gate between the agents. Agents never talk to each other directly.
-They talk through the owner, in short blocks the owner can read, approve, and paste as they are.
+One short block, one fixed shape, for every handoff between teammates.
+It works for any team: humans, Claude Code sessions, OpenCode agents, n8n bots.
+Any number of roles. Any kind of work.
+
+The canonical text lives in the global skill `~/.claude/skills/team-protocol/SKILL.md`.
+This file is the copy that ships with ShipQuick. Sync by full copy, never by partial edit.
 
 ## Roles
 
-| Role | Session | Writes to the repo | Talks to |
-|---|---|---|---|
-| Owner | human | merges, decides | everyone |
-| Coder | one Claude session, dev account | commits, pushes, opens PRs | reviewer, owner |
-| Reviewer | one Claude session, review account | comments, reviews, approves | coder, owner |
+The roles live in `docs/TEAM_ROSTER.md`. One row per role: name, who, account, what it writes, who it talks to.
+A project with more roles adds rows. The rule below never changes.
 
-A project with more roles (designer, QA, ops) adds a row. The rule stays the same.
+## The gate
 
-## The rule
-
-When you finish a unit of work (a PR, a review, a sync, a deploy), end your reply with
-**one fenced block per other teammate**. Not one block for all. One each.
-
-- First line: `To <role>, from <role>, re <PR or issue>:`
-- Under 120 words. English. Numbered imperatives: what my work changes for you, what you do next.
-- Last line: what I need from you, or `Nothing needed from you.`
-- A teammate with nothing to do still gets a one-line block. Nobody is left guessing.
-- Facts only. No secrets, no tokens, no pasted keys.
+The owner is the gate between the agents. Agents never talk to each other directly.
+They talk through the owner, in blocks the owner can read, approve, and paste as they are.
 
 The owner reads each block, approves it, and pastes it to that teammate. The owner changes
 nothing inside a block. If the owner disagrees, the owner replies to the author, not to the receiver.
 
-## Where the blocks live on GitHub
+## The unit of work
 
-Chat is not the record. The PR is.
+A unit of work is anything one teammate finishes that another must act on or know about.
+A PR. A review. A deploy. A research doc. An n8n workflow. A content draft.
 
-- The coder's block to the reviewer goes in the PR body under `## For the reviewer`.
+## The rule
+
+When you finish a unit of work, end your reply with **one fenced block per other teammate**.
+Not one block for all. One each. A teammate with nothing to do still gets a one-line block.
+
+The shape:
+
+```
+To <role>, from <role>, re <ref>:
+1. <what my work changes for you, or what you do next>
+2. <next step>
+Need from you: <one thing>.
+```
+
+- `<role>` is a lowercase name from the roster.
+- `<ref>` is any stable handle: `PR #33`, `issue #35`, `workflow lead-engine-v3`, `docs/research/x.md`.
+- Numbered imperatives. Under 120 words. English always.
+- Last line is `Need from you: ...` or `Nothing needed from you.`
+- Facts only. No secrets, no tokens, no pasted keys.
+
+Lines for the owner in Romanized Hindi (3 at most) go in chat above the block, never inside it.
+A machine checks the block, so the shape has to be exact.
+
+## Where the blocks live
+
+Chat is not the record.
+
+With a PR:
+
+- The coder's block to the reviewer goes in the PR body under `## For the reviewer`. CI checks it.
 - The reviewer's block to the coder is the review body (the approve or comment review).
-- Replies on threads are replies on threads. A block tells the other side the threads exist.
+- Any other block is a PR or issue comment.
+- The owner relays by link when the block is already on GitHub, and by paste when it is not.
 
-So the owner relays by link when the block is already on the PR, and by paste when it is not.
+Without GitHub (an n8n project, a content project):
 
-## Example (three roles)
+- The owner's chat is the record.
+- The sender adds one row to `docs/process-trace.md`. The Step column holds the block's header line.
 
-Coder finishes PR #33:
+## The check
+
+`python3 scripts/check_block.py [file]` reads a block (stdin if no file) and prints `Block OK`,
+or one reason and exit 1: `empty block`, `bad header`, `no numbered line`, `bad last line`,
+`over 120 words`, `looks like a secret`. Run it before you post. CI runs it on every PR body.
+
+## Examples
+
+A PR (coder to reviewer):
 
 ```
 To reviewer, from coder, re PR #33:
 1. New script scripts/close_linked_issues.py with a fake-gh test, 8 of 8 green.
 2. Rule written into PR_RULES section 6, the PR template, and ADR-003.
-3. Dry run on PR #29 and #23 pasted in the PR body.
 Need from you: review 33.
 ```
 
-```
-To owner, from coder, re PR #33:
-1. Merge after the reviewer approves.
-Need from you: one yes to close #32 after the merge.
-```
-
-Reviewer approves:
+An n8n workflow (builder to owner, no GitHub):
 
 ```
-To coder, from reviewer, re PR #33:
-1. Approved on 7160c63. Reply on the 2 threads.
-2. Next PR: move S0.5 under S0.4 in docs/test-cases.md.
-Need from you: the reply block when the threads are answered.
+To owner, from builder, re workflow lead-engine-v3:
+1. Deployed SUB "score-lead" with dry_run on. 12 test items passed.
+2. Turn dry_run off in Config when you have checked the Telegram alert.
+Need from you: one test lead sent through the form.
 ```
 
+A content draft (writer to editor):
+
 ```
-To owner, from reviewer, re PR #33:
-1. Squash and merge.
-Nothing else needed from you.
+To editor, from writer, re docs/drafts/kirana-growth-story.md:
+1. Draft 2 is ready, 900 words, grade 6.
+2. Check the three claims marked [source?] against the research table.
+Need from you: the edited draft or a comment per claim.
 ```
 
 ## How a child project inherits this
 
-See `docs/PLAN.md`, section D2. Short version: bump the submodule, copy rule 19 into your
-own `CLAUDE.md`, fill the roles table with your sessions and accounts.
+See `docs/PLAN.md`, section D2. Short version: bump the submodule, copy rule 19 into your own
+`CLAUDE.md`, copy and fill `docs/TEAM_ROSTER.md`, copy the `team-block` job into your CI.
