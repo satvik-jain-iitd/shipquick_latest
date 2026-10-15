@@ -66,3 +66,4 @@ Rule: read this first in every session, append before saying done.
 | 58 | agent | Logged idea ID102; created issue #39; branch feat/39-owner-block-order from dev | issue #39 | none |
 | 59 | agent | Failing tests for S0.7, then the two owner checks in scripts/check_block.py; 23 of 23 green | scripts/, tests/ | none |
 | 60 | agent | TEAM_PROTOCOL.md sections "Blocks to the owner" and "The PR loop for the owner", CLAUDE.md rule 19, ADR-005 | docs | none |
+| 61 | agent | Opened PR #40; CI green incl. team-block. Synced the global skill, examples, tpm-pr-review handoff example and CLAUDE.md s20 to v2.1 | PR #40, ~/.claude | none |
