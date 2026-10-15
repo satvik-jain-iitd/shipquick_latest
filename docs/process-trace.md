@@ -49,3 +49,7 @@ Rule: read this first in every session, append before saying done.
 | 41 | agent | Dry-ran close_linked_issues.py on PR #33: only #32 listed | none | none |
 | 42 | owner | Said yes to closing #32 | chat | asked |
 | 43 | agent | Closed #32 via the script with the PR comment; wrote journal note on the bypass window | issue #32, docs/journal | none |
+| 44 | owner | Asked for a fixed teammate message shape (drafts at /tmp/TEAM_PROTOCOL.md and /tmp/claude-md-rule.txt), one PR on docs/team-protocol | chat | volunteered |
+| 45 | agent | Logged idea ID096; created issue #35 | issue #35 | none |
+| 46 | agent | Added docs/TEAM_PROTOCOL.md, CLAUDE.md rule 19, PR template "For the reviewer", PR_RULES review-body rule, PLAN.md inherit paragraph, docs/LEARNINGS.md | docs | none |
+| 47 | agent | Opened PR docs/team-protocol -> dev; the owner merges | PR | asked |
