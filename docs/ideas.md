@@ -6,6 +6,7 @@ Every idea from the owner or Claude, dated, one line, with status (open / taken 
 - ID002: Voice hotkey design (taken)
 - ID096: Fixed teammate message shape (one fenced block per other teammate, relayed by the owner unchanged, stored on the PR) built into ShipQuick so child projects inherit it (taken)
 - ID097: Team protocol v2: any roles via a roster, any ref, English blocks, regex validator in CI, one global skill as the canonical copy (taken)
+- ID102: Owner blocks say the exact instant: Now / After <event> / Not yet per line, one Merge: line, merge once after the reviewer's approve block (taken)
 - ID003: Dictionary integration (open)
 - ID004: (your idea here) (status)
 - ID051: Move GoServe to klickbae8yt-star account when CI billing starts hurting; keep shipquick_latest on satvik-jain-iitd (open)

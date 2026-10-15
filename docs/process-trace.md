@@ -60,3 +60,9 @@ Rule: read this first in every session, append before saying done.
 | 52 | agent | TEAM_PROTOCOL.md v2, TEAM_ROSTER.md, CI job team-block, CLAUDE.md rule 19, PR_RULES, PLAN.md, ADR-004 | docs, ci.yml | none |
 | 53 | agent | Opened PR #38 (feat/37-team-protocol-v2 -> dev); CI green incl. the new team-block job on this PR's own block | PR #38 | none |
 | 54 | agent | Global: created ~/.claude/skills/team-protocol (canonical), turned tpm-pr-review handoff.md, AGENT_TEAM_PROMPT.md and AGENTS.md s5 into pointers, added CLAUDE.md s20 | ~/.claude | none |
+| 55 | owner | Merged PR #36 and PR #38 | PR #36, PR #38 | none |
+| 56 | owner | Said owner blocks never make the merge instant clear; asked for the skill to fix it | chat | volunteered |
+| 57 | agent | Planned v2.1: time words per owner line, one Merge: line, the PR loop table; owner chose docs + validator, merge once after approve | plan | asked |
+| 58 | agent | Logged idea ID102; created issue #39; branch feat/39-owner-block-order from dev | issue #39 | none |
+| 59 | agent | Failing tests for S0.7, then the two owner checks in scripts/check_block.py; 23 of 23 green | scripts/, tests/ | none |
+| 60 | agent | TEAM_PROTOCOL.md sections "Blocks to the owner" and "The PR loop for the owner", CLAUDE.md rule 19, ADR-005 | docs | none |

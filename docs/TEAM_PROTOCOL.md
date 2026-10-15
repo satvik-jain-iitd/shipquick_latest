@@ -48,6 +48,41 @@ Need from you: <one thing>.
 Lines for the owner in Romanized Hindi (3 at most) go in chat above the block, never inside it.
 A machine checks the block, so the shape has to be exact.
 
+## Blocks to the owner
+
+The owner is the only relay, so the owner's action order is the critical path.
+A block to the owner is an ordered to-do. It never makes the owner guess.
+
+Every numbered line starts with one of three time words:
+
+- `Now:` do this before anything else, this instant.
+- `After <event>:` do this only once the named event has happened. The event is a block that arrived, a CI result, or a sha.
+- `Not yet:` do not do this. The line says what to wait for.
+
+Every block to the owner has exactly one `Merge:` line, between the numbered lines and the last line:
+
+- `Merge: now, PR #38 (reviewer approved on <sha>).`
+- `Merge: not yet, wait for the reviewer's approve block.`
+- `Merge: nothing to merge.`
+
+Relays are explicit steps: `Now: paste the block below to reviewer.`
+A block to the owner that says "merge" without `Now:` or `Not yet:` is a bad block. The check fails it.
+
+## The PR loop for the owner
+
+**The owner merges exactly once, right after the reviewer's approve block, before relaying anything else.
+Every block before that says `Merge: not yet`.**
+
+| Step | Who sends a block to the owner | Owner does, in this order | Merge? |
+|---|---|---|---|
+| 1 | coder: PR opened | Now: paste the coder's block to reviewer. | Not yet |
+| 2 | reviewer: comment review (fixes needed) | Now: paste the reviewer's block to coder. | Not yet |
+| 3 | coder: fixes pushed, threads answered | Now: paste the coder's block to reviewer. | Not yet |
+| 4 | reviewer: approve review | Now: merge the PR. After the merge: paste the reviewer's block to coder with the merge sha. | **Now, once** |
+| 5 | coder: next story started | Now: say yes to close the linked issues (`scripts/close_linked_issues.py`). | Nothing |
+
+Steps 2 and 3 repeat until the reviewer approves. Step 4 happens once per PR.
+
 ## Where the blocks live
 
 Chat is not the record.
@@ -68,7 +103,7 @@ Without GitHub (an n8n project, a content project):
 
 `python3 scripts/check_block.py [file]` reads a block (stdin if no file) and prints `Block OK`,
 or one reason and exit 1: `empty block`, `bad header`, `no numbered line`, `bad last line`,
-`over 120 words`, `looks like a secret`. Run it before you post. CI runs it on every PR body.
+`owner line without a time word`, `owner block needs one Merge: line`, `over 120 words`, `looks like a secret`. Run it before you post. CI runs it on every PR body.
 
 ## Examples
 
@@ -81,13 +116,25 @@ To reviewer, from coder, re PR #33:
 Need from you: review 33.
 ```
 
+A PR, step 4 (reviewer to owner):
+
+```
+To owner, from reviewer, re PR #38:
+1. Now: merge PR #38 (approved on ea9ddf9, CI green, no open threads).
+2. After the merge: paste the block below this one to coder.
+3. Not yet: close #35 and #37; wait for the coder's block, then say yes once.
+Merge: now, PR #38.
+Need from you: the merge sha.
+```
+
 An n8n workflow (builder to owner, no GitHub):
 
 ```
 To owner, from builder, re workflow lead-engine-v3:
-1. Deployed SUB "score-lead" with dry_run on. 12 test items passed.
-2. Turn dry_run off in Config when you have checked the Telegram alert.
-Need from you: one test lead sent through the form.
+1. Now: send one test lead through the form and check the Telegram alert.
+2. After the alert looks right: turn dry_run off in Config.
+Merge: nothing to merge.
+Need from you: the test lead.
 ```
 
 A content draft (writer to editor):

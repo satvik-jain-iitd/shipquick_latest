@@ -62,3 +62,16 @@ Scenario: a teammate block is checked by code before it is relayed
   And CI runs the same check on the "## For the reviewer" section of every PR body
 ```
 Tests: `tests/test_check_block.py`.
+
+**S0.7 Blocks to the owner say when to act.**
+```gherkin
+Scenario: a block to the owner is an ordered to-do with a merge line
+  Given a block "To owner, from <role>, re <ref>:"
+  When every numbered line starts with "Now:", "After <event>:" or "Not yet:"
+  And exactly one line reads "Merge: now | not yet | nothing to merge"
+  Then scripts/check_block.py prints "Block OK" and exits 0
+  When a numbered line has no time word, or the Merge: line is missing or doubled
+  Then it prints one reason and exits 1
+  And a block to any other role is not affected
+```
+Tests: `tests/test_check_block.py`.
