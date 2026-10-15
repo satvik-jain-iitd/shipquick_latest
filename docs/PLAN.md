@@ -26,6 +26,9 @@ This file is the process plan for the shipquick_latest repository. It shows how 
 - Pre-commit: `.pre-commit-config.yaml` runs on every commit (no secrets, max 500KB files, markdown blocks closed).
 - CI jobs: pre-commit checks, commit-msg validation, PR size limit (50 files), pytest on Python 3.12.
 - CD: tags `D*` require matching `docs/demos/<tag>.md` before release.
+- Teammate blocks: every unit of work ends with one fenced block per other teammate, as `docs/TEAM_PROTOCOL.md` says. The coder's block to the reviewer lives in the PR body under `## For the reviewer`; the reviewer's block is the review body.
+
+How a child project inherits this: bump the `shipquick_latest` submodule to the commit that holds `docs/TEAM_PROTOCOL.md`, copy rule 19 from this repo's `CLAUDE.md` into the child's own `CLAUDE.md`, and fill the roles table in the child's copy with its real sessions and accounts (which Claude session is the coder, which is the reviewer, which GitHub account each one uses). A project with more roles adds more rows; the rule does not change.
 
 ### D3. Test-driven development, strictly
 For every story:

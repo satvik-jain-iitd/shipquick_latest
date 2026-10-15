@@ -28,6 +28,14 @@
 
 - (links to docs/ideas.md)
 
+## For the reviewer
+
+```
+To reviewer, from coder, re PR #N:
+1.
+Need from you:
+```
+
 ## Checklist
 
 - [ ] Issue linked with `Closes #N`
