@@ -58,3 +58,5 @@ Rule: read this first in every session, append before saying done.
 | 50 | agent | Logged idea ID097; created issue #37; branch feat/37-team-protocol-v2 from docs/team-protocol | issue #37 | none |
 | 51 | agent | Wrote failing tests/test_check_block.py (S0.6), then scripts/check_block.py; 10 of 10 green | scripts/, tests/ | none |
 | 52 | agent | TEAM_PROTOCOL.md v2, TEAM_ROSTER.md, CI job team-block, CLAUDE.md rule 19, PR_RULES, PLAN.md, ADR-004 | docs, ci.yml | none |
+| 53 | agent | Opened PR #38 (feat/37-team-protocol-v2 -> dev); CI green incl. the new team-block job on this PR's own block | PR #38 | none |
+| 54 | agent | Global: created ~/.claude/skills/team-protocol (canonical), turned tpm-pr-review handoff.md, AGENT_TEAM_PROMPT.md and AGENTS.md s5 into pointers, added CLAUDE.md s20 | ~/.claude | none |
