@@ -191,3 +191,14 @@ Scenario: scripts/review_merge.sh refuses unless every rule holds
 ```
 Tests: `tests/test_review_merge.py` (`test_s16_*`).
 
+
+**S0.15 A fresh clone matches the README (story #69).**
+```gherkin
+Scenario: someone clones ShipQuick and follows the README
+  Given every path in the README tree and every folder in the structure guide exists
+  When they clone the repo and run scripts/check_local.sh sizes markers md-blocks
+  Then it passes
+  And the Quick Start names pre-commit install, the local checks, roadmap.json and /shipquick-mode
+  And scripts/check_placeholders.py lists every <PLACEHOLDER> left, and passes when none are left
+```
+Tests: `tests/test_clone_path.py` (`test_s15_*`).

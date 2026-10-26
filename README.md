@@ -90,11 +90,8 @@ shipquick_latest/
 │       ├── ARCHITECTURE_PATTERNS.md ← Backend and frontend patterns
 │       ├── USAGE_GUIDE.md ← What to use vs what to study only
 │       └── docs/      ← Design records by domain (Database, Events, API, AI/ML...)
-├── frontend/          ← Front-end setup and patterns
-│   ├── AGENTS.md      ← Rules for AI assistants
-│   ├── CLAUDE.md      ← Session rules
-│   ├── skills-lock.json ← Material Design 3 restrictions
-│   └── resy_web_onboarding_journey.md ← Onboarding flow guide
+├── frontend/          ← Front-end setup and patterns (starts empty)
+│   └── README.md      ← What goes here
 └── pm/                ← Product management and agile
     └── agile/         ← Guides, templates, sprint records
         ├── AGILE_GUIDE.md      ← The process model
@@ -246,7 +243,20 @@ git clone <url> <your-project-name>
 cd <your-project-name>
 ```
 
-### 2. Create your feature branch
+### 2. Turn on the checks and pick a mode
+
+```bash
+# Run the checks on every commit and push
+pre-commit install
+
+# Run the same checks by hand once; it must say "all passed"
+bash scripts/check_local.sh sizes markers md-blocks
+```
+
+- Pick how much the AI agents do alone: type `/shipquick-mode manual`, `semi` or `auto` in Claude Code (`docs/MODES.md`).
+- Give your project its live roadmap page: put your title and vision in `roadmap.json`, then follow `docs/LIVE_ROADMAP.md`.
+
+### 3. Create your feature branch
 
 ```bash
 # Always branch from dev, never from main
@@ -254,14 +264,14 @@ git checkout dev
 git checkout -b feat/1-my-first-feature
 ```
 
-### 3. Install the design tools
+### 4. Install the design tools
 
 ```bash
 # Install Material Design components
 npm install @material/web
 ```
 
-### 4. Start building
+### 5. Start building
 
 You can now start using the components and design tokens. Here's a simple example:
 
@@ -275,7 +285,7 @@ You can now start using the components and design tokens. Here's a simple exampl
 </button>
 ```
 
-### 5. Send your change for review
+### 6. Send your change for review
 
 ```bash
 git push origin feat/1-my-first-feature
@@ -291,6 +301,7 @@ Then open a pull request to `dev`. Checks run automatically.
 2. Replace `<PRIMARY_COLOR>` with your main brand color (like `#0066CC`)
 3. Replace `<PRIMARY_FONT>` with your font name (like `Arial` or `Roboto`)
 4. Replace `<SPACING_UNIT>` with your spacing size (usually `4` or `8`)
+5. Run `python3 scripts/check_placeholders.py`. It lists every placeholder still left; when it says "no placeholders left", you are done.
 
 ### Step 2: Update the Color Palette
 
