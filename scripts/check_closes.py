@@ -11,11 +11,12 @@ import sys
 
 from close_linked_issues import LINK   # one rule for "this body links an issue", shared with the script that closes the issues
 
+DEPENDABOT = ("dependabot[bot]", "app/dependabot")   # the login in the Actions event, and the one `gh pr view --json author` prints
 EXEMPT_TITLE = re.compile(r"^(release|chore)(\([^)]*\))?!?: ")
 
 
 def check(title: str, author: str, body: str) -> str | None:
-    if EXEMPT_TITLE.match(title) or author == "dependabot[bot]":
+    if EXEMPT_TITLE.match(title) or author in DEPENDABOT:
         return None
     if not LINK.search(body):
         return "the body has no `Closes #<n>` line (write the issue number, for example `Closes #70`). Release, sync and chore pull requests are exempt by title prefix."
