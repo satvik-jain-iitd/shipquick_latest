@@ -3,7 +3,7 @@
 const COLUMNS = ['To do', 'Doing', 'Review', 'Done'];
 const MAX_NODES = 100;   // ponytail: one GitHub page of issues; `truncated` tells the page when there are more. Add paging when a project passes 100 issues.
 // Words a stranger does not need. The Board keeps the story's own words (raw); every other section gets the plain swap.
-const PLAIN = [[/\bCI\/CD\b/g, 'build and deploy'], [/\bPRs?\b/g, 'change'], [/\bCI\b/g, 'the checks'], [/\brpc\b/gi, 'server call'], [/\bmigrations?\b/gi, 'database change'], [/\be2e\b/gi, 'end-to-end test']];
+const PLAIN = [[/\bCI\/CD\b/g, 'build and deploy'], [/\bPRs?\b/g, 'change'], [/\bCI checks\b/g, 'checks'], [/\bCI\b/g, 'the checks'], [/\brpc\b/gi, 'server call'], [/\bmigrations?\b/gi, 'database change'], [/\be2e\b/gi, 'end-to-end test']];
 const plain = (t) => PLAIN.reduce((s, [re, w]) => s.replace(re, w), t);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 

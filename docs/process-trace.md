@@ -89,3 +89,4 @@ Rule: read this first in every session, append before saying done.
 | 81 | coder (job-search-dev) | Fix commit for PR #50: no pull_request trigger, -f, 5 minutes, docs. Red first (2 tests) | PR #50 | none |
 | 82 | reviewer (job-search-qa) | Owner chose v0.5.0, not v1.0.0 (RELEASE_GUIDE: a D increment is a minor bump). Release docs: changelog, demo note, PROGRESS, notes renamed; stale fork line removed | docs | asked |
 | 83 | coder (job-search-dev) | Found in the review of release PR #52: workflow_run names `CI`, but ci.yml is `shipquick_latest CI`, so it never fires. Bug issue #53, red test first, then the fix | PR for #53 | none |
+| 84 | coder (job-search-dev) | Bug #62 found by the reviewer on the job-search roadmap: "CI checks" became "the checks checks". Red test first, then the swap order in plain() | PR for #62 | none |
