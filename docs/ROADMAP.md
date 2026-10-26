@@ -34,6 +34,12 @@ Increments D0 to D6. Every issue and PR gets a milestone. Every increment gets a
 
 - Demo epics, stories, bugs. Board populated for showcase.
 
+## v1.0.0 Process v2 (Now, milestone D5, epic #41)
+
+- CI must-haves: secret scan, read-only token, SHA-pinned actions with Dependabot, dependency review, local checks (#43).
+- Live roadmap page on n8n for every project (#44).
+- Rules 20 to 29 and the two-session pattern (#42). Release notes: `docs/RELEASE_NOTES_v1.0.0.md`.
+
 ## D6 Template Ready (Future)
 
 - Full clone-ready template. New projects start here.

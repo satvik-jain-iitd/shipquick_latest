@@ -67,3 +67,6 @@ Rule: read this first in every session, append before saying done.
 | 59 | agent | Failing tests for S0.7, then the two owner checks in scripts/check_block.py; 23 of 23 green | scripts/, tests/ | none |
 | 60 | agent | TEAM_PROTOCOL.md sections "Blocks to the owner" and "The PR loop for the owner", CLAUDE.md rule 19, ADR-005 | docs | none |
 | 61 | agent | Opened PR #40; CI green incl. team-block. Synced the global skill, examples, tpm-pr-review handoff example and CLAUDE.md s20 to v2.1 | PR #40, ~/.claude | none |
+| 62 | reviewer (job-search-qa) | Reviewed and approved PR #40 as satvik-jain-iitd; owner merged | PR #40 | reviewed |
+| 63 | reviewer (job-search-qa) | Owner asked for v1.0.0: CI must-haves, later process rules, live roadmap on n8n. Plan approved; epic #41, stories #42 to #44 | issues #41 to #44 | asked |
+| 64 | reviewer (job-search-qa) | Docs for #42: CI research, rules 20 to 29, LIVE_ROADMAP.md, roster pair, ROADMAP v1.0.0, release notes, ideas rows | docs, CLAUDE.md | none |
