@@ -21,11 +21,14 @@ This file is the process plan for the shipquick_latest repository. It shows how 
 - PR template: issue link, what changed, scenarios covered, test output pasted, demo (gif or stdout), decisions made (ADR link), ideas noted.
 - Commits: Conventional Commits, English, short. Co-author line as required. See `COMMIT_GUIDELINES.md`.
 - Branch protection: `main` and `dev` require PR and green CI. No direct pushes. Required check: `gate` (aggregates pre-commit, commit-msg, pr-size, test). Conversation resolution is required.
-- Merge gates: green CI, one approval (not the author), zero unresolved comments, branch up to date, not a Draft, issue linked with `Closes #N`. Rule of thumb in `docs/PR_RULES.md`.
+- Merge gates: green CI, one approval (not the author), zero unresolved comments, branch up to date, not a Draft, issue linked with `Closes #N`. GitHub auto-closes only on a merge into `main`; after a merge into `dev`, `scripts/close_linked_issues.py` closes the linked story issues after one owner yes. Rule of thumb in `docs/PR_RULES.md`.
 - Auto-merge: off. The owner reviews, comments, approves, then merges by hand. Branch deleted on merge.
 - Pre-commit: `.pre-commit-config.yaml` runs on every commit (no secrets, max 500KB files, markdown blocks closed).
 - CI jobs: pre-commit checks, commit-msg validation, PR size limit (50 files), pytest on Python 3.12.
 - CD: tags `D*` require matching `docs/demos/<tag>.md` before release.
+- Teammate blocks: every unit of work ends with one fenced block per other teammate, as `docs/TEAM_PROTOCOL.md` says. The coder's block to the reviewer lives in the PR body under `## For the reviewer`; the reviewer's block is the review body.
+
+How a child project inherits this: bump the `shipquick_latest` submodule to the commit that holds `docs/TEAM_PROTOCOL.md`, copy rule 19 from this repo's `CLAUDE.md` into the child's own `CLAUDE.md`, copy `docs/TEAM_ROSTER.md` and fill it with the child's real sessions and accounts (which session is the coder, which is the reviewer, which GitHub account each one uses), and copy the `team-block` job from `.github/workflows/ci.yml` so the child's CI checks the block too. A project with more roles adds more rows; the rule does not change.
 
 ### D3. Test-driven development, strictly
 For every story:

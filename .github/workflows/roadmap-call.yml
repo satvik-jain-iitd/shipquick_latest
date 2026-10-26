@@ -1,0 +1,31 @@
+# ShipQuick's own roadmap page: the first project that calls the reusable workflow (story #49, dogfood).
+# There is no pull_request trigger on purpose: on a PR, github.sha is the PR's own unreviewed code and the job has contents: write.
+# Every trigger below runs from the default branch, so `shipquick_ref: github.sha` is reviewed code. A finished CI run (it runs on every PR push) keeps Review current.
+# A child project copies this file, changes `uses:` to `satvik-jain-iitd/shipquick_latest/.github/workflows/roadmap.yml@<SHA>`
+# and `shipquick_ref` to that same SHA. See docs/LIVE_ROADMAP.md.
+name: Roadmap page
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  workflow_run:
+    workflows: ["shipquick_latest CI"]
+    types: [completed]
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  roadmap:
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: read
+      checks: read
+      statuses: read
+    uses: ./.github/workflows/roadmap.yml
+    with:
+      shipquick_ref: ${{ github.sha }}
