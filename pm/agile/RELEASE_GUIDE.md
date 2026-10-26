@@ -24,10 +24,10 @@ Keep the demo note at `docs/demos/<tag>.md` (for example `docs/demos/v0.4.0.md`)
 ## Release branch and back-merge (lesson from v0.5.0, PRs #55 to #57)
 
 `dev` and `main` must share history, or the release PR is BEHIND and GitHub will not update it.
-1. Cut `release/vX.Y.Z` from `dev`. Merge `main` into it. The tree stays the same as `dev`, so the diff to `main` is only the release.
-2. Open the release PR from `release/vX.Y.Z` into `main`. Merge it with **Create a merge commit**, never Squash or Rebase.
+1. Cut `release/vX.Y.Z` from `dev`. Merge `main` into it with Git on the Mac. The tree stays the same as `dev`, so the diff to `main` is only the release.
+2. Open the release PR from `release/vX.Y.Z` into `main`. Any merge method works, because step 1 put `main` in the branch. A merge commit is preferred.
 3. Tag `vX.Y.Z` on `main`, then publish the GitHub Release.
-4. Back-merge: open a PR that merges `main` into `dev` and merge it with a merge commit too. Every new branch starts from that `dev`.
+4. Back-merge `main` into `dev` with a PR. Optional. Step 1 of the next release covers it. Do it when `dev` must have the release commit now.
 
 ## Release checklist
 

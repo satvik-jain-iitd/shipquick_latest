@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGS = ("docs/process-trace.md", "docs/LEARNINGS.md", "docs/ideas.md")
+LOGS = ("docs/process-trace.md", "docs/LEARNINGS.md")   # only logs whose rows are never edited; ideas.md rows get status edits, so it is not on the list
 
 
 def git(cwd, *args, check=True):
@@ -53,6 +53,7 @@ def test_s14_gitattributes_lists_exactly_the_append_only_logs_and_not_the_change
     lines = [l.split() for l in (ROOT / ".gitattributes").read_text(encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
     assert sorted(p for p, attr in lines if attr == "merge=union") == sorted(LOGS)
     assert "CHANGELOG.md" not in [p for p, _ in lines]   # only the release PR edits it, and a union merge would hide a real conflict there
+    assert "docs/ideas.md" not in [p for p, _ in lines]  # a status edit on one row, made on two branches, would be kept twice with no conflict shown
 
 
 def test_s14_every_log_ends_with_a_newline_so_a_union_merge_never_joins_two_rows():
@@ -68,6 +69,8 @@ def test_s14_rule_23_allows_up_to_three_stacks_in_separate_lanes_and_asks_for_a_
     assert "One stack open at a time" not in RULE23
     assert "up to 3" in RULE23 and "lane" in RULE23
     assert re.search(r"merge `dev` into every open branch once a day", RULE23)
+    assert re.search(r"right before the merge, merge `dev` once more with Git on the Mac if `dev` moved", RULE23)
+    assert "`docs/process-trace.md`, `docs/LEARNINGS.md`)" in RULE23 and "`docs/LEARNINGS.md`, `docs/ideas.md`" not in RULE23   # ideas.md is not an append-only log
     assert "pm/agile/templates/sprint-lanes.md" in RULE23
 
 
@@ -80,6 +83,8 @@ def test_s14_the_sprint_lane_template_asks_for_files_per_story_and_a_foundation_
 def test_s14_the_release_guide_uses_a_release_branch_and_a_back_merge():
     text = (ROOT / "pm" / "agile" / "RELEASE_GUIDE.md").read_text(encoding="utf-8")
     assert "release/vX.Y.Z" in text and "back-merge" in text and "merge commit" in text.lower()
+    assert "Any merge method works" in text   # step 1 put main in the branch, so the release never hangs on the owner's choice of button
+    assert re.search(r"Optional\. Step 1 of the next release covers it", text)
 
 
 def test_s14_the_roster_has_one_reviewer_and_up_to_three_coders_each_with_a_worktree():

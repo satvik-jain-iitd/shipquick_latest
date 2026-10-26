@@ -20,7 +20,7 @@ Work that other stories build on (shared types, API shape, database tables, a sh
 
 ## Check for overlap
 For every pair of stories in different lanes: do the "Files touched" lists share a file? If yes, move one story into the other's lane, or split the shared change into a foundation story.
-The append-only logs (`docs/process-trace.md`, `docs/LEARNINGS.md`, `docs/ideas.md`) do not count: they merge on their own (`merge=union`).
+The append-only logs (`docs/process-trace.md`, `docs/LEARNINGS.md`) do not count: they merge on their own (`merge=union`).
 
 ## Lanes
 
