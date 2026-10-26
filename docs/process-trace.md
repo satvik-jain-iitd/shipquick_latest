@@ -88,3 +88,4 @@ Rule: read this first in every session, append before saying done.
 | 80 | reviewer (job-search-qa) | Reviewed PR #50 inline: 31 threads, changes requested (drop the pull_request trigger, -f for owner and name, one number for the time) | PR #50 | reviewed |
 | 81 | coder (job-search-dev) | Fix commit for PR #50: no pull_request trigger, -f, 5 minutes, docs. Red first (2 tests) | PR #50 | none |
 | 82 | reviewer (job-search-qa) | Owner chose v0.5.0, not v1.0.0 (RELEASE_GUIDE: a D increment is a minor bump). Release docs: changelog, demo note, PROGRESS, notes renamed; stale fork line removed | docs | asked |
+| 83 | coder (job-search-dev) | Found in the review of release PR #52: workflow_run names `CI`, but ci.yml is `shipquick_latest CI`, so it never fires. Bug issue #53, red test first, then the fix | PR for #53 | none |
