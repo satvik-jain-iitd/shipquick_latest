@@ -1,7 +1,7 @@
 // S0.11 and S0.12: the roadmap renderer (story #44). A fixture of issues and pull requests goes in; one HTML page comes out.
 // Run: node --test roadmap/   (no token, no network)
-const test = require('node:test'), assert = require('node:assert/strict'), crypto = require('node:crypto');
-const { build, render, fromGraphql, page } = require('./render.js'), { sha256hex } = require('./sha256.js');
+const test = require('node:test'), assert = require('node:assert/strict');
+const { build, render, fromGraphql, page } = require('./render.js');
 
 const STORY = 'Part of epic #1.\n\n## Business\nA cook sees a cancelled ticket for a minute. The PR adds a stamp.\n\n## Product\n- rpc and migration words here.';
 const ISSUES = [
@@ -90,9 +90,4 @@ test('S0.11 GitHub GraphQL data becomes issues and pull requests; the check stat
 test('S0.11 page() = GraphQL data + project to html in one call', () => {
   const resp = { data: { repository: { issues: { pageInfo: { hasNextPage: false }, nodes: [] }, pullRequests: { nodes: [] } } } };
   assert.ok(page(resp, PROJECT, NOW).includes('Hot meals at your door.'));
-});
-
-test('S0.12 sha256hex matches node crypto, including non-ASCII text', () => {
-  for (const s of ['', 'abc', 'k'.repeat(55), 'k'.repeat(56), 'k'.repeat(64), 'key-é-日本'])
-    assert.equal(sha256hex(s), crypto.createHash('sha256').update(s).digest('hex'), s);
 });

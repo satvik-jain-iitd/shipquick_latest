@@ -29,6 +29,8 @@ def test_s08_every_action_is_pinned_to_a_full_sha_with_its_tag_in_a_comment():
         uses = re.findall(r"^\s*-?\s*uses: (\S+)(.*)$", path.read_text(encoding="utf-8"), re.M)
         assert uses, path.name
         for ref, rest in uses:
+            if ref.startswith("./"):  # a reusable workflow in this same repo (roadmap-call.yml): the commit that runs is the commit of the caller
+                continue
             assert re.fullmatch(r"[\w.-]+/[\w./-]+@[0-9a-f]{40}", ref), f"{path.name}: {ref}"
             assert re.search(r"#\s*v\d+(\.\d+)*", rest), f"{path.name}: {ref} has no tag comment"
 

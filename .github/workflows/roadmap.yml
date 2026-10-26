@@ -1,0 +1,75 @@
+# The live roadmap (story #49, docs/LIVE_ROADMAP.md). A reusable workflow: a project calls it with a short file of its own (roadmap-call.yml).
+# It reads the project's own issues and pull requests with the built-in token, writes ROADMAP.md and keeps it on a branch called `roadmap`.
+# Settings come from roadmap.json in the calling project (title, vision). This repo holds no project names.
+# The calling job must grant the rights below; a reusable workflow cannot take more than its caller gives.
+name: Roadmap
+
+on:
+  workflow_call:
+    inputs:
+      shipquick_repo:
+        description: Where the roadmap scripts live
+        type: string
+        default: satvik-jain-iitd/shipquick_latest
+      shipquick_ref:
+        description: Commit SHA or tag of the roadmap scripts. Use the same one as in `uses:`.
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: roadmap
+  cancel-in-progress: false
+
+jobs:
+  roadmap:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: read
+      checks: read
+      statuses: read
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          path: project
+      - name: Check out the roadmap scripts
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: roadmap
+          persist-credentials: false
+      - name: Read issues and pull requests (this repo only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api graphql -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
+            -f query="$(cat .shipquick/roadmap/query.graphql)" > "$RUNNER_TEMP/answer.json"
+      - name: Write ROADMAP.md
+        run: node .shipquick/roadmap/roadmap.js "$RUNNER_TEMP/answer.json" project/roadmap.json "$RUNNER_TEMP/ROADMAP.md"
+      - name: Save it on the roadmap branch
+        working-directory: project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin roadmap > /dev/null; then
+            git fetch -q origin roadmap
+            git checkout -q -B roadmap origin/roadmap
+          else
+            git checkout -q --orphan roadmap
+            git rm -rqf .
+          fi
+          cp "$RUNNER_TEMP/ROADMAP.md" ROADMAP.md
+          git add ROADMAP.md
+          if git diff --cached --quiet; then
+            echo "ROADMAP.md is unchanged, nothing to save"
+            exit 0
+          fi
+          git commit -q -m "docs: update the roadmap page"
+          git push origin HEAD:roadmap
