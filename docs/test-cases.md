@@ -112,3 +112,42 @@ Scenario: scripts/check_local.sh runs the CI hygiene checks before a push
 ```
 Tests: `tests/test_ci_must_have.py` (`test_s10_*`).
 
+**S0.11 The roadmap page tells the owner where the project stands.**
+```gherkin
+Scenario: GitHub issues and pull requests become one plain-words page
+  Given issues (epics and user stories, with a "## Business" line) and open pull requests
+  When the page is rendered
+  Then it shows Vision, Delivered (folded shut, newest first), Now, Next and a Board of four columns
+  And a story with green checks is in Review, red or draft checks or the label "doing" is Doing, no pull request is To do, closed is Done
+  And text from GitHub is escaped and the page has no script
+  And a project with more than 100 issues says so on the page
+```
+Tests: `roadmap/render.test.js` (`S0.11`). Run: `node --test roadmap/*.test.js`.
+
+**S0.12 Only the right key opens a page.**
+```gherkin
+Scenario: the link works with the right key and gives 404 otherwise
+  Given projects.json holds the SHA-256 of each key, never the key
+  When a GET reaches /webhook/roadmap with s=<slug> and k=<key>
+  Then the right key returns the saved page
+  And a wrong key, a missing key, an unknown project or a key over 200 characters returns 404
+  And the timer path stops at the kill switch before any build
+  And Config ships with dry_run true and kill false
+```
+Tests: `roadmap/build.test.js` (`S0.12`), `roadmap/render.test.js` (`sha256hex`).
+
+**S0.13 The two workflows are generated, laid out and safe.**
+```gherkin
+Scenario: the builder writes both workflows the same way every time
+  Given roadmap/build.js
+  When it builds SQ Roadmap 01 and SQ Roadmap 11 Build Page
+  Then every step has one sticky-note box, the flow runs left to right and no link crosses a box
+  And no token or key is inside a workflow file
+  And the SUB stops at the dry-run check before it saves
+  And the MAIN keeps no successful run (the key and the page stay out of the n8n history), and calls the SUB once per project
+  And build.js refuses to write while ids.json has TBD ids, unless --draft
+  And the files in roadmap/workflows/ equal a fresh build
+  And CI runs these tests
+```
+Tests: `roadmap/build.test.js` (`S0.13`), `tests/test_ci_must_have.py` (`test_s13_*`).
+

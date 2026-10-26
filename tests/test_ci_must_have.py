@@ -186,3 +186,9 @@ def test_s08_ci_runs_on_pull_requests_into_any_branch():
     on_block = CI.split("\npermissions:", 1)[0]
     assert re.search(r"^  pull_request:\s*$", on_block, re.M), "no pull_request trigger"
     assert not re.search(r"^  pull_request:\n    branches:", on_block, re.M), "pull_request is limited to some base branches"
+
+
+# ---- S0.13 (story #44): the roadmap workflow builder is tested in CI too ----
+def test_s13_ci_runs_the_roadmap_node_tests():
+    assert "node --test roadmap/*.test.js" in CI
+    assert "actions/setup-node@" in CI  # the pin test above checks it is a full SHA with its tag
