@@ -95,3 +95,5 @@ A new row writes `-` in the `#` column (the order is the file order, so rows add
 | 85 | coder (job-search-dev) | Fix commit for PR #61: ideas.md off the union list, release guide does not depend on the merge method, rule 23 asks for a last dev merge before the merge. Red first (3 tests) | PR #61 | none |
 | - | coder (job-search-dev) | Story #64: new rows carry `-`, header note, bootstrap step in the lane template and the child steps. Red first (2 tests). First row without a number | PR for #64 | none |
 | - | coder (job-search-dev) | Story #67 (epic #66, lane A): radar run (kodiak, bulldozer, merge queue: apps, no fit), red tests first (25 failed), then mode.sh, review_merge.sh, /mode, MODES.md, rule 0. Checked the jq filters on real PR data, read only | PR for #67 | asked |
+| - | reviewer (job-search-qa) | Reviewed PR #72 inline: 14 threads, changes requested (only the owner sets the mode, with a ! line) | PR #72 | reviewed |
+| - | coder (job-search-dev) | Fix commit for PR #72: agents never run set, /mode prints the ! line, MODES.md says the gate cannot tell the two sessions apart. Red first (4 tests) | PR #72 | none |

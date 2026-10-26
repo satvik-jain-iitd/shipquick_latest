@@ -185,7 +185,7 @@ Scenario: scripts/review_merge.sh refuses unless every rule holds
   Given a stub gh and a pull request that passes every rule
   When the mode is semi, manual or not set, or the PR is a draft, closed or has conflicts
   Or the approval is by someone else, of an older commit, or cancelled by a later request for changes
-  Or one review thread is unresolved, a check fails or is pending, no check ran, or the body has no "Closes #n"
+  Or one review thread is unresolved, a check fails or is pending (also one with no conclusion yet), no check ran, or the body has no "Closes #n"
   Then it exits 1 with "refused: <rule>" and runs no merge
   And when every rule holds it runs gh pr merge --merge once, with the review account's token, and skipped or neutral checks do not block
 ```
