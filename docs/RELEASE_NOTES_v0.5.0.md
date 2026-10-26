@@ -6,7 +6,7 @@ D5 is a minor bump, so it ships as `v0.5.0` (`pm/agile/RELEASE_GUIDE.md`). It al
 ## New
 - CI must-haves (#43). Read `docs/research/ci-checks.md`.
   - A secret scan runs on every PR. It reads the PR's own commits. A push reads the whole history.
-  - The workflow token is read-only.
+  - The workflow token is read-only by default. Only the roadmap job gets `contents: write`, to push its own branch.
   - Actions are pinned to a full SHA. Dependabot keeps them fresh.
   - A dependency review runs on every PR. It needs the repo's Dependency graph to be on.
   - Every hygiene check also runs on the Mac before a push (`scripts/check_local.sh`).
@@ -22,5 +22,5 @@ D5 is a minor bump, so it ships as `v0.5.0` (`pm/agile/RELEASE_GUIDE.md`). It al
 
 ## For child projects
 1. Move the submodule to `v0.5.0`.
-2. Add `roadmap.json` and the caller workflow (`docs/LIVE_ROADMAP.md`, "A child project joins in three steps").
+2. Add `roadmap.json` and the caller workflow. Pin `uses:` and `shipquick_ref` to the commit SHA of tag `v0.5.0` (`docs/LIVE_ROADMAP.md`, "A child project joins in three steps").
 3. Read rules 20 to 30.

@@ -13,14 +13,12 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 ## [Unreleased]
 
 ## [0.5.0] - 2026-10-26
-Tag `v0.5.0`, "Process v2" (milestone D5, epic #41). Notes: `docs/RELEASE_NOTES_v0.5.0.md`. It also carries the untagged D4 work below.
+Tag `v0.5.0` (cd.yml tag-check greps for this exact text, so keep it), "Process v2" (milestone D5, epic #41). Notes: `docs/RELEASE_NOTES_v0.5.0.md`. It also carries the untagged D4 work below.
 
 ### Added
 - CI must-haves: secret scan, read-only token, SHA-pinned actions with Dependabot, dependency review, local checks (#43).
 - Live roadmap on GitHub Actions: a reusable workflow writes `ROADMAP.md` on a `roadmap` branch (#49).
 - Rules 20 to 30 in `CLAUDE.md` and the two-session pattern in `docs/TEAM_ROSTER.md` (#42).
-
-### Added
 - PM and agile layer under `pm/agile/` (guides and templates).
 - `CHANGELOG.md` and the release guide.
 - Machine-enforced PR merge gates: `gate` CI job, `docs/PR_RULES.md`, `docs/PR_COVERAGE.md`, ADR-002.
