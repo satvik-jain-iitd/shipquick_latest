@@ -5,6 +5,8 @@ argument-hint: [manual|semi|auto]
 
 Show the mode of this project, or help the owner change it. The three modes are in `docs/MODES.md`.
 
+On a Mac with the `shipquick-mode` skill, the owner can type `/shipquick-mode <word>` instead of the `!` line. It sets the same file. An agent still never runs `set`.
+
 **Only the owner sets the mode.** An agent must never run `set`, not for `/mode auto` and not for any other word. If an agent could set auto, it could then merge through `scripts/review_merge.sh`, and the gate would mean nothing.
 
 1. Run `scripts/mode.sh get` (in a child project: `knowledge/shipquick_latest/scripts/mode.sh get`) and tell the owner the word. If it exits 3, the mode is not set: ask the owner to pick `manual`, `semi` or `auto`.

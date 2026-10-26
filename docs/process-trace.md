@@ -98,3 +98,5 @@ A new row writes `-` in the `#` column (the order is the file order, so rows add
 | - | reviewer (job-search-qa) | Reviewed PR #72 inline: 14 threads, changes requested (only the owner sets the mode, with a ! line) | PR #72 | reviewed |
 | - | coder (job-search-dev) | Fix commit for PR #72: agents never run set, /mode prints the ! line, MODES.md says the gate cannot tell the two sessions apart. Red first (4 tests) | PR #72 | none |
 | - | coder (job-search-dev) | Story #68 (lane B, own worktree): radar (copier is the closest, kept as the fallback), red tests first (9 failed), then adopt.sh, docs, and the mode.sh stderr nit from the reviewer. Mode is auto (checked with mode.sh get) | PR for #68 | none |
+| - | reviewer (job-search-qa) | PR #75 approved with 3 open threads (single-quoted CI name, a /shipquick-mode line, the BASE note) | PR #75 | reviewed |
+| - | coder (job-search-dev) | Fixed the 3 threads on PR #75: either quote kind in the CI name, the /shipquick-mode line in mode.md, the BASE=main note. Red first (4 tests) | PR #75 | none |

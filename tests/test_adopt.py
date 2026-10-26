@@ -103,3 +103,21 @@ def test_s18_the_generated_workflow_matches_shipquicks_own_caller_except_for_the
 def test_s18_the_manual_steps_are_replaced_by_the_command_in_the_docs():
     for path in ("docs/TEAM_PROTOCOL.md", "docs/LIVE_ROADMAP.md"):
         assert "scripts/adopt.sh" in (ROOT / path).read_text(encoding="utf-8"), path
+
+
+@pytest.mark.parametrize("line", ["name: CI", 'name: "CI"', "name: 'CI'", "name:   'Child CI'   ", 'name: "Child CI"  '])
+def test_s18_the_ci_name_is_read_with_either_kind_of_quote_or_none(child, line):
+    (child / ".github" / "workflows" / "ci.yml").write_text(line + "\non:\n  push:\n", encoding="utf-8")
+    adopt(child)
+    call = (child / ".github" / "workflows" / "roadmap-call.yml").read_text(encoding="utf-8")
+    assert f'workflows: ["{line.split(":", 1)[1].strip().strip("\"\'")}"]' in call
+
+
+def test_s18_the_printed_next_step_says_to_run_the_checks_with_the_childs_base_branch(child):
+    r = adopt(child)
+    assert "BASE=" in r.stdout and "check_local.sh" in r.stdout
+
+
+def test_s18_mode_md_mentions_the_owners_one_step_skill_next_to_the_bang_line():
+    text = (ROOT / ".claude" / "commands" / "mode.md").read_text(encoding="utf-8")
+    assert "shipquick-mode" in text and "! bash scripts/mode.sh set" in text
