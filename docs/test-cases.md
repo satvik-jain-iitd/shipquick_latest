@@ -44,7 +44,7 @@ Scenario: linked story issues close by hand when a PR merges into a non-default 
   Then a dry run lists each open story issue it would close and each one it skips
   And closes nothing
   When the owner says yes
-  Then each open story issue is closed with the comment "Done in PR #X (squash-merged to <base>)."
+  Then each open story issue is closed with the comment "Done in PR #X (merged to <base>)."
   And epics are never closed
   And nothing is closed when the PR is open, or closed without a merge
   And nothing is closed when the base is the default branch, GitHub does that
@@ -149,3 +149,83 @@ Scenario: a reusable workflow keeps ROADMAP.md on a roadmap branch
   And CI runs the node tests
 ```
 Tests: `tests/test_roadmap_workflow.py` (`test_s13_*`), `tests/test_ci_must_have.py` (`test_s13_ci_runs_the_roadmap_node_tests`).
+
+**S0.14 Several stories are built at the same time with few merge conflicts.**
+```gherkin
+Scenario: parallel lanes, append-only logs and a release branch
+  Given rule 23 allows up to 3 stacks open, one per lane, and a lane is a set of stories that touch the same files
+  When two branches each add a row at the end of docs/process-trace.md (or LEARNINGS.md)
+  Then they merge with no conflict and both rows are kept (.gitattributes merge=union)
+  And without that file the same merge conflicts (the control)
+  And CHANGELOG.md and ideas.md are not on the list (rows of ideas.md get status edits)
+  And the sprint lane template asks for the files each story touches, and for foundation work first
+  And a release goes through release/vX.Y.Z with main merged in, so any merge method works, and an optional back-merge of main into dev after the tag
+  And the roster allows one reviewer and up to 3 coders, each in a worktree
+```
+Tests: `tests/test_parallel_lanes.py` (`test_s14_*`).
+
+
+S0.14 also covers (story #64): a new row in `docs/process-trace.md` writes `-` in the `#` column (rule 1), two branches that each add a `-` row merge with no conflict, and the first union merge trick (`.git/info/attributes`) is in the lane template and in how a child project inherits this. Tests: `tests/test_parallel_lanes.py`.
+
+**S0.15 The owner picks how much the agents do alone.**
+```gherkin
+Scenario: one word per project says Manual, Semi or Auto
+  Given scripts/mode.sh and .claude/commands/mode.md
+  When the mode is not set, mode.sh get exits 3 and says to ask the owner
+  Then set then get gives the same word, a wrong word is refused, and every git worktree shares the word
+  And git does not track it, and rule 0 in CLAUDE.md asks for it at session start
+  And only the owner sets it, by typing a `!` line; /mode shows the mode and prints that line, and no agent runs set
+  And docs/MODES.md says who reviews, who merges and what still stops in each mode
+```
+Tests: `tests/test_mode.py` (`test_s15_*`).
+
+**S0.16 Only a coded gate merges, and only in Auto.**
+```gherkin
+Scenario: scripts/review_merge.sh refuses unless every rule holds
+  Given a stub gh and a pull request that passes every rule
+  When the mode is semi, manual or not set, or the PR is a draft, closed or has conflicts
+  Or the approval is by someone else, of an older commit, or cancelled by a later request for changes
+  Or one review thread is unresolved, a check fails or is pending (also one with no conclusion yet), no check ran, or the body has no "Closes #n" (a story PR; release:, chore: and Dependabot are exempt, the same rule as CI)
+  Then it exits 1 with "refused: <rule>" and runs no merge
+  And when every rule holds it runs gh pr merge --merge once, with the review account's token, and skipped or neutral checks do not block
+  And right after the merge it closes the linked story issues with the same token (story #70), and if closing fails it exits 4 and says what to run
+```
+Tests: `tests/test_review_merge.py` (`test_s16_*`).
+
+
+**S0.19 A fresh clone matches the README (story #69).**
+```gherkin
+Scenario: someone clones ShipQuick and follows the README
+  Given every path in the README tree and every folder in the structure guide exists
+  When they clone the repo and run scripts/check_local.sh sizes markers md-blocks
+  Then it passes
+  And the Quick Start names pre-commit install, the local checks, roadmap.json and scripts/mode.sh set
+  And scripts/check_placeholders.py lists every <PLACEHOLDER> left, and passes when none are left
+```
+Tests: `tests/test_clone_path.py` (`test_s19_*`).
+
+**S0.17 A story pull request links its issue, so the roadmap can mark it done.**
+```gherkin
+Scenario: the PR body needs Closes #n
+  Given scripts/check_closes.py runs as a step of the team-block job with the PR title, author and body
+  When the body has no "Closes #<n>" (or "Closes #N", or only "See #70")
+  Then the check fails and says why
+  And a title that starts with release: or chore: (also chore(deps):) passes, and so does Dependabot
+  And a title that only mentions the word (feat: release the thing) is not exempt
+  And Fixes #n and Resolves #n count too, by the same link rule as close_linked_issues.py
+```
+Tests: `tests/test_check_closes.py` (`test_s17_*`).
+
+**S0.18 A child project adopts ShipQuick with one command.**
+```gherkin
+Scenario: scripts/adopt.sh copies or updates five things and never harms the child's own files
+  Given a child git repository with a ci.yml named "Child CI"
+  When adopt.sh runs on it
+  Then .gitattributes has the union lines, the roadmap caller is pinned to the ShipQuick commit and names "Child CI", roadmap.json is a stub, mode.md is copied and the pre-commit hooks exist
+  And a second run changes nothing and says so
+  And the child's own roadmap.json, .gitattributes lines and .pre-commit-config.yaml are kept
+  And without a ci.yml the caller has no workflow_run trigger, and a bad --ref or a folder that is not a git root is refused
+  And the generated caller matches ShipQuick's own caller except for the pin and the CI name
+```
+Tests: `tests/test_adopt.py` (`test_s18_*`). Also (story #68): `mode.sh get` with no mode prints one clear line, with no shell error about the missing file.
+

@@ -15,7 +15,7 @@ Every idea from the owner or Claude, dated, one line, with status (open / taken 
 - ID109: stacked PRs with gh stack (taken, rule 23)
 - ID158: every CI check also runs locally (taken, rule 29, #43)
 - ID168, ID185, ID107: live roadmap page for every project, at a link, kept fresh by n8n (taken, rule 21, #44)
-- ID224: stories record start and close times and close on merge; the roadmap shows it (open, after #44)
+- ID224: stories record start and close times and close on merge; the roadmap shows it (taken, story #70: CI needs Closes #n)
 - ID227: two-session pair, coder on Sonnet and reviewer on Opus, direct messages (taken, rule 27)
 - ID228: runtime rule, free and n8n first, nothing on the Mac (taken, rule 28)
 - ID230: this release, v0.5.0 Process v2 (taken, epic #41)

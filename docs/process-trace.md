@@ -3,6 +3,7 @@
 One row per step, from the first message of the project. Owner contact: asked / volunteered / reviewed / none.
 
 Rule: read this first in every session, append before saying done.
+A new row writes `-` in the `#` column (the order is the file order, so rows added on two branches never collide on a number). Rows 1 to 85 keep their numbers.
 
 | # | Actor | Step | Artifact | Owner contact |
 |---|---|---|---|---|
@@ -89,3 +90,21 @@ Rule: read this first in every session, append before saying done.
 | 81 | coder (job-search-dev) | Fix commit for PR #50: no pull_request trigger, -f, 5 minutes, docs. Red first (2 tests) | PR #50 | none |
 | 82 | reviewer (job-search-qa) | Owner chose v0.5.0, not v1.0.0 (RELEASE_GUIDE: a D increment is a minor bump). Release docs: changelog, demo note, PROGRESS, notes renamed; stale fork line removed | docs | asked |
 | 83 | coder (job-search-dev) | Found in the review of release PR #52: workflow_run names `CI`, but ci.yml is `shipquick_latest CI`, so it never fires. Bug issue #53, red test first, then the fix | PR for #53 | none |
+| 84 | coder (job-search-dev) | Bug #62 found by the reviewer on the job-search roadmap: "CI checks" became "the checks checks". Red test first, then the swap order in plain() | PR for #62 | none |
+| 84 | coder (job-search-dev) | Story #59 (owner: build stories in parallel): radar run (git union merge, no tool), red tests first (two branches add a row), then .gitattributes, rule 23, lane template, release branch guide, roster | PR for #59 | asked |
+| 85 | coder (job-search-dev) | Fix commit for PR #61: ideas.md off the union list, release guide does not depend on the merge method, rule 23 asks for a last dev merge before the merge. Red first (3 tests) | PR #61 | none |
+| - | coder (job-search-dev) | Story #64: new rows carry `-`, header note, bootstrap step in the lane template and the child steps. Red first (2 tests). First row without a number | PR for #64 | none |
+| - | coder (job-search-dev) | Story #67 (epic #66, lane A): radar run (kodiak, bulldozer, merge queue: apps, no fit), red tests first (25 failed), then mode.sh, review_merge.sh, /mode, MODES.md, rule 0. Checked the jq filters on real PR data, read only | PR for #67 | asked |
+| - | reviewer (job-search-qa) | Reviewed PR #72 inline: 14 threads, changes requested (only the owner sets the mode, with a ! line) | PR #72 | reviewed |
+| - | coder (job-search-dev) | Fix commit for PR #72: agents never run set, /mode prints the ! line, MODES.md says the gate cannot tell the two sessions apart. Red first (4 tests) | PR #72 | none |
+| - | reviewer (job-search-qa) | Story #69 in lane C: README tree test found frontend/ missing (owner kept it, 11 Oct), Quick Start gaps. Added frontend/README.md, check_placeholders.py, Quick Start step 2. Red first (4 failed) | PR for #69 | none |
+| - | coder (job-search-dev) | Story #70 (lane A): radar note (one regex, no tool), red tests first (21 failed), then check_closes.py, a step in the team-block job, PR_RULES and template. Rule 0: mode was not set, reviewer asked the owner | PR for #70 | none |
+| - | coder (job-search-dev) | Scope add to #70 from the owner (via reviewer): review_merge.sh closes the story issues right after it merges. Red first (2 tests), stub gh extended | PR for #70 | volunteered |
+| - | reviewer (job-search-qa) | Reviewed PR #73 inline: 16 threads, changes requested (the gate must use the same Closes rule as CI) | PR #73 | reviewed |
+| - | coder (job-search-dev) | Fix commit for PR #73: check_closes.py shares the LINK regex, the gate calls it with title and author, so Dependabot, release: and chore: PRs can merge in Auto. Red first (9 tests) | PR #73 | none |
+| - | coder (job-search-dev) | Story #68 (lane B, own worktree): radar (copier is the closest, kept as the fallback), red tests first (9 failed), then adopt.sh, docs, and the mode.sh stderr nit from the reviewer. Mode is auto (checked with mode.sh get) | PR for #68 | none |
+| - | reviewer (job-search-qa) | PR #75 approved with 3 open threads (single-quoted CI name, a /shipquick-mode line, the BASE note) | PR #75 | reviewed |
+| - | coder (job-search-dev) | Fixed the 3 threads on PR #75: either quote kind in the CI name, the /shipquick-mode line in mode.md, the BASE=main note. Red first (4 tests) | PR #75 | none |
+| - | reviewer (job-search-qa) | Reviewed PR #77 inline: the 3.11 f-string nit, and item 4 of #76 (roadmap.json in check_placeholders) | PR #77 | reviewed |
+| - | coder (job-search-dev) | Fix for PR #77: name computed before the f-string (works on Python 3.11), and check_placeholders.py now also flags the roadmap.json stub (item 4, since #74 is merged). Red first (2 tests) | PR #77 | none |
+| - | reviewer (job-search-qa) | Release PR #78 for v0.6.0: review fixes (the ! line, not the skill, for children; full Auto limits; demo note setup; #76 line; D6 rows in PROGRESS and ROADMAP) | PR #78 | none |

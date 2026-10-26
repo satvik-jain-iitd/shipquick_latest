@@ -31,3 +31,39 @@ One block per run. Never delete a row.
 - Read: `issues-to-markdown-action` README (nothing in it) and `release-drafter` README. release-drafter writes release notes from merged pull requests. It has no epics, no stories, no Now/Next, no board. It does not fit.
 - Decision: build from scratch, small. Reuse our own `roadmap/render.js` (`build`, `fromGraphql`, `plain`) as the owner said; add only a Markdown writer and one reusable workflow.
 - Confidence that nothing fits: 0.75. Test: if a better action turns up, swap only the writer.
+
+## 26 Oct 2026, story #59: parallel stories with few merge conflicts
+- Need: sprint lane planning and conflict-free append-only logs for parallel git branches, with nothing extra for a kit user to install.
+- Run: `scout.py --need "sprint lane planning and conflict-free append-only logs for parallel git branches"` found no repos. Long search phrases returned nothing; short ones worked:
+  `towncrier` (twisted/towncrier, MIT, 926 stars, pushed 9 Oct 2026), `changie` (miniscruff/changie, MIT, 920 stars, pushed 24 Oct 2026), `scriv` (nedbat/scriv, Apache, 306 stars),
+  `changelog fragments` (only tiny repos), `merge driver` (Ataraxy-Labs/weave, Apache, 1334 stars; npm-merge-driver, 271 stars, last push 2021).
+- Read: towncrier README (news fragments: one small file per change, so developers never write to one shared file), changie README (the same idea in Go), weave README (a semantic merge for code, per function; it is a separate install and aimed at code, not at log tables).
+- Decision: use what Git already has. `merge=union` in `.gitattributes` for the three append-only logs (`docs/process-trace.md`, `docs/LEARNINGS.md`, `docs/ideas.md`): no tool, no install, works in every child project.
+  Fragments (towncrier, changie) are rejected for now: they add a Python or Go tool for a kit user, and `CHANGELOG.md` is written only in the release PR, so stories do not touch it. Revisit if two stories need to edit the changelog at once.
+  weave is rejected: it targets code, and it is one more tool to install.
+- Open risk: GitHub's own merge button may not apply `merge=union`. Tested on 26 Oct 2026 with a throwaway pull request (branch t2 into branch t1, each added a row at the end of `docs/process-trace.md`; nothing touched dev): GitHub said `CONFLICTING / DIRTY`. After `git merge t1` on the Mac in t2 (union applied, both rows kept) and a push, GitHub said `MERGEABLE`. So GitHub ignores the attribute and Git on the Mac honours it. Throwaway PR closed, both branches deleted.
+- Result: the daily rule stands (merge `dev` into every open branch with Git on the Mac), and a branch is merged with `dev` once more right before its merge if `dev` moved. Tier A for "GitHub said so" (my own run); confidence 0.85 that this holds for the other two logs (same driver, same file shape).
+
+- Correction after the review of PR #61 (26 Oct 2026): `docs/ideas.md` is NOT on the union list. Its rows get status edits (open, taken), and two edits of one row would be kept twice with no conflict shown. The list is `docs/process-trace.md` and `docs/LEARNINGS.md`. (The Decision line above is kept as written.)
+
+## 26 Oct 2026, story #67: three agent modes and a coded merge gate
+- Need: a per-project agent autonomy mode switch, and a merge gate script for GitHub pull requests, with nothing extra to install or host.
+- Run: `scout.py --need "per-project agent autonomy mode switch and a merge gate script for GitHub PRs"` found no repos. Short searches: `kodiak` (chdsbd/kodiak, AGPL-3.0, 1,116 stars, pushed 23 Oct 2026), `mergify`, `auto merge bot` (palantir/bulldozer, Apache-2.0, 812 stars, pushed 23 Oct 2026),
+  `bors-ng` (1,527 stars, last push Apr 2024), `merge queue` (funador/claude-code-merge-queue, MIT, 131 stars, pushed Aug 2026; uber/submitqueue), `pr merge gate` (tiny repos).
+- Read: kodiak, bulldozer and claude-code-merge-queue READMEs. Kodiak and bulldozer are GitHub Apps: they merge when checks and approvals pass, but they must be installed or self-hosted, they know nothing about our two accounts, our mode, or "approved by the review account", and Kodiak is AGPL. claude-code-merge-queue serializes local landing for parallel agents (an npm tool); it is not an approval gate and has no mode.
+- Decision: build two small bash scripts (`scripts/mode.sh`, `scripts/review_merge.sh`) that use only git, gh and jq. The gate needs rules no tool has: mode is auto, approved by `satvik-jain-iitd` on the latest commit, zero open threads, every check green, `Closes #n`. A hosted app would be one more thing every child project must install.
+- Confidence that nothing fits: 0.8. Test: if a kit user already runs Kodiak or bulldozer, they can skip `review_merge.sh`; the mode file still works.
+
+## 26 Oct 2026, story #70: the pull request body must link its issue (Closes #n)
+- Need: fail a pull request whose body has no `Closes #n`, with exemptions for release, sync and Dependabot pull requests, free and with no extra app.
+- Run: no scout run; the need is one regular expression on text we already have in CI (the PR title, author and body come in through `github.event.pull_request`). Checked by name what exists: GitHub's own keywords close an issue only when the PR merges into the default branch, so they do not check anything; the `team-block` job already reads the PR body with `scripts/check_block.py` in this repo.
+- Decision: a 20-line `scripts/check_closes.py` next to `check_block.py`, run as one more step of the `team-block` job. No new tool, no new job.
+- Confidence that nothing fits better: 0.85.
+
+## 26 Oct 2026, story #68: one command to adopt ShipQuick in a child project
+- Need: one command that copies and updates a few template files into a child git repository, never overwrites the child's own files, and is safe to run twice.
+- Run: `scout.py --need "one command that copies and updates template files into a child git repository"` found no repos. Short searches: `copier` (copier-org/copier, MIT, 3,658 stars, pushed 26 Oct 2026), `cruft` (cruft/cruft, MIT, 1,590 stars, last push Dec 2024), `cookiecutter` (25k stars, BSD-3, pushed Apr 2026), `template sync` (AndreasAugustin/actions-template-sync, MIT, 328 stars, a GitHub Action that opens PRs), `projen` (Apache-2.0, 2,958 stars).
+- Read: copier README (renders templates from a path or Git URL, updates a project, does not overwrite unless told) and cruft README (keeps a project in step with a cookiecutter template).
+- Decision: build `scripts/adopt.sh`, about 100 lines of bash. Copier is the closest fit and is the tool to switch to if the list of files grows past about ten or the child needs a three-way merge of its edits. For five files it is one more thing to install in every child (`pipx install copier`), the SHA and the child's CI name would have to be passed in as answers anyway, and the files are not templates with many variables. cruft and cookiecutter are for first-time project generation, projen owns the whole repo, and actions-template-sync needs a sync PR flow and a token.
+- Confidence that adopt.sh is enough: 0.75. Revisit if a child asks to keep its own edits of a copied file.
+- One more line (asked by the reviewer, 26 Oct 2026): the global skill `/shipquick-mode` (owner only, runs `mode.sh set` for him): scout found no repos. Nothing to adopt.
