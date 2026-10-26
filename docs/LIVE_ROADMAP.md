@@ -33,12 +33,17 @@ Owner decision, 26 Oct 2026: a kit user may have no n8n and no server, so the ro
   GitHub for open pull requests only, so a story whose change is merged but whose issue is still open goes back to To do.
 - Limit: one GitHub page, the newest 100 issues. The page says so when a project passes it.
 
-### A child project joins in three steps
-1. Add `roadmap.json` (title, vision) to the root of the project.
-2. Copy `.github/workflows/roadmap-call.yml` from ShipQuick. Change `uses:` to
-   `satvik-jain-iitd/shipquick_latest/.github/workflows/roadmap.yml@<SHA>` and `shipquick_ref` to the same SHA. Keep the `permissions:` block of the job.
-3. Merge it into the default branch (scheduled and issue runs only start from the default branch). Open `ROADMAP.md` on the `roadmap` branch,
+### A child project joins with one command
+Run this from the root of the child project (ShipQuick is its submodule `knowledge/shipquick_latest`, at a release tag):
+```
+bash knowledge/shipquick_latest/scripts/adopt.sh . --ref v0.5.0
+```
+It copies or updates `.github/workflows/roadmap-call.yml` (pinned to that commit, with the CI name read from your `ci.yml`), a `roadmap.json` stub (your own is never overwritten),
+`.gitattributes`, `.claude/commands/mode.md` and the pre-commit hooks, and prints what it did. A second run changes nothing. Then:
+1. Write the vision line in `roadmap.json` (the stub says where).
+2. Commit the files and merge them into the default branch (scheduled and issue runs only start from there). Open `ROADMAP.md` on the `roadmap` branch,
    and put that link in the README.
+To move to a newer release: update the submodule, run the command again with the new `--ref`.
 
 ### Triggers
 Issues (opened, edited, closed, reopened, labeled), a finished CI run (it runs on every pull request push, so Doing and Review stay current), a daily

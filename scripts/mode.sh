@@ -10,7 +10,7 @@ common=$(git rev-parse --git-common-dir 2>/dev/null) || { echo "mode.sh: not ins
 file="$common/shipquick-mode"
 case "${1:-}" in
   get)
-    mode=$(tr -d '[:space:]' < "$file" 2>/dev/null)
+    mode=$({ tr -d '[:space:]' < "$file"; } 2>/dev/null)
     case "$mode" in
       manual|semi|auto) echo "$mode" ;;
       *) echo "mode is not set: ask the owner (manual, semi or auto), then run: mode.sh set <mode>" >&2; exit 3 ;;
