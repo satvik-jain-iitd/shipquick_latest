@@ -53,7 +53,7 @@ put .gitattributes < "$tmp/attrs"
 # 2. the roadmap caller: ShipQuick's own caller, pinned, with the child's CI name
 ci_name=""
 if [ -f "$child/.github/workflows/ci.yml" ]; then
-  ci_name="$(sed -n 's/^name: *"\{0,1\}\([^"]*[^" ]\)"\{0,1\} *$/\1/p' "$child/.github/workflows/ci.yml" | head -1)"
+  ci_name="$(sed -n "s/^name: *[\"']\{0,1\}\([^\"']*[^\"' ]\)[\"']\{0,1\} *\$/\1/p" "$child/.github/workflows/ci.yml" | head -1)"
 fi
 python3 - "$SQ/.github/workflows/roadmap-call.yml" "$sha" "$tag" "$ci_name" > "$tmp/call" <<'PYEOF'
 import re, sys
@@ -118,4 +118,5 @@ else
 fi
 
 echo "Next: look at git status, commit these files, and merge them into the default branch (scheduled and issue runs start only from there)."
+echo "The ShipQuick checks compare with origin/dev. If your default branch is main, run them as: BASE=main bash $rel/scripts/check_local.sh (the base checks are skipped otherwise)."
 echo "If a branch of yours was made before .gitattributes existed, its first merge of the default branch needs the .git/info/attributes step in pm/agile/templates/sprint-lanes.md."

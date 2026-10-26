@@ -62,3 +62,23 @@ def test_s19_a_fresh_clone_passes_the_local_checks(tmp_path):
     subprocess.run(["git", "clone", "-q", str(ROOT), str(clone)], check=True)
     r = subprocess.run(["bash", "scripts/check_local.sh", "sizes", "markers", "md-blocks"], cwd=clone, capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def run_default(cwd):
+    return subprocess.run([sys.executable, str(ROOT / "scripts" / "check_placeholders.py")], cwd=cwd, capture_output=True, text=True)
+
+
+def test_s19_the_default_check_also_reads_roadmap_json_and_flags_the_adopt_stub(tmp_path):
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "design-tokens.md").write_text("Primary: #0066CC\n", encoding="utf-8")
+    assert run_default(tmp_path).returncode == 0   # no roadmap.json: nothing more to check
+    (tmp_path / "roadmap.json").write_text('{"title": "x", "vision": "Write one line here: the end goal, in words a stranger understands."}\n', encoding="utf-8")
+    r = run_default(tmp_path)
+    assert r.returncode == 1 and "roadmap.json" in r.stdout and "vision" in r.stdout
+    (tmp_path / "roadmap.json").write_text('{"title": "x", "vision": "A real line about the goal."}\n', encoding="utf-8")
+    assert run_default(tmp_path).returncode == 0
+    assert "no placeholders left" in run_default(tmp_path).stdout
+
+
+def test_s19_this_repos_own_roadmap_json_is_not_a_stub():
+    assert run_placeholders(ROOT / "roadmap.json").returncode == 0   # (the design tokens file of the template itself still holds its placeholders)
