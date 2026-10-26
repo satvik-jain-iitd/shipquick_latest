@@ -191,3 +191,16 @@ Scenario: scripts/review_merge.sh refuses unless every rule holds
 ```
 Tests: `tests/test_review_merge.py` (`test_s16_*`).
 
+**S0.18 A child project adopts ShipQuick with one command.**
+```gherkin
+Scenario: scripts/adopt.sh copies or updates five things and never harms the child's own files
+  Given a child git repository with a ci.yml named "Child CI"
+  When adopt.sh runs on it
+  Then .gitattributes has the union lines, the roadmap caller is pinned to the ShipQuick commit and names "Child CI", roadmap.json is a stub, mode.md is copied and the pre-commit hooks exist
+  And a second run changes nothing and says so
+  And the child's own roadmap.json, .gitattributes lines and .pre-commit-config.yaml are kept
+  And without a ci.yml the caller has no workflow_run trigger, and a bad --ref or a folder that is not a git root is refused
+  And the generated caller matches ShipQuick's own caller except for the pin and the CI name
+```
+Tests: `tests/test_adopt.py` (`test_s18_*`). Also (story #68): `mode.sh get` with no mode prints one clear line, with no shell error about the missing file.
+
