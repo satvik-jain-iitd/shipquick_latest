@@ -150,3 +150,4 @@ Need from you: the edited draft or a comment per claim.
 
 See `docs/PLAN.md`, section D2. Short version: bump the submodule, copy rule 19 into your own
 `CLAUDE.md`, copy and fill `docs/TEAM_ROSTER.md`, copy the `team-block` job into your CI.
+For parallel lanes (rule 23) also copy `.gitattributes` (the `merge=union` lines for your append-only logs). A branch made before that file exists conflicts on its first `git merge origin/<default>`; for that one merge put the same lines in `.git/info/attributes`, merge, then delete that file (`pm/agile/templates/sprint-lanes.md`).
