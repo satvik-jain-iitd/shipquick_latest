@@ -1,4 +1,5 @@
 """S0.15: the three modes and where the choice is kept (story #67). Real git in a throwaway repo; text checks for the docs."""
+import re
 import subprocess
 from pathlib import Path
 
@@ -65,6 +66,25 @@ def test_s15_the_mode_command_runs_the_script_in_both_places_and_tells_the_peer(
         assert word in text
 
 
+SET_LINE = "! bash scripts/mode.sh set"
+
+
+def test_s15_only_the_owner_sets_the_mode_and_the_script_header_says_so():
+    header = "\n".join(MODE.read_text(encoding="utf-8").splitlines()[:12])
+    assert "Agents only run `get`" in header and SET_LINE in header and "owner" in header
+
+
+def test_s15_the_mode_command_never_runs_set_it_prints_the_line_for_the_owner():
+    text = (ROOT / ".claude" / "commands" / "mode.md").read_text(encoding="utf-8")
+    assert "never run `set`" in text and SET_LINE in text and "knowledge/shipquick_latest/scripts/mode.sh set" in text
+    assert not re.search(r"^\d\. .*\bRun `(knowledge/shipquick_latest/)?scripts/mode\.sh set", text, re.M), "an agent step must not run set"
+
+
+def test_s15_rule_0_says_the_owner_sets_the_mode_and_an_agent_never_runs_set():
+    rule0 = [l for l in (ROOT / "CLAUDE.md").read_text(encoding="utf-8").splitlines() if l.startswith("0. ")][0]
+    assert SET_LINE in rule0 and "an agent never runs set" in rule0 and "/mode <word>" not in rule0
+
+
 def test_s15_rule_0_asks_for_the_mode_at_session_start():
     claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
     rule0 = [l for l in claude.splitlines() if l.startswith("0. ")]
@@ -75,3 +95,5 @@ def test_s15_modes_doc_names_who_reviews_who_merges_and_what_still_stops_in_auto
     text = (ROOT / "docs" / "MODES.md").read_text(encoding="utf-8")
     for needle in ("Manual", "Semi", "Auto", "reviews", "merges", "money", "secrets", "posts or messages", "review_merge.sh"):
         assert needle in text, needle
+    assert "the owner sets it" in text and SET_LINE in text   # only a person types set
+    assert "cannot tell the two sessions apart" in text and "rule 30" in text   # the known limit of the gate, said out loud

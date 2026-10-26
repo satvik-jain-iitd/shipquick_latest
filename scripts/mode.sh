@@ -3,6 +3,8 @@
 # every worktree of the repo shares it, and git does not track it.
 #   mode.sh get          prints manual, semi or auto. Exit 3 with "ask the owner" when it is not set.
 #   mode.sh set <mode>   manual | semi | auto
+# Agents only run `get`. Only the owner runs `set`, by typing `! bash scripts/mode.sh set <word>` himself: a `!` line is his own shell input,
+# never an agent's tool call. If an agent could set auto, it could then merge through review_merge.sh and the gate would mean nothing.
 set -u
 common=$(git rev-parse --git-common-dir 2>/dev/null) || { echo "mode.sh: not inside a git repository" >&2; exit 2; }
 file="$common/shipquick-mode"

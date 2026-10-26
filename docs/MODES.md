@@ -1,8 +1,8 @@
 # Modes: how much the agents do alone
 
 The owner picks one mode per project. The mode is one word (`manual`, `semi` or `auto`) in `$(git rev-parse --git-common-dir)/shipquick-mode`.
-Every worktree of the repo shares it, and git does not track it. Show or change it with `/mode`, or `scripts/mode.sh get|set <mode>`
-(in a child project: `knowledge/shipquick_latest/scripts/mode.sh`). At session start every agent runs `mode.sh get`. If the mode is not set, the agent asks the owner and sets it.
+Every worktree of the repo shares it, and git does not track it. Agents only read it: `scripts/mode.sh get` (in a child project: `knowledge/shipquick_latest/scripts/mode.sh get`), at session start. `/mode` shows it.
+**Only the owner sets it.** If the mode is not set, the agent asks the owner, and the owner sets it by typing `! bash scripts/mode.sh set <word>` himself (a `!` line is his own shell input, never an agent's tool call). An agent never runs `set`: if it could set auto, it could merge through the gate on its own.
 
 | Mode | Who codes | Who reviews | Who merges | What still stops for the owner |
 |---|---|---|---|---|
@@ -20,7 +20,9 @@ Every worktree of the repo shares it, and git does not track it. Show or change 
 6. The body has `Closes #n`.
 
 Then it runs `gh pr merge --merge` with the review account's own token. It never changes the active `gh` account. In Semi or Manual the script refuses with "mode is semi" or "mode is manual".
-An agent in Auto mode never merges with any other command. The owner turns Auto on himself, with `/mode auto`.
+An agent in Auto mode never merges with any other command. The owner turns Auto on himself, with `! bash scripts/mode.sh set auto`.
+
+**Known limit.** The gate cannot tell the two sessions apart. That the session which wrote a pull request does not approve it rests on rule 30 (the author never reviews their own PR), not on code. Dependabot pull requests carry no `Closes #n`; story #70 decides how the gate treats them.
 
 ## What Auto never does alone
 Spend money, touch secrets, and post or send messages to people (LinkedIn, email, chat). Those stop for the owner in every mode.

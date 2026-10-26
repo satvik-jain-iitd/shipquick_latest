@@ -109,6 +109,13 @@ def test_s16_a_failing_or_pending_check_refuses_and_names_it(env):
     refused(*env(pr=pr), "check test is not SUCCESS")
 
 
+def test_s16_a_check_still_running_has_no_conclusion_and_refuses(env):
+    pr = good(); pr["statusCheckRollup"][0] = {"name": "test", "status": "IN_PROGRESS", "conclusion": None}   # GitHub sends null, not an empty string
+    refused(*env(pr=pr), "check test is not SUCCESS")
+    pr = good(); pr["statusCheckRollup"][0] = {"name": "test", "status": "QUEUED"}   # and sometimes no conclusion field at all
+    refused(*env(pr=pr), "check test is not SUCCESS")
+
+
 def test_s16_no_checks_at_all_refuses(env):
     pr = good(); pr["statusCheckRollup"] = []
     refused(*env(pr=pr), "no checks ran")

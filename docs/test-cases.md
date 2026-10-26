@@ -174,6 +174,7 @@ Scenario: one word per project says Manual, Semi or Auto
   When the mode is not set, mode.sh get exits 3 and says to ask the owner
   Then set then get gives the same word, a wrong word is refused, and every git worktree shares the word
   And git does not track it, and rule 0 in CLAUDE.md asks for it at session start
+  And only the owner sets it, by typing a `!` line; /mode shows the mode and prints that line, and no agent runs set
   And docs/MODES.md says who reviews, who merges and what still stops in each mode
 ```
 Tests: `tests/test_mode.py` (`test_s15_*`).
