@@ -67,7 +67,7 @@ def main() -> int:
         print(f"Dry run. Re-run with --yes to close {len(to_close)} issue(s).")
         return 0
 
-    comment = f"Done in PR #{pr_number} (squash-merged to {base})."
+    comment = f"Done in PR #{pr_number} (merged to {base})."
     for n in to_close:
         gh("issue", "close", n, "--comment", comment)
         print(f"  closed #{n}")
