@@ -32,3 +32,15 @@ review is the gate there.
 Sources: https://docs.github.com/en/enterprise-cloud@latest/actions/security-guides/security-hardening-for-github-actions ·
 https://github.com/ossf/scorecard · https://devblogs.microsoft.com/nuget/openssf-scorecard-for-net-nuget/ ·
 https://conf.researchr.org/details/icst-2024/icst-2024-industry/1/Cost-of-Flaky-Tests-in-CI-An-Industrial-Case-Study
+
+## Notes for child projects (story #43, 26 Oct 2026)
+- **Secret scan.** On a PR it reads only the PR's own commits. On a push it reads the whole history. A child with a long or forked
+  history (job-search is a fork with 300+ upstream commits) must not go red on an old commit it cannot rewrite.
+- **Dependency review needs the Dependency graph.** Without it the job warns and passes. On 26 Oct 2026 the probe returned
+  HTTP 404 on this repo too, although it is public, and Dependabot alerts are off. So a green dependency-review means
+  "skipped" until the job log shows the review step ran. Private repos on a free plan will keep warning. The owner turns the
+  graph on in the repo settings (Advanced Security).
+- **A fake key in a test is flagged like a real one.** Build it at run time. If an old commit still holds one, put its
+  fingerprint in `.gitleaksignore` with a reason and a date when the line can go.
+- **Fast on commit, full on push.** `scripts/check_local.sh secrets-staged` reads only staged files. The full scan runs on push.
+

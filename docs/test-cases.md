@@ -75,3 +75,40 @@ Scenario: a block to the owner is an ordered to-do with a merge line
   And a block to any other role is not affected
 ```
 Tests: `tests/test_check_block.py`.
+
+**S0.8 CI is least-privilege and pinned.**
+```gherkin
+Scenario: a workflow cannot write to the repo and cannot run moved code
+  Given every file in .github/workflows
+  Then each has the top-level setting "permissions: contents: read"
+  And every "uses:" is pinned to a 40-character commit SHA with its release tag in a comment
+  And .github/dependabot.yml updates the "github-actions" ecosystem every week
+  And CI runs on a PR into any base branch, so the upper layers of a stack are checked too
+```
+Tests: `tests/test_ci_must_have.py` (`test_s08_*`).
+
+**S0.9 Secrets and bad dependencies are caught before a merge.**
+```gherkin
+Scenario: a planted secret and a vulnerable dependency are caught
+  Given the CI job "secret-scan" (gitleaks, SHA-256 checked) and the job "dependency-review"
+  When a commit adds a key such as API_SECRET_KEY = "<random string>"
+  Then secret-scan fails and the gate job fails
+  And on a pull request the scan reads only the PR's own commits, on a push it reads the whole history
+  And a PR that adds a vulnerable package fails dependency-review when the Dependency graph is on
+  And without the graph, dependency-review warns and passes
+```
+Tests: `tests/test_ci_must_have.py` (`test_s09_*`). The red run is shown in the PR.
+
+**S0.10 Every CI check also runs on the Mac.**
+```gherkin
+Scenario: scripts/check_local.sh runs the CI hygiene checks before a push
+  Given a branch with commits on top of origin/dev
+  When I run scripts/check_local.sh
+  Then it fails for a merge marker at the start of a line, an unclosed markdown block, a file over 500KB,
+       a commit subject that is not conventional, more than 50 changed files, or a secret
+  And a marker named inside a string does not fail
+  And on commit the secret check reads only the staged files (secrets-staged), on push it reads the whole history
+  And .pre-commit-config.yaml runs the fast checks on commit and all of them on push
+```
+Tests: `tests/test_ci_must_have.py` (`test_s10_*`).
+
