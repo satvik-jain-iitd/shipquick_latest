@@ -24,3 +24,17 @@ repos:
         entry: python3 scripts/check_md_blocks.py
         language: system
         types: [markdown]
+      - id: check-local
+        name: CI hygiene checks on this Mac (scripts/check_local.sh)
+        entry: bash scripts/check_local.sh sizes markers md-blocks secrets
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+      - id: check-local-push
+        name: All CI hygiene checks before a push
+        entry: bash scripts/check_local.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

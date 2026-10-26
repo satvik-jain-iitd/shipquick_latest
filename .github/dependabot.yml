@@ -1,0 +1,7 @@
+# Keeps the pinned actions in .github/workflows current: a pinned SHA never moves, so a new release arrives as a PR.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
