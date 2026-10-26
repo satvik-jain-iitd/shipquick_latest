@@ -149,3 +149,18 @@ Scenario: a reusable workflow keeps ROADMAP.md on a roadmap branch
   And CI runs the node tests
 ```
 Tests: `tests/test_roadmap_workflow.py` (`test_s13_*`), `tests/test_ci_must_have.py` (`test_s13_ci_runs_the_roadmap_node_tests`).
+
+**S0.14 Several stories are built at the same time with few merge conflicts.**
+```gherkin
+Scenario: parallel lanes, append-only logs and a release branch
+  Given rule 23 allows up to 3 stacks open, one per lane, and a lane is a set of stories that touch the same files
+  When two branches each add a row at the end of docs/process-trace.md (or LEARNINGS.md, ideas.md)
+  Then they merge with no conflict and both rows are kept (.gitattributes merge=union)
+  And without that file the same merge conflicts (the control)
+  And CHANGELOG.md is not on the list
+  And the sprint lane template asks for the files each story touches, and for foundation work first
+  And a release goes through release/vX.Y.Z with main merged in, a merge commit, and a back-merge of main into dev after the tag
+  And the roster allows one reviewer and up to 3 coders, each in a worktree
+```
+Tests: `tests/test_parallel_lanes.py` (`test_s14_*`).
+
