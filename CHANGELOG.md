@@ -25,6 +25,7 @@ Tag `v0.6.0` (cd.yml tag-check greps for this exact text, so keep it), "Auto mod
 
 ### Fixed
 - The roadmap no longer writes "the checks checks" (#62).
+- `adopt.sh` reads a single-quoted CI name, `check_closes.py` exempts Dependabot under both logins, and `check_placeholders.py` also flags the `roadmap.json` stub (#76).
 
 ## [0.5.0] - 2026-10-26
 Tag `v0.5.0` (cd.yml tag-check greps for this exact text, so keep it), "Process v2" (milestone D5, epic #41). Notes: `docs/RELEASE_NOTES_v0.5.0.md`. It also carries the untagged D4 work below.

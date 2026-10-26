@@ -107,3 +107,4 @@ A new row writes `-` in the `#` column (the order is the file order, so rows add
 | - | coder (job-search-dev) | Fixed the 3 threads on PR #75: either quote kind in the CI name, the /shipquick-mode line in mode.md, the BASE=main note. Red first (4 tests) | PR #75 | none |
 | - | reviewer (job-search-qa) | Reviewed PR #77 inline: the 3.11 f-string nit, and item 4 of #76 (roadmap.json in check_placeholders) | PR #77 | reviewed |
 | - | coder (job-search-dev) | Fix for PR #77: name computed before the f-string (works on Python 3.11), and check_placeholders.py now also flags the roadmap.json stub (item 4, since #74 is merged). Red first (2 tests) | PR #77 | none |
+| - | reviewer (job-search-qa) | Release PR #78 for v0.6.0: review fixes (the ! line, not the skill, for children; full Auto limits; demo note setup; #76 line; D6 rows in PROGRESS and ROADMAP) | PR #78 | none |

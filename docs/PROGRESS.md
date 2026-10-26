@@ -12,6 +12,7 @@ What is delivered, what is now, what is next.
 | D3 | CI hardening, protection, hygiene tests | Done |
 | D4 | Bug tracking workflow + PM/agile layer | Done (v0.5.0) |
 | D5 | Demo showcase, and Process v2: CI must-haves, rules 20 to 30, live roadmap | Done (v0.5.0) |
+| D6 | Template ready for clone, with Manual, Semi and Auto modes | Done (v0.6.0) |
 
 ## Now
 
@@ -23,7 +24,7 @@ What is delivered, what is now, what is next.
 
 | Increment | What | Status |
 |---|---|---|
-| D6 | Template ready for clone | Planned |
+| - | Next increment not planned yet | - |
 
 ## Metrics
 
