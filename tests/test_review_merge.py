@@ -14,15 +14,24 @@ STUB = """#!/usr/bin/env bash
 echo "$*" >> "$STUB_DIR/calls.log"
 case "$1" in
   auth) [ "$2" = token ] && { echo "tok-$4"; exit 0; } ;;
-  repo) echo "o/r"; exit 0 ;;
+  repo) case "$*" in *defaultBranchRef*) echo '{"defaultBranchRef":{"name":"main"}}' ;; *) echo "o/r" ;; esac; exit 0 ;;
+  issue) case "$2" in
+        view) echo '{"state":"OPEN","labels":[]}'; exit 0 ;;
+        close) [ -n "${STUB_FAIL_CLOSE:-}" ] && exit 1; echo "GH_TOKEN=$GH_TOKEN GH_REPO=${GH_REPO:-} $*" >> "$STUB_DIR/issue.log"; exit 0 ;;
+      esac ;;
   pr) case "$2" in
-        view) cat "$STUB_DIR/pr.json"; exit 0 ;;
+        view) case "$*" in *state,baseRefName,body*) echo "{\"state\":\"MERGED\",\"baseRefName\":\"dev\",\"body\":$(jq -c .body "$STUB_DIR/pr.json")}"; exit 0 ;; esac
+              cat "$STUB_DIR/pr.json"; exit 0 ;;
         merge) echo "GH_TOKEN=$GH_TOKEN $*" >> "$STUB_DIR/merge.log"; exit 0 ;;
       esac ;;
   api) cat "$STUB_DIR/threads.json"; exit 0 ;;
 esac
 exit 9
 """
+
+
+class Log(str):
+    """The merge log as text, with the issue-close log and every gh call attached."""
 
 
 def good():
@@ -45,15 +54,20 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",)):
-        (stub / "merge.log").unlink(missing_ok=True)   # one call per scenario: a test may call go() twice
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False):
+        (stub / "merge.log").unlink(missing_ok=True)
+        (stub / "issue.log").unlink(missing_ok=True)
+        e["STUB_FAIL_CLOSE"] = "1" if fail_close else ""   # one call per scenario: a test may call go() twice
         (stub / "pr.json").write_text(json.dumps(pr or good()), encoding="utf-8")
         (stub / "threads.json").write_text(json.dumps(th or threads(True, True)), encoding="utf-8")
         if mode:
             subprocess.run(["bash", str(MODE), "set", mode], cwd=repo, check=True, env=e)
         r = subprocess.run(["bash", str(GATE), *args], cwd=repo, capture_output=True, text=True, env=e)
         merged = (stub / "merge.log").read_text(encoding="utf-8") if (stub / "merge.log").exists() else ""
-        return r, merged
+        out = Log(merged)
+        out.closed = (stub / "issue.log").read_text(encoding="utf-8") if (stub / "issue.log").exists() else ""
+        out.calls = (stub / "calls.log").read_text(encoding="utf-8") if (stub / "calls.log").exists() else ""
+        return r, out
 
     return go
 
@@ -62,6 +76,7 @@ def refused(result, merged, rule):
     assert result.returncode == 1, (result.stdout, result.stderr)
     assert result.stderr.startswith("refused: ") and rule in result.stderr, result.stderr
     assert merged == "", "the gate must not merge when it refuses"
+    assert merged.closed == "", "and it must not close any issue"
 
 
 def test_s16_semi_mode_refuses(env):
@@ -150,3 +165,21 @@ def test_s16_the_repo_argument_is_used_and_a_missing_pr_number_is_refused(env):
     assert r.returncode == 0 and "-R x/y" in merged
     r, merged = env(args=())
     assert r.returncode == 2 and merged == ""
+
+
+def test_s16_after_a_good_merge_it_closes_the_story_issues_with_the_review_account_token_and_for_the_right_repo(env):
+    pr = good(); pr["body"] = "## What\nBoth.\n\nCloses #67\nCloses #5\n"
+    r, merged = env(pr=pr, args=("12", "x/y"))
+    assert r.returncode == 0, r.stderr
+    lines = merged.closed.strip().splitlines()
+    assert len(lines) == 2 and all("GH_TOKEN=tok-satvik-jain-iitd" in l and "GH_REPO=x/y" in l for l in lines)
+    assert "issue close 67" in lines[0] and "issue close 5" in lines[1]
+    assert merged.calls.index("pr merge") < merged.calls.index("issue close"), "issues close only after the merge"
+    assert "closed" in r.stdout
+
+
+def test_s16_if_closing_fails_after_the_merge_the_gate_says_the_merge_happened_and_how_to_finish(env):
+    r, merged = env(fail_close=True)
+    assert "pr merge 12" in merged, "the merge already happened"
+    assert r.returncode == 4 and "merged #12" in r.stdout
+    assert "close_linked_issues.py" in r.stderr and "--yes" in r.stderr

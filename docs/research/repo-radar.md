@@ -53,3 +53,9 @@ One block per run. Never delete a row.
 - Read: kodiak, bulldozer and claude-code-merge-queue READMEs. Kodiak and bulldozer are GitHub Apps: they merge when checks and approvals pass, but they must be installed or self-hosted, they know nothing about our two accounts, our mode, or "approved by the review account", and Kodiak is AGPL. claude-code-merge-queue serializes local landing for parallel agents (an npm tool); it is not an approval gate and has no mode.
 - Decision: build two small bash scripts (`scripts/mode.sh`, `scripts/review_merge.sh`) that use only git, gh and jq. The gate needs rules no tool has: mode is auto, approved by `satvik-jain-iitd` on the latest commit, zero open threads, every check green, `Closes #n`. A hosted app would be one more thing every child project must install.
 - Confidence that nothing fits: 0.8. Test: if a kit user already runs Kodiak or bulldozer, they can skip `review_merge.sh`; the mode file still works.
+
+## 26 Oct 2026, story #70: the pull request body must link its issue (Closes #n)
+- Need: fail a pull request whose body has no `Closes #n`, with exemptions for release, sync and Dependabot pull requests, free and with no extra app.
+- Run: no scout run; the need is one regular expression on text we already have in CI (the PR title, author and body come in through `github.event.pull_request`). Checked by name what exists: GitHub's own keywords close an issue only when the PR merges into the default branch, so they do not check anything; the `team-block` job already reads the PR body with `scripts/check_block.py` in this repo.
+- Decision: a 20-line `scripts/check_closes.py` next to `check_block.py`, run as one more step of the `team-block` job. No new tool, no new job.
+- Confidence that nothing fits better: 0.85.

@@ -3,7 +3,8 @@
 # It refuses, with exit 1 and `refused: <rule>`, unless all of this holds:
 #   the mode is auto; the PR is open, not a draft, and has no conflicts; satvik-jain-iitd approved the latest commit;
 #   no review thread is unresolved; every check is SUCCESS (SKIPPED and NEUTRAL count as passed, as on GitHub); the body has `Closes #n`.
-# Then it merges with a merge commit, using the review account's own token (never switch the active gh account). Needs git, gh and jq.
+# Then it merges with a merge commit, using the review account's own token (never switch the active gh account), and closes the story issues
+# the PR links (`Closes #n`) with scripts/close_linked_issues.py, because GitHub closes them only for a merge into the default branch. Needs git, gh, jq and python3.
 # usage: review_merge.sh <pr-number> [owner/repo]
 set -u
 REVIEWER=satvik-jain-iitd
@@ -40,3 +41,5 @@ field .body | grep -Eiq '(^|[^[:alnum:]])closes #[0-9]+' || refuse 'no `Closes #
 token=$(gh auth token --user "$REVIEWER") || refuse "no token for $REVIEWER on this machine"
 GH_TOKEN="$token" gh pr merge "$pr" -R "$repo" --merge || { echo "merge failed" >&2; exit 1; }
 echo "merged #$pr in $repo"
+# The merge cannot be undone, so a failure here is not a refusal: say what to run, and exit 4.
+GH_TOKEN="$token" GH_REPO="$repo" python3 "$HERE/close_linked_issues.py" "$pr" --yes || { echo "merged #$pr, but closing its issues failed: run  GH_REPO=$repo python3 scripts/close_linked_issues.py $pr --yes" >&2; exit 4; }

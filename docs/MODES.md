@@ -19,7 +19,7 @@ Every worktree of the repo shares it, and git does not track it. Agents only rea
 5. Every check is `SUCCESS` (`SKIPPED` and `NEUTRAL` count as passed, the way GitHub counts them). No checks at all is a refusal.
 6. The body has `Closes #n`.
 
-Then it runs `gh pr merge --merge` with the review account's own token. It never changes the active `gh` account. In Semi or Manual the script refuses with "mode is semi" or "mode is manual".
+Then it runs `gh pr merge --merge` with the review account's own token, and right after it closes the story issues the PR links, with `scripts/close_linked_issues.py <pr> --yes` (GitHub does that only for a merge into `main`). So the roadmap updates at merge time. If the merge worked but the closing failed, the gate exits 4 and prints the command to run. It never changes the active `gh` account. In Semi or Manual the script refuses with "mode is semi" or "mode is manual".
 An agent in Auto mode never merges with any other command. The owner turns Auto on himself, with `! bash scripts/mode.sh set auto`.
 
 **Known limit.** The gate cannot tell the two sessions apart. That the session which wrote a pull request does not approve it rests on rule 30 (the author never reviews their own PR), not on code. Dependabot pull requests carry no `Closes #n`; story #70 decides how the gate treats them.

@@ -66,7 +66,7 @@ def test_yes_closes_each_open_story_with_comment(tmp_path):
     assert proc.returncode == 0, proc.stderr
     closed = [c for c in calls.splitlines() if c.startswith("issue close")]
     assert len(closed) == 2
-    assert closed[0].startswith("issue close 39 --comment Done in PR #7 (squash-merged to dev)")
+    assert closed[0].startswith("issue close 39 --comment Done in PR #7 (merged to dev)")
     assert closed[1].startswith("issue close 50 ")
     assert not any(c.startswith("issue close 40") or c.startswith("issue close 41") for c in calls.splitlines())
 

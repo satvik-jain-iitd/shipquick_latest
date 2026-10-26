@@ -40,7 +40,7 @@ Merge only when all six gates are true:
 3. Zero unresolved comments.
 4. Branch is up to date with the base branch.
 5. PR is not a Draft and has no `do-not-merge` or `WIP` label.
-6. The PR links its issue with `Closes #N`.
+6. The PR links its issue with `Closes #N`. CI checks it (`scripts/check_closes.py`, a step of the `team-block` job). Release, sync and back-merge pull requests are exempt by title prefix (`release:` or `chore:`, also `chore(deps):`), and so is Dependabot (author `dependabot[bot]`). The roadmap counts a story as done only when its issue is closed. To run it by hand: `gh pr view <pr> --json body,title,author --jq .body | python3 scripts/check_closes.py --title "<title>" --author <login>`.
 
 Formula:
 
@@ -59,7 +59,7 @@ A feature PR merges into `dev`, so its issues stay open. We close them by hand.
 - When the base is not the default branch, the PR checklist adds: "Close issue #N by hand after merge, with a comment linking this PR."
 - After the owner says the PR is merged, run `python3 scripts/close_linked_issues.py <pr>`. It checks `gh pr view <pr> --json state,baseRefName`.
 - Dry run first. It prints the issues it would close and the ones it skips. Nothing changes.
-- The owner gives one yes. Then `--yes` closes each issue with the comment: `Done in PR #X (squash-merged to <base>).`
+- The owner gives one yes. Then `--yes` closes each issue with the comment: `Done in PR #X (merged to <base>).` In Auto mode `scripts/review_merge.sh` runs this script with `--yes` right after its merge, so the issue closes at merge time and the roadmap updates then.
 - It never closes an epic (label `epic`). It closes only the story issues linked by `Closes #N`.
 - It never closes an issue whose PR is still open, or closed without a merge.
 
