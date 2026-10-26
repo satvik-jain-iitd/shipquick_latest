@@ -27,6 +27,7 @@ def repo(tmp_path):
 def test_s15_an_unset_mode_exits_3_and_says_to_ask_the_owner(repo):
     r = sh(repo, "get")
     assert r.returncode == 3 and "ask the owner" in r.stderr
+    assert "No such file" not in r.stderr and r.stderr.count("\n") == 1   # one clear line, no shell error from the missing file
 
 
 @pytest.mark.parametrize("mode", ["manual", "semi", "auto"])

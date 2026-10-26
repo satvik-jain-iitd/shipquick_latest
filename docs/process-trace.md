@@ -101,3 +101,4 @@ A new row writes `-` in the `#` column (the order is the file order, so rows add
 | - | coder (job-search-dev) | Scope add to #70 from the owner (via reviewer): review_merge.sh closes the story issues right after it merges. Red first (2 tests), stub gh extended | PR for #70 | volunteered |
 | - | reviewer (job-search-qa) | Reviewed PR #73 inline: 16 threads, changes requested (the gate must use the same Closes rule as CI) | PR #73 | reviewed |
 | - | coder (job-search-dev) | Fix commit for PR #73: check_closes.py shares the LINK regex, the gate calls it with title and author, so Dependabot, release: and chore: PRs can merge in Auto. Red first (9 tests) | PR #73 | none |
+| - | coder (job-search-dev) | Story #68 (lane B, own worktree): radar (copier is the closest, kept as the fallback), red tests first (9 failed), then adopt.sh, docs, and the mode.sh stderr nit from the reviewer. Mode is auto (checked with mode.sh get) | PR for #68 | none |
