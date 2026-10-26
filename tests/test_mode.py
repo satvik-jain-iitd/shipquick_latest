@@ -59,6 +59,11 @@ def test_s15_outside_a_git_repo_it_fails_clearly(tmp_path):
     assert r.returncode == 2 and "git" in r.stderr
 
 
+def test_s15_modes_doc_says_the_gate_exempts_release_chore_and_dependabot_pull_requests():
+    text = (ROOT / "docs" / "MODES.md").read_text(encoding="utf-8")
+    assert "story #70 decides" not in text and "check_closes.py" in text and "dependabot" in text.lower()
+
+
 def test_s15_the_mode_command_runs_the_script_in_both_places_and_tells_the_peer():
     text = (ROOT / ".claude" / "commands" / "mode.md").read_text(encoding="utf-8")
     assert "scripts/mode.sh" in text and "knowledge/shipquick_latest/scripts/mode.sh" in text and "SendMessage" in text

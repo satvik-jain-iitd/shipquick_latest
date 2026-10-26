@@ -36,7 +36,7 @@ class Log(str):
 
 def good():
     return {
-        "state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE", "headRefOid": "abc123", "body": "## What\nSomething.\n\nCloses #67\n",
+        "title": "feat(x): a story (#67)", "author": {"login": "klickbae8yt-star"}, "state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE", "headRefOid": "abc123", "body": "## What\nSomething.\n\nCloses #67\n",
         "reviews": [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}}],
         "statusCheckRollup": [{"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}, {"name": "gate", "status": "COMPLETED", "conclusion": "SUCCESS"}],
     }
@@ -183,3 +183,23 @@ def test_s16_if_closing_fails_after_the_merge_the_gate_says_the_merge_happened_a
     assert "pr merge 12" in merged, "the merge already happened"
     assert r.returncode == 4 and "merged #12" in r.stdout
     assert "close_linked_issues.py" in r.stderr and "--yes" in r.stderr
+
+
+def test_s16_the_gate_uses_the_same_closes_rule_as_ci_so_exempt_pull_requests_can_merge(env):
+    for title, author in (("chore(deps): bump the github-actions group with 6 updates", "dependabot[bot]"), ("release: v0.6.0 (#71)", "klickbae8yt-star"), ("chore: merge main into dev", "klickbae8yt-star"), ("Bump x from 1 to 2", "dependabot[bot]")):
+        pr = good(); pr["body"] = "no issue link here\n"; pr["title"] = title; pr["author"] = {"login": author}
+        r, merged = env(pr=pr)
+        assert r.returncode == 0 and "pr merge 12" in merged, (title, r.stderr)
+
+
+def test_s16_a_story_pull_request_without_closes_is_still_refused_and_fixes_counts(env):
+    pr = good(); pr["body"] = "no issue link here\n"
+    refused(*env(pr=pr), "no `Closes #n`")
+    pr = good(); pr["body"] = "Fixes #67\n"
+    r, merged = env(pr=pr)
+    assert r.returncode == 0 and "pr merge 12" in merged
+
+
+def test_s16_the_gate_calls_check_closes_instead_of_its_own_grep():
+    text = GATE.read_text(encoding="utf-8")
+    assert "check_closes.py" in text and "grep -Eiq" not in text

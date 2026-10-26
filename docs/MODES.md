@@ -17,12 +17,12 @@ Every worktree of the repo shares it, and git does not track it. Agents only rea
 3. `satvik-jain-iitd` approved the latest commit. An approval of an older commit, or a later request for changes, does not count.
 4. No review thread is unresolved.
 5. Every check is `SUCCESS` (`SKIPPED` and `NEUTRAL` count as passed, the way GitHub counts them). No checks at all is a refusal.
-6. The body has `Closes #n`.
+6. The body has `Closes #n` (or Fixes, Resolves), by the same rule as CI. Release, sync (`chore:`) and Dependabot pull requests are exempt.
 
 Then it runs `gh pr merge --merge` with the review account's own token, and right after it closes the story issues the PR links, with `scripts/close_linked_issues.py <pr> --yes` (GitHub does that only for a merge into `main`). So the roadmap updates at merge time. If the merge worked but the closing failed, the gate exits 4 and prints the command to run. It never changes the active `gh` account. In Semi or Manual the script refuses with "mode is semi" or "mode is manual".
 An agent in Auto mode never merges with any other command. The owner turns Auto on himself, with `! bash scripts/mode.sh set auto`.
 
-**Known limit.** The gate cannot tell the two sessions apart. That the session which wrote a pull request does not approve it rests on rule 30 (the author never reviews their own PR), not on code. Dependabot pull requests carry no `Closes #n`; story #70 decides how the gate treats them.
+**Known limit.** The gate cannot tell the two sessions apart. That the session which wrote a pull request does not approve it rests on rule 30 (the author never reviews their own PR), not on code. Dependabot, `release:` and `chore:` pull requests carry no `Closes #n`: the gate uses the same rule as CI (`scripts/check_closes.py`), which exempts them, so they can merge in Auto.
 
 ## What Auto never does alone
 Spend money, touch secrets, and post or send messages to people (LinkedIn, email, chat). Those stop for the owner in every mode.

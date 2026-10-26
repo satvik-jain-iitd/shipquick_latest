@@ -185,7 +185,7 @@ Scenario: scripts/review_merge.sh refuses unless every rule holds
   Given a stub gh and a pull request that passes every rule
   When the mode is semi, manual or not set, or the PR is a draft, closed or has conflicts
   Or the approval is by someone else, of an older commit, or cancelled by a later request for changes
-  Or one review thread is unresolved, a check fails or is pending (also one with no conclusion yet), no check ran, or the body has no "Closes #n"
+  Or one review thread is unresolved, a check fails or is pending (also one with no conclusion yet), no check ran, or the body has no "Closes #n" (a story PR; release:, chore: and Dependabot are exempt, the same rule as CI)
   Then it exits 1 with "refused: <rule>" and runs no merge
   And when every rule holds it runs gh pr merge --merge once, with the review account's token, and skipped or neutral checks do not block
   And right after the merge it closes the linked story issues with the same token (story #70), and if closing fails it exits 4 and says what to run
@@ -200,6 +200,7 @@ Scenario: the PR body needs Closes #n
   Then the check fails and says why
   And a title that starts with release: or chore: (also chore(deps):) passes, and so does Dependabot
   And a title that only mentions the word (feat: release the thing) is not exempt
+  And Fixes #n and Resolves #n count too, by the same link rule as close_linked_issues.py
 ```
 Tests: `tests/test_check_closes.py` (`test_s17_*`).
 

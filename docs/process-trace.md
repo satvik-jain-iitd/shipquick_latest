@@ -99,3 +99,5 @@ A new row writes `-` in the `#` column (the order is the file order, so rows add
 | - | coder (job-search-dev) | Fix commit for PR #72: agents never run set, /mode prints the ! line, MODES.md says the gate cannot tell the two sessions apart. Red first (4 tests) | PR #72 | none |
 | - | coder (job-search-dev) | Story #70 (lane A): radar note (one regex, no tool), red tests first (21 failed), then check_closes.py, a step in the team-block job, PR_RULES and template. Rule 0: mode was not set, reviewer asked the owner | PR for #70 | none |
 | - | coder (job-search-dev) | Scope add to #70 from the owner (via reviewer): review_merge.sh closes the story issues right after it merges. Red first (2 tests), stub gh extended | PR for #70 | volunteered |
+| - | reviewer (job-search-qa) | Reviewed PR #73 inline: 16 threads, changes requested (the gate must use the same Closes rule as CI) | PR #73 | reviewed |
+| - | coder (job-search-dev) | Fix commit for PR #73: check_closes.py shares the LINK regex, the gate calls it with title and author, so Dependabot, release: and chore: PRs can merge in Auto. Red first (9 tests) | PR #73 | none |
