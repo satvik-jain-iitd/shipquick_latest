@@ -116,8 +116,17 @@ jobs:
           curl -sSfL -o gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
           echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tgz" | sha256sum -c -
           tar -xzf gitleaks.tgz gitleaks
-      - name: Scan the whole history for secrets
-        run: ./gitleaks git --no-banner --no-color --redact --verbose .
+      - name: Scan for secrets (a PR reads its own commits, a push reads the whole history)
+        env:
+          BASE: ${{ github.base_ref }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            # A child with a long or forked history must not go red on an old commit it cannot rewrite.
+            ./gitleaks git --no-banner --no-color --redact --verbose --log-opts="origin/$BASE..HEAD" .
+          else
+            ./gitleaks git --no-banner --no-color --redact --verbose .
+          fi
   dependency-review:
     # Needs the repo's Dependency graph. The graph is probed first: without it the job warns and passes instead of failing,
     # so enabling the graph (Settings -> Advanced Security) switches the real check on.

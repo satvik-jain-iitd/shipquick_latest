@@ -47,6 +47,12 @@ def test_s09_ci_has_a_secret_scan_job_that_checks_the_binary_checksum():
     assert "gitleaks git" in section and "sha256sum -c" in section and "fetch-depth: 0" in section
 
 
+def test_s09_a_pr_scans_only_its_own_commits_a_push_scans_the_whole_history():
+    section = CI.split("\n  secret-scan:\n", 1)[1].split("\n  test:", 1)[0]
+    assert '--log-opts="origin/$BASE..HEAD"' in section  # a long or forked history must not turn a child's PR red
+    assert "pull_request" in section and "else" in section
+
+
 def test_s09_dependency_review_runs_on_pull_requests():
     assert "dependency-review" in _jobs()
     assert "actions/dependency-review-action@" in CI
@@ -143,6 +149,18 @@ def test_s09_a_planted_secret_fails_and_a_clean_repo_passes(repo):
     assert code == 1 and "generic-api-key" in out
 
 
+@pytest.mark.skipif(shutil.which("gitleaks") is None, reason="gitleaks is installed on the Mac")
+def test_s10_the_fast_commit_check_reads_only_staged_files(repo):
+    fake = "p4Wq8ZxK2mV7" + "nB5tR1yL9cD3hJ6aS0fG"  # run-time key, see above
+    (repo / "cfg.py").write_text(f'API_SECRET_KEY = "{fake}"\n', encoding="utf-8")
+    _git(repo, "add", "cfg.py")
+    code, out = run(repo, "secrets-staged")
+    assert code == 1 and "generic-api-key" in out
+    _git(repo, "commit", "-q", "-m", "feat: key")           # now it is history, not staged
+    assert run(repo, "secrets-staged")[0] == 0               # the fast check does not rescan old commits
+    assert run(repo, "secrets")[0] == 1                      # the full scan still finds it
+
+
 def test_s10_ci_and_the_script_use_the_same_marker_pattern():
     pattern = r"'^(<<<<<<< |=======$|>>>>>>> )'"
     assert pattern in CI
@@ -154,6 +172,7 @@ def test_s10_pre_commit_runs_the_local_checks():
     text = (ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8")
     assert "scripts/check_local.sh" in text
     assert "pre-push" in text
+    assert "secrets-staged" in text.split("pre-push")[0], "the commit stage must use the staged-only secret check"
 
 
 def test_s10_this_repo_passes_its_own_marker_and_markdown_checks():

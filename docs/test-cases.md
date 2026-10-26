@@ -93,6 +93,7 @@ Scenario: a planted secret and a vulnerable dependency are caught
   Given the CI job "secret-scan" (gitleaks, SHA-256 checked) and the job "dependency-review"
   When a commit adds a key such as API_SECRET_KEY = "<random string>"
   Then secret-scan fails and the gate job fails
+  And on a pull request the scan reads only the PR's own commits, on a push it reads the whole history
   And a PR that adds a vulnerable package fails dependency-review when the Dependency graph is on
   And without the graph, dependency-review warns and passes
 ```
@@ -106,6 +107,7 @@ Scenario: scripts/check_local.sh runs the CI hygiene checks before a push
   Then it fails for a merge marker at the start of a line, an unclosed markdown block, a file over 500KB,
        a commit subject that is not conventional, more than 50 changed files, or a secret
   And a marker named inside a string does not fail
+  And on commit the secret check reads only the staged files (secrets-staged), on push it reads the whole history
   And .pre-commit-config.yaml runs the fast checks on commit and all of them on push
 ```
 Tests: `tests/test_ci_must_have.py` (`test_s10_*`).

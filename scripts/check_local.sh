@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks commits pr-size secrets   (no argument = all of them)
+#   checks: sizes markers md-blocks commits pr-size secrets secrets-staged   (no argument = all but secrets-staged)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
-#   secrets    needs gitleaks: brew install gitleaks
+#   secrets    the whole history (push); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
+#   markers    checks tracked files; an untracked file with a marker passes here, CI scans the whole checkout
 # Wired into .pre-commit-config.yaml: the fast checks on commit, all of them on push.
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -54,6 +55,11 @@ check_secrets() {
   gitleaks git --no-banner --no-color --redact --verbose .
   report secrets $?
 }
+check_secrets_staged() {
+  command -v gitleaks >/dev/null || { echo "skip secrets-staged: gitleaks is not installed (brew install gitleaks)"; return 0; }
+  gitleaks git --pre-commit --staged --no-banner --no-color --redact --verbose .
+  report secrets-staged $?
+}
 
 checks=("$@")
 [ $# -eq 0 ] && checks=(sizes markers md-blocks commits pr-size secrets)
@@ -61,8 +67,9 @@ for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
     md-blocks) check_md_blocks ;;
+    secrets-staged) check_secrets_staged ;;
     pr-size) check_pr_size ;;
-    *) echo "unknown check: $c (sizes markers md-blocks commits pr-size secrets)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks commits pr-size secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"

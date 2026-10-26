@@ -26,7 +26,7 @@ repos:
         types: [markdown]
       - id: check-local
         name: CI hygiene checks on this Mac (scripts/check_local.sh)
-        entry: bash scripts/check_local.sh sizes markers md-blocks secrets
+        entry: bash scripts/check_local.sh sizes markers md-blocks secrets-staged
         language: system
         pass_filenames: false
         always_run: true
