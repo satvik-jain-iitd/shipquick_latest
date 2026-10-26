@@ -81,3 +81,5 @@ Rule: read this first in every session, append before saying done.
 | 73 | coder (job-search-dev) | Red tests first (node --test, module not found), then render.js, sha256.js, build.js. 23 node tests green, layout checks green on both workflows | roadmap/ | none |
 | 74 | coder (job-search-dev) | Ran the real GraphQL query on this repo (read only): valid, the page renders. Made a page key, put it in the Secrets vault, only its hash is in the repo | roadmap/projects.json | none |
 | 75 | coder (job-search-dev) | Found: dev holds the fake-key commit (merge commit, not squash), so deleting .gitleaksignore turns the push scan red. Kept the file, rewrote its note | .gitleaksignore | reviewer asked, told in the PR |
+| 76 | reviewer (job-search-qa) | Reviewed PR #48 inline: 25 threads, changes requested (no run history for the page link, one SUB run per project, kill switch note, docs) | PR #48 | reviewed |
+| 77 | coder (job-search-dev) | Fix commit for PR #48: MAIN saves no successful run, mode each, SETTINGS note, TBD id guard, docs. Red first (6 tests), then green (26) | PR #48 | none |

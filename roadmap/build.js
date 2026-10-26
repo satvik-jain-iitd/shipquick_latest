@@ -2,10 +2,12 @@
 // Builds the two n8n workflows of the live roadmap (story #44, docs/LIVE_ROADMAP.md). The repo is the source of truth: never edit a node in the n8n editor.
 //   node roadmap/build.js            writes roadmap/workflows/SQ_Roadmap_01.json and SQ_Roadmap_11.json
 //   node roadmap/build.js --hash K   prints the SHA-256 of a page key K (for projects.json; the key itself goes to ~/Desktop/Secrets only)
+//   node roadmap/build.js --draft    same as the first, allowed while ids.json still has TBD ids; such files must not be deployed
 // n8n rulebook B11 (MAIN owns triggers, Config, kill switch; SUB does one job), B12 (sticky-note boxes, left to right), 95.9 (ids in one file).
 const fs = require('node:fs'), path = require('node:path');
 const { layout } = require('./lib/layout.js'), { sha256hex } = require('./sha256.js');
 const projects = require('./projects.json'), IDS = require('./ids.json');
+const PLACEHOLDERS = Object.entries(IDS).filter(([, v]) => typeof v === 'string' && v.startsWith('TBD'));
 
 const GRAPHQL = `query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) {
   issues(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { pageInfo { hasNextPage } nodes { number title body state closedAt labels(first: 10) { nodes { name } } parent { number } } }
@@ -55,18 +57,19 @@ return JSON.parse(c.projects_json).map(p => ({ json: { slug: p.slug, title: p.ti
       source: 'database', workflowId: { __rl: true, value: IDS.sub, mode: 'id' },
       workflowInputs: { mappingMode: 'defineBelow', value: Object.fromEntries(['slug', 'title', 'repo', 'vision', 'dry_run'].map(f => [f, E('$json.' + f)])), matchingColumns: [],
         schema: ['slug', 'title', 'repo', 'vision', 'dry_run'].map(id => ({ id, displayName: id, required: false, defaultMatch: false, display: true, canBeUsedToMatch: true, type: id === 'dry_run' ? 'boolean' : 'string', removed: false })), attemptToConvertTypes: false, convertFieldsToString: false },
-      mode: 'once', options: { waitForSubWorkflow: true } }),
+      mode: 'each', options: { waitForSubWorkflow: true } }),   // one SUB run per project; a failure stops the later ones and the Error Alert fires (95.14: no continue-on-fail)
   ];
   const links = [['Every 15 minutes', 'Config'], ['GET roadmap', 'Config'], ['Config', 'Web request?'], ['Web request?', 'Check key', 0], ['Web request?', 'Kill switch?', 1],
     ['Check key', 'Key ok?'], ['Key ok?', 'Get page', 0], ['Key ok?', 'Respond 404', 1], ['Get page', 'Respond page'],
     ['Kill switch?', 'One item per project', 1], ['One item per project', 'Call SQ Roadmap 11 Build Page']];
   const sections = [
     S('WHEN IT RUNS', 'Two ways in. A timer every 15 minutes builds the pages. A GET link serves a page to the owner.', 'Nothing. The link looks like /webhook/roadmap?s=<project>&k=<key>.', 4, ['Every 15 minutes', 'GET roadmap']),
-    S('SETTINGS', 'Holds every setting in one place. Tells a page request from a timer run.', 'Config keys: kill, dry_run, projects_json.', 3, ['Config', 'Web request?']),
+    S('SETTINGS', 'Holds every setting in one place. Tells a page request from a timer run.', 'Config keys: kill, dry_run, projects_json. Kill stops the builds only. The link keeps answering with the last saved page, because serving only reads.', 3, ['Config', 'Web request?']),
     S('SERVE THE PAGE', 'Checks the key by its hash. A right key gets the saved page. A wrong key gets 404.', 'Data Table roadmap_pages (read). Query fields s and k.', 6, ['Check key', 'Key ok?', 'Get page', 'Respond page', 'Respond 404']),
     S('BUILD THE PAGES', 'Stops when the kill switch is on. Otherwise asks the build workflow for one page per project.', 'Config keys: kill, dry_run, projects_json. Workflow SQ Roadmap 11 Build Page.', 5, ['Kill switch?', 'One item per project', 'Call SQ Roadmap 11 Build Page']),
   ];
-  return finish('01', 'SQ Roadmap 01', nodes, links, sections, {});
+  // A page request carries the key in its query. Do not keep successful runs: the key and the page must not sit in n8n's history (reviewer, PR #48).
+  return finish('01', 'SQ Roadmap 01', nodes, links, sections, { saveDataSuccessExecution: 'none', saveManualExecutions: false });
 }
 
 // ---- SUB: SQ Roadmap 11 Build Page ----
@@ -79,8 +82,8 @@ function buildSub() {
       sendHeaders: true, headerParameters: { parameters: [{ name: 'User-Agent', value: 'sq-roadmap' }] },
       sendBody: true, specifyBody: 'json', jsonBody: E(`JSON.stringify({ query: ${JSON.stringify(GRAPHQL)}, variables: { owner: $json.repo.split('/')[0], name: $json.repo.split('/')[1] } })`), options: {} },
       { credentials: { httpHeaderAuth: { id: IDS.credential, name: 'SQ Roadmap GitHub read-only' } }, retryOnFail: true, maxTries: 2, waitBetweenTries: 5000 }),
-    code('Render page', bundle(RENDER, `const starts = $('Start').all(), now = new Date();
-return $input.all().map((it, i) => { const p = starts[i].json;
+    code('Render page', bundle(RENDER, `const p = $('Start').first().json, now = new Date();   // one project per run (the MAIN calls with mode each)
+return $input.all().map(it => {
   return { json: { slug: p.slug, dry_run: p.dry_run, updated_at: now.toISOString(), html: page(it.json, { title: p.title, vision: p.vision }, now) } }; });`)),
     ifBool('Dry run?', E('$json.dry_run')),
     mk('Save page', 'n8n-nodes-base.dataTable', 1.1, { operation: 'upsert', dataTableId: table(), matchType: 'allConditions', filters: { conditions: bySlug },
@@ -97,9 +100,10 @@ return $input.all().map((it, i) => { const p = starts[i].json;
 }
 
 if (require.main === module) {
+  if (PLACEHOLDERS.length && !process.argv.includes('--draft')) { console.error('ids.json still has placeholder ids (' + PLACEHOLDERS.map(p => p[0]).join(', ') + '). Fill them in after the n8n setup, or pass --draft to write a draft that must not be deployed.'); process.exit(1); }
   if (process.argv[2] === '--hash') { console.log(sha256hex(process.argv[3] || '')); process.exit(0); }
   const dir = path.join(__dirname, 'workflows');
   for (const [file, b] of [['SQ_Roadmap_01.json', buildMain()], ['SQ_Roadmap_11.json', buildSub()]]) fs.writeFileSync(path.join(dir, file), JSON.stringify(b.wf, null, 2) + '\n');
   console.log('wrote roadmap/workflows/SQ_Roadmap_01.json and SQ_Roadmap_11.json');
 }
-module.exports = { buildMain, buildSub, projects, GRAPHQL };
+module.exports = { buildMain, buildSub, projects, GRAPHQL, PLACEHOLDERS };

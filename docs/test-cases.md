@@ -144,6 +144,8 @@ Scenario: the builder writes both workflows the same way every time
   Then every step has one sticky-note box, the flow runs left to right and no link crosses a box
   And no token or key is inside a workflow file
   And the SUB stops at the dry-run check before it saves
+  And the MAIN keeps no successful run (the key and the page stay out of the n8n history), and calls the SUB once per project
+  And build.js refuses to write while ids.json has TBD ids, unless --draft
   And the files in roadmap/workflows/ equal a fresh build
   And CI runs these tests
 ```

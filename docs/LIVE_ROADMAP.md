@@ -27,10 +27,14 @@ and sees where the project stands. Nobody edits it by hand.
   The key is a secret in `~/Desktop/Secrets/shipquick-roadmap.env`. The repo holds only its SHA-256 (`roadmap/projects.json`),
   so no key sits in a workflow file. A wrong or missing key returns 404. To rotate a key: make a new one, put its hash in
   `projects.json`, build, deploy, send the new link.
+- The link works like a password. The key also shows in browser history and in proxy logs, so share it only with people you trust, and rotate it if it leaks.
+  The MAIN keeps no successful run (`saveDataSuccessExecution: none`), so the key and the page do not stay in the n8n history either. Failed runs are still saved.
+- The Kill switch stops the builds only. The link keeps answering with the last saved page, because serving only reads.
 - The page lists the titles of the repo's issues. A private repo's titles are on the page, so the key is the only lock:
   share the link only with people who may read those titles.
 - The GitHub token is read-only (issues, pull requests, metadata). It lives only as the n8n credential
   `SQ Roadmap GitHub read-only` (HTTP header auth: `Authorization: Bearer <token>`).
+- Issues must close when their change is merged (`Closes #n` in the change, or `scripts/close_linked_issues.py` after a merge into dev). The page asks GitHub for open pull requests only, so a story whose change is merged but whose issue is still open goes back to To do.
 - A child project joins by adding one row to `roadmap/projects.json` (slug, title, repo, vision line, key hash), building,
   deploying, and putting the link in its README. The token must be able to read that repo.
 - Limit: one GitHub page, the newest 100 issues. The page says so when a project passes it (`render.js`, `MAX_NODES`).
@@ -43,7 +47,7 @@ and sees where the project stands. Nobody edits it by hand.
 
 ### Deploy (needs the owner's yes: activation, new folder, token)
 1. Create the n8n folder `Roadmaps`, the Data Table `roadmap_pages` (columns `slug`, `html`, `updated_at`, all text) and the credential.
-2. Put the ids in `roadmap/ids.json`, run `node roadmap/build.js`, create SUB then MAIN with the API (SUB first, rulebook 95.16).
+2. Put the ids in `roadmap/ids.json`, run `node roadmap/build.js` (it refuses while an id still starts with `TBD`; `--draft` is only for the committed draft files), create SUB then MAIN with the API (SUB first, rulebook 95.16). The MAIN calls the SUB once per project (`mode: each`): a failing project stops the later ones and the Error Alert fires.
 3. Dry run (Config `dry_run` is true): read the execution node by node. Then set `dry_run` false, run once, open the link.
 4. Activate the MAIN. Look at both canvases in the editor (fit view).
 
