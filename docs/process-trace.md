@@ -102,3 +102,5 @@ A new row writes `-` in the `#` column (the order is the file order, so rows add
 | - | reviewer (job-search-qa) | Reviewed PR #73 inline: 16 threads, changes requested (the gate must use the same Closes rule as CI) | PR #73 | reviewed |
 | - | coder (job-search-dev) | Fix commit for PR #73: check_closes.py shares the LINK regex, the gate calls it with title and author, so Dependabot, release: and chore: PRs can merge in Auto. Red first (9 tests) | PR #73 | none |
 | - | coder (job-search-dev) | Story #68 (lane B, own worktree): radar (copier is the closest, kept as the fallback), red tests first (9 failed), then adopt.sh, docs, and the mode.sh stderr nit from the reviewer. Mode is auto (checked with mode.sh get) | PR for #68 | none |
+| - | reviewer (job-search-qa) | PR #75 approved with 3 open threads (single-quoted CI name, a /shipquick-mode line, the BASE note) | PR #75 | reviewed |
+| - | coder (job-search-dev) | Fixed the 3 threads on PR #75: either quote kind in the CI name, the /shipquick-mode line in mode.md, the BASE=main note. Red first (4 tests) | PR #75 | none |

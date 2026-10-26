@@ -44,6 +44,7 @@ It copies or updates `.github/workflows/roadmap-call.yml` (pinned to that commit
 2. Commit the files and merge them into the default branch (scheduled and issue runs only start from there). Open `ROADMAP.md` on the `roadmap` branch,
    and put that link in the README.
 To move to a newer release: update the submodule, run the command again with the new `--ref`.
+The ShipQuick checks compare with `origin/dev`. A project whose default branch is `main` runs them as `BASE=main bash knowledge/shipquick_latest/scripts/check_local.sh`; the base checks are skipped otherwise.
 
 ### Triggers
 Issues (opened, edited, closed, reopened, labeled), a finished CI run (it runs on every pull request push, so Doing and Review stay current), a daily
