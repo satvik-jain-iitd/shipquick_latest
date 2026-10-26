@@ -2,8 +2,9 @@
 # The only way an agent merges a pull request (story #67, docs/MODES.md).
 # It refuses, with exit 1 and `refused: <rule>`, unless all of this holds:
 #   the mode is auto; the PR is open, not a draft, and has no conflicts; satvik-jain-iitd approved the latest commit;
-#   no review thread is unresolved; every check is SUCCESS (SKIPPED and NEUTRAL count as passed, as on GitHub); the body has `Closes #n`.
-# Then it merges with a merge commit, using the review account's own token (never switch the active gh account). Needs git, gh and jq.
+#   no review thread is unresolved; every check is SUCCESS (SKIPPED and NEUTRAL count as passed, as on GitHub); the body has `Closes #n` by the same rule as CI (scripts/check_closes.py: release:, chore: and Dependabot pull requests are exempt).
+# Then it merges with a merge commit, using the review account's own token (never switch the active gh account), and closes the story issues
+# the PR links (`Closes #n`) with scripts/close_linked_issues.py, because GitHub closes them only for a merge into the default branch. Needs git, gh, jq and python3.
 # usage: review_merge.sh <pr-number> [owner/repo]
 set -u
 REVIEWER=satvik-jain-iitd
@@ -16,7 +17,7 @@ mode=$("$HERE/mode.sh" get 2>/dev/null) || refuse "mode is not set (ask the owne
 [ "$mode" = auto ] || refuse "mode is $mode (only auto merges)"
 
 repo="${2:-$(gh repo view --json nameWithOwner --jq .nameWithOwner)}"
-json=$(gh pr view "$pr" -R "$repo" --json state,isDraft,mergeable,headRefOid,body,reviews,statusCheckRollup) || refuse "cannot read pull request $pr"
+json=$(gh pr view "$pr" -R "$repo" --json state,isDraft,mergeable,headRefOid,title,author,body,reviews,statusCheckRollup) || refuse "cannot read pull request $pr"
 field() { jq -r "$1" <<<"$json"; }
 
 { [ "$(field .state)" = OPEN ] && [ "$(field .isDraft)" = false ]; } || refuse "pull request is not open, or is a draft"
@@ -35,8 +36,10 @@ open=$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResol
 bad=$(jq -r '.statusCheckRollup[] | select(((.conclusion // .state // "") | ascii_upcase) as $c | $c != "SUCCESS" and $c != "SKIPPED" and $c != "NEUTRAL") | (.name // .context)' <<<"$json" | head -1)
 [ -z "$bad" ] || refuse "check $bad is not SUCCESS"
 
-field .body | grep -Eiq '(^|[^[:alnum:]])closes #[0-9]+' || refuse 'no `Closes #n` in the body'
+why=$(field .body | python3 "$HERE/check_closes.py" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
 
 token=$(gh auth token --user "$REVIEWER") || refuse "no token for $REVIEWER on this machine"
 GH_TOKEN="$token" gh pr merge "$pr" -R "$repo" --merge || { echo "merge failed" >&2; exit 1; }
 echo "merged #$pr in $repo"
+# The merge cannot be undone, so a failure here is not a refusal: say what to run, and exit 4.
+GH_TOKEN="$token" GH_REPO="$repo" python3 "$HERE/close_linked_issues.py" "$pr" --yes || { echo "merged #$pr, but closing its issues failed: run  GH_REPO=$repo python3 scripts/close_linked_issues.py $pr --yes" >&2; exit 4; }

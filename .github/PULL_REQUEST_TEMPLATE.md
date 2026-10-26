@@ -1,6 +1,6 @@
 ## Issue
 
-- Closes #(required, write `Closes #N`; GitHub auto-closes only when the base is the default branch)
+- Closes #(required, write `Closes #N`, CI fails without it; release:/chore: and Dependabot pull requests are exempt; GitHub auto-closes only when the base is the default branch)
 
 ## What Changed
 
