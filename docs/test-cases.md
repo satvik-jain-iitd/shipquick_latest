@@ -229,3 +229,14 @@ Scenario: scripts/adopt.sh copies or updates five things and never harms the chi
 ```
 Tests: `tests/test_adopt.py` (`test_s18_*`). Also (story #68): `mode.sh get` with no mode prints one clear line, with no shell error about the missing file.
 
+## Story #87: the merge method
+```gherkin
+Scenario: the merge gate picks a merge method
+  Given a stub gh and a pull request that passes every rule in Auto mode
+  When the base branch requires linear history and no flag is given
+  Then it runs gh pr merge --squash
+  And with --method rebase it runs --rebase whatever the setting
+  And with no flag and no such setting it runs --merge as before
+  And with --method fast it exits 2 and merges nothing
+```
+Tests: `tests/test_review_merge.py` (`test_q0_*`).
