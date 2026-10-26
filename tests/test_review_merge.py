@@ -20,7 +20,7 @@ case "$1" in
         close) [ -n "${STUB_FAIL_CLOSE:-}" ] && exit 1; echo "GH_TOKEN=$GH_TOKEN GH_REPO=${GH_REPO:-} $*" >> "$STUB_DIR/issue.log"; exit 0 ;;
       esac ;;
   pr) case "$2" in
-        view) case "$*" in *state,baseRefName,body*) echo "{\"state\":\"MERGED\",\"baseRefName\":\"dev\",\"body\":$(jq -c .body "$STUB_DIR/pr.json")}"; exit 0 ;; esac
+        view) case "$*" in *state,baseRefName,body*) jq -c '{state: "MERGED", baseRefName: "dev", body: .body}' "$STUB_DIR/pr.json"; exit 0 ;; esac
               cat "$STUB_DIR/pr.json"; exit 0 ;;
         merge) echo "GH_TOKEN=$GH_TOKEN $*" >> "$STUB_DIR/merge.log"; exit 0 ;;
       esac ;;
