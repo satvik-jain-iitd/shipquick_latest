@@ -3,6 +3,7 @@
 Read first: `docs/PLAN.md` (the plan and case study) and `docs/process-trace.md`.
 
 Standing rules, every session:
+0. **Mode** (owner, 26 Oct 2026). At session start run `scripts/mode.sh get` (in a child project: `knowledge/shipquick_latest/scripts/mode.sh get`). If it exits 3 the mode is not set: ask the owner (Manual, Semi or Auto), then set it with `/mode <word>`. In Auto an agent merges only with `scripts/review_merge.sh <pr>`. Details: `docs/MODES.md`.
 1. First action: read `docs/process-trace.md`. Last action before "done": append this session's steps to it (one row each: date, step, actor, what, artifact, owner contact asked / volunteered / reviewed). A new row writes `-` in the `#` column, so two branches that add rows at once never collide on a number; old rows keep theirs.
 2. Every owner message that changes direction gets bullets in `docs/discussions/<START_DATE>.md`.
 3. Every idea the owner states is logged at once with `~/Desktop/SecondBrain/tools/idea.py` and one line in `docs/ideas.md`.

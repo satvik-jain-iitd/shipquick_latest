@@ -166,3 +166,27 @@ Tests: `tests/test_parallel_lanes.py` (`test_s14_*`).
 
 
 S0.14 also covers (story #64): a new row in `docs/process-trace.md` writes `-` in the `#` column (rule 1), two branches that each add a `-` row merge with no conflict, and the first union merge trick (`.git/info/attributes`) is in the lane template and in how a child project inherits this. Tests: `tests/test_parallel_lanes.py`.
+
+**S0.15 The owner picks how much the agents do alone.**
+```gherkin
+Scenario: one word per project says Manual, Semi or Auto
+  Given scripts/mode.sh and .claude/commands/mode.md
+  When the mode is not set, mode.sh get exits 3 and says to ask the owner
+  Then set then get gives the same word, a wrong word is refused, and every git worktree shares the word
+  And git does not track it, and rule 0 in CLAUDE.md asks for it at session start
+  And docs/MODES.md says who reviews, who merges and what still stops in each mode
+```
+Tests: `tests/test_mode.py` (`test_s15_*`).
+
+**S0.16 Only a coded gate merges, and only in Auto.**
+```gherkin
+Scenario: scripts/review_merge.sh refuses unless every rule holds
+  Given a stub gh and a pull request that passes every rule
+  When the mode is semi, manual or not set, or the PR is a draft, closed or has conflicts
+  Or the approval is by someone else, of an older commit, or cancelled by a later request for changes
+  Or one review thread is unresolved, a check fails or is pending, no check ran, or the body has no "Closes #n"
+  Then it exits 1 with "refused: <rule>" and runs no merge
+  And when every rule holds it runs gh pr merge --merge once, with the review account's token, and skipped or neutral checks do not block
+```
+Tests: `tests/test_review_merge.py` (`test_s16_*`).
+
