@@ -91,3 +91,12 @@ test('S0.11 page() = GraphQL data + project to html in one call', () => {
   const resp = { data: { repository: { issues: { pageInfo: { hasNextPage: false }, nodes: [] }, pullRequests: { nodes: [] } } } };
   assert.ok(page(resp, PROJECT, NOW).includes('Hot meals at your door.'));
 });
+
+test('S0.11 plain words: "CI checks" becomes "checks", not "the checks checks"', () => {
+  const { plain } = require('./render.js');
+  assert.equal(plain('The CI checks run on every PR.'), 'The checks run on every change.');
+  assert.equal(plain('CI checks'), 'checks');
+  assert.equal(plain('CI is green'), 'the checks is green');   // a lone CI keeps the old swap
+  assert.equal(plain('CI/CD and PRs'), 'build and deploy and change');
+  assert.ok(!/checks checks/.test(plain('Add CI checks and CI checks')));
+});
