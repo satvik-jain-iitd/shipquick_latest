@@ -1,4 +1,4 @@
-"""S0.15 (story #69): someone who clones ShipQuick and follows the README gets a project that matches the README."""
+"""S0.19 (story #69): someone who clones ShipQuick and follows the README gets a project that matches the README."""
 import re
 import subprocess
 import sys
@@ -22,23 +22,23 @@ def tree_paths():
     return paths
 
 
-def test_s15_every_path_in_the_readme_tree_exists():
+def test_s19_every_path_in_the_readme_tree_exists():
     paths = tree_paths()
     assert len(paths) > 30, paths   # the parser really read the tree
     missing = [p for p in paths if not (ROOT / p).exists()]
     assert not missing, missing
 
 
-def test_s15_every_folder_in_the_structure_guide_exists():
+def test_s19_every_folder_in_the_structure_guide_exists():
     guide = README.split("## Folder Structure Guide", 1)[1].split("\n## ", 1)[0]
     folders = re.findall(r"^\| `([^`]+)/` \|", guide, re.M)
     assert folders, guide
     assert not [f for f in folders if not (ROOT / f).is_dir()]
 
 
-def test_s15_the_quick_start_runs_the_local_checks_and_sets_up_the_roadmap_and_the_mode():
+def test_s19_the_quick_start_runs_the_local_checks_and_sets_up_the_roadmap_and_the_mode():
     quick = README.split("## Quick Start", 1)[1].split("\n## ", 1)[0]
-    for needle in ("pre-commit install", "scripts/check_local.sh", "roadmap.json", "/shipquick-mode"):
+    for needle in ("pre-commit install", "scripts/check_local.sh", "roadmap.json", "scripts/mode.sh set"):
         assert needle in quick, needle
     custom = README.split("## How to Customize for Your Brand", 1)[1].split("\n## ", 1)[0]
     assert "scripts/check_placeholders.py" in custom
@@ -48,7 +48,7 @@ def run_placeholders(path):
     return subprocess.run([sys.executable, str(ROOT / "scripts" / "check_placeholders.py"), str(path)], capture_output=True, text=True)
 
 
-def test_s15_the_placeholder_check_lists_what_is_left_and_passes_when_filled(tmp_path):
+def test_s19_the_placeholder_check_lists_what_is_left_and_passes_when_filled(tmp_path):
     f = tmp_path / "design-tokens.md"
     f.write_text("Primary: <PRIMARY_COLOR>\nFont: <PRIMARY_FONT>\nA tag <b> and a link <https://x.y> are fine.\n", encoding="utf-8")
     r = run_placeholders(f)
@@ -57,7 +57,7 @@ def test_s15_the_placeholder_check_lists_what_is_left_and_passes_when_filled(tmp
     assert run_placeholders(f).returncode == 0
 
 
-def test_s15_a_fresh_clone_passes_the_local_checks(tmp_path):
+def test_s19_a_fresh_clone_passes_the_local_checks(tmp_path):
     clone = tmp_path / "my-app"
     subprocess.run(["git", "clone", "-q", str(ROOT), str(clone)], check=True)
     r = subprocess.run(["bash", "scripts/check_local.sh", "sizes", "markers", "md-blocks"], cwd=clone, capture_output=True, text=True)
