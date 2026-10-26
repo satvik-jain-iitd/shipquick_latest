@@ -124,30 +124,28 @@ Scenario: GitHub issues and pull requests become one plain-words page
 ```
 Tests: `roadmap/render.test.js` (`S0.11`). Run: `node --test roadmap/*.test.js`.
 
-**S0.12 Only the right key opens a page.**
+**S0.12 The roadmap page is plain Markdown from GitHub data.**
 ```gherkin
-Scenario: the link works with the right key and gives 404 otherwise
-  Given projects.json holds the SHA-256 of each key, never the key
-  When a GET reaches /webhook/roadmap with s=<slug> and k=<key>
-  Then the right key returns the saved page
-  And a wrong key, a missing key, an unknown project or a key over 200 characters returns 404
-  And the timer path stops at the kill switch before any build
-  And Config ships with dry_run true and kill false
+Scenario: ROADMAP.md says where the project stands
+  Given a project's issues and open pull requests, and its roadmap.json (title, vision)
+  When roadmap/roadmap.js writes the page
+  Then it has Vision, Delivered (folded shut), Now, Next and Board in that order, with a link to every issue
+  And text from GitHub cannot add a link, a tag or a table cell
+  And the page has no clock, so an unchanged project writes the same file
+  And a GitHub error or a roadmap.json without title or vision stops the run and writes nothing
+  And a project with more than 100 issues says so
 ```
-Tests: `roadmap/build.test.js` (`S0.12`), `roadmap/render.test.js` (`sha256hex`).
+Tests: `roadmap/roadmap.test.js` (`S0.12`).
 
-**S0.13 The two workflows are generated, laid out and safe.**
+**S0.13 The roadmap runs on GitHub Actions alone.**
 ```gherkin
-Scenario: the builder writes both workflows the same way every time
-  Given roadmap/build.js
-  When it builds SQ Roadmap 01 and SQ Roadmap 11 Build Page
-  Then every step has one sticky-note box, the flow runs left to right and no link crosses a box
-  And no token or key is inside a workflow file
-  And the SUB stops at the dry-run check before it saves
-  And the MAIN keeps no successful run (the key and the page stay out of the n8n history), and calls the SUB once per project
-  And build.js refuses to write while ids.json has TBD ids, unless --draft
-  And the files in roadmap/workflows/ equal a fresh build
-  And CI runs these tests
+Scenario: a reusable workflow keeps ROADMAP.md on a roadmap branch
+  Given .github/workflows/roadmap.yml (workflow_call) and a calling file in the project
+  When an issue, a pull request, a finished CI run, the daily timer or a manual run fires
+  Then the job reads only its own repo with the built-in token (contents write, issues, pull requests, checks, statuses read)
+  And ROADMAP.md is saved on the branch roadmap, and an unchanged page makes no commit
+  And settings come from roadmap.json in the project, and ShipQuick holds no project names
+  And no n8n code is left in roadmap/ or in the docs
+  And CI runs the node tests
 ```
-Tests: `roadmap/build.test.js` (`S0.13`), `tests/test_ci_must_have.py` (`test_s13_*`).
-
+Tests: `tests/test_roadmap_workflow.py` (`test_s13_*`), `tests/test_ci_must_have.py` (`test_s13_ci_runs_the_roadmap_node_tests`).

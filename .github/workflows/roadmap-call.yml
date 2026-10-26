@@ -1,0 +1,31 @@
+# ShipQuick's own roadmap page: the first project that calls the reusable workflow (story #49, dogfood).
+# A child project copies this file, changes `uses:` to `satvik-jain-iitd/shipquick_latest/.github/workflows/roadmap.yml@<SHA>`
+# and `shipquick_ref` to that same SHA. See docs/LIVE_ROADMAP.md.
+name: Roadmap page
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  pull_request:
+    types: [opened, reopened, closed, ready_for_review, converted_to_draft]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  roadmap:
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: read
+      checks: read
+      statuses: read
+    uses: ./.github/workflows/roadmap.yml
+    with:
+      shipquick_ref: ${{ github.sha }}
