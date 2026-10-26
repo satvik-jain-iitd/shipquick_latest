@@ -110,7 +110,8 @@ def test_s18_the_ci_name_is_read_with_either_kind_of_quote_or_none(child, line):
     (child / ".github" / "workflows" / "ci.yml").write_text(line + "\non:\n  push:\n", encoding="utf-8")
     adopt(child)
     call = (child / ".github" / "workflows" / "roadmap-call.yml").read_text(encoding="utf-8")
-    assert f'workflows: ["{line.split(":", 1)[1].strip().strip("\"\'")}"]' in call
+    name = line.split(":", 1)[1].strip().strip("\"'")   # computed first: a backslash inside an f-string expression is a SyntaxError before Python 3.12
+    assert f'workflows: ["{name}"]' in call
 
 
 def test_s18_the_printed_next_step_says_to_run_the_checks_with_the_childs_base_branch(child):
