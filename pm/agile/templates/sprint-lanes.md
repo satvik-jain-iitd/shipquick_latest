@@ -33,4 +33,5 @@ The append-only logs (`docs/process-trace.md`, `docs/LEARNINGS.md`, `docs/ideas.
 Make a worktree: `git worktree add ../<project>-dev2 -b feat/<issue>-<slug> origin/dev`.
 
 ## Every day
+GitHub's merge button ignores `merge=union`, so do this with Git on the Mac, not with "Update branch".
 Each coder merges `dev` into every open branch of its lane (`git fetch && git merge origin/dev`), fixes any conflict that day, and pushes.
