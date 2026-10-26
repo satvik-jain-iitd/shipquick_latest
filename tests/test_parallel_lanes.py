@@ -14,7 +14,7 @@ def git(cwd, *args, check=True):
     return subprocess.run(["git", *args], cwd=cwd, check=check, capture_output=True, text=True)
 
 
-def two_branches(tmp_path, log, with_attributes):
+def two_branches(tmp_path, log, with_attributes, number="2"):
     """A repo with a table log; branch a and branch b each append one row at the end. Returns the repo after `git merge b` on a."""
     git(tmp_path, "init", "-q", "-b", "dev")
     git(tmp_path, "config", "user.email", "t@example.com")
@@ -29,7 +29,7 @@ def two_branches(tmp_path, log, with_attributes):
     for name in ("a", "b"):
         git(tmp_path, "checkout", "-q", "-b", name, "dev")
         with path.open("a", encoding="utf-8") as f:
-            f.write(f"| 2 | coder-{name} | story {name} |\n")
+            f.write(f"| {number} | coder-{name} | story {name} |\n")
         git(tmp_path, "commit", "-qam", f"docs: row {name}")
     git(tmp_path, "checkout", "-q", "a")
     return git(tmp_path, "merge", "--no-edit", "b", check=False)
@@ -90,3 +90,24 @@ def test_s14_the_release_guide_uses_a_release_branch_and_a_back_merge():
 def test_s14_the_roster_has_one_reviewer_and_up_to_three_coders_each_with_a_worktree():
     text = (ROOT / "docs" / "TEAM_ROSTER.md").read_text(encoding="utf-8")
     assert "up to 3 coder" in text and "worktree" in text
+
+
+def test_s14_two_branches_that_each_add_a_dash_row_merge_with_no_conflict_and_keep_both_rows(tmp_path):
+    """Rows without a number (a dash in the # column) cannot collide on a number; both rows stay."""
+    result = two_branches(tmp_path, "docs/process-trace.md", with_attributes=True, number="-")
+    assert result.returncode == 0, result.stdout + result.stderr
+    text = (tmp_path / "docs/process-trace.md").read_text(encoding="utf-8")
+    assert text.count("| - |") == 2 and "<<<<<<<" not in text
+
+
+def test_s14_rule_1_and_the_trace_header_say_a_new_row_writes_a_dash_in_the_number_column():
+    rule1 = re.search(r"^1\. (.+)$", CLAUDE, re.M).group(1)
+    assert "`-` in the `#` column" in rule1
+    header = (ROOT / "docs" / "process-trace.md").read_text(encoding="utf-8").split("| # |", 1)[0]
+    assert "`-` in the `#` column" in header
+
+
+def test_s14_the_first_merge_trick_is_in_the_lane_template_and_the_child_steps():
+    for path in ("pm/agile/templates/sprint-lanes.md", "docs/TEAM_PROTOCOL.md"):
+        text = (ROOT / path).read_text(encoding="utf-8")
+        assert ".git/info/attributes" in text, path

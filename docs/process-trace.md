@@ -3,6 +3,7 @@
 One row per step, from the first message of the project. Owner contact: asked / volunteered / reviewed / none.
 
 Rule: read this first in every session, append before saying done.
+A new row writes `-` in the `#` column (the order is the file order, so rows added on two branches never collide on a number). Rows 1 to 85 keep their numbers.
 
 | # | Actor | Step | Artifact | Owner contact |
 |---|---|---|---|---|
@@ -92,3 +93,4 @@ Rule: read this first in every session, append before saying done.
 | 84 | coder (job-search-dev) | Bug #62 found by the reviewer on the job-search roadmap: "CI checks" became "the checks checks". Red test first, then the swap order in plain() | PR for #62 | none |
 | 84 | coder (job-search-dev) | Story #59 (owner: build stories in parallel): radar run (git union merge, no tool), red tests first (two branches add a row), then .gitattributes, rule 23, lane template, release branch guide, roster | PR for #59 | asked |
 | 85 | coder (job-search-dev) | Fix commit for PR #61: ideas.md off the union list, release guide does not depend on the merge method, rule 23 asks for a last dev merge before the merge. Red first (3 tests) | PR #61 | none |
+| - | coder (job-search-dev) | Story #64: new rows carry `-`, header note, bootstrap step in the lane template and the child steps. Red first (2 tests). First row without a number | PR for #64 | none |

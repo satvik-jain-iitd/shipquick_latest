@@ -164,3 +164,5 @@ Scenario: parallel lanes, append-only logs and a release branch
 ```
 Tests: `tests/test_parallel_lanes.py` (`test_s14_*`).
 
+
+S0.14 also covers (story #64): a new row in `docs/process-trace.md` writes `-` in the `#` column (rule 1), two branches that each add a `-` row merge with no conflict, and the first union merge trick (`.git/info/attributes`) is in the lane template and in how a child project inherits this. Tests: `tests/test_parallel_lanes.py`.

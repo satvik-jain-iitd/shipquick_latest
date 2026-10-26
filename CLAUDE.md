@@ -3,7 +3,7 @@
 Read first: `docs/PLAN.md` (the plan and case study) and `docs/process-trace.md`.
 
 Standing rules, every session:
-1. First action: read `docs/process-trace.md`. Last action before "done": append this session's steps to it (one row each: date, step, actor, what, artifact, owner contact asked / volunteered / reviewed).
+1. First action: read `docs/process-trace.md`. Last action before "done": append this session's steps to it (one row each: date, step, actor, what, artifact, owner contact asked / volunteered / reviewed). A new row writes `-` in the `#` column, so two branches that add rows at once never collide on a number; old rows keep theirs.
 2. Every owner message that changes direction gets bullets in `docs/discussions/<START_DATE>.md`.
 3. Every idea the owner states is logged at once with `~/Desktop/SecondBrain/tools/idea.py` and one line in `docs/ideas.md`.
 4. Work only from GitHub issues. Branch `feat/<issue>-<slug>` from `dev`. PR feat -> dev (self-review checklist, CI green). PR dev -> main at each demo increment; the owner merges main.
