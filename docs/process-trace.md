@@ -91,3 +91,4 @@ Rule: read this first in every session, append before saying done.
 | 83 | coder (job-search-dev) | Found in the review of release PR #52: workflow_run names `CI`, but ci.yml is `shipquick_latest CI`, so it never fires. Bug issue #53, red test first, then the fix | PR for #53 | none |
 | 84 | coder (job-search-dev) | Story #59 (owner: build stories in parallel): radar run (git union merge, no tool), red tests first (two branches add a row), then .gitattributes, rule 23, lane template, release branch guide, roster | PR for #59 | asked |
 | 900 | tmp | throwaway row 2 | none | none |
+| 900 | tmp | throwaway row 1 | none | none |
