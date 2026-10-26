@@ -39,7 +39,7 @@ def test_s13_settings_come_from_the_child_repo_and_shipquick_holds_no_child_name
 def test_s13_the_dogfood_caller_never_runs_pull_request_code_with_write_rights():
     on_block = CALL.split("\npermissions:", 1)[0]
     assert not re.search(r"^  pull_request(_target)?:", on_block, re.M), "a PR would run its own unreviewed roadmap.js with contents: write"
-    assert re.search(r"^  workflow_run:", on_block, re.M) and "workflows: [CI]" in on_block   # CI runs on every PR push, so Review still shows
+    assert re.search(r"^  workflow_run:", on_block, re.M)   # CI runs on every PR push, so Review still shows
     assert "default branch" in CALL.split("\nname:", 1)[0]   # the header says why the ref is reviewed code
 
 
@@ -63,3 +63,10 @@ def test_s13_the_n8n_code_is_gone():
         assert not (ROOT / "roadmap" / gone).exists(), gone
     text = (ROOT / "docs" / "LIVE_ROADMAP.md").read_text(encoding="utf-8").lower()
     assert "n8n" not in text.replace("no n8n", "").replace("without n8n", "")
+
+
+def test_s13_workflow_run_names_the_real_ci_workflow():
+    """workflow_run matches the `name:` of a workflow. A wrong name never fires and nothing says so (PR #52 review)."""
+    ci_name = re.search(r'^name: "?([^"\n]+)"?\s*$', (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"), re.M).group(1)
+    listed = re.search(r"^  workflow_run:\n    workflows: \[(.+)\]", CALL, re.M).group(1)
+    assert [w.strip().strip("\"'") for w in listed.split(",")] == [ci_name], (listed, ci_name)
