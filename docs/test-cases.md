@@ -83,6 +83,7 @@ Scenario: a workflow cannot write to the repo and cannot run moved code
   Then each has the top-level setting "permissions: contents: read"
   And every "uses:" is pinned to a 40-character commit SHA with its release tag in a comment
   And .github/dependabot.yml updates the "github-actions" ecosystem every week
+  And CI runs on a PR into any base branch, so the upper layers of a stack are checked too
 ```
 Tests: `tests/test_ci_must_have.py` (`test_s08_*`).
 

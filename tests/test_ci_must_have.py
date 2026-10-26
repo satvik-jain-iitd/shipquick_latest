@@ -159,3 +159,10 @@ def test_s10_this_repo_passes_its_own_marker_and_markdown_checks():
     for check in ("markers", "md-blocks"):
         code, out = run(ROOT, check)
         assert code == 0, out
+
+
+# ---- S0.8 (stacked PRs, rule 23): CI runs on a PR whatever its base branch is ----
+def test_s08_ci_runs_on_pull_requests_into_any_branch():
+    on_block = CI.split("\npermissions:", 1)[0]
+    assert re.search(r"^  pull_request:\s*$", on_block, re.M), "no pull_request trigger"
+    assert not re.search(r"^  pull_request:\n    branches:", on_block, re.M), "pull_request is limited to some base branches"
