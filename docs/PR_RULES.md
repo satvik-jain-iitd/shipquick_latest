@@ -40,7 +40,7 @@ Merge only when all six gates are true:
 3. Zero unresolved comments.
 4. Branch is up to date with the base branch.
 5. PR is not a Draft and has no `do-not-merge` or `WIP` label.
-6. The PR links its issue with `Closes #N`. CI checks it (`scripts/check_closes.py`, a step of the `team-block` job). `Fixes #N` and `Resolves #N` count too: the check uses the link rule of `scripts/close_linked_issues.py`, and `scripts/review_merge.sh` uses the same check, so the merge gate and CI never disagree. Release, sync and back-merge pull requests are exempt by title prefix (`release:` or `chore:`, also `chore(deps):`), and so is Dependabot (author `dependabot[bot]`). The roadmap counts a story as done only when its issue is closed. To run it by hand: `gh pr view <pr> --json body,title,author --jq .body | python3 scripts/check_closes.py --title "<title>" --author <login>`.
+6. The PR links its issue with `Closes #N`. CI checks it (`scripts/check_closes.py`, a step of the `team-block` job). `Fixes #N` and `Resolves #N` count too: the check uses the link rule of `scripts/close_linked_issues.py`, and `scripts/review_merge.sh` uses the same check, so the merge gate and CI never disagree. Release, sync and back-merge pull requests are exempt by title prefix (`release:` or `chore:`, also `chore(deps):`), and so is Dependabot (author `dependabot[bot]`, or `app/dependabot` as `gh` prints it). The roadmap counts a story as done only when its issue is closed. To run it by hand: `gh pr view <pr> --json body,title,author --jq .body | python3 scripts/check_closes.py --title "<title>" --author <login>`.
 
 Formula:
 

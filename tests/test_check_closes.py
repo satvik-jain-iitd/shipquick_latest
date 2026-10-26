@@ -45,8 +45,9 @@ def test_s17_a_title_that_only_mentions_the_word_is_not_exempt(title):
     assert run("no link here\n", title=title).returncode == 1
 
 
-def test_s17_dependabot_is_exempt_whatever_its_title_says():
-    assert run("bumps x\n", title="Bump x from 1 to 2", author="dependabot[bot]").returncode == 0
+def test_s17_dependabot_is_exempt_whatever_its_title_says_under_either_login():
+    assert run("bumps x\n", title="Bump x from 1 to 2", author="dependabot[bot]").returncode == 0   # the Actions event says dependabot[bot]
+    assert run("bumps x\n", title="Bump x from 1 to 2", author="app/dependabot").returncode == 0   # `gh pr view --json author` says app/dependabot
     assert run("bumps x\n", title="Bump x from 1 to 2", author="someone-else").returncode == 1
 
 

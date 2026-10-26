@@ -299,7 +299,7 @@ Then open a pull request to `dev`. Checks run automatically.
 ### Step 1: Set Your Brand Colors and Fonts
 
 1. Open `docs/design-tokens.md`
-2. Run `python3 scripts/check_placeholders.py`. It lists every placeholder in the file, such as `<PRIMARY_COLOR>`, `<PRIMARY_FONT>` and `<SPACING_1>`.
+2. Run `python3 scripts/check_placeholders.py`. It lists every placeholder in the file (and the stub vision line in `roadmap.json`, if you have one), such as `<PRIMARY_COLOR>`, `<PRIMARY_FONT>` and `<SPACING_1>`.
 3. Replace each one with your value, for example `#0066CC` for a color, `Roboto` for a font, or `8` for a spacing step.
 4. Run the check again. When it says "no placeholders left", you are done.
 
