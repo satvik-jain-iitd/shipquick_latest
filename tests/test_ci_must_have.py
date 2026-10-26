@@ -137,7 +137,8 @@ def test_s10_pr_over_fifty_files_fails_fifty_passes(repo):
 @pytest.mark.skipif(shutil.which("gitleaks") is None, reason="gitleaks is installed on the Mac; CI runs the secret-scan job instead")
 def test_s09_a_planted_secret_fails_and_a_clean_repo_passes(repo):
     assert run(repo, "secrets")[0] == 0
-    commit(repo, {"cfg.py": 'API_SECRET_KEY = "k9Zx3QpL7vB2nM8tR5wY1cD6hJ4aS0fG"\n'})
+    fake = "k9Zx3QpL7vB2" + "nM8tR5wY1cD6hJ4aS0fG"  # built at run time: the literal must not sit in this repo (the scan would flag it)
+    commit(repo, {"cfg.py": f'API_SECRET_KEY = "{fake}"\n'})
     code, out = run(repo, "secrets")
     assert code == 1 and "generic-api-key" in out
 

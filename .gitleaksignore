@@ -1,0 +1,4 @@
+# Fingerprints gitleaks must skip. One line each: commit:file:rule:line. Say why above it.
+# A fake key (random letters, never a real credential) that story #43's first commit kept in a test fixture.
+# The next commit builds it at run time, but the first commit stays in the history of this PR.
+4c9cb837db3a8205cdcb6717fad1d3467e5c266f:tests/test_ci_must_have.py:generic-api-key:140
