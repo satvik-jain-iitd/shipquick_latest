@@ -89,3 +89,5 @@ Rule: read this first in every session, append before saying done.
 | 81 | coder (job-search-dev) | Fix commit for PR #50: no pull_request trigger, -f, 5 minutes, docs. Red first (2 tests) | PR #50 | none |
 | 82 | reviewer (job-search-qa) | Owner chose v0.5.0, not v1.0.0 (RELEASE_GUIDE: a D increment is a minor bump). Release docs: changelog, demo note, PROGRESS, notes renamed; stale fork line removed | docs | asked |
 | 83 | coder (job-search-dev) | Found in the review of release PR #52: workflow_run names `CI`, but ci.yml is `shipquick_latest CI`, so it never fires. Bug issue #53, red test first, then the fix | PR for #53 | none |
+| 84 | coder (job-search-dev) | Story #59 (owner: build stories in parallel): radar run (git union merge, no tool), red tests first (two branches add a row), then .gitattributes, rule 23, lane template, release branch guide, roster | PR for #59 | asked |
+| 85 | coder (job-search-dev) | Fix commit for PR #61: ideas.md off the union list, release guide does not depend on the merge method, rule 23 asks for a last dev merge before the merge. Red first (3 tests) | PR #61 | none |

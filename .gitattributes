@@ -1,0 +1,8 @@
+# Append-only logs: two branches that each add rows at the end merge with no conflict (story #59, rule 23).
+# Git keeps the lines of both sides. A row is never edited after it is written, so nothing else can be lost.
+# GitHub's own merge ignores this (tested 26 Oct 2026: CONFLICTING on GitHub, clean with `git merge` on the Mac). So merge `dev` into your branch
+# with Git on the Mac once a day, and once more right before the merge if `dev` moved (rule 23).
+# Not listed on purpose: CHANGELOG.md (only the release PR edits it, and a union merge would hide a real conflict there) and
+# docs/ideas.md (its rows get status edits; two edits of one row would be kept twice with no conflict shown).
+docs/process-trace.md merge=union
+docs/LEARNINGS.md merge=union
