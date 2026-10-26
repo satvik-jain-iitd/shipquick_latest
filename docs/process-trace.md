@@ -70,3 +70,8 @@ Rule: read this first in every session, append before saying done.
 | 62 | reviewer (job-search-qa) | Reviewed and approved PR #40 as satvik-jain-iitd; owner merged | PR #40 | reviewed |
 | 63 | reviewer (job-search-qa) | Owner asked for v1.0.0: CI must-haves, later process rules, live roadmap on n8n. Plan approved; epic #41, stories #42 to #44 | issues #41 to #44 | asked |
 | 64 | reviewer (job-search-qa) | Docs for #42: CI research, rules 20 to 29, LIVE_ROADMAP.md, roster pair, ROADMAP v1.0.0, release notes, ideas rows | docs, CLAUDE.md | none |
+| 65 | coder (job-search-dev) | Read issue #43 and docs/research/ci-checks.md; radar run for secret scanning; adopted gitleaks 8.30.1 (full history scans clean, 38 commits) | docs/research/repo-radar.md | none |
+| 66 | coder (job-search-dev) | Branch ci/43-must-have from docs/42-release-plan; 17 failing tests first (S0.8 to S0.10) | tests/test_ci_must_have.py | none |
+| 67 | coder (job-search-dev) | Read-only tokens, SHA pins, Dependabot, secret-scan, dependency-review, anchored marker grep, scripts/check_local.sh, pre-commit hooks; 41 tests green | .github/, scripts/, .pre-commit-config.yaml | none |
+| 68 | coder (job-search-dev) | Opened PR #46 (base docs/42-release-plan). First run had no checks: the pull_request trigger skipped stacked bases; fixed with a test first. The scan then flagged our own fake test key; fixed at run time plus .gitleaksignore | PR #46 | none |
+| 69 | coder (job-search-dev) | CI green, 8 checks. Red proof in throwaway PR #47 (closed, branch deleted): planted secret and planted merge marker each failed once | PR #46 comment | none |
