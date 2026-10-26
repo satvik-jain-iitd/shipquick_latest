@@ -14,7 +14,7 @@ Method: `~/.claude/skills/web-research/SKILL.md`. Tiers: A primary, B big data f
 Opposite view: more checks are not more safety. A check that never fails for a real reason trains everyone to
 ignore red. Flaky checks cost real time. So every check below must protect this project, or it is removed.
 
-## The must-have set (ShipQuick v1.0.0)
+## The must-have set (ShipQuick v0.5.0)
 | # | Check | Protects against | Where |
 |---|---|---|---|
 | 1 | Tests run in CI | a change that breaks behaviour | `test` job, per project language |

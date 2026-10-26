@@ -1,4 +1,4 @@
-# Live roadmap (requirement, v1.0.0)
+# Live roadmap (requirement, v0.5.0)
 
 Every project has one live roadmap page from its first epic. The owner opens it at any time, on any device,
 and sees where the project stands. Nobody edits it by hand.
@@ -32,7 +32,6 @@ Owner decision, 26 Oct 2026: a kit user may have no n8n and no server, so the ro
 - Issues must close when their change is merged (`Closes #n` in the change, or `scripts/close_linked_issues.py` after a merge into dev). The page asks
   GitHub for open pull requests only, so a story whose change is merged but whose issue is still open goes back to To do.
 - Limit: one GitHub page, the newest 100 issues. The page says so when a project passes it.
-- Limit: a pull request from a fork has a read-only token, so its run cannot write the branch. It stays red on the fork only.
 
 ### A child project joins in three steps
 1. Add `roadmap.json` (title, vision) to the root of the project.

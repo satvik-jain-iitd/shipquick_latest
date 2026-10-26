@@ -10,13 +10,14 @@ What is delivered, what is now, what is next.
 | D1 | Architecture patterns, ADRs (now `backend/`) | Done |
 | D2 | Design system (M3), tokens | Done |
 | D3 | CI hardening, protection, hygiene tests | Done |
+| D4 | Bug tracking workflow + PM/agile layer | Done (v0.5.0) |
+| D5 | Demo showcase, and Process v2: CI must-haves, rules 20 to 30, live roadmap | Done (v0.5.0) |
 
 ## Now
 
 | Increment | What | Status |
 |---|---|---|
-| D4 | Bug tracking workflow + PM/agile layer | In progress |
-| D5 | Demo showcase (epics, stories, bugs) | In progress |
+| - | Nothing in progress | - |
 
 ## Next
 

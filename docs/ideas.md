@@ -18,4 +18,4 @@ Every idea from the owner or Claude, dated, one line, with status (open / taken 
 - ID224: stories record start and close times and close on merge; the roadmap shows it (open, after #44)
 - ID227: two-session pair, coder on Sonnet and reviewer on Opus, direct messages (taken, rule 27)
 - ID228: runtime rule, free and n8n first, nothing on the Mac (taken, rule 28)
-- ID230: this release, v1.0.0 Process v2 (taken, epic #41)
+- ID230: this release, v0.5.0 Process v2 (taken, epic #41)
