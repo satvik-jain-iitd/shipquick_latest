@@ -24,7 +24,7 @@ case "$1" in
               cat "$STUB_DIR/pr.json"; exit 0 ;;
         merge) echo "GH_TOKEN=$GH_TOKEN $*" >> "$STUB_DIR/merge.log"; exit 0 ;;
       esac ;;
-  api) cat "$STUB_DIR/threads.json"; exit 0 ;;
+  api) case "$2" in repos/*) echo '{"default_branch":"main"}'; exit 0 ;; esac; cat "$STUB_DIR/threads.json"; exit 0 ;;
 esac
 exit 9
 """

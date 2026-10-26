@@ -229,3 +229,12 @@ Scenario: scripts/adopt.sh copies or updates five things and never harms the chi
 ```
 Tests: `tests/test_adopt.py` (`test_s18_*`). Also (story #68): `mode.sh get` with no mode prints one clear line, with no shell error about the missing file.
 
+
+**S0.20 The default branch comes from the repo being merged, not from the folder (bug #88).**
+```gherkin
+Given GH_REPO names a repo whose default branch is "master"
+And the folder's own git remotes point at a repo with another default branch
+When close_linked_issues.py runs for a merged PR
+Then it compares the PR base with "master", the default of GH_REPO's repo
+```
+Tests: `tests/test_close_linked_issues.py` (the fake gh answers `repo view` with a wrong repo).
