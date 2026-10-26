@@ -85,3 +85,5 @@ Rule: read this first in every session, append before saying done.
 | 77 | coder (job-search-dev) | Fix commit for PR #48: MAIN saves no successful run, mode each, SETTINGS note, TBD id guard, docs. Red first (6 tests), then green (26) | PR #48 | none |
 | 78 | owner | Decided the roadmap leaves n8n: a kit user may have no n8n. Story #49 (GitHub Actions only) replaces the n8n part of #44. Nothing was deployed to n8n | issue #49 | decided |
 | 79 | coder (job-search-dev) | Story #49: radar run (no fit), red tests first (node and pytest), then roadmap.js, query.graphql, roadmap.yml, roadmap-call.yml, roadmap.json. Removed the n8n code | docs/research/repo-radar.md, roadmap/ | none |
+| 80 | reviewer (job-search-qa) | Reviewed PR #50 inline: 31 threads, changes requested (drop the pull_request trigger, -f for owner and name, one number for the time) | PR #50 | reviewed |
+| 81 | coder (job-search-dev) | Fix commit for PR #50: no pull_request trigger, -f, 5 minutes, docs. Red first (2 tests) | PR #50 | none |

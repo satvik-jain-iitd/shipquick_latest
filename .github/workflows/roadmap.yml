@@ -49,7 +49,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api graphql -F owner="${GITHUB_REPOSITORY%/*}" -F name="${GITHUB_REPOSITORY#*/}" \
+          gh api graphql -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
             -f query="$(cat .shipquick/roadmap/query.graphql)" > "$RUNNER_TEMP/answer.json"
       - name: Write ROADMAP.md
         run: node .shipquick/roadmap/roadmap.js "$RUNNER_TEMP/answer.json" project/roadmap.json "$RUNNER_TEMP/ROADMAP.md"

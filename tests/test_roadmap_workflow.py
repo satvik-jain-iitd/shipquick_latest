@@ -36,8 +36,20 @@ def test_s13_settings_come_from_the_child_repo_and_shipquick_holds_no_child_name
     assert "shipquick_ref" in FLOW and "node .shipquick/roadmap/roadmap.js" in FLOW
 
 
-def test_s13_the_dogfood_caller_runs_on_issues_pull_requests_and_a_daily_cron():
-    assert re.search(r"^  issues:", CALL, re.M) and re.search(r"^  pull_request:", CALL, re.M)
+def test_s13_the_dogfood_caller_never_runs_pull_request_code_with_write_rights():
+    on_block = CALL.split("\npermissions:", 1)[0]
+    assert not re.search(r"^  pull_request(_target)?:", on_block, re.M), "a PR would run its own unreviewed roadmap.js with contents: write"
+    assert re.search(r"^  workflow_run:", on_block, re.M) and "workflows: [CI]" in on_block   # CI runs on every PR push, so Review still shows
+    assert "default branch" in CALL.split("\nname:", 1)[0]   # the header says why the ref is reviewed code
+
+
+def test_s13_owner_and_name_are_sent_as_strings():
+    assert 'gh api graphql -f owner=' in FLOW.replace("\\\n", " ") or "-f owner=" in FLOW
+    assert " -F " not in FLOW  # -F guesses types: a repo named 123 or true would be sent as a number or a boolean
+
+
+def test_s13_the_dogfood_caller_runs_on_issues_a_finished_ci_and_a_daily_cron():
+    assert re.search(r"^  issues:", CALL, re.M)
     assert re.search(r"cron: ['\"][\d*/ ]+['\"]", CALL)
     assert "uses: ./.github/workflows/roadmap.yml" in CALL
     assert re.search(r"^permissions:\n  contents: read\n", CALL, re.M)   # the top level stays read only; the calling job gets the rights

@@ -141,7 +141,7 @@ Tests: `roadmap/roadmap.test.js` (`S0.12`).
 ```gherkin
 Scenario: a reusable workflow keeps ROADMAP.md on a roadmap branch
   Given .github/workflows/roadmap.yml (workflow_call) and a calling file in the project
-  When an issue, a pull request, a finished CI run, the daily timer or a manual run fires
+  When an issue, a finished CI run, the daily timer or a manual run fires (never a pull request: that would run unreviewed code with write rights)
   Then the job reads only its own repo with the built-in token (contents write, issues, pull requests, checks, statuses read)
   And ROADMAP.md is saved on the branch roadmap, and an unchanged page makes no commit
   And settings come from roadmap.json in the project, and ShipQuick holds no project names

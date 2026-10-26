@@ -42,8 +42,9 @@ Owner decision, 26 Oct 2026: a kit user may have no n8n and no server, so the ro
    and put that link in the README.
 
 ### Triggers
-Issues (opened, edited, closed, reopened, labeled), pull requests (opened, reopened, closed, ready, draft), a finished CI run (so Review shows
-when the checks turn green), a daily timer, and a manual run. A change shows on the page one run later, about a minute.
+Issues (opened, edited, closed, reopened, labeled), a finished CI run (it runs on every pull request push, so Doing and Review stay current), a daily
+timer, and a manual run. There is no pull request trigger: on a pull request the job would run that change's own unreviewed script with write rights.
+Every trigger starts from the default branch, so the script that runs is reviewed code. A change shows on the page about a minute after the event.
 
 ## Done when
-A new issue shows on the page within 15 minutes, and the link opens on the owner's phone.
+A new issue shows on the page within 5 minutes, and the link opens on the owner's phone.
