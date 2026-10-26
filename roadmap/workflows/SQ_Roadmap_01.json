@@ -1,0 +1,549 @@
+{
+  "name": "SQ Roadmap 01",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WHEN IT RUNS\n**What:** Two ways in. A timer every 15 minutes builds the pages. A GET link serves a page to the owner.\n**Needs:** Nothing. The link looks like /webhook/roadmap?s=<project>&k=<key>.",
+        "width": 640,
+        "height": 536,
+        "color": 4
+      },
+      "name": "Sticky: WHEN IT RUNS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "le-note-01"
+    },
+    {
+      "parameters": {
+        "content": "## SETTINGS\n**What:** Holds every setting in one place. Tells a page request from a timer run.\n**Needs:** Config keys: kill, dry_run, projects_json.",
+        "width": 640,
+        "height": 376,
+        "color": 3
+      },
+      "name": "Sticky: SETTINGS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        840,
+        0
+      ],
+      "id": "le-note-02"
+    },
+    {
+      "parameters": {
+        "content": "## SERVE THE PAGE\n**What:** Checks the key by its hash. A right key gets the saved page. A wrong key gets 404.\n**Needs:** Data Table roadmap_pages (read). Query fields s and k.",
+        "width": 1160,
+        "height": 536,
+        "color": 6
+      },
+      "name": "Sticky: SERVE THE PAGE",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        0
+      ],
+      "id": "le-note-03"
+    },
+    {
+      "parameters": {
+        "content": "## BUILD THE PAGES\n**What:** Stops when the kill switch is on. Otherwise asks the build workflow for one page per project.\n**Needs:** Config keys: kill, dry_run, projects_json. Workflow SQ Roadmap 11 Build Page.",
+        "width": 880,
+        "height": 352,
+        "color": 5
+      },
+      "name": "Sticky: BUILD THE PAGES",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        736
+      ],
+      "id": "le-note-04"
+    },
+    {
+      "id": "sq-roadmap-01-01-every-15-minutes",
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "name": "Every 15 minutes",
+      "position": [
+        60,
+        216
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-02-get-roadmap",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "roadmap",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "name": "GET roadmap",
+      "position": [
+        60,
+        376
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-03-config",
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a-kill",
+              "name": "kill",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "a-dry_run",
+              "name": "dry_run",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "a-projects_json",
+              "name": "projects_json",
+              "value": "[{\"slug\":\"shipquick\",\"title\":\"ShipQuick\",\"repo\":\"satvik-jain-iitd/shipquick_latest\",\"vision\":\"ShipQuick is a ready-made kit and process that lets a small team build a web or mobile app fast, with AI helpers and people who check each other's work.\",\"sha256\":\"6e7a38d8e29012e36528eb042b14fab5855effa8bd32d918a7188cbc9ff4b3b3\"}]",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "name": "Config",
+      "position": [
+        900,
+        216
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-04-web-request",
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.query !== undefined }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "name": "Web request?",
+      "position": [
+        1180,
+        216
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-05-check-key",
+      "parameters": {
+        "jsCode": "// SHA-256 as plain JavaScript. The n8n Code node has no `require('crypto')` unless the box allows it (rulebook B5 rule 73), and we do not change the box for a hash.\n// The page key is checked by its hash, so no key is ever written into a workflow file.\nconst K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,\n  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,\n  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,\n  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];\nconst rotr = (x, n) => (x >>> n) | (x << (32 - n));\nfunction sha256hex(text) {\n  const bytes = [...unescape(encodeURIComponent(String(text)))].map(c => c.charCodeAt(0)), bits = bytes.length * 8;\n  bytes.push(0x80); while (bytes.length % 64 !== 56) bytes.push(0);\n  for (let i = 7; i >= 0; i--) bytes.push(i > 3 ? 0 : (bits >>> (i * 8)) & 0xff);   // lengths under 512 MB: the high 32 bits are 0\n  const h = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19], w = new Array(64);\n  for (let o = 0; o < bytes.length; o += 64) {\n    for (let i = 0; i < 16; i++) w[i] = (bytes[o + 4 * i] << 24) | (bytes[o + 4 * i + 1] << 16) | (bytes[o + 4 * i + 2] << 8) | bytes[o + 4 * i + 3];\n    for (let i = 16; i < 64; i++) { const a = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3), b = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10); w[i] = (w[i - 16] + a + w[i - 7] + b) | 0; }\n    let [a, b, c, d, e, f, g, hh] = h;\n    for (let i = 0; i < 64; i++) {\n      const t1 = (hh + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0, t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;\n      hh = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;\n    }\n    [a, b, c, d, e, f, g, hh].forEach((v, i) => { h[i] = (h[i] + v) | 0; });\n  }\n  return h.map(v => (v >>> 0).toString(16).padStart(8, '0')).join('');\n}\n\nconst j = $input.first().json, q = j.query || {};\nconst p = JSON.parse(j.projects_json).find(x => x.slug === q.s);\nconst ok = !!p && typeof q.k === 'string' && q.k.length <= 200 && sha256hex(q.k) === p.sha256;\nreturn [{ json: { ok, slug: ok ? p.slug : '' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "name": "Check key",
+      "position": [
+        1740,
+        216
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-06-key-ok",
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "name": "Key ok?",
+      "position": [
+        2020,
+        216
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-07-get-page",
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "TBD-table",
+          "mode": "id"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "slug",
+              "keyValue": "={{ $json.slug }}"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "name": "Get page",
+      "alwaysOutputData": true,
+      "position": [
+        2300,
+        216
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-08-respond-page",
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html || '<p>Not built yet. Try again in 15 minutes.</p>' }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "name": "Respond page",
+      "position": [
+        2580,
+        216
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-09-respond-404",
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Not found",
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "name": "Respond 404",
+      "position": [
+        2300,
+        376
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-10-kill-switch",
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.kill }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "name": "Kill switch?",
+      "position": [
+        1740,
+        928
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-11-one-item-per-project",
+      "parameters": {
+        "jsCode": "const c = $input.first().json;\nreturn JSON.parse(c.projects_json).map(p => ({ json: { slug: p.slug, title: p.title, repo: p.repo, vision: p.vision, dry_run: c.dry_run } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "name": "One item per project",
+      "position": [
+        2020,
+        928
+      ]
+    },
+    {
+      "id": "sq-roadmap-01-12-call-sq-roadmap-11-build-page",
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "TBD-sub",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "slug": "={{ $json.slug }}",
+            "title": "={{ $json.title }}",
+            "repo": "={{ $json.repo }}",
+            "vision": "={{ $json.vision }}",
+            "dry_run": "={{ $json.dry_run }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "slug",
+              "displayName": "slug",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "repo",
+              "displayName": "repo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "vision",
+              "displayName": "vision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "dry_run",
+              "displayName": "dry_run",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "name": "Call SQ Roadmap 11 Build Page",
+      "position": [
+        2300,
+        928
+      ]
+    }
+  ],
+  "connections": {
+    "Every 15 minutes": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET roadmap": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Web request?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web request?": {
+      "main": [
+        [
+          {
+            "node": "Check key",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Kill switch?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check key": {
+      "main": [
+        [
+          {
+            "node": "Key ok?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Key ok?": {
+      "main": [
+        [
+          {
+            "node": "Get page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get page": {
+      "main": [
+        [
+          {
+            "node": "Respond page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kill switch?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "One item per project",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per project": {
+      "main": [
+        [
+          {
+            "node": "Call SQ Roadmap 11 Build Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

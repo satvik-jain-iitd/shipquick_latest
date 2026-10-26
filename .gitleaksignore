@@ -1,6 +1,6 @@
 # Fingerprints gitleaks must skip. One line each: commit:file:rule:line. Say why above it, and when it can go.
 # A fake key (random letters, never a real credential) that story #43's first commit kept in a test fixture.
-# The next commit builds it at run time, but the first commit is still in this PR's range, so the PR scan sees it.
-# DELETE THIS FILE right after PR #46 is squash-merged into dev: a squash commit holds only the final files, so the old
-# commit never reaches dev and this line is dead text from then on.
+# The next commit builds it at run time, but the first commit stays in the history of dev: PR #46 was merged with a merge
+# commit, not a squash, so the full-history scan on a push to dev or main still sees it. Checked on 26 Oct 2026: with this file
+# moved away, `gitleaks git .` on dev reports 1 leak (this one). KEEP THIS FILE. It can go only if dev is ever rebuilt without that commit.
 4c9cb837db3a8205cdcb6717fad1d3467e5c266f:tests/test_ci_must_have.py:generic-api-key:140
