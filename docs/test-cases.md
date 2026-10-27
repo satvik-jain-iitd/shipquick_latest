@@ -238,3 +238,15 @@ When close_linked_issues.py runs for a merged PR
 Then it compares the PR base with "master", the default of GH_REPO's repo
 ```
 Tests: `tests/test_close_linked_issues.py` (the fake gh answers `repo view` with a wrong repo).
+
+## Story #87: the merge method
+```gherkin
+Scenario: the merge gate picks a merge method
+  Given a stub gh and a pull request that passes every rule in Auto mode
+  When the base branch requires linear history and no flag is given
+  Then it runs gh pr merge --squash
+  And with --method rebase it runs --rebase whatever the setting
+  And with no flag and no such setting it runs --merge as before
+  And with --method fast it exits 2 and merges nothing
+```
+Tests: `tests/test_review_merge.py` (`test_q0_*`).

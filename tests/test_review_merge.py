@@ -11,6 +11,7 @@ GATE = ROOT / "scripts" / "review_merge.sh"
 MODE = ROOT / "scripts" / "mode.sh"
 REVIEWER = "satvik-jain-iitd"
 STUB = """#!/usr/bin/env bash
+# the protection call always carries --jq in the script: the stub applies the same filter
 echo "$*" >> "$STUB_DIR/calls.log"
 case "$1" in
   auth) [ "$2" = token ] && { echo "tok-$4"; exit 0; } ;;
@@ -24,7 +25,8 @@ case "$1" in
               cat "$STUB_DIR/pr.json"; exit 0 ;;
         merge) echo "GH_TOKEN=$GH_TOKEN $*" >> "$STUB_DIR/merge.log"; exit 0 ;;
       esac ;;
-  api) case "$2" in repos/*) echo '{"default_branch":"main"}'; exit 0 ;; esac; cat "$STUB_DIR/threads.json"; exit 0 ;;
+  api) case "$*" in *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;; esac
+       case "$2" in repos/*) echo '{"default_branch":"main"}'; exit 0 ;; esac; cat "$STUB_DIR/threads.json"; exit 0 ;;
 esac
 exit 9
 """
@@ -36,7 +38,7 @@ class Log(str):
 
 def good():
     return {
-        "title": "feat(x): a story (#67)", "author": {"login": "klickbae8yt-star"}, "state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE", "headRefOid": "abc123", "body": "## What\nSomething.\n\nCloses #67\n",
+        "title": "feat(x): a story (#67)", "author": {"login": "klickbae8yt-star"}, "state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE", "baseRefName": "dev", "headRefOid": "abc123", "body": "## What\nSomething.\n\nCloses #67\n",
         "reviews": [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}}],
         "statusCheckRollup": [{"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}, {"name": "gate", "status": "COMPLETED", "conclusion": "SUCCESS"}],
     }
@@ -54,9 +56,12 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
+        (stub / "protection.json").unlink(missing_ok=True)
+        if linear is not None:   # the base branch protection answer: required_linear_history on or off; None = the branch has no protection (the call fails)
+            (stub / "protection.json").write_text(json.dumps({"required_linear_history": {"enabled": linear}}), encoding="utf-8")
         e["STUB_FAIL_CLOSE"] = "1" if fail_close else ""   # one call per scenario: a test may call go() twice
         (stub / "pr.json").write_text(json.dumps(pr or good()), encoding="utf-8")
         (stub / "threads.json").write_text(json.dumps(th or threads(True, True)), encoding="utf-8")
@@ -203,3 +208,29 @@ def test_s16_a_story_pull_request_without_closes_is_still_refused_and_fixes_coun
 def test_s16_the_gate_calls_check_closes_instead_of_its_own_grep():
     text = GATE.read_text(encoding="utf-8")
     assert "check_closes.py" in text and "grep -Eiq" not in text
+
+
+# ---- story #87: the merge method. Squash when the base branch needs a straight history, a flag wins, the default stays merge. ----
+def test_q0_a_base_branch_that_needs_linear_history_is_squashed(env):
+    r, merged = env(linear=True)
+    assert r.returncode == 0, r.stderr
+    assert "--squash" in merged and "--merge" not in merged
+
+
+def test_q0_the_flag_wins_over_the_setting(env):
+    r, merged = env(args=("12", "--method", "rebase"), linear=True)
+    assert r.returncode == 0, r.stderr
+    assert "--rebase" in merged and "--squash" not in merged
+
+
+def test_q0_no_flag_and_no_setting_still_merges_with_a_merge_commit(env):
+    for linear in (False, None):   # protection with linear history off, and a branch with no protection at all
+        r, merged = env(linear=linear)
+        assert r.returncode == 0, r.stderr
+        assert "--merge" in merged and "--squash" not in merged
+
+
+def test_q0_an_unknown_method_is_a_usage_error_and_merges_nothing(env):
+    r, merged = env(args=("12", "--method", "fast"))
+    assert r.returncode == 2 and "usage" in r.stderr, (r.stdout, r.stderr)
+    assert merged == ""
