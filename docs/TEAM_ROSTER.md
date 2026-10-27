@@ -33,6 +33,7 @@ account on the reviewer row (GoServe: `klickbae8yt-star` builds, `satvik-jain-ii
 | coder | Claude Code session `<project>-dev` | Sonnet | klickbae8yt-star | branches, tests, code, PRs | reviewer, owner |
 | reviewer | Claude Code session `<project>-qa` (also the orchestrator: plan, stories, architecture) | Opus | satvik-jain-iitd | reviews, approves, stories | coder, owner |
 
+- The coder opens every pull request, feature to dev and dev to main. The reviewer never opens one: it reviews, approves and (in auto mode, through `scripts/review_merge.sh`) merges.
 - The two sessions talk with `ListAgents` + `SendMessage`, in teammate-block shape. The owner is not the relay.
 - Each session has its own folder: the coder in the main checkout, the reviewer in a git worktree. Never edit the other's folder.
 - Parallel work (owner, 26 Oct 2026): one reviewer session and up to 3 coder sessions (`<project>-dev`, `<project>-dev2`, `<project>-dev3`), one per lane, each in its own git worktree. The lanes come from `pm/agile/templates/sprint-lanes.md`. The reviewer reviews every lane.

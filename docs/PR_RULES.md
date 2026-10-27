@@ -10,6 +10,8 @@ Raise a PR when the issue is done and tests pass on your machine.
 - Open the PR against `dev`.
 - Do not wait for the end of a sprint.
 
+The coder opens every PR, feature to dev and dev to main. The reviewer never opens one; it reviews and merges (see section 8).
+
 ## 2. How big a PR should be
 
 - Max 50 files.
@@ -72,9 +74,9 @@ A feature PR merges into `dev`, so its issues stay open. We close them by hand.
 
 ## 8. Auto-merge
 
-- Auto-merge is off.
-- The owner reviews, comments, approves, then merges by hand.
-- Nothing merges without the owner's approval. The owner is always the last step.
+- GitHub auto-merge is off.
+- In manual and semi mode the owner merges by hand, after the approval. Nothing merges without the owner's approval.
+- In auto mode the reviewer merges, feature to dev and dev to main, only through `scripts/review_merge.sh` and only when every gate in section 5 is true. The owner is not asked.
 
 ## 9. Coverage
 
