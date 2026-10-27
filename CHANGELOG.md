@@ -12,6 +12,30 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-27
+Tag `v0.6.1` (cd.yml tag-check greps for this exact text, so keep it), a patch release of the merge gate (story #93). Notes: `docs/RELEASE_NOTES_v0.6.1.md`.
+
+### Added
+- `scripts/review_merge.sh --method squash|rebase|merge`. With no flag the gate squashes when the base branch requires linear history, and merges as before otherwise (#87).
+
+### Fixed
+- The scripts read the default branch of the repo named by `GH_REPO`, not of the current folder (#88).
+
+## [0.6.0] - 2026-10-26
+Tag `v0.6.0` (cd.yml tag-check greps for this exact text, so keep it), "Auto mode" (milestone D6, epic #66). Notes: `docs/RELEASE_NOTES_v0.6.0.md`.
+
+### Added
+- Three modes, Manual, Semi and Auto, with `scripts/mode.sh`, `/mode`, and `docs/MODES.md`. Only the owner sets the mode (#67).
+- The merge gate `scripts/review_merge.sh`: in Auto, agents merge only through it (#67). It closes the linked story issues at merge time (#70).
+- CI fails a PR body without `Closes #n`. Release, chore and Dependabot PRs are exempt (#70).
+- `scripts/adopt.sh`: one command adopts ShipQuick in a child project (#68).
+- The clone path is tested against the README, and `scripts/check_placeholders.py` lists leftover template tokens (#69).
+- Parallel lanes: rule 23 allows up to 3 stacks, `merge=union` for the append-only logs, and a sprint-lanes template (#59, #64).
+
+### Fixed
+- The roadmap no longer writes "the checks checks" (#62).
+- `adopt.sh` reads a single-quoted CI name, `check_closes.py` exempts Dependabot under both logins, and `check_placeholders.py` also flags the `roadmap.json` stub (#76).
+
 ## [0.5.0] - 2026-10-26
 Tag `v0.5.0` (cd.yml tag-check greps for this exact text, so keep it), "Process v2" (milestone D5, epic #41). Notes: `docs/RELEASE_NOTES_v0.5.0.md`. It also carries the untagged D4 work below.
 
