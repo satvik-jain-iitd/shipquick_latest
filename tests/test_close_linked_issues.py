@@ -16,7 +16,10 @@ fx = json.load(open(os.environ["FAKE_GH_FIXTURE"]))
 open(os.environ["FAKE_GH_CALLS"], "a").write(" ".join(sys.argv[1:]) + "\\n")
 a = sys.argv[1:]
 if a[:2] == ["repo", "view"]:
-    print(json.dumps({"defaultBranchRef": {"name": fx["default"]}}))
+    # real gh ignores GH_REPO here and reads the folder's git remotes: answer with a wrong repo (issue #88)
+    print(json.dumps({"defaultBranchRef": {"name": "master-of-the-wrong-repo"}}))
+elif a[:2] == ["api", "repos/{owner}/{repo}"]:
+    print(json.dumps({"default_branch": fx["default"]}))
 elif a[:2] == ["pr", "view"]:
     print(json.dumps(fx["pr"]))
 elif a[:2] == ["issue", "view"]:
