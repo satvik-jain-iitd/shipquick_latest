@@ -40,6 +40,7 @@ Increments D0 to D6. Every issue and PR gets a milestone. Every increment gets a
 - Live roadmap page on GitHub Actions for every project (#49; the n8n design of #44 was dropped).
 - Rules 20 to 30 and the two-session pattern (#42). Release notes: `docs/RELEASE_NOTES_v0.5.0.md`.
 
-## D6 Template Ready (Future)
+## v0.6.0 Template Ready with Auto mode (Done, milestone D6, epic #66)
 
-- Full clone-ready template. New projects start here.
+- Full clone-ready template. New projects start here, with `scripts/adopt.sh` (#68) and a tested clone path (#69).
+- Manual, Semi and Auto modes, and the merge gate that closes issues at merge (#67, #70). Release notes: `docs/RELEASE_NOTES_v0.6.0.md`.
