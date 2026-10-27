@@ -11,7 +11,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$(git rev-parse --show-toplevel)" || exit 2
 BASE="${BASE:-dev}"
 MARKERS='^(<<<<<<< |=======$|>>>>>>> )'
-CONVENTIONAL='^(feat|fix|docs|design|test|chore|refactor|style|perf|ci|build)(\(.+\))?: .+'
+CONVENTIONAL='^(feat|fix|docs|design|test|chore|refactor|style|perf|ci|build|release)(\(.+\))?: .+'
 failed=0
 
 have_base() { git rev-parse --verify -q "origin/$BASE" >/dev/null || { echo "skip $1: no origin/$BASE here"; return 1; }; }
