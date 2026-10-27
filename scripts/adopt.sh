@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # One command to adopt ShipQuick in a child project (story #68). Run it from the ShipQuick checkout (in a child: knowledge/shipquick_latest):
 #   bash knowledge/shipquick_latest/scripts/adopt.sh . [--ref <tag-or-sha>]
-# It copies or updates five things in the child repo and prints what it did (created / updated / unchanged / kept). A second run changes nothing.
+# It copies or updates six things in the child repo and prints what it did (created / updated / unchanged / kept). A second run changes nothing.
 #   .gitattributes                      adds the merge=union lines for the append-only logs; your own lines stay
 #   .github/workflows/roadmap-call.yml  the roadmap caller, pinned to this checkout's commit (or --ref), with your ci.yml's `name:` for workflow_run
 #   roadmap.json                        a stub (title, vision) only if you have none; yours is never overwritten
 #   .claude/commands/mode.md            the /mode command
 #   .pre-commit-config.yaml             the check_local.sh hooks, only if you have none (it prints the hook to add if yours lacks them)
+#   CLAUDE.md                           the one pointer line to the protocol; a new file starts from docs/CLAUDE.project.template.md, yours keeps every line
 # Needs git and python3. It never commits.
 set -eu
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -115,6 +116,15 @@ elif [ -e "$child/.pre-commit-config.yaml" ]; then
   echo "$hooks"
 else
   printf 'repos:\n%s\n' "$hooks" | put .pre-commit-config.yaml
+fi
+
+# 6. CLAUDE.md: one pointer line to the protocol. A new file starts from the template; yours keeps every line.
+ptr="follow $rel/CLAUDE.md"
+if [ ! -e "$child/CLAUDE.md" ]; then
+  sed "s#follow knowledge/shipquick_latest/CLAUDE.md#$ptr#; s#^\# <project>:#\# $(basename "$child"):#" "$SQ/docs/CLAUDE.project.template.md" | put CLAUDE.md
+elif grep -qF "$ptr" "$child/CLAUDE.md"; then echo "unchanged CLAUDE.md (has the pointer)"
+else
+  awk -v ptr="Protocol: $ptr" 'NR==1 && /^#/ {print; print ""; print ptr; next} NR==1 {print ptr; print ""} {print}' "$child/CLAUDE.md" | put CLAUDE.md
 fi
 
 echo "Next: look at git status, commit these files, and merge them into the default branch (scheduled and issue runs start only from there)."
