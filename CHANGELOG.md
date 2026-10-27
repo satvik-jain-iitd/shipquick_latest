@@ -12,6 +12,15 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-10-27
+Tag `v0.6.1` (cd.yml tag-check greps for this exact text, so keep it), a patch release of the merge gate (story #93). Notes: `docs/RELEASE_NOTES_v0.6.1.md`.
+
+### Added
+- `scripts/review_merge.sh --method squash|rebase|merge`. With no flag the gate squashes when the base branch requires linear history, and merges as before otherwise (#87).
+
+### Fixed
+- The scripts read the default branch of the repo named by `GH_REPO`, not of the current folder (#88).
+
 ## [0.6.0] - 2026-10-26
 Tag `v0.6.0` (cd.yml tag-check greps for this exact text, so keep it), "Auto mode" (milestone D6, epic #66). Notes: `docs/RELEASE_NOTES_v0.6.0.md`.
 
