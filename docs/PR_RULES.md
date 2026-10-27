@@ -76,7 +76,7 @@ A feature PR merges into `dev`, so its issues stay open. We close them by hand.
 
 - GitHub auto-merge is off.
 - In manual and semi mode the owner merges by hand, after the approval. Nothing merges without the owner's approval.
-- In auto mode the reviewer merges, feature to dev and dev to main, only through `scripts/review_merge.sh` and only when every gate in section 5 is true. The owner is not asked.
+- In auto mode the reviewer merges, feature to dev and dev to main, only through `scripts/review_merge.sh` and only when every gate in section 5 is true. The owner is not asked. The dev to main PR title starts with `release:`, so the gate does not demand a `Closes #n` line (section 5, gate 6).
 
 ## 9. Coverage
 

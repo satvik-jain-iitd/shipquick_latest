@@ -42,7 +42,12 @@ def test_roster_and_pr_rules_state_the_roles():
 def test_modes_auto_row_merges_dev_to_main():
     row = next(l for l in read("docs/MODES.md").splitlines() if l.startswith("| Auto"))
     assert "dev to main" in row
-    assert "pending owner yes" in read("docs/MODES.md")
+
+
+def test_dev_to_main_title_starts_with_release():
+    assert "starts with `release:`" in read("docs/MODES.md")
+    sec = read("docs/PR_RULES.md").split("## 8. Auto-merge")[1].split("## 9.")[0]
+    assert "starts with `release:`" in sec
 
 
 def test_pr_rules_auto_merge_section_not_owner_only_in_auto():
