@@ -33,7 +33,8 @@ def main() -> int:
         return 2
     pr_number, do_close = int(sys.argv[1]), "--yes" in sys.argv
 
-    default = gh("repo", "view", "--json", "defaultBranchRef")["defaultBranchRef"]["name"]
+    # `gh repo view` ignores GH_REPO and reads the folder's git remotes (issue #88); `gh api` honours it.
+    default = json.loads(gh("api", "repos/{owner}/{repo}"))["default_branch"]
     pr = gh("pr", "view", str(pr_number), "--json", "state,baseRefName,body")
     base = pr["baseRefName"]
 
