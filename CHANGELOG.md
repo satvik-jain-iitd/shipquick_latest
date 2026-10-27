@@ -20,6 +20,9 @@ Tag `v0.7.0` (cd.yml tag-check greps for this exact text, so keep it), "ShipQuic
 - `docs/CLAUDE.project.template.md`: what a child project fills in (stack, folders, decisions) plus one pointer line to the protocol (#99).
 - `scripts/adopt.sh` puts that pointer line in the child's `CLAUDE.md`. It makes the file from the template if there is none, keeps every line of an existing one, and changes nothing on a second run (#101).
 
+### Fixed
+- The commit-message check (CI, `scripts/check_local.sh`, `scripts/check_commit_msg.py`, `COMMIT_GUIDELINES.md`) allows the `release:` type, which the release rules already use.
+
 ### Changed
 - `CLAUDE.md` holds the protocol only. Rules 6, 9 and 10 were project facts and are gone. Rule numbers do not change, so those three numbers stay free (#99).
 
