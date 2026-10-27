@@ -23,6 +23,7 @@ type(scope): description
 | `perf` | Performance |
 | `ci` | CI and pipelines |
 | `build` | Build system |
+| `release` | A release: changelog, notes, the dev to main PR |
 
 ## Rules
 

@@ -2,18 +2,15 @@
 
 Read first: `docs/PLAN.md` (the plan and case study) and `docs/process-trace.md`.
 
-Standing rules, every session:
+Standing rules, every session. This file is the whole protocol and holds no project facts. Stack, folders and ADR pointers go in the project's own CLAUDE.md, started from `docs/CLAUDE.project.template.md`. Rule numbers never change, so 6, 9 and 10 stay free.
 0. **Mode** (owner, 26 Oct 2026). At session start run `scripts/mode.sh get` (in a child project: `knowledge/shipquick_latest/scripts/mode.sh get`). If it exits 3 the mode is not set: ask the owner (Manual, Semi or Auto); the owner sets it with `! bash scripts/mode.sh set <word>` typed himself, and an agent never runs set. In Auto an agent merges only with `scripts/review_merge.sh <pr>`. Details: `docs/MODES.md`.
 1. First action: read `docs/process-trace.md`. Last action before "done": append this session's steps to it (one row each: date, step, actor, what, artifact, owner contact asked / volunteered / reviewed). A new row writes `-` in the `#` column, so two branches that add rows at once never collide on a number; old rows keep theirs.
 2. Every owner message that changes direction gets bullets in `docs/discussions/<START_DATE>.md`.
 3. Every idea the owner states is logged at once with `~/Desktop/SecondBrain/tools/idea.py` and one line in `docs/ideas.md`.
-4. Work only from GitHub issues. Branch `feat/<issue>-<slug>` from `dev`. PR feat -> dev (self-review checklist, CI green). PR dev -> main at each demo increment; the owner merges main.
+4. Work only from GitHub issues. Branch `feat/<issue>-<slug>` from `dev`. PR feat -> dev (self-review checklist, CI green). PR dev -> main at each demo increment. The coder opens every PR, dev -> main too; the reviewer never opens one. Who merges main depends on the mode: in manual and semi the owner merges it; in auto the reviewer merges it with `scripts/review_merge.sh` and the owner is not asked (`docs/MODES.md`).
 5. TDD: failing test first, named after the Gherkin scenario, failure pasted in the PR. Tests listed in `docs/tests/test-cases.md`.
-6. Ponytail: only the code the story needs. No GUI, tray, VAD, streaming, LLM cleanup (ADR-010).
 7. Definition of Ready before a story starts; Definition of Done before it closes (docs/PLAN.md Part D).
 8. Decisions that change architecture or scope get `docs/decisions/ADR-NNN.md` in the same PR.
-9. Apple-silicon native only. Never Rosetta. Python >= 3.12 < 3.14 (ADR-008).
-10. Models live in `models/` (gitignored, shipped in the zip). Never download at run time (ADR-007).
 11. Branches: `main` is protected, never push direct. `dev` is integration. Feature branches `feat/<issue>-<slug>` come from `dev`, merge back via PR.
 12. PRs stay small: max 50 files. Commits follow `COMMIT_GUIDELINES.md`. Merge only when all gates pass: green CI, one approval (not the author), zero unresolved comments, branch up to date, not a Draft, issue linked with `Closes #N`. `Closes #N` only auto-closes on a merge into `main`. After a merge into `dev`, run `python3 scripts/close_linked_issues.py <pr>` (dry run, then `--yes` after one owner yes); it closes only linked story issues, never epics, never for an open or unmerged PR. Full rules in `docs/PR_RULES.md`. Coverage tracked in `docs/PR_COVERAGE.md`.
 13. Pre-commit runs on every commit: no secrets, no files over 500KB, no merge markers, markdown blocks closed.
@@ -30,7 +27,7 @@ Standing rules, every session:
 24. **`main` holds only run-critical code** (owner, 13 Oct 2026) in projects that deploy from `main`. Docs, plans, decisions and rules live on `dev`. Promote with a release branch that takes only the run paths.
 25. **Phase gate** (owner, 2026). Before a new MVP phase starts, run a question-and-answer with the owner on every infrastructure item for that phase, research the gaps, set up with his yes, and record it. Nothing in the phase is built before the gate passes.
 26. **Nothing stays tacit**. Every assumption goes in `docs/assumptions.md`; every follow-up in `docs/follow-ups.md`; every learning or mistake gets a row in `docs/LEARNINGS.md`.
-27. **The two-session pair** (owner, 26 Oct 2026). A project can run a coder session (Sonnet, named `<project>-dev`) and a reviewer and orchestrator session (Opus, named `<project>-qa`). They talk directly with `ListAgents` and `SendMessage`, in teammate-block shape. Each session works in its own folder (the reviewer in a git worktree) and never edits the other's folder. Roles: `docs/TEAM_ROSTER.md`.
+27. **The two-session pair** (owner, 26 Oct 2026). A project can run a coder session (Sonnet, named `<project>-dev`) and a reviewer and orchestrator session (Opus, named `<project>-qa`). They talk directly with `ListAgents` and `SendMessage`, in teammate-block shape. Each session works in its own folder (the reviewer in a git worktree) and never edits the other's folder. The coder opens every PR; the reviewer never opens a PR, it only reviews and merges (rule 4). Roles: `docs/TEAM_ROSTER.md`.
 28. **Runtime rule** (owner, 26 Oct 2026). Everything runs free first and on n8n on Oracle first, set up in n8n. Nothing runs from the owner's Mac unless a login, cookies or a burner account force it. Test local model quality before picking a model.
 29. **Useful checks only** (owner, 26 Oct 2026). Every CI check protects this project or it is removed. Every CI check also runs locally before a push (`scripts/check_local.sh`). Must-have set: `docs/research/ci-checks.md`.
 30. **The review loop** (owner, 26 Oct 2026). The reviewer leaves comments on every changed file (inline, on the lines that matter, plus one summary). The coder answers each thread and fixes or explains. They go back and forth until they agree; only the reviewer resolves a thread. The author never reviews their own PR: when the reviewer session writes a PR, the coder session reviews it. Merge needs zero unresolved threads (`docs/PR_RULES.md`).

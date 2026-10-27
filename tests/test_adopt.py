@@ -122,3 +122,29 @@ def test_s18_the_printed_next_step_says_to_run_the_checks_with_the_childs_base_b
 def test_s18_mode_md_mentions_the_owners_one_step_skill_next_to_the_bang_line():
     text = (ROOT / ".claude" / "commands" / "mode.md").read_text(encoding="utf-8")
     assert "shipquick-mode" in text and "! bash scripts/mode.sh set" in text
+
+
+# Story 3 of epic #97: adopt.sh puts the one pointer line in the child's CLAUDE.md.
+def pointer(child):
+    import os
+    return f"follow {os.path.relpath(ROOT, child)}/CLAUDE.md"
+
+
+def test_s97_no_claude_md_gets_one_made_from_the_template_with_the_pointer(child):
+    r = adopt(child)
+    text = (child / "CLAUDE.md").read_text(encoding="utf-8")
+    assert text.count(pointer(child)) == 1 and "knowledge/shipquick_latest/CLAUDE.md" not in text
+    assert "## Stack" in text and "created   CLAUDE.md" in r.stdout
+
+
+def test_s97_an_existing_claude_md_keeps_every_line_and_gains_the_pointer_once(child):
+    mine = "# My project\n\nStack: Rust.\n1. My own numbered line.\n"
+    (child / "CLAUDE.md").write_text(mine, encoding="utf-8")
+    r = adopt(child)
+    text = (child / "CLAUDE.md").read_text(encoding="utf-8")
+    assert text.startswith("# My project\n") and pointer(child) in text
+    for line in mine.splitlines():
+        assert line in text.splitlines()
+    assert "updated   CLAUDE.md" in r.stdout
+    again = adopt(child)
+    assert (child / "CLAUDE.md").read_text(encoding="utf-8") == text and "unchanged CLAUDE.md" in again.stdout

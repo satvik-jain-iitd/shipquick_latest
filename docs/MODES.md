@@ -8,7 +8,7 @@ Every worktree of the repo shares it, and git does not track it. Agents only rea
 |---|---|---|---|---|
 | Manual | the agents | the owner | the owner | everything: the agents code and open pull requests |
 | Semi | the agents | the agents review each other (the reviewer approves) | the owner | the merge |
-| Auto | the agents | the agents review and approve | the agents, with `scripts/review_merge.sh` only | money, secrets, and posts or messages to people |
+| Auto | the agents | the agents review and approve | the agents, with `scripts/review_merge.sh` only; this includes dev to main (owner yes, 27 Oct 2026) | money, secrets, and posts or messages to people |
 
 ## The merge gate (Auto only)
 `scripts/review_merge.sh <pr> [owner/repo]` is the only way an agent merges. It refuses, and says which rule, unless all of these hold:
@@ -23,6 +23,8 @@ Then it runs `gh pr merge` with the method `--squash` when the base branch requi
 An agent in Auto mode never merges with any other command. The owner turns Auto on himself, with `! bash scripts/mode.sh set auto`.
 
 **Known limit.** The gate cannot tell the two sessions apart. That the session which wrote a pull request does not approve it rests on rule 30 (the author never reviews their own PR), not on code. Dependabot, `release:` and `chore:` pull requests carry no `Closes #n`: the gate uses the same rule as CI (`scripts/check_closes.py`), which exempts them, so they can merge in Auto.
+
+**Dev to main in Auto** (owner, 27 Oct 2026: "why do I need to merge if it is auto"): the coder opens the dev to main PR, the reviewer approves and merges it with the gate. The dev to main PR title starts with `release:`, so `scripts/check_closes.py` and `scripts/review_merge.sh` do not demand a `Closes #n` line. In manual and semi the owner still merges main. The owner confirmed this line (owner yes, 27 Oct 2026).
 
 ## What Auto never does alone
 Spend money, touch secrets, and post or send messages to people (LinkedIn, email, chat). Those stop for the owner in every mode.
