@@ -71,11 +71,11 @@ How it is kept:
 - One owner per project: the reviewer session. It reads the live canvas before every change and publishes with the tool.
 - The coder reads the canvas and never edits it. A code change that needs a board change asks the reviewer in a teammate block.
 
-## 10. Feedback becomes a rule the same day (29 Oct 2026)
-
-- Every generic design feedback from the owner (anything that would apply to another project) is written into this page the same day, with its date, by the session that received it, and into that session's own instruction file. Project-specific feedback goes to the project's docs. Nothing stays only in chat.
-
 ## 9. The owner's words land on the canvas and on the story (29 Oct 2026)
 
 - A comment the owner leaves on a board is answered on that board (what changed, where) and recorded on the story issue the same day.
 - A decision that changes scope (a new flow, money, a setting) goes on the story before the build, in his words.
+
+## 10. Feedback becomes a rule the same day (29 Oct 2026)
+
+- Every generic design feedback from the owner (anything that would apply to another project) is written into this page the same day, with its date, by the session that received it, and into that session's own instruction file. Project-specific feedback goes to the project's docs. Nothing stays only in chat.
