@@ -44,3 +44,7 @@ For every speed number in the table write three values: published, the one third
 
 ## 9. n8n
 A model step in a workflow carries a `**Model:**` line in its sticky note (model, input cap, output cap, lane). The same rules sit in the n8n rulebook, section B14.
+
+## 10. Before choosing a model: the technique and breakdown matrix
+Owner, 29 Oct 2026: "different kinds of prompt engineering techniques and different kinds of breakdown into micro tasks should be tried whenever we are deciding which model to use, before reaching any conclusion on which model is best."
+Never conclude "model X is best" from one prompt and one breakdown. Fix the smallest readable model, fix the eval, pick 5 to 8 cells from the catalog by output kind, pre-register them, run them all, read 30 real outputs of the winner, and only then step the model up. The catalog with ids, the fit notes for small CPU models, the sources with tiers, and the full procedure: `docs/research/prompt-techniques.md` (Part C). The pre-registration template: `docs/templates/experiment-matrix.md`. The result goes back into the catalog's status column with a PR to ShipQuick.

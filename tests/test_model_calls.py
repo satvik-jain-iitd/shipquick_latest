@@ -47,3 +47,25 @@ def test_the_rules_doc_holds_the_ladder_the_lanes_the_budget_and_the_table_templ
 
 def test_claude_md_points_every_child_project_to_the_rules():
     assert "docs/MODEL_LOAD.md" in (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+# ---- the prompt technique and breakdown catalog (story #107, second commit): every row cites a source with a tier and a confidence, and the decision procedure is the rule before any model verdict
+import re
+
+CATALOG = ROOT / "docs" / "research" / "prompt-techniques.md"
+
+
+def test_every_catalog_row_has_an_id_a_tier_and_a_confidence():
+    rows = [l for l in CATALOG.read_text(encoding="utf-8").splitlines() if re.match(r"^\| [TB]\d{2} \|", l)]
+    assert len(rows) >= 50, len(rows)
+    for row in rows:
+        assert re.search(r"\b[ABCKSP]\b", row) and re.search(r"\b0\.\d\b|\b1\.0\b", row), row[:80]
+    ids = [r.split("|")[1].strip() for r in rows]
+    assert len(ids) == len(set(ids)) and any(i.startswith("T") for i in ids) and any(i.startswith("B") for i in ids)
+
+
+def test_the_decision_procedure_comes_before_any_model_verdict_and_the_rules_doc_links_the_catalog():
+    text = CATALOG.read_text(encoding="utf-8")
+    assert "## Part C" in text and "no model verdict" in text.lower() and "matrix" in text
+    assert "prompt-techniques.md" in (ROOT / "docs" / "MODEL_LOAD.md").read_text(encoding="utf-8")
+    assert (ROOT / "docs" / "templates" / "experiment-matrix.md").exists()
