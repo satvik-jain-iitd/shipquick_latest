@@ -13,8 +13,11 @@ def canvas(names, notes=None):
     return {"v": 3, "boards": {n: board() for n in names}, "order": list(names), "notes": notes or {}, "pages": [], "title": "t"}
 
 
+TINTS = {"sage": "#bfcfb4", "teal": "#cfd998", "yellow": "#ffde59"}   # fixture values only; a project's own come from its manifest
+
+
 def manifest(rows, start=True):
-    return {"start_here": "read me" if start else None, "sections": [
+    return {"start_here": "read me" if start else None, "tints": TINTS, "ink": "#263528", "remove_notes": ["old-title"], "sections": [
         {"id": "a", "title": "Section 1 · A", "purpose": "p", "prefix": "LIVE", "tint": "sage", "rows": rows[0]},
         {"id": "b", "title": "Section 2 · B", "purpose": "p", "prefix": "DESIGN", "tint": "teal", "rows": rows[1]},
         {"id": "c", "title": "Section 3 · C", "purpose": "p", "prefix": "IN TALK", "tint": "yellow", "rows": rows[2]}]}
@@ -22,7 +25,7 @@ def manifest(rows, start=True):
 
 class Layout(unittest.TestCase):
     def setUp(self):
-        self.c = canvas(["A.dc.html", "B.dc.html", "C.dc.html", "D.dc.html", "E.dc.html", "F.dc.html"], {"n1": {"w": 360, "x": 9, "y": 9, "text": "one"}, "n2": {"w": 360, "x": 9, "y": 9, "text": "two"}})
+        self.c = canvas(["A.dc.html", "B.dc.html", "C.dc.html", "D.dc.html", "E.dc.html", "F.dc.html"], {"n1": {"w": 360, "x": 9, "y": 9, "text": "one"}, "n2": {"w": 360, "x": 9, "y": 9, "text": "two"}, "cs-old": {"w": 360, "x": 0, "y": 0, "text": "mine"}, "old-title": {"w": 360, "x": 0, "y": 0, "text": "named"}, "owner-note": {"w": 360, "x": 5000, "y": 5000, "text": "his"}})
         self.m = manifest([[{"id": "1a", "title": "1a", "boards": ["A.dc.html", "B.dc.html"], "notes": ["n1"]}, {"id": "1b", "title": "1b", "boards": ["C.dc.html"], "notes": []}],
                            [{"id": "2a", "title": "2a", "boards": ["D.dc.html", "E.dc.html"], "notes": ["n2"]}],
                            [{"id": "3a", "title": "3a", "boards": ["F.dc.html"], "notes": []}]])
@@ -57,6 +60,7 @@ class Layout(unittest.TestCase):
         self.assertIn("Unsorted", bg["project/bg/section-3-1.dc.html"])   # the row title is painted on section 3's board
 
     def test_S4_a_board_in_two_rows_or_missing_is_a_problem_and_nothing_is_written(self):
+        self.assertTrue(any("no sections" in p for p in cs.layout(self.c, {"tints": TINTS, "ink": "#263528", "sections": []})[2]))
         self.m["sections"][2]["rows"][0]["boards"].append("A.dc.html")
         self.m["sections"][2]["rows"][0]["boards"].append("Z.dc.html")
         _, _, problems = cs.layout(self.c, self.m)
@@ -84,12 +88,30 @@ class Layout(unittest.TestCase):
         self.assertEqual({k: (v["x"], v["y"], v["title"]) for k, v in a["boards"].items()}, {k: (v["x"], v["y"], v["title"]) for k, v in b["boards"].items()})
 
     def test_S8_every_word_on_a_board_is_ink_on_its_fill_at_4_5_to_1_and_titles_live_on_the_board(self):
-        for tint in cs.TINTS.values(): self.assertGreaterEqual(cs.contrast(cs.INK, cs.tile_fill(tint)), 4.5, tint)
+        for tint in TINTS.values(): self.assertGreaterEqual(cs.contrast("#263528", cs.tile_fill(tint)), 4.5, tint)
         new, bg, problems = cs.layout(self.c, self.m)
         self.assertEqual(problems, [])
         self.assertFalse([k for k, n in new["notes"].items() if n.get("kind") == "title1"])   # no title note: the editor picks its colour, we cannot
         self.assertIn(">1a<", bg["project/bg/section-1-1.dc.html"])
-        self.assertIn(f"color: {cs.INK}", bg["project/bg/section-1-1.dc.html"])
+        self.assertIn("color: #263528", bg["project/bg/section-1-1.dc.html"])
+        self.assertIn("read me", bg["project/bg/start.dc.html"])   # the start text is painted on its board too, not a sticky
+        self.assertNotIn("start-here", new["notes"])
+
+    def test_S9_the_colours_come_from_the_manifest_and_a_missing_or_low_contrast_one_stops_the_run(self):
+        m = json.loads(json.dumps(self.m)); m.pop("tints"); m.pop("ink")
+        _, _, problems = cs.layout(self.c, m)
+        self.assertTrue(any("no tints" in p for p in problems) and any("no ink" in p for p in problems))
+        m = json.loads(json.dumps(self.m)); m["ink"] = "#f0f0f0"   # light ink on a light fill
+        _, _, problems = cs.layout(self.c, m)
+        self.assertTrue(any("under 4.5:1" in p for p in problems))
+        self.assertNotIn("#bfcfb4", open(cs.__file__).read())   # no project colour in the tool itself
+
+    def test_S10_the_tool_removes_only_its_own_notes_and_the_ones_the_manifest_names(self):
+        new, _, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+        self.assertNotIn("cs-old", new["notes"]); self.assertNotIn("old-title", new["notes"])
+        self.assertIn("owner-note", new["notes"])
+        self.assertEqual(new["notes"]["owner-note"]["x"], 5000)   # an unnamed note of the owner keeps its place
 
     def test_S7_check_existing_finds_an_overlap(self):
         new, _, _ = cs.layout(self.c, self.m)

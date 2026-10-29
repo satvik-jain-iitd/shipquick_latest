@@ -28,6 +28,23 @@ One canvas per project, five sections top to bottom, each on its own background 
 
 How it is kept:
 - The layout comes from a manifest (`design/canvas-stages.json`: sections, rows, the boards in each row, the purpose of each section) through `scripts/canvas_stage.py`. A board moves by editing the manifest and running the tool, never by dragging.
+- The manifest, in short. Colours and the font are the project's own, copied from its tokens; the tool holds none. Keys the tool does not know (`canvas`, `arranged`, a project's own record) are left alone and ignored.
+  ```json
+  {
+    "canvas": "https://claude.ai/artifact/<id>",
+    "tints": {"sage": "#rrggbb", "teal": "#rrggbb", "yellow": "#rrggbb", "red": "#rrggbb", "gray": "#rrggbb"},
+    "ink": "#rrggbb", "paper": "#ffffff", "font": "'Project Sans', system-ui, sans-serif",
+    "start_here": "How to read this canvas: ...", "start_tint": "sage",
+    "remove_notes": ["an-old-title-note"],
+    "sections": [
+      {"id": "production", "title": "Section 1 · Production", "purpose": "What is live today.", "prefix": "LIVE", "tint": "sage",
+       "rows": [{"id": "1a", "title": "1a · First open", "boards": ["Welcome.dc.html"], "notes": ["first-open"]}]},
+      {"id": "final", "title": "Section 2 · Design final, not live", "purpose": "...", "prefix": "DESIGN", "tint": "teal",
+       "rows": [{"id": "2a", "title": "2a · Approved, being coded", "prefix": "ON STAGING", "boards": ["Map.dc.html"], "notes": []}]}
+    ]
+  }
+  ```
+  `boards` are the canvas file names; `notes` are the ids of story stickies that sit at the end of that row; a row's `prefix` overrides the section's. `remove_notes` is the only way the tool removes a note of yours (its own notes carry the `cs-` prefix).
 - A background is an artboard, listed first in the canvas order, sized around everything inside it. A drawn note never sits under a screen, so a note is never a frame.
 - Nothing ever sits outside its background board: no text, icon, image, note or screen. The tool refuses a layout where a box is outside its board or two boxes overlap.
 - Inside Production the rows follow the user's journey left to right, then the other roles (staff, admin).

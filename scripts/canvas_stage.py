@@ -1,27 +1,29 @@
 #!/usr/bin/env python3
 """Lay out a Design canvas (the claude.ai Design artifact type) by stage, from a manifest.
 
-The manifest (design/canvas-stages.json) names sections, rows and the boards in each row. The tool places every
-board, sticky and title, draws one background artboard per section (an artboard, listed first in `order`, so it
-sits under the screens; a note never can), sized from what is inside it, and prefixes every board's name with
-its state. Nothing is deleted: a board the manifest does not name goes to an Unsorted row. The run fails, and
-writes nothing, when two boxes overlap or a box sits outside its section's board.
+The manifest (design/canvas-stages.json) names sections, rows and the boards in each row, and the project's own
+colours (tints, ink, paper) and font. The tool places every board and story note, draws one background artboard
+per section (an artboard, listed first in `order`, so it sits under the screens; a note never can), sized from what
+is inside it, paints the section title, its purpose and every row title ON that board (ink on the fill, 4.5:1 or
+the run stops), and prefixes every board's name with its state. Nothing is deleted: a board the manifest does not
+name goes to an Unsorted row; the only notes the tool removes are the ones named in `remove_notes` and its own
+(`cs-` prefix). The run fails, and writes nothing, when two boxes overlap or a box sits outside its section's board.
 
 Use:  canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --check
       canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --apply
-Standard library only.
+Standard library only. No project value lives in this file: every colour and the font come from the manifest.
 """
 import argparse, json, re, sys
 from pathlib import Path
 
 PITCH_X, ROW_PITCH, SECTION_GAP, PAD = 470, 1150, 600, 140
-HEAD = 520                 # the section title and its purpose note, above the first row
 TITLE_GAP = 230            # a row title sits this far above its row (the editor wants at least 223)
 TITLE_H, ROW_TITLE_H = 90, 50
+BAND_H = 300               # the band at the top of a section's first tile: its title and purpose
 MAX_SIDE = 8000            # an artboard's side is capped by the editor
 PREFIXES = ("LIVE", "ON STAGING", "DESIGN", "IN TALK", "REJECTED", "OLD", "UNSORTED")
-TINTS = {"sage": "#bfcfb4", "teal": "#cfd998", "yellow": "#ffde59", "red": "#b3261e", "gray": "#706f70", "blue": "#8fb3c7"}
-MINE = re.compile(r"^(t-row\d|row\d|r-\d\w*|howto(-2)?|frame-s\d\w*|start-here|shape-|note-)")
+MINE = re.compile(r"^cs-")     # the one prefix reserved for notes this tool writes; a user's note is never touched
+DEFAULT_PAPER, DEFAULT_FONT = "#ffffff", "system-ui, sans-serif"
 
 
 def clean_title(t: str) -> str:
@@ -40,9 +42,6 @@ def inside(a, outer, pad):
     return a["x"] >= outer["x"] + pad and a["y"] >= outer["y"] + pad and a["x"] + a["w"] <= outer["x"] + outer["w"] - pad and a["y"] + a["h"] <= outer["y"] + outer["h"] - pad
 
 
-INK, PAPER = "#263528", "#ffffff"
-
-
 def mix(hex_a, hex_b, a_share):
     """color-mix in sRGB, as the page paints it: a_share of hex_a over hex_b."""
     ra, ga, ba = (int(hex_a[i:i + 2], 16) for i in (1, 3, 5)); rb, gb, bb = (int(hex_b[i:i + 2], 16) for i in (1, 3, 5))
@@ -57,17 +56,32 @@ def contrast(hex_fg, hex_bg):
     a, b = lum(hex_fg), lum(hex_bg); a, b = max(a, b), min(a, b); return (a + 0.05) / (b + 0.05)
 
 
-def tile_fill(tint): return mix(tint, PAPER, 0.28)
+def tile_fill(tint, paper=DEFAULT_PAPER): return mix(tint, paper, 0.28)
+
+
+def theme(manifest: dict):
+    """The project's colours and font, from the manifest only. Returns (theme dict, problems)."""
+    problems = []
+    tints = manifest.get("tints") or {}
+    hexes = [v for v in list(tints.values()) + [manifest.get("ink"), manifest.get("paper", DEFAULT_PAPER)] if v is not None]
+    if not tints: problems.append("manifest has no tints: add \"tints\": {\"<name>\": \"#rrggbb\", ...} from the project's tokens")
+    if not manifest.get("ink"): problems.append("manifest has no ink: add \"ink\": \"#rrggbb\" (the text colour painted on the boards)")
+    for h in hexes:
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", str(h)): problems.append(f"{h} is not a #rrggbb colour")
+    th = {"tints": tints, "ink": manifest.get("ink", "#000000"), "paper": manifest.get("paper", DEFAULT_PAPER), "font": manifest.get("font", DEFAULT_FONT)}
+    for name, tint in tints.items():   # every word on a board is ink on the board's fill: 4.5:1 or the run stops
+        if not problems and contrast(th["ink"], tile_fill(tint, th["paper"])) < 4.5: problems.append(f"tint {name}: ink on its fill is under 4.5:1")
+    return th, problems
 
 
 def esc(t): return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def bg_html(title, purpose, tint, w, h, row_titles=(), band=True):
+def bg_html(title, purpose, tint, w, h, th, row_titles=(), band=True):
     """A background board: the fill, a band with the section title and purpose (first tile only: a continued tile has no band,
     so a row title can never sit on it), and every row title drawn ON the board (ink on the light fill, 4.5:1 checked by the tool),
     so no text ever depends on the editor's own note colours."""
-    fill = tile_fill(tint)
+    ink, fill = th["ink"], tile_fill(tint, th["paper"])
     rows = "\n".join(f'  <h2 style="position: absolute; left: {x}px; top: {y}px; margin: 0; font-size: 36px; line-height: 1.1; font-weight: 700; white-space: nowrap;">{esc(t)}</h2>' for x, y, t in row_titles)
     head = f"""  <div style="display: flex; flex-direction: column; gap: 12px; max-width: 1400px; padding: 40px 48px;">
     <h1 style="margin: 0; font-size: 56px; line-height: 1.05; font-weight: 800;">{esc(title)}</h1>
@@ -85,10 +99,9 @@ def bg_html(title, purpose, tint, w, h, row_titles=(), band=True):
 <helmet>
 <style>
 body{{margin:0}}
-a{{color:{INK}}}a:hover{{color:#45654E}}
 </style>
 </helmet>
-<div style="position: relative; width: {w}px; height: {h}px; box-sizing: border-box; overflow: hidden; background: {fill}; border: 2px solid {mix(tint, INK, 0.6)}; font-family: 'Anek Latin', system-ui, sans-serif; color: {INK};">
+<div style="position: relative; width: {w}px; height: {h}px; box-sizing: border-box; overflow: hidden; background: {fill}; border: 2px solid {mix(tint, ink, 0.6)}; font-family: {th['font']}; color: {ink};">
 {head}
 {rows}
 </div>
@@ -103,54 +116,57 @@ class Component extends DCLogic {{
 """
 
 
+def text_height(text: str, width_px=1400, size=22):
+    """A rough height for a paragraph painted in the band: enough lines at this size, never too few."""
+    per_line = max(1, int(width_px / (size * 0.52)))
+    return (len(text) // per_line + 1) * int(size * 1.4)
+
+
 def layout(canvas: dict, manifest: dict):
     """Return (new canvas dict, background files {path: html}, problems list). Nothing is written here."""
     c = json.loads(json.dumps(canvas))
     boards, notes = c["boards"], c.setdefault("notes", {})
-    problems = []
+    th, problems = theme(manifest)
+    sections = json.loads(json.dumps(manifest.get("sections") or []))
+    if not sections:
+        problems.append("manifest has no sections"); return c, {}, problems
     # 1. every board exactly once; unknown boards go to an Unsorted row
     named = {}
-    for s in manifest["sections"]:
+    for s in sections:
         for r in s["rows"]:
             for b in r["boards"]:
                 if b in named: problems.append(f"{b} is in two rows: {named[b]} and {r['id']}")
                 named[b] = r["id"]
                 if b not in boards: problems.append(f"{b} is in the manifest but not on the canvas (row {r['id']})")
-    old_bg = [k for k in boards if k.startswith("bg/")]
-    for k in old_bg: boards.pop(k)
+    for k in [k for k in boards if k.startswith("bg/")]: boards.pop(k)
     unsorted = [k for k in boards if k not in named]
-    sections = json.loads(json.dumps(manifest["sections"]))
     if unsorted:
         host = sections[min(2, len(sections) - 1)]
         host["rows"].append({"id": "unsorted", "title": "Unsorted · on the canvas, not yet in the manifest: place each one", "prefix": "UNSORTED", "boards": sorted(unsorted), "notes": []})
-    # 2. drop the layout notes of earlier runs (titles, section notes, drawn frames); keep story notes and the user's others
-    for k in [k for k in notes if MINE.match(k)]: notes.pop(k)
+    # 2. drop the tool's own notes from earlier runs, and the ones the manifest names; keep every other note
+    for k in [k for k in notes if MINE.match(k) or k in manifest.get("remove_notes", [])]: notes.pop(k)
     # 3. place everything
     y = 0; boxes = []; bg_files = {}; bg_entries = []; section_boxes = []
-    for name, tint in TINTS.items():   # every word on a board is ink on the board's fill: 4.5:1 or the run stops
-        if contrast(INK, tile_fill(tint)) < 4.5: problems.append(f"tint {name}: ink on its fill is under 4.5:1")
+    tint_of = lambda name: th["tints"].get(name) or (next(iter(th["tints"].values())) if th["tints"] else DEFAULT_PAPER)
     sh = manifest.get("start_here")
     if sh:
-        # the start note sits on its own small board; the board carries the heading, the note carries the text
-        BAND = 150
-        notes["start-here"] = {"fill": "blue", "size": 24, "w": 1100, "x": 0, "y": y + BAND, "text": sh}
-        sb = [box(0, y, 2400, TITLE_H, "start-band"), box(0, y + BAND, 1100, 1100 * 4 // 3, "start-here")]
+        # the start note is painted on its own small board, so its colour is measured like every other word
+        h = 40 * 2 + 60 + 12 + text_height(sh)
+        sb = [box(0, y, 1400 + 96, h, "start-band")]
         boxes += sb
-        x0, y0, x1, y1 = -PAD, y - PAD, 2400 + PAD, y + BAND + 1100 * 4 // 3 + PAD
+        x0, y0, x1, y1 = -PAD, y - PAD, 1400 + 96 + PAD, y + h + PAD
         bg_entries.append(("bg/start.dc.html", {"x": x0, "y": y0, "w": x1 - x0, "h": y1 - y0, "title": "Start here (background)"}))
-        bg_files["project/bg/start.dc.html"] = bg_html(manifest.get("start_title", "Design canvas · start here"), "", TINTS["blue"], x1 - x0, y1 - y0)
+        bg_files["project/bg/start.dc.html"] = bg_html(manifest.get("start_title", "Design canvas · start here"), sh, tint_of(manifest.get("start_tint", "")), x1 - x0, y1 - y0, th)
         section_boxes.append((0, box(x0, y0, x1 - x0, y1 - y0, "start"), sb))
         y = y1 + SECTION_GAP
     for n, s in enumerate(sections, 1):
         top = y; sboxes = []; row_titles = []
         # the section title and purpose are painted on the board's band (see bg_html); this box reserves the band's space
-        BAND_H = 300
-        notes[f"row{n}"] = {"fill": "teal" if n <= 2 else "orange" if n == 3 else "red" if n == 4 else "purple", "size": 24, "w": 1100, "x": 0, "y": top + BAND_H, "text": s["purpose"]}
-        sboxes += [box(0, top, 3600, BAND_H - 40, f"band {n}"), box(0, top + BAND_H, 1100, 1100 * 4 // 3, f"row{n}")]
-        ry = top + BAND_H + 1100 * 4 // 3 + TITLE_GAP + 80   # the first row starts under the purpose note
+        sboxes.append(box(0, top, 3600, BAND_H - 40, f"band {n}"))
+        ry = top + BAND_H + TITLE_GAP   # the first row starts under the band
         row_tops = []
         for r in s["rows"]:
-            rid = "r-" + r["id"]; prefix = r.get("prefix", s["prefix"])
+            rid = "r-" + r["id"]; prefix = r.get("prefix", s.get("prefix", "DESIGN"))
             if prefix not in PREFIXES: problems.append(f"row {r['id']}: prefix {prefix} is not one of {PREFIXES}")
             row_titles.append((0, ry - TITLE_GAP, r["title"]))   # painted on the board, ink on the fill
             sboxes.append(box(0, ry - TITLE_GAP, 3600, ROW_TITLE_H, rid)); row_tops.append(ry - TITLE_GAP - 20)
@@ -183,7 +199,7 @@ def layout(canvas: dict, manifest: dict):
                 band_box = box(x0, cuts[0], 1400 + 96, BAND_H - 40, f"band of section {n}")
                 for rx, ryy, txt in mine:
                     if overlaps(band_box, box(rx + x0, ryy + cuts[0], 3600, ROW_TITLE_H, txt)): problems.append(f"row title '{txt}' sits on the band of section {n}")
-            bg_files["project/" + path] = bg_html(s["title"], s["purpose"] if t == 0 else "", TINTS.get(s.get("tint", "gray"), TINTS["gray"]), w, h, mine, band=(t == 0))
+            bg_files["project/" + path] = bg_html(s["title"], s.get("purpose", "") if t == 0 else "", tint_of(s.get("tint", "")), w, h, th, mine, band=(t == 0))
         section_boxes.append((n, box(x0, y0, x1 - x0, y1 - y0, f"section {n}"), sboxes))
         boxes += sboxes; y = y1 + SECTION_GAP
     # 5. checks
@@ -201,7 +217,7 @@ def layout(canvas: dict, manifest: dict):
 
 
 def check_existing(canvas: dict):
-    """Overlap and containment on a canvas as it is (for --check without relayout)."""
+    """Overlap on a canvas as it is now (boards and sticky notes), before any relayout. `--check` prints these first."""
     bs = [box(e["x"], e["y"], e["w"], e["h"], k) for k, e in canvas["boards"].items() if not k.startswith("bg/")]
     ns = [box(n["x"], n["y"], n.get("maxW", n.get("w", 360)), TITLE_H if n.get("kind") == "title1" else n.get("w", 360) * 4 // 3, k) for k, n in canvas.get("notes", {}).items() if n.get("kind") in (None, "title1")]
     out = []
@@ -219,6 +235,8 @@ def main(argv=None):
     a = ap.parse_args(argv)
     root = Path(a.canvas); cj = root / "project" / "canvas.json"
     canvas = json.loads(cj.read_text()); manifest = json.loads(Path(a.manifest).read_text())
+    if a.check:
+        for p in check_existing(canvas): print("NOW " + p)   # what overlaps on the canvas as it is, before any relayout
     new, bg_files, problems = layout(canvas, manifest)
     if problems:
         print("\n".join("PROBLEM " + p for p in problems)); return 1
