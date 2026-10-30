@@ -19,4 +19,5 @@ jobs:
       - name: Scan docs/children.md and open feedback issues for gaps
         env:
           GH_TOKEN: ${{ github.token }}
+          SHIPQUICK_CHILD_TOKEN: ${{ secrets.SHIPQUICK_CHILD_TOKEN }}
         run: python3 scripts/adoption_scan.py

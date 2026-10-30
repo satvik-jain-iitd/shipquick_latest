@@ -4,6 +4,12 @@ ShipQuick commit more than $days old, opens (or reuses) one `feedback` issue in 
 the child and the gap. A child session reports its own gaps with scripts/feedback.sh; this script
 is ShipQuick noticing when a child never ran it at all.
 
+A line in docs/children.md may end with " private" (`owner/repo private`). A private child is
+read with the SHIPQUICK_CHILD_TOKEN secret (fine-grained PAT, contents+metadata read only on that
+repo — see docs/ADOPTION.md); public children keep the workflow's own github.token. A private
+child with no SHIPQUICK_CHILD_TOKEN configured prints one line and is skipped: no daily issue,
+since the scan has no way to tell "not adopted" from "can't see it".
+
 Usage: python3 scripts/adoption_scan.py [--children docs/children.md] [--days 14] [--dry-run]
 Needs: gh (authenticated as the build account), network. A scan problem (a child unreachable) is
 reported per child, never fatal; exit 2 is a usage error only.
@@ -12,6 +18,7 @@ import argparse
 import base64
 import datetime
 import json
+import os
 import re
 import subprocess
 import sys
@@ -20,19 +27,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REPO = "satvik-jain-iitd/shipquick_latest"
 PIN = re.compile(r"^\s*shipquick_ref:\s*([0-9a-f]{40})", re.M)
+CHILD_TOKEN_ENV = "SHIPQUICK_CHILD_TOKEN"
 
 
-def read_children(path) -> list[str]:
+def read_children(path) -> list[tuple[str, bool]]:
     out = []
     for line in Path(path).read_text(encoding="utf-8").splitlines():
         line = line.split("#", 1)[0].strip()
-        if line and "/" in line:
-            out.append(line)
+        if not line or "/" not in line:
+            continue
+        parts = line.split()
+        out.append((parts[0], len(parts) > 1 and parts[1] == "private"))
     return out
 
 
-def gh_api(path):
-    r = subprocess.run(["gh", "api", path], capture_output=True, text=True)
+def gh_api(path, token=None):
+    env = dict(os.environ)
+    if token:
+        env["GH_TOKEN"] = token
+    r = subprocess.run(["gh", "api", path], capture_output=True, text=True, env=env)
     if r.returncode != 0:
         return None
     try:
@@ -66,6 +79,14 @@ def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str |
     return None
 
 
+def scan_child(child: str, is_private: bool, fetch, days: int, today, has_token: bool) -> tuple[str | None, bool]:
+    """Returns (message_or_None, should_file_issue). A private child with no secret is reported
+    but never filed, since a 404 from a missing token looks identical to "not adopted"."""
+    if is_private and not has_token:
+        return (f"{child}: private, no {CHILD_TOKEN_ENV} configured — skipping (no daily issue)", False)
+    return (check_child(child, fetch, days, today), True)
+
+
 def open_or_comment(child: str, why: str, dry_run: bool) -> None:
     low_child = child.lower()
     existing = gh_api(f"repos/{REPO}/issues?labels=feedback&state=open") or []
@@ -89,11 +110,15 @@ def main() -> int:
     args = p.parse_args()
 
     today = datetime.datetime.now(datetime.timezone.utc)
-    for child in read_children(args.children):
-        why = check_child(child, gh_api, args.days, today)
+    child_token = os.environ.get(CHILD_TOKEN_ENV)
+    for child, is_private in read_children(args.children):
+        token = child_token if is_private else None
+        fetch = (lambda path, t=token: gh_api(path, token=t))
+        why, should_file = scan_child(child, is_private, fetch, args.days, today, bool(token))
         if why:
             print(why)
-            open_or_comment(child, why, args.dry_run)
+            if should_file:
+                open_or_comment(child, why, args.dry_run)
         else:
             print(f"{child}: adopted and fresh")
     return 0

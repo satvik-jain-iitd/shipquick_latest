@@ -75,7 +75,34 @@ def test_cannot_read_the_child_repo_is_flagged():
 def test_read_children_strips_comments_and_blanks(tmp_path):
     f = tmp_path / "children.md"
     f.write_text("# header\nowner/a\n\n  owner/b  # trailing comment\n", encoding="utf-8")
-    assert scan.read_children(f) == ["owner/a", "owner/b"]
+    assert scan.read_children(f) == [("owner/a", False), ("owner/b", False)]
+
+
+def test_read_children_marks_a_line_ending_in_private(tmp_path):
+    f = tmp_path / "children.md"
+    f.write_text("owner/a\nowner/b private\n", encoding="utf-8")
+    assert scan.read_children(f) == [("owner/a", False), ("owner/b", True)]
+
+
+def test_a_private_child_with_no_token_is_skipped_with_no_issue_filed():
+    fetch = api(call_content=None)
+    why, should_file = scan.scan_child("owner/child", True, fetch, 14, TODAY, has_token=False)
+    assert why and "no" in why and "SHIPQUICK_CHILD_TOKEN" in why
+    assert should_file is False
+
+
+def test_a_private_child_with_a_token_is_checked_normally():
+    fetch = api(call_content={"content": _b64(f"  shipquick_ref: {FRESH_SHA}\n")}, fresh=True)
+    why, should_file = scan.scan_child("owner/child", True, fetch, 14, TODAY, has_token=True)
+    assert why is None
+    assert should_file is True
+
+
+def test_a_public_child_ignores_has_token():
+    fetch = api(call_content=None)
+    why, should_file = scan.scan_child("owner/child", False, fetch, 14, TODAY, has_token=False)
+    assert why and "shipquick-call.yml" in why
+    assert should_file is True
 
 
 def _b64(text):
