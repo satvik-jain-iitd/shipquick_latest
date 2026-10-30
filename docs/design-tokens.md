@@ -69,3 +69,5 @@
 **Replace all `<PLACEHOLDER>` values** with your project-specific assets before starting development.
 
 **Inspired by**: Legacy design system and Google Material Design 3 design tokens.
+
+The contrast and colour rules for screens and canvases are in `docs/DESIGN_PROCESS.md` (section 6).
