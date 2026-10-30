@@ -1,4 +1,5 @@
 """S0.16: the coded merge gate (story #67). A stub `gh` on PATH: no network, no token, nothing is ever merged."""
+import base64
 import json
 import os
 import subprocess
@@ -25,7 +26,10 @@ case "$1" in
               cat "$STUB_DIR/pr.json"; exit 0 ;;
         merge) echo "GH_TOKEN=$GH_TOKEN $*" >> "$STUB_DIR/merge.log"; exit 0 ;;
       esac ;;
-  api) case "$*" in *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;; esac
+  api) case "$*" in
+         *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;;
+         *contents/CLAUDE.md*) [ -f "$STUB_DIR/claude_md_b64" ] && { cat "$STUB_DIR/claude_md_b64"; exit 0; }; exit 1 ;;
+       esac
        case "$2" in repos/*) echo '{"default_branch":"main"}'; exit 0 ;; esac; cat "$STUB_DIR/threads.json"; exit 0 ;;
 esac
 exit 9
@@ -56,17 +60,22 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
         (stub / "protection.json").unlink(missing_ok=True)
         if linear is not None:   # the base branch protection answer: required_linear_history on or off; None = the branch has no protection (the call fails)
             (stub / "protection.json").write_text(json.dumps({"required_linear_history": {"enabled": linear}}), encoding="utf-8")
-        claude_md = repo / "CLAUDE.md"
-        if dev_link:   # story #122: the UAT gate applies only when THIS repo's own CLAUDE.md has a filled Dev link
-            claude_md.write_text(f"## Environments\n- Dev link: {dev_link}\n", encoding="utf-8")
+        # story #122 fix: the UAT gate reads the PR's OWN repo's CLAUDE.md via the GitHub contents API (base64),
+        # never the local checkout's — a local checkout without a Dev link must not make a different repo exempt.
+        b64_file = stub / "claude_md_b64"
+        if claude_md_unreadable:
+            b64_file.unlink(missing_ok=True)
         else:
-            claude_md.unlink(missing_ok=True)
+            body = f"## Environments\n- Dev link: {dev_link}\n" if dev_link else "# no Dev link configured\n"
+            b64_file.write_text(base64.b64encode(body.encode()).decode(), encoding="utf-8")
+        # the local checkout deliberately carries no CLAUDE.md of its own, to prove it is never read
+        (repo / "CLAUDE.md").unlink(missing_ok=True)
         e["STUB_FAIL_CLOSE"] = "1" if fail_close else ""   # one call per scenario: a test may call go() twice
         (stub / "pr.json").write_text(json.dumps(pr or good()), encoding="utf-8")
         (stub / "threads.json").write_text(json.dumps(th or threads(True, True)), encoding="utf-8")
@@ -323,3 +332,8 @@ def test_s122_a_release_titled_promotion_still_refuses_when_the_project_has_a_de
     pr = good(); pr["baseRefName"] = "main"; pr["title"] = "release: v0.8.0"
     pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY.replace('[x] #219', '[ ] #219')}{UAT_TAIL}"
     refused(*env(pr=pr, dev_link=DEV_LINK), "unticked")
+
+
+def test_s122_cannot_read_the_pr_repos_claude_md_refuses_it_is_never_treated_as_exempt(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, claude_md_unreadable=True), "cannot read")
