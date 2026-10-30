@@ -1,55 +1,117 @@
-"""Story #96: the roles are explicit in the source. The coder opens every PR, the reviewer never does,
-and auto mode lets the reviewer merge dev to main."""
-import re
+"""Story #140: scripts/roles.py -- the one parser for .shipquick/roles.yml. No account name lives
+anywhere else; every script that needs one calls this."""
+import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+import roles  # noqa: E402
+
+GOOD = """coder:
+  - account-one
+  - account-two
+reviewer:
+  - account-three
+owner: account-three
+shipquick_repo: owner/repo
+"""
 
 
-def read(rel):
-    return (ROOT / rel).read_text()
+def test_parse_reads_lists_and_scalars():
+    data = roles.parse(GOOD)
+    assert data == {
+        "coder": ["account-one", "account-two"],
+        "reviewer": ["account-three"],
+        "owner": "account-three",
+        "shipquick_repo": "owner/repo",
+    }
 
 
-def rule(n):
-    m = re.search(rf"^{n}\. .*$", read("CLAUDE.md"), re.M)
-    assert m, f"CLAUDE.md has no rule {n}"
-    return m.group(0)
+def test_parse_ignores_comments_and_blank_lines():
+    text = "# a header\ncoder:\n  - a\n\n  # inline note\nreviewer:\n  - b\nowner: b\n"
+    data = roles.parse(text)
+    assert data == {"coder": ["a"], "reviewer": ["b"], "owner": "b"}
 
 
-def test_rule_4_coder_opens_every_pr_including_dev_to_main():
-    r = rule(4)
-    assert "coder opens every PR" in r and "dev -> main" in r
-    assert "reviewer never opens" in r
+def test_parse_of_empty_text_is_an_empty_dict():
+    assert roles.parse("") == {}
+    assert roles.parse("   \n\n") == {}
 
 
-def test_rule_4_main_merge_depends_on_mode():
-    r = rule(4)
-    assert "manual and semi" in r and "auto" in r and "review_merge.sh" in r
-    assert "the owner merges main." not in r  # the old unconditional sentence
+def test_load_raises_file_not_found_with_a_clear_reason(tmp_path):
+    with pytest.raises(FileNotFoundError, match="adopt.sh"):
+        roles.load(str(tmp_path / "no-such-file.yml"))
 
 
-def test_rule_27_names_the_roles():
-    assert "reviewer never opens a PR" in rule(27)
+def test_load_raises_value_error_when_a_required_field_is_missing(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text("coder:\n  - a\n", encoding="utf-8")   # no reviewer, no owner
+    with pytest.raises(ValueError, match="reviewer"):
+        roles.load(str(f))
 
 
-def test_roster_and_pr_rules_state_the_roles():
-    assert "reviewer never opens" in read("docs/TEAM_ROSTER.md")
-    pr = read("docs/PR_RULES.md")
-    assert "The coder opens every PR" in pr
-    assert "The reviewer never opens" in pr
+def test_load_succeeds_when_coder_reviewer_and_owner_are_all_set(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD, encoding="utf-8")
+    data = roles.load(str(f))
+    assert data["coder"] == ["account-one", "account-two"]
 
 
-def test_modes_auto_row_merges_dev_to_main():
-    row = next(l for l in read("docs/MODES.md").splitlines() if l.startswith("| Auto"))
-    assert "dev to main" in row
+def test_cli_get_coder_prints_accounts_comma_separated(tmp_path, capsys):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD, encoding="utf-8")
+    assert roles.main(["get", "coder", "--file", str(f)]) == 0
+    assert capsys.readouterr().out.strip() == "account-one,account-two"
 
 
-def test_dev_to_main_title_starts_with_release():
-    assert "starts with `release:`" in read("docs/MODES.md")
-    sec = read("docs/PR_RULES.md").split("## 8. Auto-merge")[1].split("## 9.")[0]
-    assert "starts with `release:`" in sec
+def test_cli_get_owner_prints_the_scalar(tmp_path, capsys):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD, encoding="utf-8")
+    assert roles.main(["get", "owner", "--file", str(f)]) == 0
+    assert capsys.readouterr().out.strip() == "account-three"
 
 
-def test_pr_rules_auto_merge_section_not_owner_only_in_auto():
-    sec = read("docs/PR_RULES.md").split("## 8. Auto-merge")[1].split("## 9.")[0]
-    assert "auto mode" in sec.lower()
+def test_cli_get_shipquick_repo_prints_the_scalar(tmp_path, capsys):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD, encoding="utf-8")
+    assert roles.main(["get", "shipquick_repo", "--file", str(f)]) == 0
+    assert capsys.readouterr().out.strip() == "owner/repo"
+
+
+def test_cli_get_a_field_not_in_the_file_exits_1(tmp_path, capsys):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD, encoding="utf-8")   # no shipquick_repo omitted here -- try removing it
+    f.write_text(GOOD.replace("shipquick_repo: owner/repo\n", ""), encoding="utf-8")
+    assert roles.main(["get", "shipquick_repo", "--file", str(f)]) == 1
+    assert "not set" in capsys.readouterr().err
+
+
+def test_cli_missing_file_exits_1_with_a_clear_message(tmp_path, capsys):
+    assert roles.main(["get", "coder", "--file", str(tmp_path / "missing.yml")]) == 1
+    assert "adopt.sh" in capsys.readouterr().err
+
+
+# ---- no account name lives in the scripts that decide who may code, review or merge ----
+ACCOUNTS = ("satvik-jain-iitd", "klickbae8yt-star")
+GATE_FILES = (
+    "scripts/roles.py",
+    "scripts/role.sh",
+    "scripts/mode.sh",
+    "scripts/review_merge.sh",
+    "scripts/check_roles.py",
+)
+
+
+@pytest.mark.parametrize("rel", GATE_FILES)
+def test_s140_no_account_name_lives_in_a_gate_script(rel):
+    """These scripts decide who may code, review or merge: they must read .shipquick/roles.yml
+    through roles.py, never carry an account literal of their own. (Other files -- adopt.sh,
+    feedback.sh, freeze.sh, adoption_scan.py, ci.yml, checks.yml -- keep a default ShipQuick
+    home-repo or build-account name behind SHIPQUICK_REPO/SHIPQUICK_BUILD_USER or a workflow input
+    default; that default is a convenience for a fork, not a role decision, so it is out of scope
+    here.)"""
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    for acct in ACCOUNTS:
+        assert acct not in text, f"{rel} hardcodes {acct}"

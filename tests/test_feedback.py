@@ -236,3 +236,29 @@ def test_s119_a_normalised_whole_title_match_is_still_caught(child, tmp_path):
     r = run(child, tmp_path, STUB_ONE_DUPE, "--title", "MODEL_CALLS.SH is slow!!", "--body-file", str(f))
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert r.comment != "" and r.issue == ""
+
+
+# ---- story #140 (reviewer): BUILD_USER defaults to the calling repo's own first coder account ----
+def test_build_user_defaults_to_the_callers_first_coder_account(child, tmp_path):
+    (child / ".shipquick").mkdir()
+    (child / ".shipquick" / "roles.yml").write_text("coder:\n  - repo-coder\n  - repo-coder-2\nreviewer:\n  - repo-reviewer\nowner: repo-reviewer\n", encoding="utf-8")
+    f = body_file(tmp_path, filled_body())
+    r = run(child, tmp_path, STUB_OK_NO_DUPES, "--title", "model_calls.sh is slow", "--body-file", str(f))
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "auth token --user repo-coder" in (Path(tmp_path / "stub" / "calls.log").read_text(encoding="utf-8"))
+
+
+def test_shipquick_build_user_env_var_overrides_roles_yml(child, tmp_path):
+    (child / ".shipquick").mkdir()
+    (child / ".shipquick" / "roles.yml").write_text("coder:\n  - repo-coder\nreviewer:\n  - repo-reviewer\nowner: repo-reviewer\n", encoding="utf-8")
+    f = body_file(tmp_path, filled_body())
+    r = run(child, tmp_path, STUB_OK_NO_DUPES, "--title", "model_calls.sh is slow", "--body-file", str(f), env_extra={"SHIPQUICK_BUILD_USER": "override-acct"})
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "auth token --user override-acct" in (Path(tmp_path / "stub" / "calls.log").read_text(encoding="utf-8"))
+
+
+def test_with_no_roles_yml_the_old_literal_default_is_unchanged(child, tmp_path):
+    f = body_file(tmp_path, filled_body())
+    r = run(child, tmp_path, STUB_OK_NO_DUPES, "--title", "model_calls.sh is slow", "--body-file", str(f))
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "auth token --user klickbae8yt-star" in (Path(tmp_path / "stub" / "calls.log").read_text(encoding="utf-8"))

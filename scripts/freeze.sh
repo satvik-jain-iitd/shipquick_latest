@@ -6,12 +6,19 @@
 #   freeze.sh status [--repo <owner/repo>] [--ref <branch>]   # prints what check_freeze.py decides;
 #                                              #   no --repo reads the current checkout's .shipquick/freeze
 # on/off run inside the repo's own clean git checkout with an `origin` remote; push and the PR use the
-# build account ($SHIPQUICK_BUILD_USER, default klickbae8yt-star). FREEZE_NO_PUSH=1 stops right after the
+# build account ($SHIPQUICK_BUILD_USER, default: this repo's first coder account from .shipquick/roles.yml
+# if it has one, else klickbae8yt-star -- story #140). FREEZE_NO_PUSH=1 stops right after the
 # local commit, used by tests (no network, no PR). A freeze does not lift itself past --until (story #126
 # scenario 4): only `freeze.sh off`, or a renewed `on`, changes it. Needs git, gh.
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BUILD_USER="${SHIPQUICK_BUILD_USER:-klickbae8yt-star}"
+BUILD_USER="${SHIPQUICK_BUILD_USER:-}"
+if [ -z "$BUILD_USER" ]; then
+  _top="$(git rev-parse --show-toplevel 2>/dev/null)" || _top=""
+  [ -n "$_top" ] && BUILD_USER="$(python3 "$HERE/roles.py" get coder --file "$_top/.shipquick/roles.yml" 2>/dev/null | cut -d, -f1)"
+  BUILD_USER="${BUILD_USER:-klickbae8yt-star}"
+  unset _top
+fi
 usage() { echo 'usage: freeze.sh on "<reason>" --until <date> | freeze.sh off | freeze.sh status [--repo owner/repo] [--ref branch]' >&2; exit 2; }
 
 valid_date() { date -d "$1" >/dev/null 2>&1 || date -j -f "%Y-%m-%d" "$1" >/dev/null 2>&1; }
@@ -19,7 +26,7 @@ valid_date() { date -d "$1" >/dev/null 2>&1 || date -j -f "%Y-%m-%d" "$1" >/dev/
 push_and_pr() {   # push_and_pr <branch> <commit-title> <pr-body>
   branch="$1"; title="$2"; body="$3"
   if [ "${FREEZE_NO_PUSH:-0}" = 1 ]; then
-    echo "dry run (FREEZE_NO_PUSH=1): committed on $branch, not pushed"
+    echo "dry run (FREEZE_NO_PUSH=1): committed on $branch, not pushed (build account: $BUILD_USER)"
     return 0
   fi
   token="$(gh auth token --user "$BUILD_USER")" || { echo "freeze.sh: no token for $BUILD_USER on this machine" >&2; return 1; }

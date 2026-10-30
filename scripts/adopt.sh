@@ -9,6 +9,10 @@
 #   .claude/commands/mode.md            the /mode command
 #   .pre-commit-config.yaml             the check_local.sh hooks, only if you have none (it prints the hook to add if yours lacks them)
 #   CLAUDE.md                           the one pointer line to the protocol; a new file starts from docs/CLAUDE.project.template.md, yours keeps every line
+#   .shipquick/roles.yml                 which accounts may code, review, and own this project (story #140), only if you have none
+# --coder/--reviewer <acct[,acct]> --owner <acct>: fill .shipquick/roles.yml on first adoption. With none
+#   of these and no roles.yml yet, adopt.sh writes nothing for it and tells you to rerun with the flags or
+#   fill it by hand -- CI's `roles` job and `scripts/review_merge.sh` both refuse until it exists.
 # --check (story #124): prints the adoption verdict and exits 1 when not adopted, instead of writing anything.
 #   Adopted means: .github/workflows/shipquick-call.yml is pinned to the exact commit the
 #   knowledge/shipquick_latest submodule is at, and .pre-commit-config.yaml carries the ShipQuick hooks.
@@ -16,12 +20,15 @@
 set -eu
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQ="$(cd "$HERE/.." && pwd -P)"
-usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--check]" >&2; exit 2; }
-child=""; ref=HEAD; check_mode=""
+usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--check] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
+child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --ref) [ -n "${2:-}" ] || usage; ref="$2"; shift 2 ;;
     --check) check_mode=1; shift ;;
+    --coder) [ -n "${2:-}" ] || usage; coder="$2"; shift 2 ;;
+    --reviewer) [ -n "${2:-}" ] || usage; reviewer="$2"; shift 2 ;;
+    --owner) [ -n "${2:-}" ] || usage; owner_acct="$2"; shift 2 ;;
     -*) usage ;;
     *) [ -z "$child" ] || usage; child="$1"; shift ;;
   esac
@@ -175,6 +182,23 @@ if [ ! -e "$child/CLAUDE.md" ]; then
 elif grep -qF "$ptr" "$child/CLAUDE.md"; then echo "unchanged CLAUDE.md (has the pointer)"
 else
   awk -v ptr="Protocol: $ptr" 'NR==1 && /^#/ {print; print ""; print ptr; next} NR==1 {print ptr; print ""} {print}' "$child/CLAUDE.md" | put CLAUDE.md
+fi
+
+# 7. .shipquick/roles.yml: which accounts may code, review, and who owns this project (story #140)
+if [ -e "$child/.shipquick/roles.yml" ]; then
+  echo "kept      .shipquick/roles.yml (yours)"
+elif [ -n "$coder" ] && [ -n "$reviewer" ] && [ -n "$owner_acct" ]; then
+  sq_remote="$(git -C "$SQ" remote get-url origin 2>/dev/null || true)"
+  sq_repo="$(printf '%s\n' "$sq_remote" | sed -n 's#.*[:/]\([^/][^/]*/[^/][^/]*\)\.git$#\1#p' | head -1)"
+  [ -n "$sq_repo" ] || sq_repo="satvik-jain-iitd/shipquick_latest"
+  {
+    echo "coder:"; printf '%s\n' "$coder" | tr ',' '\n' | sed 's/^/  - /'
+    echo "reviewer:"; printf '%s\n' "$reviewer" | tr ',' '\n' | sed 's/^/  - /'
+    echo "owner: $owner_acct"
+    echo "shipquick_repo: $sq_repo"
+  } | put .shipquick/roles.yml
+else
+  echo "note: .shipquick/roles.yml not written -- rerun with --coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>, or fill it by hand. CI's roles job and scripts/review_merge.sh both refuse to merge until it exists."
 fi
 
 echo "Next: look at git status, commit these files, and merge them into the default branch (scheduled and issue runs start only from there)."

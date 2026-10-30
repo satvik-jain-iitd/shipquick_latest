@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # The only way an agent merges a pull request (story #67, docs/MODES.md).
 # It refuses, with exit 1 and `refused: <rule>`, unless all of this holds:
-#   the mode is auto; the PR is open, not a draft, and has no conflicts; satvik-jain-iitd approved the latest commit;
+#   the mode is auto; the PR is open, not a draft, and has no conflicts; the PR's own repo's own `.shipquick/roles.yml`
+#   (read from GitHub, never the local checkout -- story #122's lesson) says who may author and who may approve: the
+#   PR author is a coder account, and a reviewer account other than the author approved the latest commit (story #140,
+#   the #114 case: a PR the reviewer account itself opened is never merged through this script);
 #   no review thread is unresolved; every check is SUCCESS (SKIPPED and NEUTRAL count as passed, as on GitHub); the body has `Closes #n` by the same rule as CI (scripts/check_closes.py: release:, chore: and Dependabot pull requests are exempt);
 #   and, only when the base branch is main: the PR's own repo's CLAUDE.md (read from GitHub, not the local checkout, which may be a different repo) must be
 #   readable or the merge refuses outright; if it has a filled "Dev link:" line (scripts/has_dev_link.sh) the body also needs a followable "## UAT on dev"
@@ -18,7 +21,6 @@
 # (GoServe dev, documents and staging refuse a merge commit), and otherwise makes a merge commit as before.
 # usage: review_merge.sh <pr-number> [owner/repo] [--method squash|rebase|merge]
 set -u
-REVIEWER=satvik-jain-iitd
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 usage() { echo "usage: review_merge.sh <pr-number> [owner/repo] [--method squash|rebase|merge]" >&2; exit 2; }
 method=""; args=()
@@ -45,8 +47,31 @@ field() { jq -r "$1" <<<"$json"; }
 { [ "$(field .state)" = OPEN ] && [ "$(field .isDraft)" = false ]; } || refuse "pull request is not open, or is a draft"
 [ "$(field .mergeable)" != CONFLICTING ] || refuse "pull request has conflicts"
 
-last=$(jq -r --arg u "$REVIEWER" '[.reviews[] | select(.author.login == $u and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED"))] | last | "\(.state) \(.commit.oid)"' <<<"$json")
-[ "$last" = "APPROVED $(field .headRefOid)" ] || refuse "not approved by $REVIEWER on the latest commit"
+# story #140: who may author and who may approve come from the PR's OWN repo's .shipquick/roles.yml,
+# read from GitHub (never the local checkout -- story #122's lesson), not a name hardcoded here.
+roles_raw=$(gh api "repos/$repo/contents/.shipquick/roles.yml?ref=$(field .baseRefName)" --jq '.content' 2>/dev/null)
+roles_rc=$?
+[ "$roles_rc" -eq 0 ] && [ -n "$roles_raw" ] || refuse "cannot read $repo's .shipquick/roles.yml on $(field .baseRefName) to check roles"
+roles_tmp="$(mktemp)"
+printf '%s' "$roles_raw" | base64 -d > "$roles_tmp" 2>/dev/null
+coders=$(python3 "$HERE/roles.py" get coder --file "$roles_tmp") || refuse "cannot read coder accounts from $repo's .shipquick/roles.yml"
+reviewers=$(python3 "$HERE/roles.py" get reviewer --file "$roles_tmp") || refuse "cannot read reviewer accounts from $repo's .shipquick/roles.yml"
+rm -f "$roles_tmp"
+
+author=$(field .author.login)
+case "$author" in
+  dependabot\[bot\]|app/dependabot) ;;   # exempt, same as check_closes.py and team-block
+  *) printf ',%s,' "$coders" | grep -qF ",$author," || refuse "PR author $author is not a coder account" ;;
+esac
+
+reviewer_account=$(jq -r --arg revs "$reviewers" --arg author "$author" --arg head "$(field .headRefOid)" '
+  ($revs | split(",")) as $rs
+  | [.reviews[] | select(.author.login as $a | ($rs | index($a)) != null and $a != $author and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED"))]
+  | group_by(.author.login) | map(last)
+  | map(select(.state == "APPROVED" and .commit.oid == $head))
+  | if length > 0 then .[0].author.login else "" end
+' <<<"$json")
+[ -n "$reviewer_account" ] || refuse "not approved by a reviewer account (other than the author, $author) on the latest commit"
 
 threads=$(gh api graphql -f query='query($owner: String!, $name: String!, $n: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $n) { reviewThreads(first: 100) { pageInfo { hasNextPage } nodes { isResolved } } } } }' \
   -f owner="${repo%/*}" -f name="${repo#*/}" -F n="$pr") || refuse "cannot read the review threads"
@@ -84,7 +109,7 @@ gate_concl=$(jq -r --arg n "$gate_name" '
 
 why=$(field .body | python3 "$HERE/check_closes.py" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
 
-token=$(gh auth token --user "$REVIEWER") || refuse "no token for $REVIEWER on this machine"
+token=$(gh auth token --user "$reviewer_account") || refuse "no token for $reviewer_account on this machine"
 
 # story #131: a PR touching any protected path (CI config, lint baselines, path lists a check reads
 # its own rules from) is never merged in auto mode -- the owner merges it by hand.

@@ -76,7 +76,7 @@ SET_LINE = "! bash scripts/mode.sh set"
 
 
 def test_s15_only_the_owner_sets_the_mode_and_the_script_header_says_so():
-    header = "\n".join(MODE.read_text(encoding="utf-8").splitlines()[:12])
+    header = "\n".join(MODE.read_text(encoding="utf-8").splitlines()[:18])
     assert "Agents only run `get`" in header and SET_LINE in header and "owner" in header
 
 
@@ -102,4 +102,61 @@ def test_s15_modes_doc_names_who_reviews_who_merges_and_what_still_stops_in_auto
     for needle in ("Manual", "Semi", "Auto", "reviews", "merges", "money", "secrets", "posts or messages", "review_merge.sh"):
         assert needle in text, needle
     assert "the owner sets it" in text and SET_LINE in text   # only a person types set
-    assert "cannot tell the two sessions apart" in text and "rule 30" in text   # the known limit of the gate, said out loud
+
+
+# ---- story #140: mode.sh prefers the tracked, protected .shipquick/mode once it exists ----
+def test_s140_a_tracked_shipquick_mode_file_wins_over_the_old_untracked_one(repo):
+    sh(repo, "set", "manual")   # the old file: auto would normally win once set
+    (repo / ".shipquick").mkdir()
+    (repo / ".shipquick" / "mode").write_text("auto\n", encoding="utf-8")
+    assert sh(repo, "get").stdout.strip() == "auto"
+
+
+def test_s140_set_refuses_once_the_tracked_file_exists_and_says_to_pr_it(repo):
+    (repo / ".shipquick").mkdir()
+    (repo / ".shipquick" / "mode").write_text("manual\n", encoding="utf-8")
+    r = sh(repo, "set", "auto")
+    assert r.returncode == 1
+    assert "protected path" in r.stderr and "open a PR" in r.stderr
+    assert (repo / ".shipquick" / "mode").read_text(encoding="utf-8").strip() == "manual"   # unchanged
+
+
+def test_s140_with_no_tracked_file_the_old_behavior_is_unchanged(repo):
+    assert sh(repo, "get").returncode == 3   # not set, same as before this story
+    assert sh(repo, "set", "semi").returncode == 0
+    assert sh(repo, "get").stdout.strip() == "semi"
+
+
+def _write_roles(repo, coder, reviewer):
+    (repo / ".shipquick").mkdir(exist_ok=True)
+    (repo / ".shipquick" / "roles.yml").write_text(
+        f"coder:\n  - {coder}\nreviewer:\n  - {reviewer}\nowner: {reviewer}\n", encoding="utf-8"
+    )
+
+
+def test_s140_one_account_as_both_coder_and_reviewer_refuses_auto(repo):
+    _write_roles(repo, "solo", "solo")
+    r = sh(repo, "set", "auto")
+    assert r.returncode == 1
+    assert "never pass the approver-is-not-the-author check" in r.stderr
+    assert sh(repo, "get").returncode == 3   # nothing written
+
+
+def test_s140_one_account_as_both_still_allows_manual_and_semi(repo):
+    _write_roles(repo, "solo", "solo")
+    assert sh(repo, "set", "manual").returncode == 0
+    assert sh(repo, "get").stdout.strip() == "manual"
+    assert sh(repo, "set", "semi").returncode == 0
+    assert sh(repo, "get").stdout.strip() == "semi"
+
+
+def test_s140_two_different_accounts_still_allow_auto(repo):
+    _write_roles(repo, "coder-acct", "reviewer-acct")
+    r = sh(repo, "set", "auto")
+    assert r.returncode == 0
+    assert sh(repo, "get").stdout.strip() == "auto"
+
+
+def test_s140_with_no_roles_yml_auto_is_unaffected(repo):
+    assert sh(repo, "set", "auto").returncode == 0
+    assert sh(repo, "get").stdout.strip() == "auto"
