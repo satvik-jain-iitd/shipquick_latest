@@ -183,6 +183,37 @@ def test_s10_this_repo_passes_its_own_marker_and_markdown_checks():
         assert code == 0, out
 
 
+# ---- story #121: check_local.sh runs the same frontend-design gate on the commit log (no PR body exists yet before a push) ----
+def test_s121_frontend_design_passes_with_nothing_configured(repo):
+    commit(repo, {"a.txt": "1\n"}, "feat: a change")
+    assert run(repo, "frontend-design")[0] == 0
+
+
+def test_s121_frontend_design_fails_when_a_configured_path_is_touched_with_no_board(repo):
+    commit(repo, {"docs/frontend-paths.txt": "frontend/*\n"}, "chore: frontend paths")
+    _git(repo, "update-ref", "refs/remotes/origin/dev", "HEAD")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen with no board")
+    code, out = run(repo, "frontend-design")
+    assert code == 1 and "frontend/screen.tsx" in out
+
+
+def test_s121_frontend_design_passes_when_a_commit_message_names_the_board(repo):
+    commit(repo, {"docs/frontend-paths.txt": "frontend/*\n"}, "chore: frontend paths")
+    _git(repo, "update-ref", "refs/remotes/origin/dev", "HEAD")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen\n\nDesign board: Production/Login\nApproved: 2026-10-30")
+    assert run(repo, "frontend-design")[0] == 0
+
+
+def test_s121_ci_has_a_frontend_design_job_on_every_pr_and_the_gate_waits_for_it():
+    assert "frontend-design" in _jobs()
+    section = CI.split("\n  frontend-design:\n", 1)[1].split("\n  team-block:", 1)[0]
+    assert "check_frontend_design.sh" in section
+    assert "--head" in section and "head_ref" in section   # PR #123 blocker: checkout is detached, the branch name must be passed explicitly
+    gate = CI.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "frontend-design" in needs
+
+
 # ---- S0.8 (stacked PRs, rule 23): CI runs on a PR whatever its base branch is ----
 def test_s08_ci_runs_on_pull_requests_into_any_branch():
     on_block = CI.split("\npermissions:", 1)[0]

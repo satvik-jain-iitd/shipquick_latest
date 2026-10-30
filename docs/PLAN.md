@@ -56,10 +56,11 @@ This is the validation step for the planning itself. If a story fails it, the pl
 4. Dependencies (model folders, permissions, fixtures, the owner's input) are listed and available.
 5. The ponytail check is written in the issue: what is deliberately not being built.
 6. The owner has seen the issue (he reviews the board before each increment starts).
+7. `Frontend change: yes / no` is answered (story #121). A "yes" also has `Design board:` and `Approved:` filled — a sample screen on the canvas, shown to and approved by the owner, before any code starts.
 If any item is missing, the story goes back to Backlog and the plan or the issue is fixed first.
 
 ### D6. Definition of done (story)
-Tests written first and green. Scenarios mapped to tests or to a matrix row. Docs updated in the same PR. Ponytail review: nothing speculative added. Issue closed by the PR. Journal entry written. A story that changes a live screen names the design board it updated in the PR body (or says "no screen change"); the reviewer checks the board before approving.
+Tests written first and green. Scenarios mapped to tests or to a matrix row. Docs updated in the same PR. Ponytail review: nothing speculative added. Issue closed by the PR. Journal entry written. A story that changes a live screen names the already-approved design board it built in the PR body (or says "no screen change"); the reviewer checks the board was approved before the code, not after (story #121; `scripts/check_frontend_design.sh` fails a PR that touches frontend paths with no named board).
 
 ### D7. Definition of done (increment)
 All its stories done. `docs/demos/D<n>.md` written. dev → main PR opened with the demo. Metrics rows updated. The owner has seen the demo.
