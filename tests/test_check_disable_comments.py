@@ -70,3 +70,15 @@ def test_the_file_header_line_itself_is_never_mistaken_for_an_added_line():
 def test_added_lines_helper_pairs_each_plus_line_with_its_own_file():
     diff = diff_with_added("a.ts", "one") + diff_with_added("b.ts", "two")
     assert cdc.added_lines(diff) == [("a.ts", "one"), ("b.ts", "two")]
+
+
+def test_this_check_s_own_source_and_docs_mentioning_the_patterns_are_never_a_hit():
+    # scripts/check_disable_comments.py and docs/PR_RULES.md have to contain these literal strings
+    # as data (defining and documenting the pattern), not as a real disable directive -- PR #141's
+    # own CI run tripped on exactly this before the CODE_EXT scope was added.
+    for path, line in [
+        ("scripts/check_disable_comments.py", 'DISABLE = re.compile(r"eslint-disable|stylelint-disable")'),
+        ("docs/PR_RULES.md", "fails a PR that adds an `eslint-disable`, `stylelint-disable`"),
+        ("tests/test_check_disable_comments.py", 'why = cdc.check(diff_with_added("src/x.ts", "// eslint-disable-next-line"), "")'),
+    ]:
+        assert cdc.check(diff_with_added(path, line), "") is None, path

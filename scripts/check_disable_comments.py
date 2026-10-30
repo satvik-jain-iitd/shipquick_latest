@@ -11,6 +11,9 @@ import subprocess
 import sys
 
 DISABLE = re.compile(r"eslint-disable|stylelint-disable|swiftlint:disable|@ts-nocheck|@Suppress\(")
+# Only the file types these linters actually read: a Python or Markdown file that defines, tests,
+# or documents this very check has to contain these strings as data, not as a real disable directive.
+CODE_EXT = re.compile(r"\.(ts|tsx|js|jsx|mjs|cjs|vue|svelte|astro|css|scss|less|swift|kt|kts|m|mm)$")
 IGNORE_FILE = re.compile(r"(^|/)\.?[\w-]*ignore$")
 ADR_LINE = re.compile(r"^ADR:\s*docs/decisions/ADR-\d+\.md\s*$", re.M)
 
@@ -32,7 +35,7 @@ def added_lines(diff_text: str):
 def check(diff_text: str, pr_body: str) -> str | None:
     hits = []
     for path, text in added_lines(diff_text):
-        if DISABLE.search(text):
+        if CODE_EXT.search(path) and DISABLE.search(text):
             hits.append(f"{path}: {text.strip()[:80]}")
         elif IGNORE_FILE.search(path) and text.strip() and not text.strip().startswith("#"):
             hits.append(f"{path}: new ignore-file entry: {text.strip()[:80]}")
