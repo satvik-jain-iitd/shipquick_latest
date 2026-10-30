@@ -1,0 +1,19 @@
+# Story #131: paths whose own rules can't be loosened by a PR under those rules. In auto mode,
+# review_merge.sh refuses any PR that touches one of these -- the owner merges it by hand. This
+# list is ShipQuick's own, never a child's: a child cannot soften what it is being checked against.
+# One shell glob per line (bash [[ == ]] matching, so `*` already crosses `/`); `#` comments and
+# blank lines are ignored.
+.github/workflows/*
+.claude/settings*.json
+knowledge/shipquick_latest
+docs/frontend-paths.txt
+docs/architecture-paths.txt
+docs/guard.yml
+design/tokens.json
+.stylelintrc*
+eslint.config.*
+.swiftlint.yml
+detekt*.yml
+.dependency-cruiser.*
+.importlinter
+*baseline*

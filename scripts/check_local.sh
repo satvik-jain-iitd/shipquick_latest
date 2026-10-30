@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks commits pr-size frontend-design secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks commits pr-size frontend-design disable-comments secrets secrets-staged   (no argument = all but secrets-staged)
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
 #   secrets    the whole history (push); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
@@ -61,6 +61,16 @@ check_frontend_design() {
   rm -f "$tmp"
   report frontend-design "$rc"
 }
+check_disable_comments() {
+  have_base disable-comments || return 0
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  python3 "$HERE/check_disable_comments.py" --base "origin/$BASE" --body-file "$tmp"
+  rc=$?
+  rm -f "$tmp"
+  report disable-comments "$rc"
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   gitleaks git --no-banner --no-color --redact --verbose .
@@ -73,7 +83,7 @@ check_secrets_staged() {
 }
 
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks commits pr-size frontend-design secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks commits pr-size frontend-design disable-comments secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
@@ -81,7 +91,8 @@ for c in "${checks[@]}"; do
     secrets-staged) check_secrets_staged ;;
     pr-size) check_pr_size ;;
     frontend-design) check_frontend_design ;;
-    *) echo "unknown check: $c (sizes markers md-blocks commits pr-size frontend-design secrets secrets-staged)"; exit 2 ;;
+    disable-comments) check_disable_comments ;;
+    *) echo "unknown check: $c (sizes markers md-blocks commits pr-size frontend-design disable-comments secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"

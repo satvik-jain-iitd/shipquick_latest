@@ -400,3 +400,48 @@ def test_s126_no_freeze_file_at_all_is_not_frozen(env):
 def test_s126_cannot_read_the_freeze_file_for_a_reason_other_than_404_refuses(env):
     pr = good(); pr["baseRefName"] = "main"
     refused(*env(pr=pr, freeze_unreadable=True), "cannot read")
+
+
+# ---- story #131: harden the merge gate -- a required "gate" check, plus protected paths ----
+def test_s131_no_gate_check_at_all_refuses_even_though_every_other_check_passed(env):
+    pr = good(); pr["statusCheckRollup"] = [{"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}]   # gate job deleted from the caller
+    refused(*env(pr=pr), "no required check named exactly gate")
+
+
+def test_s131_the_required_gate_check_name_also_matches_the_child_shape(env):
+    pr = good(); pr["statusCheckRollup"] = [{"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}, {"name": "shipquick-checks / gate", "status": "COMPLETED", "conclusion": "SUCCESS"}]
+    r, merged = env(pr=pr)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s131_a_gate_check_that_is_not_itself_success_refuses(env):
+    pr = good(); pr["statusCheckRollup"] = [{"name": "gate", "status": "COMPLETED", "conclusion": "NEUTRAL"}]   # the generic loop treats NEUTRAL as passed; the gate itself must not
+    refused(*env(pr=pr), "required check gate is NEUTRAL, not SUCCESS")
+
+
+def test_s131_a_pr_touching_a_protected_path_refuses(env):
+    files = [{"filename": ".github/workflows/ci.yml", "status": "modified"}]
+    refused(*env(pr_files=files), "protected path, owner merges")
+
+
+def test_s131_a_pr_touching_an_unrelated_file_is_not_protected_and_merges(env):
+    files = [{"filename": "README.md", "status": "modified"}]
+    r, merged = env(pr_files=files)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s131_protected_paths_cover_configs_baselines_and_the_submodule_pin(env):
+    for f in (".claude/settings.json", "design/tokens.json", ".stylelintrc.json", "eslint.config.js",
+              ".swiftlint.yml", "detekt-baseline.yml", ".dependency-cruiser.js", ".importlinter",
+              "docs/frontend-paths.txt", "docs/architecture-paths.txt", "docs/guard.yml",
+              "knowledge/shipquick_latest", "android/app/detekt-baseline.xml"):
+        files = [{"filename": f, "status": "modified"}]
+        result, merged = env(pr_files=files)
+        assert result.returncode == 1 and "protected path" in result.stderr, (f, result.stderr)
+
+
+def test_s131_emptying_frontend_paths_txt_is_itself_a_protected_path_edit(env):
+    files = [{"filename": "docs/frontend-paths.txt", "status": "modified"}]
+    refused(*env(pr_files=files), "protected path, owner merges (docs/frontend-paths.txt)")

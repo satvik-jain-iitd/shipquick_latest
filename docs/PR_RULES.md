@@ -116,3 +116,29 @@ While `.shipquick/freeze` exists on `main`:
 
 A freeze past its `until:` date does not lift itself: `scripts/check_freeze.py` still refuses, now
 flagged STALE, until someone runs `freeze.sh off` or a fresh `freeze.sh on ... --until <later date>`.
+
+## 13. Hardening the gate (story #131, epic #130)
+
+A gate is only as strong as the merge. Three things close the gap where a PR could otherwise switch
+its own gate off from inside itself:
+
+- **A required `gate` check.** `checks.yml` (and `ci.yml`) has a `gate` job that `needs:` every
+  other job and fails on any failure or cancellation. `scripts/review_merge.sh` refuses unless a
+  check named exactly `gate` (ShipQuick) or `shipquick-checks / gate` (a child calling the reusable
+  workflow) itself ran and is `SUCCESS` — a generic "every check is SUCCESS or SKIPPED" loop cannot
+  be trusted alone, since a PR that deletes a job from its own caller never produces a *bad* result
+  for that job, it simply has none.
+- **Protected paths.** `scripts/protected_paths.txt` lists the paths whose own rules can't be
+  loosened by a PR under those rules: CI workflow files, the ShipQuick submodule pin, lint configs
+  and baselines, token files, and the path lists other checks read their own scope from
+  (`docs/frontend-paths.txt`, `docs/architecture-paths.txt`, `docs/guard.yml`). In auto mode,
+  `review_merge.sh` refuses any PR touching one of them outright — "protected path, owner merges" —
+  so the owner reviews and merges that PR by hand, never an agent.
+- **Adoption ancestor.** The adoption job (`scripts/check_adoption_ancestor.py`) also requires the
+  pinned ShipQuick commit to be merged into `dev` or `main`, or be a release tag — not just any
+  commit that exists in ShipQuick's history, which would let a PR pin a throwaway branch commit that
+  never passed ShipQuick's own review.
+- **Disable-comment guard.** `scripts/check_disable_comments.py` fails a PR that adds an
+  `eslint-disable`, `stylelint-disable`, `swiftlint:disable`, `@ts-nocheck`, `@Suppress(`, or a new
+  ignore-file entry on an added line — unless the PR's body names the ADR that justifies it
+  (`ADR: docs/decisions/ADR-NNN.md`).

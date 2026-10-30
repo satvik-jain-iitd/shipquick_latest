@@ -23,8 +23,30 @@ def test_s124_checks_yml_is_a_workflow_call_with_a_required_ref_input():
 
 def test_s124_checks_yml_has_every_gate_as_its_own_job():
     jobs = _jobs(CHECKS)
-    for j in ("adoption", "team-block", "frontend-design", "uat-on-main", "freeze-on-main", "environments"):
+    for j in ("adoption", "disable-comments", "team-block", "frontend-design", "uat-on-main", "freeze-on-main", "environments", "gate"):
         assert j in jobs, j
+
+
+# ---- story #131: harden the merge gate ----
+def test_s131_checks_yml_has_a_gate_job_that_needs_every_other_job():
+    gate = CHECKS.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    for j in ("adoption", "disable-comments", "team-block", "frontend-design", "uat-on-main", "freeze-on-main", "environments"):
+        assert j in needs, j
+    assert "if: always()" in gate
+    assert "contains(needs.*.result, 'failure')" in gate and "contains(needs.*.result, 'cancelled')" in gate
+
+
+def test_s131_the_adoption_job_checks_the_pin_is_an_ancestor_or_a_tag():
+    section = CHECKS.split("\n  adoption:\n", 1)[1].split("\n  disable-comments:", 1)[0]
+    assert "check_adoption_ancestor.py" in section
+    assert "inputs.shipquick_repo" in section and "inputs.shipquick_ref" in section
+
+
+def test_s131_disable_comments_job_runs_on_every_pr_and_reuses_the_script():
+    section = CHECKS.split("\n  disable-comments:\n", 1)[1].split("\n  team-block:", 1)[0]
+    assert "if: github.event_name == 'pull_request'" in section
+    assert "check_disable_comments.py" in section
 
 
 def test_s126_the_freeze_job_is_scoped_to_main_and_reuses_check_freeze():

@@ -268,3 +268,17 @@ def test_s126_the_gate_waits_for_freeze():
     gate = CI.split("\n  gate:\n", 1)[1]
     needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
     assert "freeze" in needs
+
+
+# ---- story #131: harden the merge gate ----
+def test_s131_ci_has_a_disable_comments_job_on_every_pr():
+    assert "disable-comments" in _jobs()
+    section = CI.split("\n  disable-comments:\n", 1)[1].split("\n  secret-scan:", 1)[0]
+    assert "if: github.event_name == 'pull_request'" in section
+    assert "check_disable_comments.py" in section
+
+
+def test_s131_the_gate_waits_for_disable_comments():
+    gate = CI.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "disable-comments" in needs
