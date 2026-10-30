@@ -17,7 +17,7 @@ Never jump to making screens before the direction is final.
 - A "yes" starts with a sample screen on the design canvas, from the latest approved board, shown to the owner. Code does not start until he approves it and the board moves to "Design final not live". The code builds that exact screen; copy goes from the frame into the code word for word — the frame is the contract, the code does not improve the words on its own.
 - This applies to every story type: feature, bug fix, chore. Code is never ahead of design.
 - After the code ships to production, the board moves to "Production" (rule 3).
-- A PR that touches the project's own frontend paths (`scripts/check_frontend_design.sh`, globs configured per project) must name the approved board in its body (`Design board: <name>`), or the check fails — in CI and in `scripts/check_local.sh`. A PR that says "no screen change" while still touching those paths also fails.
+- A PR that touches the project's own frontend paths (`scripts/check_frontend_design.sh`, globs configured per project) must name the approved board and its approval date in its body (`Design board: <name>` and `Approved: <date>`), or the check fails — in CI and in `scripts/check_local.sh`. A PR that says "no screen change" while still touching those paths also fails. A `dev -> main` promotion or a `main -> dev` back-merge (base or head is `main`) is never a frontend story and is always skipped.
 - Nothing on the canvas is deleted. An old version moves to the mistakes section (rule 4).
 
 ## 3. The canvas by stage (29 Oct 2026)

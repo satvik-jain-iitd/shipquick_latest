@@ -109,7 +109,7 @@ jobs:
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
-          bash scripts/check_frontend_design.sh --body-file /tmp/pr-body.md --base "origin/$BASE" --repo .
+          bash scripts/check_frontend_design.sh --body-file /tmp/pr-body.md --base "origin/$BASE" --repo . --head "${{ github.head_ref }}"
   team-block:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'

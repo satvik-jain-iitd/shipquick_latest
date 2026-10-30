@@ -3,21 +3,29 @@
 # approved design board in its body, or fail. A PR that says "no screen change" but still touches
 # those paths also fails. The paths file (one shell glob per line, # comments and blanks ignored)
 # is the project's own config; nothing configured means nothing is checked.
-# usage: check_frontend_design.sh --body-file <f> --base <ref> [--repo <path>] [--paths-file <path>]
+# usage: check_frontend_design.sh --body-file <f> --base <ref> [--repo <path>] [--paths-file <path>] [--head <branch-name>]
 set -u
-usage() { echo "usage: check_frontend_design.sh --body-file <f> --base <ref> [--repo <path>] [--paths-file <path>]" >&2; exit 2; }
-body_file=""; base=""; repo="."; paths_file="docs/frontend-paths.txt"
+usage() { echo "usage: check_frontend_design.sh --body-file <f> --base <ref> [--repo <path>] [--paths-file <path>] [--head <branch-name>]" >&2; exit 2; }
+body_file=""; base=""; repo="."; paths_file="docs/frontend-paths.txt"; head=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --body-file) [ -n "${2:-}" ] || usage; body_file="$2"; shift 2 ;;
     --base) [ -n "${2:-}" ] || usage; base="$2"; shift 2 ;;
     --repo) [ -n "${2:-}" ] || usage; repo="$2"; shift 2 ;;
     --paths-file) [ -n "${2:-}" ] || usage; paths_file="$2"; shift 2 ;;
+    --head) [ -n "${2:-}" ] || usage; head="$2"; shift 2 ;;
     *) usage ;;
   esac
 done
 [ -n "$body_file" ] && [ -n "$base" ] || usage
 [ -f "$body_file" ] || { echo "check_frontend_design.sh: no such file: $body_file" >&2; exit 2; }
+
+base_name="${base##*/}"   # strip a leading "origin/" if present
+head_name="${head:-$(git -C "$repo" rev-parse --abbrev-ref HEAD 2>/dev/null || true)}"
+if [ "$base_name" = main ] || [ "$head_name" = main ]; then
+  echo "base or head is main (a dev -> main promotion or a main -> dev back-merge, not a frontend story): check skipped"
+  exit 0
+fi
 
 globs_path="$repo/$paths_file"
 globs=()
@@ -61,4 +69,12 @@ case "$board" in
     exit 1
     ;;
 esac
-echo "design board named: $board"
+approved="$(grep -E '^Approved:' "$body_file" | head -1 | sed -E 's/^Approved:[[:space:]]*//; s/[[:space:]]+$//')"
+case "$approved" in
+  "" | "<"*">"*)
+    echo "touches frontend paths with a board but no approved date (\"Approved: <date>\" in the PR body):"
+    printf '  %s\n' "${touched[@]}"
+    exit 1
+    ;;
+esac
+echo "design board named: $board (approved $approved)"

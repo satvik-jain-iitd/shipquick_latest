@@ -22,7 +22,7 @@ def commit(repo, files, msg):
 
 
 def base_repo(tmp_path, paths_file_text=None):
-    git(tmp_path, "init", "-q", "-b", "main")
+    git(tmp_path, "init", "-q", "-b", "dev")
     git(tmp_path, "config", "user.email", "t@example.com")
     git(tmp_path, "config", "user.name", "T")
     files = {"README.md": "# demo\n"}
@@ -39,11 +39,13 @@ def body_file(tmp_path, text, name="body.md"):
     return p
 
 
-def run(repo, body_text, paths_file=None):
+def run(repo, body_text, paths_file=None, base="dev", head=None):
     f = body_file(repo, body_text)
-    args = ["--repo", str(repo), "--body-file", str(f), "--base", "main"]
+    args = ["--repo", str(repo), "--body-file", str(f), "--base", base]
     if paths_file:
         args += ["--paths-file", paths_file]
+    if head:
+        args += ["--head", head]
     return subprocess.run(["bash", str(SCRIPT), *args], capture_output=True, text=True)
 
 
@@ -64,8 +66,22 @@ def test_a_pr_that_does_not_touch_frontend_paths_passes_with_no_board(tmp_path):
 def test_a_pr_touching_a_frontend_path_with_an_approved_board_passes(tmp_path):
     repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
     commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
-    r = run(repo, "Design board: Production/Login\n")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\n")
     assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_a_board_with_no_approved_date_fails(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\n")
+    assert r.returncode == 1 and "approved" in r.stdout.lower()
+
+
+def test_a_board_with_a_placeholder_approved_date_fails(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: <date>\n")
+    assert r.returncode == 1
 
 
 def test_a_pr_touching_a_frontend_path_with_no_board_fails(tmp_path):
@@ -116,3 +132,25 @@ def test_a_custom_paths_file_location(tmp_path):
     commit(repo, {"ui/screen.tsx": "x\n"}, "feat: a screen")
     r = run(repo, "## What\nno board\n", paths_file="config/frontend-globs.txt")
     assert r.returncode == 1 and "ui/screen.tsx" in r.stdout
+
+
+# ---- PR #123 review blocker: a dev -> main promotion, or a main -> dev back-merge, is not a frontend story and must not be gated ----
+def test_a_promotion_to_main_with_frontend_files_and_no_board_passes(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "## What\nno board\n", base="main")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_the_same_diff_into_dev_still_fails(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "## What\nno board\n", base="dev")
+    assert r.returncode == 1 and "frontend/screen.tsx" in r.stdout
+
+
+def test_a_back_merge_whose_head_is_main_passes_even_into_dev(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "## What\nno board\n", base="dev", head="main")
+    assert r.returncode == 0, (r.stdout, r.stderr)
