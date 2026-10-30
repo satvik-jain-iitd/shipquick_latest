@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Added
+- `docs/DESIGN_PROCESS.md`: the design rules (direction before screens, the canvas by stage, contrast, who owns the canvas, feedback becomes a rule the same day) and `scripts/canvas_stage.py`, the stdlib tool that lays a design canvas out from a manifest, with `tests/test_canvas_stage.py` (#105).
+
 ## [0.7.0] - 2026-10-27
 Tag `v0.7.0` (cd.yml tag-check greps for this exact text, so keep it), "ShipQuick is the whole protocol" (epic #97, first three stories). Notes: `docs/RELEASE_NOTES_v0.7.0.md`.
 
