@@ -46,7 +46,16 @@ open=$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResol
 [ "$open" = 0 ] || refuse "$open unresolved review threads"
 
 [ "$(field '.statusCheckRollup | length')" -gt 0 ] || refuse "no checks ran"
-bad=$(jq -r '.statusCheckRollup[] | select(((.conclusion // .state // "") | ascii_upcase) as $c | $c != "SUCCESS" and $c != "SKIPPED" and $c != "NEUTRAL") | (.name // .context)' <<<"$json" | head -1)
+# A check name can carry more than one run (a rerun, a close/reopen, a stale suite from an earlier commit): only its latest run by startedAt counts.
+bad=$(jq -r '
+  .statusCheckRollup
+  | sort_by(.name // .context)
+  | group_by(.name // .context)
+  | map(max_by(.startedAt // .completedAt // ""))
+  | .[]
+  | select(((.conclusion // .state // "") | ascii_upcase) as $c | $c != "SUCCESS" and $c != "SKIPPED" and $c != "NEUTRAL")
+  | (.name // .context)
+' <<<"$json" | head -1)
 [ -z "$bad" ] || refuse "check $bad is not SUCCESS"
 
 why=$(field .body | python3 "$HERE/check_closes.py" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
