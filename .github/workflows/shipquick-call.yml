@@ -1,0 +1,22 @@
+# ShipQuick's own template for the caller every child writes (story #124). Never triggered for real
+# here: ShipQuick carries no knowledge/shipquick_latest submodule of its own (the adoption job would
+# always fail), and ShipQuick's checks already run natively in ci.yml. workflow_dispatch keeps this
+# file inert in this repo while still letting scripts/adopt.sh read it as the template.
+# adopt.sh copies this file, replaces `workflow_dispatch:` with `pull_request:`, changes `uses:` to
+# `satvik-jain-iitd/shipquick_latest/.github/workflows/checks.yml@<SHA>` and `shipquick_ref` to that
+# same SHA. See docs/ADOPTION.md.
+name: ShipQuick checks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shipquick-checks:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/checks.yml
+    with:
+      shipquick_ref: ${{ github.sha }}

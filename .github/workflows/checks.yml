@@ -1,0 +1,137 @@
+# Every PR gate a ShipQuick child project needs (story #124), as one reusable workflow: team block,
+# Closes link, design-first, UAT on main, environments — plus an adoption job that fails loudly when
+# the caller's pin does not match the child's own knowledge/shipquick_latest submodule commit, or the
+# child's .pre-commit-config.yaml carries no ShipQuick hooks. Adoption is never silent.
+# A child never writes this file by hand: scripts/adopt.sh writes the caller (.github/workflows/shipquick-call.yml).
+# The calling job must grant at least `contents: read`; a reusable workflow cannot take more than its caller gives.
+name: ShipQuick checks (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      shipquick_repo:
+        description: Where the ShipQuick scripts live
+        type: string
+        default: satvik-jain-iitd/shipquick_latest
+      shipquick_ref:
+        description: Commit SHA (or tag) of the ShipQuick scripts. Use the same one as in `uses:`.
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  adoption:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          path: project
+      - name: Check the caller's pin and the pre-commit hooks (story #124)
+        run: |
+          sub_sha="$(git -C project rev-parse -q --verify "HEAD:knowledge/shipquick_latest" || true)"
+          if [ -z "$sub_sha" ]; then
+            echo "no knowledge/shipquick_latest submodule found at this commit. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+            exit 1
+          fi
+          if [ "$sub_sha" != "${{ inputs.shipquick_ref }}" ]; then
+            echo "the caller is pinned to ${{ inputs.shipquick_ref }}, but the submodule is at $sub_sha. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+            exit 1
+          fi
+          if ! grep -q "check_local.sh" project/.pre-commit-config.yaml 2>/dev/null; then
+            echo "no ShipQuick pre-commit hooks in .pre-commit-config.yaml. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+            exit 1
+          fi
+          echo "adoption OK: pinned to $sub_sha, pre-commit hooks present"
+  team-block:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+    steps:
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check the teammate block in the PR body
+        run: |
+          case "$PR_AUTHOR" in
+            dependabot\[bot\]|app/dependabot) echo "Dependabot: team-block exempt"; exit 0 ;;
+          esac
+          printf '%s\n' "$PR_BODY" | awk '/^## For the reviewer/{f=1;next} /^## /{f=0} f' | python3 .shipquick/scripts/check_block.py
+      - name: Check the PR body links its issue (Closes #n)
+        run: |
+          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
+  frontend-design:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          path: project
+          fetch-depth: 0
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check the design board is named for any frontend change (story #121)
+        run: |
+          BASE="${{ github.base_ref }}"
+          git -C project fetch origin "$BASE"
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          bash .shipquick/scripts/check_frontend_design.sh --body-file "$RUNNER_TEMP/pr-body.md" --base "origin/$BASE" --repo project --head "${{ github.head_ref }}"
+  uat-on-main:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          path: project
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check the UAT-on-dev checklist is followable (story #120, #122)
+        run: |
+          bash .shipquick/scripts/has_dev_link.sh project/CLAUDE.md || { echo "no Dev link configured in this project: UAT checklist exempt"; exit 0; }
+          printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 .shipquick/scripts/check_uat.py
+  environments:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          path: project
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check Dev link / Production link are filled past D0 (story #120)
+        run: bash .shipquick/scripts/check_environments.sh --claude-md project/CLAUDE.md --milestone D1
