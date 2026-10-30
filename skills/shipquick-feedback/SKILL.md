@@ -1,6 +1,6 @@
 ---
 name: shipquick-feedback
-description: Send one line of feedback about a ShipQuick gap, found while working in any project that carries ShipQuick as the knowledge/shipquick_latest submodule, into ShipQuick's own feedback inbox as a full nine-section story. Use when the owner says "send this to ShipQuick", "ShipQuick feedback", "tell ShipQuick about this", or when a session hits a ShipQuick rule, check or script that is missing, wrong, or carries project facts that do not belong in the generic kit.
+description: Send a ShipQuick gap, found while working in any project that carries ShipQuick as the knowledge/shipquick_latest submodule, into ShipQuick's own feedback inbox as the whole story in nine sections. Use when the owner says "send this to ShipQuick", "ShipQuick feedback", "tell ShipQuick about this", or when a session hits a ShipQuick rule, check or script that is missing, wrong, or carries project facts that do not belong in the generic kit.
 ---
 
 # ShipQuick feedback

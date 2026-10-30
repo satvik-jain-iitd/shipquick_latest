@@ -197,3 +197,42 @@ def test_s118_the_header_carries_the_project_name_and_the_shipquick_commit(child
     sha = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
     assert "job-search" in r.issue
     assert sha[:7] in r.issue
+
+
+# ---- PR #119 review blocker: the unfilled template must not pass (hints and "Why n: ..." placeholders are not content) ----
+def test_s119_the_unfilled_template_itself_is_refused(child, tmp_path):
+    r = run(child, tmp_path, STUB_OK_NO_DUPES, "--title", "unfilled template", "--body-file", str(ROOT / "docs" / "templates" / "feedback.md"))
+    assert r.returncode == 2, (r.stdout, r.stderr)
+    assert r.issue == ""
+
+
+def test_s119_why_n_dot_dot_dot_placeholder_lines_do_not_count_as_why_lines(child, tmp_path):
+    f = body_file(tmp_path, filled_body(**{"Root cause": "Why 1: ...\nWhy 2: ...\nWhy 3: ...\nOne real sentence that is not a Why line.\n"}))
+    r = run(child, tmp_path, STUB_OK_NO_DUPES, "--title", "t", "--body-file", str(f))
+    assert r.returncode == 2 and "Root cause" in r.stderr
+    assert r.issue == ""
+
+
+def test_s119_a_section_still_equal_to_the_template_hint_is_refused_even_with_other_sections_filled(child, tmp_path):
+    hint = "Project, tool and version, what you were doing, the ids (PR, issue, run), the exact error text."
+    f = body_file(tmp_path, filled_body(**{"Situation": hint}))
+    r = run(child, tmp_path, STUB_OK_NO_DUPES, "--title", "t", "--body-file", str(f))
+    assert r.returncode == 2 and "Situation" in r.stderr
+    assert r.issue == ""
+
+
+# ---- PR #119 review nit: duplicate match must not let a short title swallow an unrelated long one ----
+def test_s119_a_short_title_does_not_match_an_unrelated_long_existing_title(child, tmp_path):
+    stub = STUB_ONE_DUPE.replace("model_calls.sh is slow", "the ci pipeline double-runs tests on reopen")
+    f = body_file(tmp_path, filled_body())
+    r = run(child, tmp_path, stub, "--title", "ci", "--body-file", str(f))
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert r.comment == "", "a 1-word title must not be treated as matching a long unrelated title"
+    assert r.issue != ""
+
+
+def test_s119_a_normalised_whole_title_match_is_still_caught(child, tmp_path):
+    f = body_file(tmp_path, filled_body())
+    r = run(child, tmp_path, STUB_ONE_DUPE, "--title", "MODEL_CALLS.SH is slow!!", "--body-file", str(f))
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert r.comment != "" and r.issue == ""

@@ -13,6 +13,7 @@
 # title and the full body and exits 1, nothing lost. Needs git, gh and jq.
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMPLATE="$HERE/../docs/templates/feedback.md"
 REPO="${SHIPQUICK_REPO:-satvik-jain-iitd/shipquick_latest}"
 BUILD_USER="${SHIPQUICK_BUILD_USER:-klickbae8yt-star}"
 SECTIONS=("Situation" "Expected vs seen" "Steps to reproduce" "Impact" "Root cause" "Why ShipQuick did not catch it" "How big teams avoid it" "Generic fix for ShipQuick" "Stop the repeat")
@@ -29,16 +30,19 @@ done
 [ -n "$title" ] && [ -n "$file" ] || usage
 [ -f "$file" ] || { echo "feedback.sh: no such file: $file" >&2; exit 2; }
 
-section_text() {
-  awk -v h="## $1" 'index($0, h) == 1 {f = 1; next} /^## / {f = 0} f' "$file" | sed '/^[[:space:]]*$/d'
+section_text() {   # section_text <file> <section name> — a blank-stripped block, "## <name>" to the next "## " or EOF
+  awk -v h="## $2" 'index($0, h) == 1 {f = 1; next} /^## / {f = 0} f' "$1" | sed '/^[[:space:]]*$/d'
 }
 
 for s in "${SECTIONS[@]}"; do
-  text="$(section_text "$s")"
-  [ -n "$text" ] || { echo "feedback.sh: missing or empty section: $s" >&2; exit 2; }
+  text="$(section_text "$file" "$s")"
+  hint="$(section_text "$TEMPLATE" "$s")"
+  # "Why n: ..." is the template's own placeholder, never a real why line; strip it before judging content.
+  content="$(printf '%s\n' "$text" | grep -Eva '^Why[[:space:]]*[0-9]*:[[:space:]]*\.\.\.[[:space:]]*$')"
+  [ -n "$content" ] && [ "$text" != "$hint" ] || { echo "feedback.sh: missing or empty section: $s (still the template hint, or only placeholder lines)" >&2; exit 2; }
   if [ "$s" = "Root cause" ]; then
-    whys=$(printf '%s\n' "$text" | grep -ci '^Why')
-    [ "$whys" -ge 3 ] || { echo "feedback.sh: missing or empty section: Root cause (needs at least three \"Why\" lines, a five-whys chain; found $whys)" >&2; exit 2; }
+    whys=$(printf '%s\n' "$content" | grep -ci '^Why')
+    [ "$whys" -ge 3 ] || { echo "feedback.sh: missing or empty section: Root cause (needs at least three real \"Why\" lines, a five-whys chain; found $whys)" >&2; exit 2; }
   fi
 done
 
@@ -76,17 +80,29 @@ token="$(gh auth token --user "$BUILD_USER" 2>/dev/null)" || {
   exit 1
 }
 
+norm() {   # lowercase, strip punctuation to spaces, squeeze: a short word-for-word key, not a raw substring
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/ /g; s/^ +| +$//g'
+}
+strip_prefix() {   # drop this script's own "feedback: <project>: " title prefix before comparing
+  printf '%s' "$1" | sed -E 's/^feedback: [^:]+: //'
+}
+
 dupe=""
 if [ -z "$force_new" ]; then
   open_titles="$(GH_TOKEN="$token" gh issue list -R "$REPO" --label feedback --state open --json number,title 2>/dev/null \
     | jq -r '.[] | "\(.number)\t\(.title)"' 2>/dev/null || true)"
-  low_title="$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]')"
+  nt="$(norm "$title")"
+  nt_words=$(printf '%s' "$nt" | wc -w)
   while IFS=$'\t' read -r num etitle; do
     [ -n "$num" ] || continue
-    low_e="$(printf '%s' "$etitle" | tr '[:upper:]' '[:lower:]')"
-    case "$low_e" in *"$low_title"*) dupe="$num" ;; esac
-    [ -n "$dupe" ] && break
-    case "$low_title" in *"$low_e"*) dupe="$num" ;; esac
+    ne="$(norm "$(strip_prefix "$etitle")")"
+    ne_words=$(printf '%s' "$ne" | wc -w)
+    if [ "$nt" = "$ne" ]; then
+      dupe="$num"
+    elif [ "$nt_words" -ge 4 ] && [ "$ne_words" -ge 4 ]; then
+      case "$ne" in *"$nt"*) dupe="$num" ;; esac
+      [ -z "$dupe" ] && case "$nt" in *"$ne"*) dupe="$num" ;; esac
+    fi
     [ -n "$dupe" ] && break
   done <<<"$open_titles"
 fi
