@@ -16,7 +16,7 @@ jobs:
       shipquick_ref: <SHA>
 ```
 
-`.github/workflows/checks.yml` (the reusable workflow this calls) runs every PR gate a child needs — team block, `Closes #n`, design-first, UAT on main, environments — plus one more job, **adoption**, that runs first and fails loudly when:
+`.github/workflows/checks.yml` (the reusable workflow this calls) runs every PR gate a child needs — team block, `Closes #n`, design-first, UAT on main, release freeze, environments — plus one more job, **adoption**, that runs first and fails loudly when:
 - the caller's pin (`shipquick_ref`) does not equal the commit the child's `knowledge/shipquick_latest` submodule is actually at, or
 - the child's `.pre-commit-config.yaml` carries no ShipQuick hooks.
 

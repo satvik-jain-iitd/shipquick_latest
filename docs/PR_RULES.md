@@ -99,3 +99,20 @@ Protection applies to admins too. For a real emergency:
 
 - Remove rule: `DELETE .../branches/{branch}/protection`.
 - Turn auto-merge off in repo settings.
+
+## 12. Release freeze (story #126)
+
+A freeze is a file, not a note in chat. `scripts/freeze.sh on "<reason>" --until <date>` writes
+`.shipquick/freeze` on `main` through its own PR; `freeze.sh off` removes it the same way;
+`freeze.sh status` prints what it would decide, locally or for any `owner/repo`.
+
+While `.shipquick/freeze` exists on `main`:
+- `scripts/review_merge.sh` refuses every merge into `main`, with the freeze's reason and until-date
+  in the refusal, except the one PR whose only changed file removes `.shipquick/freeze` (so lifting
+  the freeze is never itself blocked by the freeze).
+- The `freeze` job in `ci.yml` (and the reusable `checks.yml` a child calls, story #124) fails a PR
+  into `main` the same way, reading the already-checked-out file — a PR that only removes the file
+  already shows it gone in the merge-commit checkout, so no separate exemption is needed there.
+
+A freeze past its `until:` date does not lift itself: `scripts/check_freeze.py` still refuses, now
+flagged STALE, until someone runs `freeze.sh off` or a fresh `freeze.sh on ... --until <later date>`.

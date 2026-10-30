@@ -253,3 +253,18 @@ def test_s120_the_gate_waits_for_uat_checklist():
     gate = CI.split("\n  gate:\n", 1)[1]
     needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
     assert "uat-checklist" in needs
+
+
+# ---- story #126: a release freeze is a mechanism, not a sentence ----
+def test_s126_ci_has_a_freeze_job_scoped_to_main_only():
+    assert "freeze" in _jobs()
+    section = CI.split("\n  freeze:\n", 1)[1].split("\n  secret-scan:", 1)[0]
+    assert "github.base_ref == 'main'" in section
+    assert "check_freeze.py" in section
+    assert ".shipquick/freeze" in section
+
+
+def test_s126_the_gate_waits_for_freeze():
+    gate = CI.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "freeze" in needs

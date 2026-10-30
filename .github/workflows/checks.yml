@@ -117,6 +117,28 @@ jobs:
         run: |
           bash .shipquick/scripts/has_dev_link.sh project/CLAUDE.md || { echo "no Dev link configured in this project: UAT checklist exempt"; exit 0; }
           printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 .shipquick/scripts/check_uat.py
+  freeze-on-main:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          path: project
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check the project's own .shipquick/freeze (story #126)
+        run: |
+          # The checkout above is the tentative merge of this PR into main, so a PR that only
+          # removes project/.shipquick/freeze already shows it gone here.
+          [ -f project/.shipquick/freeze ] || { echo "not frozen"; exit 0; }
+          python3 .shipquick/scripts/check_freeze.py < project/.shipquick/freeze
   environments:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'

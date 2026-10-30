@@ -23,8 +23,15 @@ def test_s124_checks_yml_is_a_workflow_call_with_a_required_ref_input():
 
 def test_s124_checks_yml_has_every_gate_as_its_own_job():
     jobs = _jobs(CHECKS)
-    for j in ("adoption", "team-block", "frontend-design", "uat-on-main", "environments"):
+    for j in ("adoption", "team-block", "frontend-design", "uat-on-main", "freeze-on-main", "environments"):
         assert j in jobs, j
+
+
+def test_s126_the_freeze_job_is_scoped_to_main_and_reuses_check_freeze():
+    section = CHECKS.split("\n  freeze-on-main:\n", 1)[1].split("\n  environments:", 1)[0]
+    assert "github.base_ref == 'main'" in section
+    assert "check_freeze.py" in section
+    assert ".shipquick/freeze" in section
 
 
 def test_s124_the_adoption_job_fails_on_a_pin_mismatch_and_says_what_to_run():
