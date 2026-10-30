@@ -381,15 +381,17 @@ def test_s126_a_pr_that_only_removes_the_freeze_file_is_exempt_and_merges(env):
 
 
 def test_s126_a_pr_that_removes_the_freeze_file_plus_something_else_is_not_exempt(env):
+    # not the lift-only shape, so it is caught by the (now broader) protected-paths check before
+    # the freeze check even runs -- still refused, same as before PR #141's review, different line.
     pr = good(); pr["baseRefName"] = "main"
     files = [{"filename": ".shipquick/freeze", "status": "removed"}, {"filename": "README.md", "status": "modified"}]
-    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "frozen until 2099-01-01")
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "protected path")
 
 
 def test_s126_a_pr_that_edits_the_freeze_file_rather_than_removing_it_is_not_exempt(env):
     pr = good(); pr["baseRefName"] = "main"
     files = [{"filename": ".shipquick/freeze", "status": "modified"}]
-    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "frozen until 2099-01-01")
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "protected path")
 
 
 def test_s126_no_freeze_file_at_all_is_not_frozen(env):
@@ -445,3 +447,26 @@ def test_s131_protected_paths_cover_configs_baselines_and_the_submodule_pin(env)
 def test_s131_emptying_frontend_paths_txt_is_itself_a_protected_path_edit(env):
     files = [{"filename": "docs/frontend-paths.txt", "status": "modified"}]
     refused(*env(pr_files=files), "protected path, owner merges (docs/frontend-paths.txt)")
+
+
+# ---- review blocker on PR #141: the enforcers themselves must be protected paths too ----
+def test_s131_the_enforcer_scripts_are_themselves_protected(env):
+    for f in ("scripts/protected_paths.txt", "scripts/review_merge.sh", "scripts/mode.sh",
+              "scripts/has_dev_link.sh", "scripts/check_closes.py", "scripts/check_uat.py",
+              ".shipquick/roles.yml", ".shipquick/mode"):
+        result, merged = env(pr_files=[{"filename": f, "status": "modified"}])
+        assert result.returncode == 1 and "protected path" in result.stderr, (f, result.stderr)
+
+
+def test_s131_lifting_the_freeze_still_merges_even_though_shipquick_star_is_now_protected(env):
+    pr = good(); pr["baseRefName"] = "main"
+    files = [{"filename": ".shipquick/freeze", "status": "removed"}]
+    r, merged = env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s131_editing_the_freeze_file_rather_than_removing_it_is_still_protected(env):
+    files = [{"filename": ".shipquick/freeze", "status": "modified"}]
+    result, merged = env(pr_files=files)
+    assert result.returncode == 1 and "protected path" in result.stderr

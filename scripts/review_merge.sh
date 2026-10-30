@@ -97,9 +97,14 @@ protected_match() {   # protected_match <changed-file> -- true if it matches a l
   return 1
 }
 files_json=$(GH_TOKEN="$token" gh api "repos/$repo/pulls/$pr/files" --paginate) || refuse "cannot read changed files"
+# story #126's lift-the-freeze exemption: a PR whose only changed file removes .shipquick/freeze is
+# never itself blocked by the freeze gate, or (now that .shipquick/* is protected, review blocker on
+# PR #141) by the protected-paths refusal below -- otherwise freeze.sh off could never merge.
+only_lifts_freeze=$(jq -r 'if length == 1 and .[0].filename == ".shipquick/freeze" and .[0].status == "removed" then "yes" else "no" end' <<<"$files_json")
 bad_path=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
+  [ "$f" = ".shipquick/freeze" ] && [ "$only_lifts_freeze" = yes ] && continue
   if protected_match "$f"; then bad_path="$f"; break; fi
 done < <(jq -r '.[].filename' <<<"$files_json")
 [ -z "$bad_path" ] || refuse "protected path, owner merges ($bad_path)"
@@ -132,7 +137,6 @@ if [ "$(field .baseRefName)" = main ]; then   # story #126: a release freeze blo
     freeze_msg=$(printf '%s' "$freeze_raw" | base64 -d 2>/dev/null | python3 "$HERE/check_freeze.py")
     freeze_blocked=$?
     if [ "$freeze_blocked" = 1 ]; then
-      only_lifts_freeze=$(jq -r 'if length == 1 and .[0].filename == ".shipquick/freeze" and .[0].status == "removed" then "yes" else "no" end' <<<"$files_json")
       [ "$only_lifts_freeze" = yes ] || refuse "$freeze_msg"
     fi
   fi

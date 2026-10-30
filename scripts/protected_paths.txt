@@ -17,3 +17,12 @@ detekt*.yml
 .dependency-cruiser.*
 .importlinter
 *baseline*
+# the enforcers themselves (review blocker on PR #141): a PR must never be able to weaken the gate
+# it is being merged through, or the list that protects everything else.
+scripts/protected_paths.txt
+scripts/review_merge.sh
+scripts/mode.sh
+scripts/has_dev_link.sh
+scripts/check_*.py
+scripts/check_*.sh
+.shipquick/*
