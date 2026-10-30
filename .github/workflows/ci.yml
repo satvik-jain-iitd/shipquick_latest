@@ -113,6 +113,17 @@ jobs:
       - name: Check the PR body links its issue (Closes #n)
         run: |
           printf '%s\n' "$PR_BODY" | python3 scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
+  uat-checklist:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Check the UAT-on-dev checklist is followable (story #120, #122)
+        run: |
+          bash scripts/has_dev_link.sh CLAUDE.md || { echo "no Dev link configured in this repo: UAT checklist exempt"; exit 0; }
+          printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 scripts/check_uat.py
   secret-scan:
     runs-on: ubuntu-latest
     steps:
@@ -197,7 +208,7 @@ jobs:
   gate:
     name: gate
     runs-on: ubuntu-latest
-    needs: [pre-commit, commit-msg, pr-size, team-block, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, team-block, uat-checklist, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -206,6 +217,7 @@ jobs:
           echo "commit-msg: ${{ needs.commit-msg.result }}"
           echo "pr-size: ${{ needs.pr-size.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
+          echo "uat-checklist: ${{ needs.uat-checklist.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "test: ${{ needs.test.result }}"

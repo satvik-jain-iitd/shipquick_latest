@@ -1,4 +1,5 @@
 """S0.16: the coded merge gate (story #67). A stub `gh` on PATH: no network, no token, nothing is ever merged."""
+import base64
 import json
 import os
 import subprocess
@@ -25,7 +26,12 @@ case "$1" in
               cat "$STUB_DIR/pr.json"; exit 0 ;;
         merge) echo "GH_TOKEN=$GH_TOKEN $*" >> "$STUB_DIR/merge.log"; exit 0 ;;
       esac ;;
-  api) case "$*" in *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;; esac
+  api) case "$*" in
+         *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;;
+         *contents/CLAUDE.md*)
+           case "$*" in *" -f "*|*" -F "*) echo "stub: -f/-F on a GET turns gh api into a POST, GitHub 404s" >&2; exit 1 ;; esac
+           [ -f "$STUB_DIR/claude_md_b64" ] && { cat "$STUB_DIR/claude_md_b64"; exit 0; }; exit 1 ;;
+       esac
        case "$2" in repos/*) echo '{"default_branch":"main"}'; exit 0 ;; esac; cat "$STUB_DIR/threads.json"; exit 0 ;;
 esac
 exit 9
@@ -56,12 +62,22 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
         (stub / "protection.json").unlink(missing_ok=True)
         if linear is not None:   # the base branch protection answer: required_linear_history on or off; None = the branch has no protection (the call fails)
             (stub / "protection.json").write_text(json.dumps({"required_linear_history": {"enabled": linear}}), encoding="utf-8")
+        # story #122 fix: the UAT gate reads the PR's OWN repo's CLAUDE.md via the GitHub contents API (base64),
+        # never the local checkout's — a local checkout without a Dev link must not make a different repo exempt.
+        b64_file = stub / "claude_md_b64"
+        if claude_md_unreadable:
+            b64_file.unlink(missing_ok=True)
+        else:
+            body = f"## Environments\n- Dev link: {dev_link}\n" if dev_link else "# no Dev link configured\n"
+            b64_file.write_text(base64.b64encode(body.encode()).decode(), encoding="utf-8")
+        # the local checkout deliberately carries no CLAUDE.md of its own, to prove it is never read
+        (repo / "CLAUDE.md").unlink(missing_ok=True)
         e["STUB_FAIL_CLOSE"] = "1" if fail_close else ""   # one call per scenario: a test may call go() twice
         (stub / "pr.json").write_text(json.dumps(pr or good()), encoding="utf-8")
         (stub / "threads.json").write_text(json.dumps(th or threads(True, True)), encoding="utf-8")
@@ -256,3 +272,70 @@ def test_q0_an_unknown_method_is_a_usage_error_and_merges_nothing(env):
     r, merged = env(args=("12", "--method", "fast"))
     assert r.returncode == 2 and "usage" in r.stderr, (r.stdout, r.stderr)
     assert merged == ""
+
+
+# ---- story #120: a dev -> main promotion refuses without a followable, fully-ticked UAT checklist ----
+UAT_STORY = """- [x] #219 Fix: cart total after removing an item
+  Open: https://dev.app.example.com/cart (log in with test phone 9999999999, OTP 123456)
+  1. Add "Masala Dosa" 3 times.
+  2. Tap the minus on "Masala Dosa" once.
+  Expected: the cart shows 2 x Masala Dosa and the total is ₹240 (2 x ₹120).
+"""
+UAT_TAIL = """- [x] Old flows still work
+- [x] Design matches the approved boards
+Known bugs going to production: none
+"""
+
+
+DEV_LINK = "https://dev.app.example.com"
+
+
+def test_s120_a_promotion_pr_to_main_without_a_uat_section_refuses(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "UAT on dev")
+
+
+def test_s120_a_promotion_pr_to_main_with_a_complete_ticked_uat_checklist_merges(env):
+    pr = good(); pr["baseRefName"] = "main"
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY}{UAT_TAIL}"
+    r, merged = env(pr=pr, dev_link=DEV_LINK)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s120_an_unticked_box_in_the_uat_checklist_refuses(env):
+    pr = good(); pr["baseRefName"] = "main"
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY.replace('[x] #219', '[ ] #219')}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "unticked")
+
+
+def test_s120_a_uat_story_line_with_no_expected_refuses(env):
+    pr = good(); pr["baseRefName"] = "main"
+    broken_story = UAT_STORY.replace('  Expected: the cart shows 2 x Masala Dosa and the total is ₹240 (2 x ₹120).\n', "")
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{broken_story}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "not followable")
+
+
+def test_s120_a_regular_feature_pr_to_dev_needs_no_uat_checklist(env):
+    r, merged = env(dev_link=DEV_LINK)   # good() already targets dev, no UAT section at all
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+# ---- story #122 (PR #122 review blocker): exempt by project (no Dev link configured), never by PR title ----
+def test_s122_a_project_with_no_dev_link_is_exempt_even_with_a_release_title_and_no_uat_section(env):
+    pr = good(); pr["baseRefName"] = "main"; pr["title"] = "release: v0.8.0"
+    r, merged = env(pr=pr)   # no dev_link passed: this project's own CLAUDE.md has none
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s122_a_release_titled_promotion_still_refuses_when_the_project_has_a_dev_link_and_an_unticked_box(env):
+    pr = good(); pr["baseRefName"] = "main"; pr["title"] = "release: v0.8.0"
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY.replace('[x] #219', '[ ] #219')}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "unticked")
+
+
+def test_s122_cannot_read_the_pr_repos_claude_md_refuses_it_is_never_treated_as_exempt(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, claude_md_unreadable=True), "cannot read")
