@@ -104,7 +104,8 @@ Protection applies to admins too. For a real emergency:
 
 A freeze is a file, not a note in chat. `scripts/freeze.sh on "<reason>" --until <date>` writes
 `.shipquick/freeze` on `main` through its own PR; `freeze.sh off` removes it the same way;
-`freeze.sh status` prints what it would decide, locally or for any `owner/repo`.
+`freeze.sh status` prints what it would decide, reading `origin/main` (never the local checkout's
+own uncommitted or unpushed files -- bug #142) or any `owner/repo` given with `--repo`.
 
 While `.shipquick/freeze` exists on `main`:
 - `scripts/review_merge.sh` refuses every merge into `main`, with the freeze's reason and until-date
