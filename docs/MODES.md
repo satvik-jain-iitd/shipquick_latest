@@ -1,14 +1,32 @@
 # Modes: how much the agents do alone
 
-The owner picks one mode per project. The mode is one word (`manual`, `semi` or `auto`) in `$(git rev-parse --git-common-dir)/shipquick-mode`.
-Every worktree of the repo shares it, and git does not track it. Agents only read it: `scripts/mode.sh get` (in a child project: `knowledge/shipquick_latest/scripts/mode.sh get`), at session start. `/mode` shows it.
-**Only the owner sets it.** If the mode is not set, the agent asks the owner, and the owner sets it by typing `! bash scripts/mode.sh set <word>` himself (a `!` line is his own shell input, never an agent's tool call). An agent never runs `set`: if it could set auto, it could merge through the gate on its own.
+The owner picks one mode per project. The mode is one word (`manual`, `semi` or `auto`), kept one of two
+places (`scripts/mode.sh get` reads in this order, story #140):
+1. `.shipquick/mode` in the repo, when it exists. Tracked by git, listed in `scripts/protected_paths.txt`:
+   changing it needs a PR touching a protected path, so only the owner's own merge can flip it, never an
+   agent's `Bash` call. This is the only way to set the mode once this file exists.
+2. Else, the old `$(git rev-parse --git-common-dir)/shipquick-mode`: one word, every worktree of the repo
+   shares it, git does not track it.
+
+Agents only read it: `scripts/mode.sh get` (in a child project: `knowledge/shipquick_latest/scripts/mode.sh get`), at session start. `/mode` shows it.
+**Only the owner sets it.** Before `.shipquick/mode` exists, the agent asks the owner, and the owner sets it
+by typing `! bash scripts/mode.sh set <word>` himself (a `!` line is his own shell input, never an agent's tool
+call); `mode.sh set` refuses outright once `.shipquick/mode` exists, and tells the owner to edit that file and
+open a PR instead. An agent never runs `set`: if it could set auto, it could merge through the gate on its own.
+
+`.shipquick/roles.yml` (story #140) names which GitHub accounts may be `coder`, `reviewer` and `owner` for the
+project. The table below is per role, not per session: any account listed as `coder` may code, any account
+listed as `reviewer` may review and approve, and the same account can never do both on one pull request.
 
 | Mode | Who codes | Who reviews | Who merges | What still stops for the owner |
 |---|---|---|---|---|
-| Manual | the agents | the owner | the owner | everything: the agents code and open pull requests |
-| Semi | the agents | the agents review each other (the reviewer approves) | the owner | the merge |
-| Auto | the agents | the agents review and approve | the agents, with `scripts/review_merge.sh` only; this includes dev to main (owner yes, 27 Oct 2026) | money, secrets, and posts or messages to people |
+| Manual | a coder account | the owner | the owner | everything: the agents code and open pull requests |
+| Semi | a coder account | a reviewer account (not the author) approves | the owner | the merge |
+| Auto | a coder account | a reviewer account (not the author) approves | a reviewer account, with `scripts/review_merge.sh` only; this includes dev to main (owner yes, 27 Oct 2026) | money, secrets, and posts or messages to people |
+
+One account listed as both the only `coder` and the only `reviewer` can never run Auto (`mode.sh set auto`
+refuses it): with one account playing both roles, the gate's "approver is not the author" check can never
+pass, so Auto would just stop on every pull request. Manual and Semi still work; the owner reviews by hand.
 
 ## The merge gate (Auto only)
 `scripts/review_merge.sh <pr> [owner/repo]` is the only way an agent merges. It refuses, and says which rule, unless all of these hold:

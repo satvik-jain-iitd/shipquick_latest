@@ -9,13 +9,20 @@
 # The script fills the header itself (project, ShipQuick commit, date) — the caller never writes it.
 # An open `feedback` issue with a similar title gets a comment instead of a new issue; --new forces a new one.
 # Opens/comments in $SHIPQUICK_REPO (default satvik-jain-iitd/shipquick_latest), label `feedback`, using
-# the build account's token ($SHIPQUICK_BUILD_USER, default klickbae8yt-star). No gh login: prints the
+# the build account's token ($SHIPQUICK_BUILD_USER, default: the calling repo's first coder account from
+# .shipquick/roles.yml if it has one, else klickbae8yt-star -- story #140). No gh login: prints the
 # title and the full body and exits 1, nothing lost. Needs git, gh and jq.
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE="$HERE/../docs/templates/feedback.md"
 REPO="${SHIPQUICK_REPO:-satvik-jain-iitd/shipquick_latest}"
-BUILD_USER="${SHIPQUICK_BUILD_USER:-klickbae8yt-star}"
+BUILD_USER="${SHIPQUICK_BUILD_USER:-}"
+if [ -z "$BUILD_USER" ]; then
+  _top="$(git rev-parse --show-toplevel 2>/dev/null)" || _top=""
+  [ -n "$_top" ] && BUILD_USER="$(python3 "$HERE/roles.py" get coder --file "$_top/.shipquick/roles.yml" 2>/dev/null | cut -d, -f1)"
+  BUILD_USER="${BUILD_USER:-klickbae8yt-star}"
+  unset _top
+fi
 SECTIONS=("Situation" "Expected vs seen" "Steps to reproduce" "Impact" "Root cause" "Why ShipQuick did not catch it" "How big teams avoid it" "Generic fix for ShipQuick" "Stop the repeat")
 usage() { echo 'usage: feedback.sh --title "<t>" --body-file <f> [--new]' >&2; exit 2; }
 title=""; file=""; force_new=""

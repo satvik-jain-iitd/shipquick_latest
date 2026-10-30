@@ -101,3 +101,33 @@ def test_status_with_a_local_freeze_file_says_frozen(repo):
     r = run(repo, "status")
     assert r.returncode == 1
     assert "frozen until 2099-01-01" in r.stdout
+
+
+def _commit_roles_yml(repo, text):
+    """A clean working tree is required before `on`/`off`, so roles.yml must already be committed."""
+    (repo / ".shipquick").mkdir(exist_ok=True)
+    (repo / ".shipquick" / "roles.yml").write_text(text, encoding="utf-8")
+    subprocess.run(["git", "add", ".shipquick/roles.yml"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "chore: roles.yml"], cwd=repo, check=True)
+    subprocess.run(["git", "push", "-q", "origin", "main"], cwd=repo, check=True)
+
+
+# ---- story #140 (reviewer): BUILD_USER defaults to the repo's own first coder account ----
+def test_build_user_defaults_to_the_repos_first_coder_account(repo):
+    _commit_roles_yml(repo, "coder:\n  - repo-coder\n  - repo-coder-2\nreviewer:\n  - repo-reviewer\nowner: repo-reviewer\n")
+    r = run(repo, "on", "incident", "--until", "2099-01-01")
+    assert r.returncode == 0, r.stderr
+    assert "build account: repo-coder)" in r.stdout
+
+
+def test_shipquick_build_user_env_var_overrides_roles_yml(repo):
+    _commit_roles_yml(repo, "coder:\n  - repo-coder\nreviewer:\n  - repo-reviewer\nowner: repo-reviewer\n")
+    r = run(repo, "on", "incident", "--until", "2099-01-01", extra_env={"SHIPQUICK_BUILD_USER": "override-acct"})
+    assert r.returncode == 0, r.stderr
+    assert "build account: override-acct)" in r.stdout
+
+
+def test_with_no_roles_yml_the_old_literal_default_is_unchanged(repo):
+    r = run(repo, "on", "incident", "--until", "2099-01-01")
+    assert r.returncode == 0, r.stderr
+    assert "build account: klickbae8yt-star)" in r.stdout

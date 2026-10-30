@@ -1,0 +1,9 @@
+# Story #140: which GitHub accounts play which role in this project. scripts/roles.py is the one
+# parser; no account name lives in any other ShipQuick script. This file is a protected path
+# (scripts/protected_paths.txt): a PR that changes it needs the owner's own merge.
+coder:
+  - klickbae8yt-star
+reviewer:
+  - satvik-jain-iitd
+owner: satvik-jain-iitd
+shipquick_repo: satvik-jain-iitd/shipquick_latest
