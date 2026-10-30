@@ -56,12 +56,17 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
         (stub / "protection.json").unlink(missing_ok=True)
         if linear is not None:   # the base branch protection answer: required_linear_history on or off; None = the branch has no protection (the call fails)
             (stub / "protection.json").write_text(json.dumps({"required_linear_history": {"enabled": linear}}), encoding="utf-8")
+        claude_md = repo / "CLAUDE.md"
+        if dev_link:   # story #122: the UAT gate applies only when THIS repo's own CLAUDE.md has a filled Dev link
+            claude_md.write_text(f"## Environments\n- Dev link: {dev_link}\n", encoding="utf-8")
+        else:
+            claude_md.unlink(missing_ok=True)
         e["STUB_FAIL_CLOSE"] = "1" if fail_close else ""   # one call per scenario: a test may call go() twice
         (stub / "pr.json").write_text(json.dumps(pr or good()), encoding="utf-8")
         (stub / "threads.json").write_text(json.dumps(th or threads(True, True)), encoding="utf-8")
@@ -271,48 +276,50 @@ Known bugs going to production: none
 """
 
 
+DEV_LINK = "https://dev.app.example.com"
+
+
 def test_s120_a_promotion_pr_to_main_without_a_uat_section_refuses(env):
     pr = good(); pr["baseRefName"] = "main"
-    refused(*env(pr=pr), "UAT on dev")
+    refused(*env(pr=pr, dev_link=DEV_LINK), "UAT on dev")
 
 
 def test_s120_a_promotion_pr_to_main_with_a_complete_ticked_uat_checklist_merges(env):
     pr = good(); pr["baseRefName"] = "main"
-    pr["body"] = pr["body"] + f"\n## UAT on dev (https://dev.app.example.com)\n{UAT_STORY}{UAT_TAIL}"
-    r, merged = env(pr=pr)
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY}{UAT_TAIL}"
+    r, merged = env(pr=pr, dev_link=DEV_LINK)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert merged != ""
 
 
 def test_s120_an_unticked_box_in_the_uat_checklist_refuses(env):
     pr = good(); pr["baseRefName"] = "main"
-    pr["body"] = pr["body"] + f"\n## UAT on dev (https://dev.app.example.com)\n{UAT_STORY.replace('[x] #219', '[ ] #219')}{UAT_TAIL}"
-    refused(*env(pr=pr), "unticked")
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY.replace('[x] #219', '[ ] #219')}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "unticked")
 
 
 def test_s120_a_uat_story_line_with_no_expected_refuses(env):
     pr = good(); pr["baseRefName"] = "main"
     broken_story = UAT_STORY.replace('  Expected: the cart shows 2 x Masala Dosa and the total is ₹240 (2 x ₹120).\n', "")
-    pr["body"] = pr["body"] + f"\n## UAT on dev (https://dev.app.example.com)\n{broken_story}{UAT_TAIL}"
-    refused(*env(pr=pr), "not followable")
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{broken_story}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "not followable")
 
 
 def test_s120_a_regular_feature_pr_to_dev_needs_no_uat_checklist(env):
-    r, merged = env()   # good() already targets dev, no UAT section at all
+    r, merged = env(dev_link=DEV_LINK)   # good() already targets dev, no UAT section at all
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert merged != ""
 
 
-def test_s120_a_release_titled_promotion_to_main_is_exempt_from_the_uat_checklist(env):
+# ---- story #122 (PR #122 review blocker): exempt by project (no Dev link configured), never by PR title ----
+def test_s122_a_project_with_no_dev_link_is_exempt_even_with_a_release_title_and_no_uat_section(env):
     pr = good(); pr["baseRefName"] = "main"; pr["title"] = "release: v0.8.0"
-    r, merged = env(pr=pr)
+    r, merged = env(pr=pr)   # no dev_link passed: this project's own CLAUDE.md has none
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert merged != ""
 
 
-def test_s120_a_dependabot_promotion_to_main_is_exempt_from_the_uat_checklist(env):
-    pr = good(); pr["baseRefName"] = "main"; pr["author"]["login"] = "dependabot[bot]"
-    pr["reviews"][0]["commit"]["oid"] = pr["headRefOid"]
-    r, merged = env(pr=pr)
-    assert r.returncode == 0, (r.stdout, r.stderr)
-    assert merged != ""
+def test_s122_a_release_titled_promotion_still_refuses_when_the_project_has_a_dev_link_and_an_unticked_box(env):
+    pr = good(); pr["baseRefName"] = "main"; pr["title"] = "release: v0.8.0"
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY.replace('[x] #219', '[ ] #219')}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "unticked")

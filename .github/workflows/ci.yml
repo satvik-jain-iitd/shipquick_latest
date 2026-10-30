@@ -118,18 +118,11 @@ jobs:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
-      PR_TITLE: ${{ github.event.pull_request.title }}
-      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: Check the UAT-on-dev checklist is followable (story #120)
+      - name: Check the UAT-on-dev checklist is followable (story #120, #122)
         run: |
-          case "$PR_AUTHOR" in
-            dependabot\[bot\]|app/dependabot) echo "Dependabot: UAT checklist exempt"; exit 0 ;;
-          esac
-          case "$PR_TITLE" in
-            release:*|release\(*\)*:*|chore:*|chore\(*\)*:*) echo "release/chore sync: UAT checklist exempt"; exit 0 ;;
-          esac
+          bash scripts/has_dev_link.sh CLAUDE.md || { echo "no Dev link configured in this repo: UAT checklist exempt"; exit 0; }
           printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 scripts/check_uat.py
   secret-scan:
     runs-on: ubuntu-latest

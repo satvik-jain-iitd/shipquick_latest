@@ -215,7 +215,7 @@ def test_s120_ci_has_a_uat_checklist_job_scoped_to_main_only():
     section = CI.split("\n  uat-checklist:\n", 1)[1].split("\n  secret-scan:", 1)[0]
     assert "github.base_ref == 'main'" in section
     assert "check_uat.py" in section
-    assert "dependabot" in section and "release:" in section   # same exemptions as check_closes.py
+    assert "has_dev_link.sh" in section   # exempt by project (story #122), never by PR title
 
 
 def test_s120_the_gate_waits_for_uat_checklist():

@@ -3,7 +3,8 @@
 # It refuses, with exit 1 and `refused: <rule>`, unless all of this holds:
 #   the mode is auto; the PR is open, not a draft, and has no conflicts; satvik-jain-iitd approved the latest commit;
 #   no review thread is unresolved; every check is SUCCESS (SKIPPED and NEUTRAL count as passed, as on GitHub); the body has `Closes #n` by the same rule as CI (scripts/check_closes.py: release:, chore: and Dependabot pull requests are exempt);
-#   and, only when the base branch is main, the body has a followable "## UAT on dev" checklist (scripts/check_uat.py) with every box ticked (story #120).
+#   and, only when the base branch is main and the repo's own CLAUDE.md has a filled "Dev link:" line (scripts/has_dev_link.sh), the body has a followable
+#   "## UAT on dev" checklist (scripts/check_uat.py) with every box ticked (story #120, #122).
 # Then it merges, using the review account's own token (never switch the active gh account), and closes the story issues
 # the PR links (`Closes #n`) with scripts/close_linked_issues.py, because GitHub closes them only for a merge into the default branch. Needs git, gh, jq and python3.
 # The merge method (story #87): --method squash|rebase|merge wins; with no flag it squashes when the base branch requires linear history
@@ -61,15 +62,10 @@ bad=$(jq -r '
 
 why=$(field .body | python3 "$HERE/check_closes.py" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
 
+cwd_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"   # run from the project's own repo; its own CLAUDE.md, never ShipQuick's (story #122)
 uat_exempt=0
-if [ "$(field .baseRefName)" = main ]; then
-  python3 -c "
-import sys; sys.path.insert(0, sys.argv[3])
-from check_closes import EXEMPT_TITLE, DEPENDABOT
-sys.exit(0 if (EXEMPT_TITLE.match(sys.argv[1]) or sys.argv[2] in DEPENDABOT) else 1)
-" "$(field .title)" "$(field .author.login)" "$HERE" && uat_exempt=1
-fi
-if [ "$(field .baseRefName)" = main ] && [ "$uat_exempt" = 0 ]; then   # a dev -> main app promotion is gated on the owner's UAT checklist, story #120 (release/chore/Dependabot syncs are exempt, same rule as check_closes.py)
+"$HERE/has_dev_link.sh" "$cwd_root/CLAUDE.md" || uat_exempt=1   # exempt by project (no Dev link configured), never by PR title
+if [ "$(field .baseRefName)" = main ] && [ "$uat_exempt" = 0 ]; then   # a dev -> main app promotion is gated on the owner's UAT checklist, story #120
   uat=$(field .body | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f')
   [ -n "$uat" ] || refuse "a promotion to main needs a \"## UAT on dev (<link>)\" section in the body"
   why=$(printf '%s\n' "$uat" | python3 "$HERE/check_uat.py") || refuse "the UAT checklist is not followable: $why"
