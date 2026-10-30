@@ -118,6 +118,34 @@ class Layout(unittest.TestCase):
         new["boards"]["B.dc.html"]["x"] = new["boards"]["A.dc.html"]["x"] + 10
         self.assertTrue(any("overlaps" in p for p in cs.check_existing(new)))
 
+    def test_S11_a_production_board_with_no_provenance_refuses_and_writes_nothing(self):
+        self.m["sections"][0]["id"] = "production"   # section "a" becomes Production for this test
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("A.dc.html" in p and "no PR and approved date" in p for p in problems), problems)
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "project").mkdir(); (Path(d) / "project" / "canvas.json").write_text(json.dumps(self.c)); mp = Path(d) / "m.json"; mp.write_text(json.dumps(self.m))
+            self.assertEqual(cs.main(["--manifest", str(mp), "--canvas", d, "--apply"]), 1)
+            self.assertFalse((Path(d) / "project" / "bg").exists())
+
+    def test_S12_a_production_board_with_pr_and_approved_is_fine_a_plain_string_outside_production_still_works(self):
+        self.m["sections"][0]["id"] = "production"
+        self.m["sections"][0]["rows"][0]["boards"] = [{"board": "A.dc.html", "pr": "#142", "approved": "2026-10-28"}]
+        self.m["sections"][0]["rows"][1]["boards"] = [{"board": "C.dc.html", "pr": "#140", "approved": "2026-10-20"}]
+        self.m["sections"][1]["rows"][0]["boards"] = ["B.dc.html", "D.dc.html", "E.dc.html"]   # section "b" is not Production: plain strings are fine
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+
+    def test_S13_a_production_board_entry_missing_only_approved_still_refuses(self):
+        self.m["sections"][0]["id"] = "production"
+        self.m["sections"][0]["rows"][0]["boards"] = [{"board": "A.dc.html", "pr": "#142"}, "B.dc.html"]
+        self.m["sections"][0]["rows"][1]["boards"] = [{"board": "C.dc.html", "pr": "#140", "approved": "2026-10-20"}]
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("A.dc.html" in p and "no PR and approved date" in p for p in problems), problems)
+
+    def test_S14_a_non_production_section_never_needs_provenance(self):
+        new, _, problems = cs.layout(self.c, self.m)   # sections "b" and "c" in setUp, plain strings throughout
+        self.assertEqual(problems, [])
+
 
 if __name__ == "__main__":
     unittest.main()

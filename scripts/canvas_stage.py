@@ -7,7 +7,10 @@ per section (an artboard, listed first in `order`, so it sits under the screens;
 is inside it, paints the section title, its purpose and every row title ON that board (ink on the fill, 4.5:1 or
 the run stops), and prefixes every board's name with its state. Nothing is deleted: a board the manifest does not
 name goes to an Unsorted row; the only notes the tool removes are the ones named in `remove_notes` and its own
-(`cs-` prefix). The run fails, and writes nothing, when two boxes overlap or a box sits outside its section's board.
+(`cs-` prefix). The run fails, and writes nothing, when two boxes overlap or a box sits outside its section's board,
+or (story #125) a board in the section whose id is "production" has no provenance: there, a `boards` entry must be
+{"board": "<name>", "pr": "<the PR that changed it>", "approved": "<its approval date>"}, not a plain filename —
+provenance, not recency, decides a Production board; with no approved board behind a change, the app is the drift.
 
 Use:  canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --check
       canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --apply
@@ -32,6 +35,11 @@ def clean_title(t: str) -> str:
 
 def box(x, y, w, h, name):
     return {"x": x, "y": y, "w": w, "h": h, "name": name}
+
+
+def board_name(entry):
+    """A row's `boards` entry is a plain filename, or (Production only, story #125) {"board", "pr", "approved"}."""
+    return entry if isinstance(entry, str) else entry.get("board")
 
 
 def overlaps(a, b):
@@ -134,10 +142,17 @@ def layout(canvas: dict, manifest: dict):
     named = {}
     for s in sections:
         for r in s["rows"]:
-            for b in r["boards"]:
+            for entry in r["boards"]:
+                b = board_name(entry)
                 if b in named: problems.append(f"{b} is in two rows: {named[b]} and {r['id']}")
                 named[b] = r["id"]
                 if b not in boards: problems.append(f"{b} is in the manifest but not on the canvas (row {r['id']})")
+                if s.get("id") == "production":
+                    prov = entry if isinstance(entry, dict) else {}
+                    if not prov.get("pr") or not prov.get("approved"):
+                        problems.append(f"{b} (row {r['id']}) moves into or stays in Production with no PR and approved date cited — "
+                                         "the manifest entry must be {\"board\": ..., \"pr\": ..., \"approved\": ...} (story #125); "
+                                         "with no approved board behind it, the app is the drift and the board stands")
     for k in [k for k in boards if k.startswith("bg/")]: boards.pop(k)
     unsorted = [k for k in boards if k not in named]
     if unsorted:
@@ -171,7 +186,8 @@ def layout(canvas: dict, manifest: dict):
             row_titles.append((0, ry - TITLE_GAP, r["title"]))   # painted on the board, ink on the fill
             sboxes.append(box(0, ry - TITLE_GAP, 3600, ROW_TITLE_H, rid)); row_tops.append(ry - TITLE_GAP - 20)
             x = 0; tallest = 0
-            for b in r["boards"]:
+            for entry in r["boards"]:
+                b = board_name(entry)
                 if b not in boards: continue
                 e = boards[b]; e["x"], e["y"] = x, ry; e["title"] = f"{prefix} · " + clean_title(e.get("title", b))
                 sboxes.append(box(x, ry, e["w"], e["h"], b)); x += e["w"] + 80; tallest = max(tallest, e["h"])
