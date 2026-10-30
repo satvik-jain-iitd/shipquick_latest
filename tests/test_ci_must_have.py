@@ -194,3 +194,16 @@ def test_s08_ci_runs_on_pull_requests_into_any_branch():
 def test_s13_ci_runs_the_roadmap_node_tests():
     assert "node --test roadmap/*.test.js" in CI
     assert "actions/setup-node@" in CI  # the pin test above checks it is a full SHA with its tag
+
+
+# ---- story #113: a Dependabot PR has no teammate block, and dependency bumps target dev, not main ----
+def test_s113_team_block_job_exempts_dependabot_before_checking_the_block():
+    section = CI.split("\n  team-block:\n", 1)[1].split("\n  secret-scan:", 1)[0]
+    step = section.split('Check the teammate block in the PR body', 1)[1]
+    assert re.search(r"dependabot", step, re.I), "team-block has no Dependabot exemption, same pattern as check_closes.py"
+    assert step.lower().index("dependabot") < step.index("check_block.py"), "the exemption must run before the block check"
+
+
+def test_s113_dependabot_bumps_target_dev():
+    text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+    assert re.search(r'target-branch: "?dev"?', text)
