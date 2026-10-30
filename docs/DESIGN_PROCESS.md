@@ -110,7 +110,9 @@ When a Production board and the live app disagree, the question is never "which 
 - The manifest enforces this: a `boards` entry in the Production section (`"id": "production"`) must be
   `{"board": "<name>", "pr": "<the PR that changed it>", "approved": "<its approval date>"}`, not a
   plain filename. `scripts/canvas_stage.py` refuses to lay out — and writes nothing — when a Production
-  board entry has no `pr` or no `approved`.
+  board entry has no `pr` or no `approved`, when `pr` is not `"#<n>"`, a PR URL, or `"baseline"`, or when
+  `pr` is `"baseline"` but the manifest's `"provenance_since"` is unset or this board's `approved` date
+  falls after it — a one-time migration date, not a free pass to fake provenance for anything newer.
 - A drift audit (any number of boards, any time) never edits a board itself. It lists each mismatch —
   board, app screen, the PR that caused it, whether that PR named an approved board, and the verdict
   (app drift or board drift) — using `docs/templates/drift-report.md`. Only a human decision (a code

@@ -42,6 +42,18 @@ def board_name(entry):
     return entry if isinstance(entry, str) else entry.get("board")
 
 
+PR_RE = re.compile(r"^#\d+$|^https?://\S+/pulls?/\d+/?$")
+
+
+def valid_pr(pr, approved, provenance_since):
+    """A Production entry's "pr": "#<n>", a PR URL, or (story #125 review blocker) "baseline" — but
+    only when the manifest's "provenance_since" is set and this board's "approved" date is on or
+    before it, so a GoServe-style migration cannot fake provenance for a board approved afterwards."""
+    if pr == "baseline":
+        return bool(provenance_since) and approved <= provenance_since
+    return bool(PR_RE.match(pr or ""))
+
+
 def overlaps(a, b):
     return a["x"] < b["x"] + b["w"] and b["x"] < a["x"] + a["w"] and a["y"] < b["y"] + b["h"] and b["y"] < a["y"] + a["h"]
 
@@ -149,10 +161,18 @@ def layout(canvas: dict, manifest: dict):
                 if b not in boards: problems.append(f"{b} is in the manifest but not on the canvas (row {r['id']})")
                 if s.get("id") == "production":
                     prov = entry if isinstance(entry, dict) else {}
-                    if not prov.get("pr") or not prov.get("approved"):
+                    pr, approved = prov.get("pr"), prov.get("approved")
+                    if not pr or not approved:
                         problems.append(f"{b} (row {r['id']}) moves into or stays in Production with no PR and approved date cited — "
                                          "the manifest entry must be {\"board\": ..., \"pr\": ..., \"approved\": ...} (story #125); "
                                          "with no approved board behind it, the app is the drift and the board stands")
+                    elif not valid_pr(pr, approved, manifest.get("provenance_since")):
+                        since = manifest.get("provenance_since")
+                        if pr == "baseline":
+                            problems.append(f"{b} (row {r['id']}): pr \"baseline\" needs manifest \"provenance_since\" set and approved "
+                                             f"({approved}) on or before it (provenance_since: {since or 'not set'}) — otherwise cite the real PR")
+                        else:
+                            problems.append(f"{b} (row {r['id']}): pr {pr!r} is not \"baseline\", \"#<n>\" or a PR URL")
     for k in [k for k in boards if k.startswith("bg/")]: boards.pop(k)
     unsorted = [k for k in boards if k not in named]
     if unsorted:
