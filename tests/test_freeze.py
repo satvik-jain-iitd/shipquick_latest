@@ -135,6 +135,8 @@ def test_status_with_an_uncommitted_local_file_is_not_frozen(repo):
 def test_status_reads_origin_main_even_when_the_local_checkout_has_not_fetched_it(repo, tmp_path):
     other = tmp_path / "other-clone"
     subprocess.run(["git", "clone", "-q", str(repo.parent / "remote.git"), str(other)], check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=other, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=other, check=True)
     freeze_main_directly(other, until="2099-01-01")   # pushed from a different clone; repo's own local main is stale
     r = run(repo, "status")
     assert r.returncode == 1
