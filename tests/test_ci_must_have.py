@@ -237,3 +237,18 @@ def test_s113_team_block_job_exempts_dependabot_before_checking_the_block():
 def test_s113_dependabot_bumps_target_dev():
     text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
     assert re.search(r'target-branch: "?dev"?', text)
+
+
+# ---- story #120: a dev -> main (app promotion) PR's UAT checklist is checked in CI too ----
+def test_s120_ci_has_a_uat_checklist_job_scoped_to_main_only():
+    assert "uat-checklist" in _jobs()
+    section = CI.split("\n  uat-checklist:\n", 1)[1].split("\n  secret-scan:", 1)[0]
+    assert "github.base_ref == 'main'" in section
+    assert "check_uat.py" in section
+    assert "has_dev_link.sh" in section   # exempt by project (story #122), never by PR title
+
+
+def test_s120_the_gate_waits_for_uat_checklist():
+    gate = CI.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "uat-checklist" in needs
