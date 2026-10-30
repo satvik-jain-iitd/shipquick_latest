@@ -118,6 +118,68 @@ class Layout(unittest.TestCase):
         new["boards"]["B.dc.html"]["x"] = new["boards"]["A.dc.html"]["x"] + 10
         self.assertTrue(any("overlaps" in p for p in cs.check_existing(new)))
 
+    def test_S11_a_production_board_with_no_provenance_refuses_and_writes_nothing(self):
+        self.m["sections"][0]["id"] = "production"   # section "a" becomes Production for this test
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("A.dc.html" in p and "no PR and approved date" in p for p in problems), problems)
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "project").mkdir(); (Path(d) / "project" / "canvas.json").write_text(json.dumps(self.c)); mp = Path(d) / "m.json"; mp.write_text(json.dumps(self.m))
+            self.assertEqual(cs.main(["--manifest", str(mp), "--canvas", d, "--apply"]), 1)
+            self.assertFalse((Path(d) / "project" / "bg").exists())
+
+    def test_S12_a_production_board_with_pr_and_approved_is_fine_a_plain_string_outside_production_still_works(self):
+        self.m["sections"][0]["id"] = "production"
+        self.m["sections"][0]["rows"][0]["boards"] = [{"board": "A.dc.html", "pr": "#142", "approved": "2026-10-28"}]
+        self.m["sections"][0]["rows"][1]["boards"] = [{"board": "C.dc.html", "pr": "#140", "approved": "2026-10-20"}]
+        self.m["sections"][1]["rows"][0]["boards"] = ["B.dc.html", "D.dc.html", "E.dc.html"]   # section "b" is not Production: plain strings are fine
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+
+    def test_S13_a_production_board_entry_missing_only_approved_still_refuses(self):
+        self.m["sections"][0]["id"] = "production"
+        self.m["sections"][0]["rows"][0]["boards"] = [{"board": "A.dc.html", "pr": "#142"}, "B.dc.html"]
+        self.m["sections"][0]["rows"][1]["boards"] = [{"board": "C.dc.html", "pr": "#140", "approved": "2026-10-20"}]
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("A.dc.html" in p and "no PR and approved date" in p for p in problems), problems)
+
+    def test_S14_a_non_production_section_never_needs_provenance(self):
+        new, _, problems = cs.layout(self.c, self.m)   # sections "b" and "c" in setUp, plain strings throughout
+        self.assertEqual(problems, [])
+
+    # ---- review blocker on PR #129: a "baseline" pr is a fake provenance escape hatch unless gated by date ----
+    def test_S15_a_baseline_pr_approved_on_or_before_provenance_since_passes(self):
+        self.m["provenance_since"] = "2026-10-01"
+        self.m["sections"][0]["id"] = "production"
+        self.m["sections"][0]["rows"][0]["boards"] = [{"board": "A.dc.html", "pr": "baseline", "approved": "2026-09-15"}]
+        self.m["sections"][0]["rows"][1]["boards"] = [{"board": "C.dc.html", "pr": "baseline", "approved": "2026-10-01"}]   # on the cutoff: still fine
+        self.m["sections"][1]["rows"][0]["boards"] = ["B.dc.html", "D.dc.html", "E.dc.html"]
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+
+    def test_S16_a_baseline_pr_approved_after_provenance_since_refuses(self):
+        self.m["provenance_since"] = "2026-10-01"
+        self.m["sections"][0]["id"] = "production"
+        self.m["sections"][0]["rows"][0]["boards"] = [{"board": "A.dc.html", "pr": "baseline", "approved": "2026-10-02"}]
+        self.m["sections"][0]["rows"][1]["boards"] = [{"board": "C.dc.html", "pr": "#140", "approved": "2026-10-20"}]
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("A.dc.html" in p and "baseline" in p for p in problems), problems)
+
+    def test_S17_a_baseline_pr_with_no_provenance_since_set_refuses(self):
+        self.m["sections"][0]["id"] = "production"
+        self.m["sections"][0]["rows"][0]["boards"] = [{"board": "A.dc.html", "pr": "baseline", "approved": "2026-09-15"}]
+        self.m["sections"][0]["rows"][1]["boards"] = [{"board": "C.dc.html", "pr": "#140", "approved": "2026-10-20"}]
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("A.dc.html" in p and "baseline" in p and "not set" in p for p in problems), problems)
+
+    def test_S18_a_plain_filename_or_free_text_as_pr_refuses(self):
+        self.m["provenance_since"] = "2026-10-01"
+        self.m["sections"][0]["id"] = "production"
+        self.m["sections"][0]["rows"][0]["boards"] = [{"board": "A.dc.html", "pr": "Checkout.dc.html", "approved": "2026-09-15"}]
+        self.m["sections"][0]["rows"][1]["boards"] = [{"board": "C.dc.html", "pr": "approved by Satvik", "approved": "2026-10-20"}]
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("A.dc.html" in p and "is not" in p for p in problems), problems)
+        self.assertTrue(any("C.dc.html" in p and "is not" in p for p in problems), problems)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -98,3 +98,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: build `scripts/freeze.sh` (bash, mirrors `scripts/feedback.sh`'s size) + wire
   `review_merge.sh` and `checks.yml`, same contents-API pattern already proven in #120/#122.
 - Confidence that nothing fits better: 0.85.
+
+## 30 Oct 2026, story #125: provenance, not recency, decides board vs app drift
+- Need: refuse to move or rewrite a Production design-canvas board from the app unless the manifest
+  entry cites the PR that changed the app and its approval date (provenance over recency).
+- Run: `scout.py --need "refuse to overwrite an approved design canvas board from code unless the PR
+  that changed the code cites the board and its approval date, provenance over recency"`: no repos
+  found. This is a one-field addition to `scripts/canvas_stage.py`'s own manifest validation (story
+  #105), not a separate concern — no general tool validates provenance on a design-canvas manifest.
+- Decision: extend `canvas_stage.py`'s existing refusal checks (overlap, outside-board) with one more:
+  a Production `boards` entry with no `{"pr", "approved"}` is a refusal, same as any other.
+- Confidence that nothing fits better: 0.85.

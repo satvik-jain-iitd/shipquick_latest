@@ -96,6 +96,28 @@ How it is kept:
 - A comment the owner leaves on a board is answered on that board (what changed, where) and recorded on the story issue the same day.
 - A decision that changes scope (a new flow, money, a setting) goes on the story before the build, in his words.
 
-## 10. Feedback becomes a rule the same day (29 Oct 2026)
+## 10. Provenance, not recency, decides Production drift (30 Oct 2026, story #125)
+
+When a Production board and the live app disagree, the question is never "which one is newer" — it is
+"which one was approved". Recency decided once, on a GoServe audit: 62 of 66 boards were read as
+"stale" and rewritten from unapproved code, overwriting design nobody had signed off.
+
+- If no approved board covers an app change, **the app is the drift and the board stands.** The fix is
+  a code story back to the board, or a new design story through approval (rule 2) — never a silent
+  rewrite of the board from whatever the app happens to do.
+- A Production board is rewritten from the app **only** when the PR that changed the app named that
+  approved board (`Design board: <name>` and `Approved: <date>`, rule 2 / story #121).
+- The manifest enforces this: a `boards` entry in the Production section (`"id": "production"`) must be
+  `{"board": "<name>", "pr": "<the PR that changed it>", "approved": "<its approval date>"}`, not a
+  plain filename. `scripts/canvas_stage.py` refuses to lay out — and writes nothing — when a Production
+  board entry has no `pr` or no `approved`, when `pr` is not `"#<n>"`, a PR URL, or `"baseline"`, or when
+  `pr` is `"baseline"` but the manifest's `"provenance_since"` is unset or this board's `approved` date
+  falls after it — a one-time migration date, not a free pass to fake provenance for anything newer.
+- A drift audit (any number of boards, any time) never edits a board itself. It lists each mismatch —
+  board, app screen, the PR that caused it, whether that PR named an approved board, and the verdict
+  (app drift or board drift) — using `docs/templates/drift-report.md`. Only a human decision (a code
+  story, or a new approved design story) changes anything from there.
+
+## 11. Feedback becomes a rule the same day (29 Oct 2026)
 
 - Every generic design feedback from the owner (anything that would apply to another project) is written into this page the same day, with its date, by the session that received it, and into that session's own instruction file. Project-specific feedback goes to the project's docs. Nothing stays only in chat.
