@@ -1,0 +1,22 @@
+# Second layer of story #124: for a child with no caller at all (so it never runs checks.yml and
+# never fails its own CI), a daily scan of docs/children.md opens a feedback issue here instead.
+name: Adoption scan
+
+on:
+  schedule:
+    - cron: "11 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Scan docs/children.md and open feedback issues for gaps
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/adoption_scan.py
