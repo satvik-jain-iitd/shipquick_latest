@@ -28,7 +28,9 @@ case "$1" in
       esac ;;
   api) case "$*" in
          *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;;
-         *contents/CLAUDE.md*) [ -f "$STUB_DIR/claude_md_b64" ] && { cat "$STUB_DIR/claude_md_b64"; exit 0; }; exit 1 ;;
+         *contents/CLAUDE.md*)
+           case "$*" in *" -f "*|*" -F "*) echo "stub: -f/-F on a GET turns gh api into a POST, GitHub 404s" >&2; exit 1 ;; esac
+           [ -f "$STUB_DIR/claude_md_b64" ] && { cat "$STUB_DIR/claude_md_b64"; exit 0; }; exit 1 ;;
        esac
        case "$2" in repos/*) echo '{"default_branch":"main"}'; exit 0 ;; esac; cat "$STUB_DIR/threads.json"; exit 0 ;;
 esac

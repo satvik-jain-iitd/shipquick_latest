@@ -67,7 +67,7 @@ token=$(gh auth token --user "$REVIEWER") || refuse "no token for $REVIEWER on t
 
 uat_exempt=0
 if [ "$(field .baseRefName)" = main ]; then   # read the PR's OWN repo's CLAUDE.md on its base branch (never the local checkout's: it may be a different repo, story #122)
-  raw_b64=$(GH_TOKEN="$token" gh api "repos/$repo/contents/CLAUDE.md" -f ref="$(field .baseRefName)" --jq '.content' 2>/dev/null)
+  raw_b64=$(GH_TOKEN="$token" gh api "repos/$repo/contents/CLAUDE.md?ref=$(field .baseRefName)" --jq '.content' 2>/dev/null)
   api_rc=$?
   [ "$api_rc" -eq 0 ] && [ -n "$raw_b64" ] || refuse "cannot read $repo's CLAUDE.md on $(field .baseRefName) to check the UAT gate"
   claude_md_tmp="$(mktemp)"
