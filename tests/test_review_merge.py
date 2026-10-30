@@ -141,6 +141,28 @@ def test_s16_no_checks_at_all_refuses(env):
     refused(*env(pr=pr), "no checks ran")
 
 
+def test_s112_a_stale_failed_run_of_the_same_check_name_is_ignored_once_a_later_run_of_it_passed(env):
+    pr = good()
+    pr["statusCheckRollup"] = [
+        {"name": "gate", "status": "COMPLETED", "conclusion": "FAILURE", "startedAt": "2026-10-29T13:08:00Z"},
+        {"name": "gate", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-10-30T04:00:00Z"},
+        {"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-10-30T04:00:00Z"},
+    ]
+    r, merged = env(pr=pr)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != "", "the gate must merge once the latest run of every check passed"
+
+
+def test_s112_a_later_failed_run_is_not_masked_by_an_earlier_pass_of_the_same_name(env):
+    pr = good()
+    pr["statusCheckRollup"] = [
+        {"name": "gate", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-10-29T13:08:00Z"},
+        {"name": "gate", "status": "COMPLETED", "conclusion": "FAILURE", "startedAt": "2026-10-30T04:00:00Z"},
+        {"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-10-30T04:00:00Z"},
+    ]
+    refused(*env(pr=pr), "check gate is not SUCCESS")
+
+
 def test_s16_a_body_without_closes_refuses(env):
     pr = good(); pr["body"] = "## What\nSomething. See #67.\n"
     refused(*env(pr=pr), "no `Closes #n`")
