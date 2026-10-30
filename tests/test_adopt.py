@@ -24,6 +24,8 @@ def child(tmp_path):
     c = tmp_path / "my-child"
     (c / ".github" / "workflows").mkdir(parents=True)
     subprocess.run(["git", "init", "-q", "-b", "dev", str(c)], check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=c, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=c, check=True)
     (c / ".github" / "workflows" / "ci.yml").write_text('name: Child CI\non:\n  push:\n', encoding="utf-8")
     return c
 
