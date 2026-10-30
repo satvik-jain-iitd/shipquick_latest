@@ -31,6 +31,11 @@ case "$1" in
          *contents/CLAUDE.md*)
            case "$*" in *" -f "*|*" -F "*) echo "stub: -f/-F on a GET turns gh api into a POST, GitHub 404s" >&2; exit 1 ;; esac
            [ -f "$STUB_DIR/claude_md_b64" ] && { cat "$STUB_DIR/claude_md_b64"; exit 0; }; exit 1 ;;
+         *contents/.shipquick/freeze*)
+           [ -f "$STUB_DIR/freeze_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
+           [ -f "$STUB_DIR/freeze_b64" ] && { cat "$STUB_DIR/freeze_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
+         *pulls/*/files*)
+           [ -f "$STUB_DIR/pr_files.json" ] && { cat "$STUB_DIR/pr_files.json"; exit 0; }; echo '[]'; exit 0 ;;
        esac
        case "$2" in repos/*) echo '{"default_branch":"main"}'; exit 0 ;; esac; cat "$STUB_DIR/threads.json"; exit 0 ;;
 esac
@@ -62,10 +67,25 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
         (stub / "protection.json").unlink(missing_ok=True)
+        freeze_b64_file = stub / "freeze_b64"
+        if freeze:
+            freeze_b64_file.write_text(base64.b64encode(freeze.encode()).decode(), encoding="utf-8")
+        else:
+            freeze_b64_file.unlink(missing_ok=True)
+        pr_files_file = stub / "pr_files.json"
+        if pr_files is not None:
+            pr_files_file.write_text(json.dumps(pr_files), encoding="utf-8")
+        else:
+            pr_files_file.unlink(missing_ok=True)
+        freeze_unreadable_file = stub / "freeze_unreadable"
+        if freeze_unreadable:
+            freeze_unreadable_file.write_text("1", encoding="utf-8")
+        else:
+            freeze_unreadable_file.unlink(missing_ok=True)
         if linear is not None:   # the base branch protection answer: required_linear_history on or off; None = the branch has no protection (the call fails)
             (stub / "protection.json").write_text(json.dumps({"required_linear_history": {"enabled": linear}}), encoding="utf-8")
         # story #122 fix: the UAT gate reads the PR's OWN repo's CLAUDE.md via the GitHub contents API (base64),
@@ -339,3 +359,44 @@ def test_s122_a_release_titled_promotion_still_refuses_when_the_project_has_a_de
 def test_s122_cannot_read_the_pr_repos_claude_md_refuses_it_is_never_treated_as_exempt(env):
     pr = good(); pr["baseRefName"] = "main"
     refused(*env(pr=pr, claude_md_unreadable=True), "cannot read")
+
+
+# ---- story #126: a release freeze blocks every merge into main except a PR that only lifts it ----
+def test_s126_a_frozen_main_refuses_a_normal_promotion(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, freeze="reason: holiday freeze\nuntil: 2099-01-01\n"), "frozen until 2099-01-01")
+
+
+def test_s126_an_expired_freeze_still_refuses_and_says_stale(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, freeze="reason: incident\nuntil: 2000-01-01\n"), "STALE")
+
+
+def test_s126_a_pr_that_only_removes_the_freeze_file_is_exempt_and_merges(env):
+    pr = good(); pr["baseRefName"] = "main"
+    files = [{"filename": ".shipquick/freeze", "status": "removed"}]
+    r, merged = env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s126_a_pr_that_removes_the_freeze_file_plus_something_else_is_not_exempt(env):
+    pr = good(); pr["baseRefName"] = "main"
+    files = [{"filename": ".shipquick/freeze", "status": "removed"}, {"filename": "README.md", "status": "modified"}]
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "frozen until 2099-01-01")
+
+
+def test_s126_a_pr_that_edits_the_freeze_file_rather_than_removing_it_is_not_exempt(env):
+    pr = good(); pr["baseRefName"] = "main"
+    files = [{"filename": ".shipquick/freeze", "status": "modified"}]
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "frozen until 2099-01-01")
+
+
+def test_s126_no_freeze_file_at_all_is_not_frozen(env):
+    r, merged = env()   # good() targets dev; also true for a main promotion, covered by the s120/s122 merge-success tests above
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_s126_cannot_read_the_freeze_file_for_a_reason_other_than_404_refuses(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, freeze_unreadable=True), "cannot read")

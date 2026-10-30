@@ -5,7 +5,8 @@
 #   no review thread is unresolved; every check is SUCCESS (SKIPPED and NEUTRAL count as passed, as on GitHub); the body has `Closes #n` by the same rule as CI (scripts/check_closes.py: release:, chore: and Dependabot pull requests are exempt);
 #   and, only when the base branch is main: the PR's own repo's CLAUDE.md (read from GitHub, not the local checkout, which may be a different repo) must be
 #   readable or the merge refuses outright; if it has a filled "Dev link:" line (scripts/has_dev_link.sh) the body also needs a followable "## UAT on dev"
-#   checklist (scripts/check_uat.py) with every box ticked (story #120, #122).
+#   checklist (scripts/check_uat.py) with every box ticked (story #120, #122); and the PR's own repo's own `.shipquick/freeze` on `main` (read the same
+#   way, scripts/check_freeze.py) must be absent, expired-but-still-blocking is still blocking, unless this PR's only changed file removes it (story #126).
 # Then it merges, using the review account's own token (never switch the active gh account), and closes the story issues
 # the PR links (`Closes #n`) with scripts/close_linked_issues.py, because GitHub closes them only for a merge into the default branch. Needs git, gh, jq and python3.
 # The merge method (story #87): --method squash|rebase|merge wins; with no flag it squashes when the base branch requires linear history
@@ -81,6 +82,23 @@ if [ "$(field .baseRefName)" = main ] && [ "$uat_exempt" = 0 ]; then   # a dev -
   why=$(printf '%s\n' "$uat" | python3 "$HERE/check_uat.py") || refuse "the UAT checklist is not followable: $why"
   unticked=$(printf '%s\n' "$uat" | grep -c '^- \[ \]' || true)
   [ "$unticked" = 0 ] || refuse "$unticked unticked box(es) in the UAT checklist"
+fi
+
+if [ "$(field .baseRefName)" = main ]; then   # story #126: a release freeze blocks every merge into main except a PR that only lifts it
+  err_tmp="$(mktemp)"
+  freeze_raw=$(GH_TOKEN="$token" gh api "repos/$repo/contents/.shipquick/freeze?ref=$(field .baseRefName)" --jq '.content' 2>"$err_tmp")
+  freeze_rc=$?
+  [ "$freeze_rc" -eq 0 ] || grep -q "404" "$err_tmp" || refuse "cannot read $repo's .shipquick/freeze on $(field .baseRefName) to check the freeze gate"
+  rm -f "$err_tmp"
+  if [ "$freeze_rc" -eq 0 ] && [ -n "$freeze_raw" ]; then
+    freeze_msg=$(printf '%s' "$freeze_raw" | base64 -d 2>/dev/null | python3 "$HERE/check_freeze.py")
+    freeze_blocked=$?
+    if [ "$freeze_blocked" = 1 ]; then
+      files_json=$(GH_TOKEN="$token" gh api "repos/$repo/pulls/$pr/files" --paginate) || refuse "cannot read changed files to check the freeze exemption"
+      only_lifts_freeze=$(jq -r 'if length == 1 and .[0].filename == ".shipquick/freeze" and .[0].status == "removed" then "yes" else "no" end' <<<"$files_json")
+      [ "$only_lifts_freeze" = yes ] || refuse "$freeze_msg"
+    fi
+  fi
 fi
 
 if [ -z "$method" ]; then   # no flag: read the base branch's own setting (the reviewer's token can; no protection or no answer means merge, as before)

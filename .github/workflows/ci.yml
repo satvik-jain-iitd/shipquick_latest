@@ -139,6 +139,18 @@ jobs:
         run: |
           bash scripts/has_dev_link.sh CLAUDE.md || { echo "no Dev link configured in this repo: UAT checklist exempt"; exit 0; }
           printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 scripts/check_uat.py
+  freeze:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Check the merge-commit tree's own .shipquick/freeze (story #126)
+        run: |
+          # actions/checkout on a pull_request event checks out the tentative merge of this PR into
+          # main, so a PR that only removes .shipquick/freeze already shows it gone here -- no
+          # separate exemption needed in CI (review_merge.sh, run outside Actions, needs one instead).
+          [ -f .shipquick/freeze ] || { echo "not frozen"; exit 0; }
+          python3 scripts/check_freeze.py < .shipquick/freeze
   secret-scan:
     runs-on: ubuntu-latest
     steps:
@@ -223,7 +235,7 @@ jobs:
   gate:
     name: gate
     runs-on: ubuntu-latest
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, team-block, uat-checklist, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, team-block, uat-checklist, freeze, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -234,6 +246,7 @@ jobs:
           echo "frontend-design: ${{ needs.frontend-design.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"
+          echo "freeze: ${{ needs.freeze.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "test: ${{ needs.test.result }}"

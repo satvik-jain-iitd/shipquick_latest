@@ -77,3 +77,17 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Run: `scout.py --need "CLI command that opens a labeled GitHub issue in a parent repo from a child repo as a lightweight feedback inbox"`: no repos found. `gh search repos "gh issue create wrapper feedback script"`: nothing. `gh search repos "topic:feedback topic:cli github-issue"`: whole feedback platforms (forem, fider), not a one-call wrapper.
 - Built from scratch: `scripts/feedback.sh`, about 20 lines of bash around `gh issue create` (the project already has `gh`; this is thinner than any tool on the list).
 - Confidence that nothing fits: 0.85.
+
+## 30 Oct 2026, story #126: a release freeze that is a mechanism, not a sentence
+- Need: a CLI to set/read a release-freeze flag file in a git repo (on/off/status, a reason, an
+  until-date), and a merge-gate script that refuses a PR into `main` while frozen, with a stale
+  freeze (past its until-date) failing loudly instead of silently lifting.
+- Run: `scout.py --need "CLI to set a release freeze flag file in a git repo, with status/on/off
+  and a stale-date check, used by a merge-gate script"`: no repos found. This mirrors story #120's
+  `has_dev_link.sh`/`check_environments.sh` shape exactly (a flag file read through the contents
+  API with `?ref=`, refused by `review_merge.sh`) — no general tool reads a repo's own flag file
+  and feeds a GitHub Actions gate; freeze/change-management tools that exist (ServiceNow, Jira
+  change freeze) are whole platforms, not a two-line file check.
+- Decision: build `scripts/freeze.sh` (bash, mirrors `scripts/feedback.sh`'s size) + wire
+  `review_merge.sh` and `checks.yml`, same contents-API pattern already proven in #120/#122.
+- Confidence that nothing fits better: 0.85.
