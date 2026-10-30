@@ -106,6 +106,9 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Check the teammate block in the PR body
         run: |
+          case "$PR_AUTHOR" in
+            dependabot\[bot\]|app/dependabot) echo "Dependabot: team-block exempt"; exit 0 ;;
+          esac
           printf '%s\n' "$PR_BODY" | awk '/^## For the reviewer/{f=1;next} /^## /{f=0} f' | python3 scripts/check_block.py
       - name: Check the PR body links its issue (Closes #n)
         run: |
