@@ -372,12 +372,12 @@ def test_s126_an_expired_freeze_still_refuses_and_says_stale(env):
     refused(*env(pr=pr, freeze="reason: incident\nuntil: 2000-01-01\n"), "STALE")
 
 
-def test_s126_a_pr_that_only_removes_the_freeze_file_is_exempt_and_merges(env):
+def test_s126_a_pr_that_only_removes_the_freeze_file_is_still_a_protected_path(env):
+    # review blocker on PR #141: lifting a freeze is the owner's own decision too, so a lift-only
+    # PR no longer auto-merges -- .shipquick/* is protected with no exception.
     pr = good(); pr["baseRefName"] = "main"
     files = [{"filename": ".shipquick/freeze", "status": "removed"}]
-    r, merged = env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files)
-    assert r.returncode == 0, (r.stdout, r.stderr)
-    assert merged != ""
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "protected path, owner merges")
 
 
 def test_s126_a_pr_that_removes_the_freeze_file_plus_something_else_is_not_exempt(env):
@@ -458,12 +458,10 @@ def test_s131_the_enforcer_scripts_are_themselves_protected(env):
         assert result.returncode == 1 and "protected path" in result.stderr, (f, result.stderr)
 
 
-def test_s131_lifting_the_freeze_still_merges_even_though_shipquick_star_is_now_protected(env):
+def test_s131_a_lift_only_freeze_pr_is_refused_in_auto_mode_the_owner_merges_it(env):
     pr = good(); pr["baseRefName"] = "main"
     files = [{"filename": ".shipquick/freeze", "status": "removed"}]
-    r, merged = env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files)
-    assert r.returncode == 0, (r.stdout, r.stderr)
-    assert merged != ""
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "protected path, owner merges")
 
 
 def test_s131_editing_the_freeze_file_rather_than_removing_it_is_still_protected(env):

@@ -108,8 +108,9 @@ A freeze is a file, not a note in chat. `scripts/freeze.sh on "<reason>" --until
 
 While `.shipquick/freeze` exists on `main`:
 - `scripts/review_merge.sh` refuses every merge into `main`, with the freeze's reason and until-date
-  in the refusal, except the one PR whose only changed file removes `.shipquick/freeze` (so lifting
-  the freeze is never itself blocked by the freeze).
+  in the refusal. `.shipquick/freeze` is also a protected path (story #131): even the PR that only
+  lifts the freeze needs the owner's own merge, never an auto-merge — lifting a freeze is the
+  owner's decision too, the same as changing it.
 - The `freeze` job in `ci.yml` (and the reusable `checks.yml` a child calls, story #124) fails a PR
   into `main` the same way, reading the already-checked-out file — a PR that only removes the file
   already shows it gone in the merge-commit checkout, so no separate exemption is needed there.

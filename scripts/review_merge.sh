@@ -6,7 +6,8 @@
 #   and, only when the base branch is main: the PR's own repo's CLAUDE.md (read from GitHub, not the local checkout, which may be a different repo) must be
 #   readable or the merge refuses outright; if it has a filled "Dev link:" line (scripts/has_dev_link.sh) the body also needs a followable "## UAT on dev"
 #   checklist (scripts/check_uat.py) with every box ticked (story #120, #122); and the PR's own repo's own `.shipquick/freeze` on `main` (read the same
-#   way, scripts/check_freeze.py) must be absent, expired-but-still-blocking is still blocking, unless this PR's only changed file removes it (story #126).
+#   way, scripts/check_freeze.py) must be absent, expired-but-still-blocking is still blocking (story #126) -- though in practice any PR that touches
+#   `.shipquick/freeze` at all, lift included, is already refused by the protected-paths rule below: lifting a freeze is the owner's decision too.
 #   Story #131: a check named exactly `gate` (ShipQuick) or `shipquick-checks / gate` (child) must itself be SUCCESS -- the generic "every check SUCCESS
 #   or SKIPPED" loop above cannot be trusted alone, since a PR that deletes a job from its own caller never produces a bad result for that job, it simply
 #   has none. And no PR may touch a path in scripts/protected_paths.txt (CI config, lint baselines, path lists a check reads its own rules from) -- those
@@ -97,14 +98,13 @@ protected_match() {   # protected_match <changed-file> -- true if it matches a l
   return 1
 }
 files_json=$(GH_TOKEN="$token" gh api "repos/$repo/pulls/$pr/files" --paginate) || refuse "cannot read changed files"
-# story #126's lift-the-freeze exemption: a PR whose only changed file removes .shipquick/freeze is
-# never itself blocked by the freeze gate, or (now that .shipquick/* is protected, review blocker on
-# PR #141) by the protected-paths refusal below -- otherwise freeze.sh off could never merge.
+# story #126's lift-the-freeze exemption lives only in the freeze check below, never here: lifting a
+# freeze is the owner's decision too, so .shipquick/* (including .shipquick/freeze) is protected with
+# no exception -- a lift-only PR still needs the owner's own merge (review blocker on PR #141).
 only_lifts_freeze=$(jq -r 'if length == 1 and .[0].filename == ".shipquick/freeze" and .[0].status == "removed" then "yes" else "no" end' <<<"$files_json")
 bad_path=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
-  [ "$f" = ".shipquick/freeze" ] && [ "$only_lifts_freeze" = yes ] && continue
   if protected_match "$f"; then bad_path="$f"; break; fi
 done < <(jq -r '.[].filename' <<<"$files_json")
 [ -z "$bad_path" ] || refuse "protected path, owner merges ($bad_path)"

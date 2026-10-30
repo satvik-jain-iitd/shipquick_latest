@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Story #126 (GoServe feedback #126): a release freeze is a mechanism, not a sentence.
 #   freeze.sh on "<reason>" --until <date>   # writes .shipquick/freeze on main through a PR
-#   freeze.sh off                             # removes it through a PR (review_merge.sh exempts
-#                                              #   exactly this one: a PR whose only change is removing the file)
+#   freeze.sh off                             # removes it through a PR -- .shipquick/freeze is a
+#                                              #   protected path (story #131), so the owner merges this PR too
 #   freeze.sh status [--repo <owner/repo>] [--ref <branch>]   # prints what check_freeze.py decides;
 #                                              #   no --repo reads the current checkout's .shipquick/freeze
 # on/off run inside the repo's own clean git checkout with an `origin` remote; push and the PR use the
@@ -80,8 +80,8 @@ Lifts the current release freeze.
 ## For the reviewer
 \`\`\`
 To reviewer, from coder, re freeze off:
-1. Only change here is removing .shipquick/freeze; review_merge.sh exempts exactly this from the freeze gate.
-Need from you: review and merge.
+1. .shipquick/freeze is a protected path, story #131: this PR needs the owner to merge it directly, auto mode refuses it.
+Need from you: review, then the owner merges.
 \`\`\`
 EOF
 )
