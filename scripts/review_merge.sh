@@ -6,7 +6,12 @@
 #   and, only when the base branch is main: the PR's own repo's CLAUDE.md (read from GitHub, not the local checkout, which may be a different repo) must be
 #   readable or the merge refuses outright; if it has a filled "Dev link:" line (scripts/has_dev_link.sh) the body also needs a followable "## UAT on dev"
 #   checklist (scripts/check_uat.py) with every box ticked (story #120, #122); and the PR's own repo's own `.shipquick/freeze` on `main` (read the same
-#   way, scripts/check_freeze.py) must be absent, expired-but-still-blocking is still blocking, unless this PR's only changed file removes it (story #126).
+#   way, scripts/check_freeze.py) must be absent, expired-but-still-blocking is still blocking (story #126) -- though in practice any PR that touches
+#   `.shipquick/freeze` at all, lift included, is already refused by the protected-paths rule below: lifting a freeze is the owner's decision too.
+#   Story #131: a check named exactly `gate` (ShipQuick) or `shipquick-checks / gate` (child) must itself be SUCCESS -- the generic "every check SUCCESS
+#   or SKIPPED" loop above cannot be trusted alone, since a PR that deletes a job from its own caller never produces a bad result for that job, it simply
+#   has none. And no PR may touch a path in scripts/protected_paths.txt (CI config, lint baselines, path lists a check reads its own rules from) -- those
+#   are refused outright in auto mode, "protected path, owner merges", so a check's own rules can never be loosened by the PR that check is judging.
 # Then it merges, using the review account's own token (never switch the active gh account), and closes the story issues
 # the PR links (`Closes #n`) with scripts/close_linked_issues.py, because GitHub closes them only for a merge into the default branch. Needs git, gh, jq and python3.
 # The merge method (story #87): --method squash|rebase|merge wins; with no flag it squashes when the base branch requires linear history
@@ -62,9 +67,47 @@ bad=$(jq -r '
 ' <<<"$json" | head -1)
 [ -z "$bad" ] || refuse "check $bad is not SUCCESS"
 
+# story #131: the generic loop above cannot be trusted alone (a deleted job leaves no bad result at all),
+# so a check literally named `gate` or `shipquick-checks / gate` must exist and itself be SUCCESS.
+gate_name=$(jq -r '.statusCheckRollup[] | (.name // .context)' <<<"$json" | grep -xE 'gate|shipquick-checks / gate' | head -1)
+[ -n "$gate_name" ] || refuse "no required check named exactly gate or shipquick-checks / gate ran"
+gate_concl=$(jq -r --arg n "$gate_name" '
+  .statusCheckRollup
+  | sort_by(.name // .context)
+  | group_by(.name // .context)
+  | map(max_by(.startedAt // .completedAt // ""))
+  | .[]
+  | select((.name // .context) == $n)
+  | ((.conclusion // .state // "") | ascii_upcase)
+' <<<"$json" | head -1)
+[ "$gate_concl" = SUCCESS ] || refuse "required check $gate_name is $gate_concl, not SUCCESS"
+
 why=$(field .body | python3 "$HERE/check_closes.py" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
 
 token=$(gh auth token --user "$REVIEWER") || refuse "no token for $REVIEWER on this machine"
+
+# story #131: a PR touching any protected path (CI config, lint baselines, path lists a check reads
+# its own rules from) is never merged in auto mode -- the owner merges it by hand.
+protected_match() {   # protected_match <changed-file> -- true if it matches a line of protected_paths.txt
+  local f="$1" pat
+  while IFS= read -r pat; do
+    pat="${pat%%#*}"; pat="$(printf '%s' "$pat" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
+    [ -z "$pat" ] && continue
+    [[ "$f" == $pat ]] && return 0
+  done < "$HERE/protected_paths.txt"
+  return 1
+}
+files_json=$(GH_TOKEN="$token" gh api "repos/$repo/pulls/$pr/files" --paginate) || refuse "cannot read changed files"
+# story #126's lift-the-freeze exemption lives only in the freeze check below, never here: lifting a
+# freeze is the owner's decision too, so .shipquick/* (including .shipquick/freeze) is protected with
+# no exception -- a lift-only PR still needs the owner's own merge (review blocker on PR #141).
+only_lifts_freeze=$(jq -r 'if length == 1 and .[0].filename == ".shipquick/freeze" and .[0].status == "removed" then "yes" else "no" end' <<<"$files_json")
+bad_path=""
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  if protected_match "$f"; then bad_path="$f"; break; fi
+done < <(jq -r '.[].filename' <<<"$files_json")
+[ -z "$bad_path" ] || refuse "protected path, owner merges ($bad_path)"
 
 uat_exempt=0
 if [ "$(field .baseRefName)" = main ]; then   # read the PR's OWN repo's CLAUDE.md on its base branch (never the local checkout's: it may be a different repo, story #122)
@@ -94,8 +137,6 @@ if [ "$(field .baseRefName)" = main ]; then   # story #126: a release freeze blo
     freeze_msg=$(printf '%s' "$freeze_raw" | base64 -d 2>/dev/null | python3 "$HERE/check_freeze.py")
     freeze_blocked=$?
     if [ "$freeze_blocked" = 1 ]; then
-      files_json=$(GH_TOKEN="$token" gh api "repos/$repo/pulls/$pr/files" --paginate) || refuse "cannot read changed files to check the freeze exemption"
-      only_lifts_freeze=$(jq -r 'if length == 1 and .[0].filename == ".shipquick/freeze" and .[0].status == "removed" then "yes" else "no" end' <<<"$files_json")
       [ "$only_lifts_freeze" = yes ] || refuse "$freeze_msg"
     fi
   fi

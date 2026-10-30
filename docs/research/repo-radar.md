@@ -109,3 +109,19 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: extend `canvas_stage.py`'s existing refusal checks (overlap, outside-board) with one more:
   a Production `boards` entry with no `{"pr", "approved"}` is a refusal, same as any other.
 - Confidence that nothing fits better: 0.85.
+
+## 30 Oct 2026, story #131 (epic #130): harden the merge gate
+- Need: a required GitHub Actions "gate" status check review_merge.sh verifies is SUCCESS, a
+  protected-paths list that refuses an auto-mode merge touching CI config or lint baselines, an
+  adoption-ancestor check (pinned SHA must be merged or tagged), and a disable-comment guard.
+- Run: `scout.py --need "a required GitHub Actions status check named gate that review_merge.sh
+  verifies is SUCCESS, plus a protected-paths list that blocks auto-merge when a PR touches CI
+  config or lint baselines"`: no repos found. This is ShipQuick's own merge-gate script and its
+  reusable workflow, not a general tool — a branch-protection "required status check" exists on
+  GitHub itself, but review_merge.sh runs outside Actions (an agent, not GitHub, decides the merge),
+  so the check still has to be read and enforced in the script.
+- Decision: extend `review_merge.sh` (protected paths, required gate check) and `checks.yml`/`ci.yml`
+  (gate job, disable-comment guard job); a new small stdlib script for the adoption-ancestor check
+  (`scripts/check_adoption_ancestor.py`, pure logic + a thin network-calling CLI, same shape as
+  `adoption_scan.py`'s injected `fetch`).
+- Confidence that nothing fits better: 0.85.
