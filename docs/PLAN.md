@@ -59,7 +59,7 @@ This is the validation step for the planning itself. If a story fails it, the pl
 If any item is missing, the story goes back to Backlog and the plan or the issue is fixed first.
 
 ### D6. Definition of done (story)
-Tests written first and green. Scenarios mapped to tests or to a matrix row. Docs updated in the same PR. Ponytail review: nothing speculative added. Issue closed by the PR. Journal entry written.
+Tests written first and green. Scenarios mapped to tests or to a matrix row. Docs updated in the same PR. Ponytail review: nothing speculative added. Issue closed by the PR. Journal entry written. A story that changes a live screen names the design board it updated in the PR body (or says "no screen change"); the reviewer checks the board before approving.
 
 ### D7. Definition of done (increment)
 All its stories done. `docs/demos/D<n>.md` written. dev → main PR opened with the demo. Metrics rows updated. The owner has seen the demo.
