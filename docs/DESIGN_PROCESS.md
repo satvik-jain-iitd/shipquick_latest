@@ -11,10 +11,13 @@ Never jump to making screens before the direction is final.
 - Brainstorm the direction in words first when the owner asks for it. Nothing is built before he picks.
 - Motion follows the same rule: frames and a note, never a finished animatic.
 
-## 2. The canvas is the contract (28 Oct 2026)
+## 2. Design first, approval, then code (28 Oct 2026; rewritten 30 Oct 2026, story #121)
 
-- Every UI change lands on the design canvas in the same story as the code, as a board with a note. A story with a screen change and no board is not done.
-- Copy goes from the frame into the code word for word. The frame is the contract; the code does not improve the words on its own.
+- At Definition of Ready, every story answers: does this touch the frontend — UI, layout, design or copy? Yes or no, on the issue.
+- A "yes" starts with a sample screen on the design canvas, from the latest approved board, shown to the owner. Code does not start until he approves it and the board moves to "Design final not live". The code builds that exact screen; copy goes from the frame into the code word for word — the frame is the contract, the code does not improve the words on its own.
+- This applies to every story type: feature, bug fix, chore. Code is never ahead of design.
+- After the code ships to production, the board moves to "Production" (rule 3).
+- A PR that touches the project's own frontend paths (`scripts/check_frontend_design.sh`, globs configured per project) must name the approved board in its body (`Design board: <name>`), or the check fails — in CI and in `scripts/check_local.sh`. A PR that says "no screen change" while still touching those paths also fails.
 - Nothing on the canvas is deleted. An old version moves to the mistakes section (rule 4).
 
 ## 3. The canvas by stage (29 Oct 2026)
