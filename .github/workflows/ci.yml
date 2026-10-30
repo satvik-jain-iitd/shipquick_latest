@@ -5,6 +5,7 @@ on:
   pull_request:
 permissions:
   contents: read
+  pull-requests: read   # story #140: the roles job reads commit authors via `gh api .../pulls/.../commits`
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -125,6 +126,19 @@ jobs:
           git fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
+  roles:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
+        run: |
+          commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '[.[].author.login] | join(",")')
+          coders=$(python3 scripts/roles.py get coder)
+          python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders"
   team-block:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -250,7 +264,7 @@ jobs:
   gate:
     name: gate
     runs-on: ubuntu-latest
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, team-block, uat-checklist, freeze, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -260,6 +274,7 @@ jobs:
           echo "pr-size: ${{ needs.pr-size.result }}"
           echo "frontend-design: ${{ needs.frontend-design.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
+          echo "roles: ${{ needs.roles.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"
           echo "freeze: ${{ needs.freeze.result }}"

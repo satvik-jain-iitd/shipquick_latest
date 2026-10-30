@@ -125,3 +125,18 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   (`scripts/check_adoption_ancestor.py`, pure logic + a thin network-calling CLI, same shape as
   `adoption_scan.py`'s injected `fetch`).
 - Confidence that nothing fits better: 0.85.
+
+## 31 Oct 2026, story #140 (epic #130): per-role accounts and a protected mode store
+- Need: a per-repo file naming which GitHub accounts may code, review, and own a project, read by a
+  merge-gate script that must never embed an account name itself; a sourced shell helper that exports
+  the right `GH_TOKEN` for one role per session.
+- Run: `scout.py --need "per-repo roles.yml listing which GitHub accounts may code vs review vs own a
+  project, read by a merge-gate script, with a sourced shell helper to export the right GH_TOKEN for a
+  role"`: no repos found. GitHub's own CODEOWNERS and branch protection decide who *may* approve, but
+  neither drives a gate script run outside Actions, and neither can be sourced into a shell to switch
+  `gh`'s active account for one role — that half is ShipQuick's own `scripts/review_merge.sh`/`mode.sh`
+  concern, not a general tool's.
+- Decision: a small fixed-shape parser (`scripts/roles.py`, no YAML dependency — the file never needs
+  more than two keys and two lists), a sourced helper (`scripts/role.sh`), and a CI job
+  (`scripts/check_roles.py`) that all read `.shipquick/roles.yml` instead of a literal account name.
+- Confidence that nothing fits better: 0.85.

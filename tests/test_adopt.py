@@ -198,3 +198,37 @@ def test_s124_check_fails_when_there_are_no_precommit_hooks_even_with_a_good_pin
     (child / ".pre-commit-config.yaml").write_text("repos: []\n", encoding="utf-8")
     r = adopt(child, "--check")
     assert r.returncode == 1 and "not adopted" in r.stdout.lower()
+
+
+# ---- story #140: --coder/--reviewer/--owner fill .shipquick/roles.yml on first adoption ----
+def test_s140_with_no_flags_roles_yml_is_not_written_and_adopt_says_so(child):
+    r = adopt(child)
+    assert r.returncode == 0, r.stderr
+    assert not (child / ".shipquick" / "roles.yml").exists()
+    assert "roles.yml not written" in r.stdout and "--coder" in r.stdout
+
+
+def test_s140_with_all_three_flags_roles_yml_is_written(child):
+    r = adopt(child, "--coder", "build-acct,build-acct-2", "--reviewer", "review-acct", "--owner", "review-acct")
+    assert r.returncode == 0, r.stderr
+    text = (child / ".shipquick" / "roles.yml").read_text(encoding="utf-8")
+    assert "- build-acct\n" in text and "- build-acct-2\n" in text
+    assert "- review-acct\n" in text and "owner: review-acct" in text
+    assert "shipquick_repo:" in text
+    assert "created" in r.stdout
+
+
+def test_s140_an_existing_roles_yml_is_never_overwritten(child):
+    (child / ".shipquick").mkdir()
+    (child / ".shipquick" / "roles.yml").write_text("coder:\n  - mine\nreviewer:\n  - mine\nowner: mine\n", encoding="utf-8")
+    r = adopt(child, "--coder", "other", "--reviewer", "other2", "--owner", "other2")
+    assert r.returncode == 0, r.stderr
+    assert (child / ".shipquick" / "roles.yml").read_text(encoding="utf-8") == "coder:\n  - mine\nreviewer:\n  - mine\nowner: mine\n"
+    assert "kept" in r.stdout and "roles.yml" in r.stdout
+
+
+def test_s140_partial_flags_are_treated_as_no_flags(child):
+    r = adopt(child, "--coder", "build-acct")
+    assert r.returncode == 0, r.stderr
+    assert not (child / ".shipquick" / "roles.yml").exists()
+    assert "roles.yml not written" in r.stdout

@@ -34,6 +34,9 @@ case "$1" in
          *contents/.shipquick/freeze*)
            [ -f "$STUB_DIR/freeze_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
            [ -f "$STUB_DIR/freeze_b64" ] && { cat "$STUB_DIR/freeze_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
+         *contents/.shipquick/roles.yml*)
+           [ -f "$STUB_DIR/roles_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
+           cat "$STUB_DIR/roles_yml_b64"; exit 0 ;;
          *pulls/*/files*)
            [ -f "$STUB_DIR/pr_files.json" ] && { cat "$STUB_DIR/pr_files.json"; exit 0; }; echo '[]'; exit 0 ;;
        esac
@@ -67,10 +70,17 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
         (stub / "protection.json").unlink(missing_ok=True)
+        default_roles_yml = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n"
+        (stub / "roles_yml_b64").write_text(base64.b64encode((roles or default_roles_yml).encode()).decode(), encoding="utf-8")
+        roles_unreadable_file = stub / "roles_unreadable"
+        if roles_unreadable:
+            roles_unreadable_file.write_text("1", encoding="utf-8")
+        else:
+            roles_unreadable_file.unlink(missing_ok=True)
         freeze_b64_file = stub / "freeze_b64"
         if freeze:
             freeze_b64_file.write_text(base64.b64encode(freeze.encode()).decode(), encoding="utf-8")
@@ -141,17 +151,17 @@ def test_s16_a_draft_or_closed_pull_request_refuses(env):
 
 def test_s16_an_approval_by_someone_else_is_not_enough(env):
     pr = good(); pr["reviews"][0]["author"]["login"] = "klickbae8yt-star"
-    refused(*env(pr=pr), f"not approved by {REVIEWER}")
+    refused(*env(pr=pr), "not approved by a reviewer account")
 
 
 def test_s16_an_approval_of_an_older_commit_is_not_enough(env):
     pr = good(); pr["reviews"][0]["commit"]["oid"] = "old000"
-    refused(*env(pr=pr), f"not approved by {REVIEWER}")
+    refused(*env(pr=pr), "not approved by a reviewer account")
 
 
 def test_s16_a_later_request_for_changes_cancels_the_approval(env):
     pr = good(); pr["reviews"].append({"author": {"login": REVIEWER}, "state": "CHANGES_REQUESTED", "commit": {"oid": "abc123"}})
-    refused(*env(pr=pr), f"not approved by {REVIEWER}")
+    refused(*env(pr=pr), "not approved by a reviewer account")
 
 
 def test_s16_one_unresolved_thread_refuses(env):
@@ -468,3 +478,38 @@ def test_s131_editing_the_freeze_file_rather_than_removing_it_is_still_protected
     files = [{"filename": ".shipquick/freeze", "status": "modified"}]
     result, merged = env(pr_files=files)
     assert result.returncode == 1 and "protected path" in result.stderr
+
+
+# ---- story #140: who may author, who may approve -- come from .shipquick/roles.yml, the #114 case ----
+def test_s140_an_author_not_in_the_coder_list_refuses_even_with_a_reviewer_approval(env):
+    pr = good(); pr["author"] = {"login": "some-random-account"}
+    refused(*env(pr=pr), "PR author some-random-account is not a coder account")
+
+
+def test_s140_a_pr_opened_by_the_reviewer_account_refuses_the_114_case(env):
+    pr = good(); pr["author"] = {"login": REVIEWER}
+    refused(*env(pr=pr), "is not a coder account")
+
+
+def test_s140_the_reviewer_approving_their_own_pr_is_never_enough_even_if_they_are_also_listed_as_coder(env):
+    roles = "coder:\n  - klickbae8yt-star\n  - satvik-jain-iitd\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n"
+    pr = good(); pr["author"] = {"login": REVIEWER}; pr["reviews"] = [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}}]
+    refused(*env(pr=pr, roles=roles), "not approved by a reviewer account")
+
+
+def test_s140_a_second_reviewer_account_in_roles_yml_is_honored(env):
+    roles = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\n  - second-reviewer\nowner: satvik-jain-iitd\n"
+    pr = good(); pr["reviews"] = [{"author": {"login": "second-reviewer"}, "state": "APPROVED", "commit": {"oid": "abc123"}}]
+    r, merged = env(pr=pr, roles=roles)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s140_dependabot_is_exempt_from_the_coder_check_but_still_needs_a_real_reviewer_approval(env):
+    pr = good(); pr["author"] = {"login": "dependabot[bot]"}; pr["title"] = "chore(deps): bump x"; pr["body"] = "no issue link\n"
+    r, merged = env(pr=pr)   # good()'s default review is still from REVIEWER, a real reviewer account
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_s140_cannot_read_roles_yml_refuses_it_is_never_treated_as_exempt(env):
+    refused(*env(roles_unreadable=True), "cannot read")
