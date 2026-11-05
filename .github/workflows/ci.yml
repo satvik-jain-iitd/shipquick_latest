@@ -86,9 +86,11 @@ jobs:
           fetch-depth: 0
       - name: Check PR size
         run: |
-          case "${{ github.head_ref }}" in
-            release/*) echo "skip pr-size: a release branch aggregates already-reviewed dev commits, not new review surface"; exit 0 ;;
-          esac
+          if [ "${{ github.base_ref }}" = main ]; then
+            case "${{ github.head_ref }}" in
+              release/*) echo "skip pr-size: a release branch into main aggregates already-reviewed dev commits, not new review surface"; exit 0 ;;
+            esac
+          fi
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
           # Moved files are not new review surface, so renames do not count.

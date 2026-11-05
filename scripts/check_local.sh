@@ -48,9 +48,11 @@ check_pr_size() {
   have_base pr-size || return 0
   local branch n
   branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
-  case "$branch" in
-    release/*) echo "skip pr-size: a release branch aggregates already-reviewed dev commits, not new review surface"; report pr-size 0; return 0 ;;
-  esac
+  if [ "$BASE" = main ]; then
+    case "$branch" in
+      release/*) echo "skip pr-size: a release branch into main aggregates already-reviewed dev commits, not new review surface"; report pr-size 0; return 0 ;;
+    esac
+  fi
   n=$(changed | wc -l | tr -d ' ')
   echo "Counted files: $n (max 50, renames ignored)"
   [ "$n" -le 50 ]; report pr-size $?
