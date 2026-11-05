@@ -21,10 +21,14 @@ def commit(repo, files, msg):
     git(repo, "commit", "-q", "-m", msg)
 
 
+REPO_SLUG = "test-owner/test-repo"
+
+
 def base_repo(tmp_path, paths_file_text=None):
     git(tmp_path, "init", "-q", "-b", "dev")
     git(tmp_path, "config", "user.email", "t@example.com")
     git(tmp_path, "config", "user.name", "T")
+    git(tmp_path, "remote", "add", "origin", f"https://github.com/{REPO_SLUG}.git")
     files = {"README.md": "# demo\n"}
     if paths_file_text is not None:
         files["docs/frontend-paths.txt"] = paths_file_text
@@ -178,7 +182,7 @@ def test_with_a_screens_file_a_board_with_a_render_line_passes(tmp_path):
     repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
     commit(repo, {"docs/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
     commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
-    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\nRender: https://example.test/artifacts/welcome.png\n")
+    r = run(repo, f"Design board: Production/Login\nApproved: 2026-10-30\nRender: https://github.com/{REPO_SLUG}/actions/runs/123\n")
     assert r.returncode == 0, (r.stdout, r.stderr)
 
 
@@ -188,6 +192,31 @@ def test_with_a_screens_file_a_placeholder_render_line_fails(tmp_path):
     commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
     r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\nRender: <link>\n")
     assert r.returncode == 1
+
+
+# ---- PR #152 review: Render: must be a GitHub Actions run (or artefact) URL of this repo ----
+def test_a_render_line_that_is_not_a_github_actions_url_fails(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"docs/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\nRender: https://example.test/artifacts/welcome.png\n")
+    assert r.returncode == 1 and "github.com" in r.stdout.lower()
+
+
+def test_a_render_line_pointing_at_a_different_repos_actions_run_fails(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"docs/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\nRender: https://github.com/someone-else/other-repo/actions/runs/999\n")
+    assert r.returncode == 1 and "different repo" in r.stdout.lower()
+
+
+def test_a_render_line_pointing_at_an_artefact_path_of_this_repos_run_passes(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"docs/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, f"Design board: Production/Login\nApproved: 2026-10-30\nRender: https://github.com/{REPO_SLUG}/actions/runs/123/artifacts/456\n")
+    assert r.returncode == 0, (r.stdout, r.stderr)
 
 
 def test_an_empty_screens_file_is_the_same_as_none_configured(tmp_path):

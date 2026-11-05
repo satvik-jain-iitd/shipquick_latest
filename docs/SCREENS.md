@@ -8,7 +8,7 @@ itself drifted. This mechanism makes the picture a precondition, not a courtesy.
 
 ## What a project adopts
 
-Three files, all opt-in (a project with none of them is unaffected, the same way `docs/frontend-paths.txt`
+Four pieces, all opt-in (a project with none of them is unaffected, the same way `docs/frontend-paths.txt`
 being absent skips story #121's own check):
 
 1. **`docs/screens.txt`** — one screen per line: `name | path | viewport (WxH) | setup step`. `#` comments
@@ -32,7 +32,21 @@ being absent skips story #121's own check):
 3. **One Playwright spec** (a project writes its own; start from `docs/templates/screens.spec.ts`) that
    reads `docs/screens.txt`, walks a `STEPS` map keyed by the setup-step column, and asserts
    `toHaveScreenshot()` for each screen. A screen naming an **unknown** step fails loudly in its own test,
-   not silently skipped — the template's first test proves this.
+   not silently skipped — the template's first test proves this. The template's own `toHaveScreenshot` call
+   already passes `{ maxDiffPixels: 10 }`, so a copied template is right even before touching your config.
+4. **In `playwright.config.ts`**, a baseline path that lands on a protected directory name (the existing
+   `*baseline*` glob in `scripts/protected_paths.txt` only protects what you name correctly), and the same
+   threshold as a project-wide default:
+   ```ts
+   export default defineConfig({
+     // No OS in the baseline file names: they are made on CI only (see below), never a laptop.
+     snapshotPathTemplate: "{testDir}/screens-baseline/{arg}{ext}",
+     expect: { toHaveScreenshot: { maxDiffPixels: 10, animations: "disabled" } },
+     // ...
+   });
+   ```
+   `screens-baseline` matches `*baseline*` already; do not rename it without adding the new name to
+   `scripts/protected_paths.txt` in the same PR.
 
 ## The four things that make it deterministic
 

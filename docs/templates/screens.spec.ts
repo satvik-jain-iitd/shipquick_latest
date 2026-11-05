@@ -51,6 +51,8 @@ for (const s of screens) {
       await page.screenshot({ path: `${process.env.SCREENS_OUT}/${s.name}.png` });
     }
     if (process.env.SCREENS_RENDER_ONLY) return;
-    await expect(page).toHaveScreenshot(`${s.name}.png`);
+    // maxDiffPixels: 10 is set here too, not only in playwright.config.ts (docs/SCREENS.md), so a
+    // copied template is right even if the project's own config is never touched.
+    await expect(page).toHaveScreenshot(`${s.name}.png`, { maxDiffPixels: 10 });
   });
 }

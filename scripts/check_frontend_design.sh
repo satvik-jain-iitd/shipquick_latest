@@ -97,6 +97,25 @@ if [ -n "$has_screens" ]; then
       exit 1
       ;;
   esac
+  # PR #152 review: a link to anywhere is not evidence -- it must be a GitHub Actions run (or an
+  # artefact under one) of THIS repo, never an arbitrary URL.
+  case "$render" in
+    https://github.com/*/actions/runs/*) : ;;
+    *)
+      echo "Render: must be a GitHub Actions run or artefact URL (https://github.com/<owner>/<repo>/actions/runs/<id>), not: $render"
+      exit 1
+      ;;
+  esac
+  repo_slug="$(git -C "$repo" remote get-url origin 2>/dev/null | sed -E 's#^(https://github\.com/|git@github\.com:)##; s#\.git$##')"
+  if [ -n "$repo_slug" ]; then
+    case "$render" in
+      "https://github.com/$repo_slug/actions/runs/"*) : ;;
+      *)
+        echo "Render: points at a different repo than this one ($repo_slug): $render"
+        exit 1
+        ;;
+    esac
+  fi
 fi
 
 echo "design board named: $board (approved $approved)"

@@ -58,6 +58,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 .shipquick/scripts/check_adoption_ancestor.py --repo "${{ inputs.shipquick_repo }}" --sha "${{ inputs.shipquick_ref }}"
+      - name: Check a configured docs/screens.txt is actually wired into CI (story #146)
+        run: python3 .shipquick/scripts/check_screens_wired.py --screens-file project/docs/screens.txt --workflows-dir project/.github/workflows
   disable-comments:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
