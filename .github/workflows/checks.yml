@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the project
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
       - name: Check the caller's pin and the pre-commit hooks (story #124)
@@ -47,7 +47,7 @@ jobs:
           fi
           echo "adoption OK: pinned to $sub_sha, pre-commit hooks present"
       - name: Check out the ShipQuick scripts
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
@@ -65,12 +65,12 @@ jobs:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
       - name: Check out the project
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
           fetch-depth: 0
       - name: Check out the ShipQuick scripts
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
@@ -91,11 +91,11 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out the project
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
       - name: Check out the ShipQuick scripts
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
@@ -118,7 +118,7 @@ jobs:
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
     steps:
       - name: Check out the ShipQuick scripts
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
@@ -141,12 +141,12 @@ jobs:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
       - name: Check out the project
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
           fetch-depth: 0
       - name: Check out the ShipQuick scripts
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
@@ -166,11 +166,11 @@ jobs:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
       - name: Check out the project
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
       - name: Check out the ShipQuick scripts
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
@@ -186,11 +186,11 @@ jobs:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     steps:
       - name: Check out the project
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
       - name: Check out the ShipQuick scripts
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
@@ -208,11 +208,11 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Check out the project
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
       - name: Check out the ShipQuick scripts
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
