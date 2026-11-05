@@ -49,3 +49,5 @@ Same tokens work everywhere. Replace placeholders in `docs/design-tokens.md` wit
 ## Rule
 
 Read `design/USAGE_GUIDE.md` before using anything. Patterns are knowledge, code is property.
+
+Before any screen, frame or canvas work, read `docs/DESIGN_PROCESS.md` (the rules, dated).

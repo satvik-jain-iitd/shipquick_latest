@@ -24,6 +24,8 @@ def child(tmp_path):
     c = tmp_path / "my-child"
     (c / ".github" / "workflows").mkdir(parents=True)
     subprocess.run(["git", "init", "-q", "-b", "dev", str(c)], check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=c, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=c, check=True)
     (c / ".github" / "workflows" / "ci.yml").write_text('name: Child CI\non:\n  push:\n', encoding="utf-8")
     return c
 
@@ -148,3 +150,85 @@ def test_s97_an_existing_claude_md_keeps_every_line_and_gains_the_pointer_once(c
     assert "updated   CLAUDE.md" in r.stdout
     again = adopt(child)
     assert (child / "CLAUDE.md").read_text(encoding="utf-8") == text and "unchanged CLAUDE.md" in again.stdout
+
+
+# ---- story #124: adoption must never be silent ----
+CHECKS_CALL = "satvik-jain-iitd/shipquick_latest/.github/workflows/checks.yml"
+
+
+def test_s124_adopt_writes_a_pinned_pull_request_triggered_shipquick_call(child):
+    r = adopt(child)
+    assert r.returncode == 0, r.stderr
+    call = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    assert f"uses: {CHECKS_CALL}@{HEAD}" in call and f"shipquick_ref: {HEAD}" in call
+    triggers = call.split("\npermissions:", 1)[0]
+    assert "\n  pull_request:" in triggers and "workflow_dispatch" not in triggers
+    assert "created" in r.stdout
+
+
+def add_fake_submodule(child, sha):
+    """A gitlink entry at knowledge/shipquick_latest, no real remote needed."""
+    subprocess.run(["git", "update-index", "--add", "--cacheinfo", f"160000,{sha},knowledge/shipquick_latest"], cwd=child, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "chore: pretend submodule"], cwd=child, check=True)
+
+
+def test_s124_check_says_not_adopted_with_no_caller_at_all(child):
+    r = adopt(child, "--check")
+    assert r.returncode == 1 and "not adopted" in r.stdout.lower()
+
+
+def test_s124_check_passes_once_pinned_correctly_with_hooks_and_a_matching_submodule(child):
+    adopt(child)
+    add_fake_submodule(child, HEAD)
+    r = adopt(child, "--check")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "adopted" in r.stdout.lower()
+
+
+def test_s124_check_fails_when_the_pin_does_not_match_the_submodule(child):
+    adopt(child)
+    add_fake_submodule(child, "1234567890abcdef1234567890abcdef12345678")
+    r = adopt(child, "--check")
+    assert r.returncode == 1 and "not adopted" in r.stdout.lower()
+
+
+def test_s124_check_fails_when_there_are_no_precommit_hooks_even_with_a_good_pin(child):
+    adopt(child)
+    add_fake_submodule(child, HEAD)
+    (child / ".pre-commit-config.yaml").write_text("repos: []\n", encoding="utf-8")
+    r = adopt(child, "--check")
+    assert r.returncode == 1 and "not adopted" in r.stdout.lower()
+
+
+# ---- story #140: --coder/--reviewer/--owner fill .shipquick/roles.yml on first adoption ----
+def test_s140_with_no_flags_roles_yml_is_not_written_and_adopt_says_so(child):
+    r = adopt(child)
+    assert r.returncode == 0, r.stderr
+    assert not (child / ".shipquick" / "roles.yml").exists()
+    assert "roles.yml not written" in r.stdout and "--coder" in r.stdout
+
+
+def test_s140_with_all_three_flags_roles_yml_is_written(child):
+    r = adopt(child, "--coder", "build-acct,build-acct-2", "--reviewer", "review-acct", "--owner", "review-acct")
+    assert r.returncode == 0, r.stderr
+    text = (child / ".shipquick" / "roles.yml").read_text(encoding="utf-8")
+    assert "- build-acct\n" in text and "- build-acct-2\n" in text
+    assert "- review-acct\n" in text and "owner: review-acct" in text
+    assert "shipquick_repo:" in text
+    assert "created" in r.stdout
+
+
+def test_s140_an_existing_roles_yml_is_never_overwritten(child):
+    (child / ".shipquick").mkdir()
+    (child / ".shipquick" / "roles.yml").write_text("coder:\n  - mine\nreviewer:\n  - mine\nowner: mine\n", encoding="utf-8")
+    r = adopt(child, "--coder", "other", "--reviewer", "other2", "--owner", "other2")
+    assert r.returncode == 0, r.stderr
+    assert (child / ".shipquick" / "roles.yml").read_text(encoding="utf-8") == "coder:\n  - mine\nreviewer:\n  - mine\nowner: mine\n"
+    assert "kept" in r.stdout and "roles.yml" in r.stdout
+
+
+def test_s140_partial_flags_are_treated_as_no_flags(child):
+    r = adopt(child, "--coder", "build-acct")
+    assert r.returncode == 0, r.stderr
+    assert not (child / ".shipquick" / "roles.yml").exists()
+    assert "roles.yml not written" in r.stdout

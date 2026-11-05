@@ -1,4 +1,5 @@
 """S0.16: the coded merge gate (story #67). A stub `gh` on PATH: no network, no token, nothing is ever merged."""
+import base64
 import json
 import os
 import subprocess
@@ -25,7 +26,20 @@ case "$1" in
               cat "$STUB_DIR/pr.json"; exit 0 ;;
         merge) echo "GH_TOKEN=$GH_TOKEN $*" >> "$STUB_DIR/merge.log"; exit 0 ;;
       esac ;;
-  api) case "$*" in *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;; esac
+  api) case "$*" in
+         *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;;
+         *contents/CLAUDE.md*)
+           case "$*" in *" -f "*|*" -F "*) echo "stub: -f/-F on a GET turns gh api into a POST, GitHub 404s" >&2; exit 1 ;; esac
+           [ -f "$STUB_DIR/claude_md_b64" ] && { cat "$STUB_DIR/claude_md_b64"; exit 0; }; exit 1 ;;
+         *contents/.shipquick/freeze*)
+           [ -f "$STUB_DIR/freeze_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
+           [ -f "$STUB_DIR/freeze_b64" ] && { cat "$STUB_DIR/freeze_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
+         *contents/.shipquick/roles.yml*)
+           [ -f "$STUB_DIR/roles_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
+           cat "$STUB_DIR/roles_yml_b64"; exit 0 ;;
+         *pulls/*/files*)
+           [ -f "$STUB_DIR/pr_files.json" ] && { cat "$STUB_DIR/pr_files.json"; exit 0; }; echo '[]'; exit 0 ;;
+       esac
        case "$2" in repos/*) echo '{"default_branch":"main"}'; exit 0 ;; esac; cat "$STUB_DIR/threads.json"; exit 0 ;;
 esac
 exit 9
@@ -56,12 +70,44 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
         (stub / "protection.json").unlink(missing_ok=True)
+        default_roles_yml = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n"
+        (stub / "roles_yml_b64").write_text(base64.b64encode((roles or default_roles_yml).encode()).decode(), encoding="utf-8")
+        roles_unreadable_file = stub / "roles_unreadable"
+        if roles_unreadable:
+            roles_unreadable_file.write_text("1", encoding="utf-8")
+        else:
+            roles_unreadable_file.unlink(missing_ok=True)
+        freeze_b64_file = stub / "freeze_b64"
+        if freeze:
+            freeze_b64_file.write_text(base64.b64encode(freeze.encode()).decode(), encoding="utf-8")
+        else:
+            freeze_b64_file.unlink(missing_ok=True)
+        pr_files_file = stub / "pr_files.json"
+        if pr_files is not None:
+            pr_files_file.write_text(json.dumps(pr_files), encoding="utf-8")
+        else:
+            pr_files_file.unlink(missing_ok=True)
+        freeze_unreadable_file = stub / "freeze_unreadable"
+        if freeze_unreadable:
+            freeze_unreadable_file.write_text("1", encoding="utf-8")
+        else:
+            freeze_unreadable_file.unlink(missing_ok=True)
         if linear is not None:   # the base branch protection answer: required_linear_history on or off; None = the branch has no protection (the call fails)
             (stub / "protection.json").write_text(json.dumps({"required_linear_history": {"enabled": linear}}), encoding="utf-8")
+        # story #122 fix: the UAT gate reads the PR's OWN repo's CLAUDE.md via the GitHub contents API (base64),
+        # never the local checkout's — a local checkout without a Dev link must not make a different repo exempt.
+        b64_file = stub / "claude_md_b64"
+        if claude_md_unreadable:
+            b64_file.unlink(missing_ok=True)
+        else:
+            body = f"## Environments\n- Dev link: {dev_link}\n" if dev_link else "# no Dev link configured\n"
+            b64_file.write_text(base64.b64encode(body.encode()).decode(), encoding="utf-8")
+        # the local checkout deliberately carries no CLAUDE.md of its own, to prove it is never read
+        (repo / "CLAUDE.md").unlink(missing_ok=True)
         e["STUB_FAIL_CLOSE"] = "1" if fail_close else ""   # one call per scenario: a test may call go() twice
         (stub / "pr.json").write_text(json.dumps(pr or good()), encoding="utf-8")
         (stub / "threads.json").write_text(json.dumps(th or threads(True, True)), encoding="utf-8")
@@ -105,17 +151,17 @@ def test_s16_a_draft_or_closed_pull_request_refuses(env):
 
 def test_s16_an_approval_by_someone_else_is_not_enough(env):
     pr = good(); pr["reviews"][0]["author"]["login"] = "klickbae8yt-star"
-    refused(*env(pr=pr), f"not approved by {REVIEWER}")
+    refused(*env(pr=pr), "not approved by a reviewer account")
 
 
 def test_s16_an_approval_of_an_older_commit_is_not_enough(env):
     pr = good(); pr["reviews"][0]["commit"]["oid"] = "old000"
-    refused(*env(pr=pr), f"not approved by {REVIEWER}")
+    refused(*env(pr=pr), "not approved by a reviewer account")
 
 
 def test_s16_a_later_request_for_changes_cancels_the_approval(env):
     pr = good(); pr["reviews"].append({"author": {"login": REVIEWER}, "state": "CHANGES_REQUESTED", "commit": {"oid": "abc123"}})
-    refused(*env(pr=pr), f"not approved by {REVIEWER}")
+    refused(*env(pr=pr), "not approved by a reviewer account")
 
 
 def test_s16_one_unresolved_thread_refuses(env):
@@ -139,6 +185,28 @@ def test_s16_a_check_still_running_has_no_conclusion_and_refuses(env):
 def test_s16_no_checks_at_all_refuses(env):
     pr = good(); pr["statusCheckRollup"] = []
     refused(*env(pr=pr), "no checks ran")
+
+
+def test_s112_a_stale_failed_run_of_the_same_check_name_is_ignored_once_a_later_run_of_it_passed(env):
+    pr = good()
+    pr["statusCheckRollup"] = [
+        {"name": "gate", "status": "COMPLETED", "conclusion": "FAILURE", "startedAt": "2026-10-29T13:08:00Z"},
+        {"name": "gate", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-10-30T04:00:00Z"},
+        {"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-10-30T04:00:00Z"},
+    ]
+    r, merged = env(pr=pr)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != "", "the gate must merge once the latest run of every check passed"
+
+
+def test_s112_a_later_failed_run_is_not_masked_by_an_earlier_pass_of_the_same_name(env):
+    pr = good()
+    pr["statusCheckRollup"] = [
+        {"name": "gate", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-10-29T13:08:00Z"},
+        {"name": "gate", "status": "COMPLETED", "conclusion": "FAILURE", "startedAt": "2026-10-30T04:00:00Z"},
+        {"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS", "startedAt": "2026-10-30T04:00:00Z"},
+    ]
+    refused(*env(pr=pr), "check gate is not SUCCESS")
 
 
 def test_s16_a_body_without_closes_refuses(env):
@@ -234,3 +302,214 @@ def test_q0_an_unknown_method_is_a_usage_error_and_merges_nothing(env):
     r, merged = env(args=("12", "--method", "fast"))
     assert r.returncode == 2 and "usage" in r.stderr, (r.stdout, r.stderr)
     assert merged == ""
+
+
+# ---- story #120: a dev -> main promotion refuses without a followable, fully-ticked UAT checklist ----
+UAT_STORY = """- [x] #219 Fix: cart total after removing an item
+  Open: https://dev.app.example.com/cart (log in with test phone 9999999999, OTP 123456)
+  1. Add "Masala Dosa" 3 times.
+  2. Tap the minus on "Masala Dosa" once.
+  Expected: the cart shows 2 x Masala Dosa and the total is ₹240 (2 x ₹120).
+"""
+UAT_TAIL = """- [x] Old flows still work
+- [x] Design matches the approved boards
+Known bugs going to production: none
+"""
+
+
+DEV_LINK = "https://dev.app.example.com"
+
+
+def test_s120_a_promotion_pr_to_main_without_a_uat_section_refuses(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "UAT on dev")
+
+
+def test_s120_a_promotion_pr_to_main_with_a_complete_ticked_uat_checklist_merges(env):
+    pr = good(); pr["baseRefName"] = "main"
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY}{UAT_TAIL}"
+    r, merged = env(pr=pr, dev_link=DEV_LINK)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s120_an_unticked_box_in_the_uat_checklist_refuses(env):
+    pr = good(); pr["baseRefName"] = "main"
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY.replace('[x] #219', '[ ] #219')}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "unticked")
+
+
+def test_s120_a_uat_story_line_with_no_expected_refuses(env):
+    pr = good(); pr["baseRefName"] = "main"
+    broken_story = UAT_STORY.replace('  Expected: the cart shows 2 x Masala Dosa and the total is ₹240 (2 x ₹120).\n', "")
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{broken_story}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "not followable")
+
+
+def test_s120_a_regular_feature_pr_to_dev_needs_no_uat_checklist(env):
+    r, merged = env(dev_link=DEV_LINK)   # good() already targets dev, no UAT section at all
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+# ---- story #122 (PR #122 review blocker): exempt by project (no Dev link configured), never by PR title ----
+def test_s122_a_project_with_no_dev_link_is_exempt_even_with_a_release_title_and_no_uat_section(env):
+    pr = good(); pr["baseRefName"] = "main"; pr["title"] = "release: v0.8.0"
+    r, merged = env(pr=pr)   # no dev_link passed: this project's own CLAUDE.md has none
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s122_a_release_titled_promotion_still_refuses_when_the_project_has_a_dev_link_and_an_unticked_box(env):
+    pr = good(); pr["baseRefName"] = "main"; pr["title"] = "release: v0.8.0"
+    pr["body"] = pr["body"] + f"\n## UAT on dev ({DEV_LINK})\n{UAT_STORY.replace('[x] #219', '[ ] #219')}{UAT_TAIL}"
+    refused(*env(pr=pr, dev_link=DEV_LINK), "unticked")
+
+
+def test_s122_cannot_read_the_pr_repos_claude_md_refuses_it_is_never_treated_as_exempt(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, claude_md_unreadable=True), "cannot read")
+
+
+# ---- story #126: a release freeze blocks every merge into main except a PR that only lifts it ----
+def test_s126_a_frozen_main_refuses_a_normal_promotion(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, freeze="reason: holiday freeze\nuntil: 2099-01-01\n"), "frozen until 2099-01-01")
+
+
+def test_s126_an_expired_freeze_still_refuses_and_says_stale(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, freeze="reason: incident\nuntil: 2000-01-01\n"), "STALE")
+
+
+def test_s126_a_pr_that_only_removes_the_freeze_file_is_still_a_protected_path(env):
+    # review blocker on PR #141: lifting a freeze is the owner's own decision too, so a lift-only
+    # PR no longer auto-merges -- .shipquick/* is protected with no exception.
+    pr = good(); pr["baseRefName"] = "main"
+    files = [{"filename": ".shipquick/freeze", "status": "removed"}]
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "protected path, owner merges")
+
+
+def test_s126_a_pr_that_removes_the_freeze_file_plus_something_else_is_not_exempt(env):
+    # not the lift-only shape, so it is caught by the (now broader) protected-paths check before
+    # the freeze check even runs -- still refused, same as before PR #141's review, different line.
+    pr = good(); pr["baseRefName"] = "main"
+    files = [{"filename": ".shipquick/freeze", "status": "removed"}, {"filename": "README.md", "status": "modified"}]
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "protected path")
+
+
+def test_s126_a_pr_that_edits_the_freeze_file_rather_than_removing_it_is_not_exempt(env):
+    pr = good(); pr["baseRefName"] = "main"
+    files = [{"filename": ".shipquick/freeze", "status": "modified"}]
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "protected path")
+
+
+def test_s126_no_freeze_file_at_all_is_not_frozen(env):
+    r, merged = env()   # good() targets dev; also true for a main promotion, covered by the s120/s122 merge-success tests above
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_s126_cannot_read_the_freeze_file_for_a_reason_other_than_404_refuses(env):
+    pr = good(); pr["baseRefName"] = "main"
+    refused(*env(pr=pr, freeze_unreadable=True), "cannot read")
+
+
+# ---- story #131: harden the merge gate -- a required "gate" check, plus protected paths ----
+def test_s131_no_gate_check_at_all_refuses_even_though_every_other_check_passed(env):
+    pr = good(); pr["statusCheckRollup"] = [{"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}]   # gate job deleted from the caller
+    refused(*env(pr=pr), "no required check named exactly gate")
+
+
+def test_s131_the_required_gate_check_name_also_matches_the_child_shape(env):
+    pr = good(); pr["statusCheckRollup"] = [{"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}, {"name": "shipquick-checks / gate", "status": "COMPLETED", "conclusion": "SUCCESS"}]
+    r, merged = env(pr=pr)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s131_a_gate_check_that_is_not_itself_success_refuses(env):
+    pr = good(); pr["statusCheckRollup"] = [{"name": "gate", "status": "COMPLETED", "conclusion": "NEUTRAL"}]   # the generic loop treats NEUTRAL as passed; the gate itself must not
+    refused(*env(pr=pr), "required check gate is NEUTRAL, not SUCCESS")
+
+
+def test_s131_a_pr_touching_a_protected_path_refuses(env):
+    files = [{"filename": ".github/workflows/ci.yml", "status": "modified"}]
+    refused(*env(pr_files=files), "protected path, owner merges")
+
+
+def test_s131_a_pr_touching_an_unrelated_file_is_not_protected_and_merges(env):
+    files = [{"filename": "README.md", "status": "modified"}]
+    r, merged = env(pr_files=files)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s131_protected_paths_cover_configs_baselines_and_the_submodule_pin(env):
+    for f in (".claude/settings.json", "design/tokens.json", ".stylelintrc.json", "eslint.config.js",
+              ".swiftlint.yml", "detekt-baseline.yml", ".dependency-cruiser.js", ".importlinter",
+              "docs/frontend-paths.txt", "docs/architecture-paths.txt", "docs/guard.yml",
+              "knowledge/shipquick_latest", "android/app/detekt-baseline.xml"):
+        files = [{"filename": f, "status": "modified"}]
+        result, merged = env(pr_files=files)
+        assert result.returncode == 1 and "protected path" in result.stderr, (f, result.stderr)
+
+
+def test_s131_emptying_frontend_paths_txt_is_itself_a_protected_path_edit(env):
+    files = [{"filename": "docs/frontend-paths.txt", "status": "modified"}]
+    refused(*env(pr_files=files), "protected path, owner merges (docs/frontend-paths.txt)")
+
+
+# ---- review blocker on PR #141: the enforcers themselves must be protected paths too ----
+def test_s131_the_enforcer_scripts_are_themselves_protected(env):
+    for f in ("scripts/protected_paths.txt", "scripts/review_merge.sh", "scripts/mode.sh",
+              "scripts/has_dev_link.sh", "scripts/check_closes.py", "scripts/check_uat.py",
+              ".shipquick/roles.yml", ".shipquick/mode"):
+        result, merged = env(pr_files=[{"filename": f, "status": "modified"}])
+        assert result.returncode == 1 and "protected path" in result.stderr, (f, result.stderr)
+
+
+def test_s131_a_lift_only_freeze_pr_is_refused_in_auto_mode_the_owner_merges_it(env):
+    pr = good(); pr["baseRefName"] = "main"
+    files = [{"filename": ".shipquick/freeze", "status": "removed"}]
+    refused(*env(pr=pr, freeze="reason: x\nuntil: 2099-01-01\n", pr_files=files), "protected path, owner merges")
+
+
+def test_s131_editing_the_freeze_file_rather_than_removing_it_is_still_protected(env):
+    files = [{"filename": ".shipquick/freeze", "status": "modified"}]
+    result, merged = env(pr_files=files)
+    assert result.returncode == 1 and "protected path" in result.stderr
+
+
+# ---- story #140: who may author, who may approve -- come from .shipquick/roles.yml, the #114 case ----
+def test_s140_an_author_not_in_the_coder_list_refuses_even_with_a_reviewer_approval(env):
+    pr = good(); pr["author"] = {"login": "some-random-account"}
+    refused(*env(pr=pr), "PR author some-random-account is not a coder account")
+
+
+def test_s140_a_pr_opened_by_the_reviewer_account_refuses_the_114_case(env):
+    pr = good(); pr["author"] = {"login": REVIEWER}
+    refused(*env(pr=pr), "is not a coder account")
+
+
+def test_s140_the_reviewer_approving_their_own_pr_is_never_enough_even_if_they_are_also_listed_as_coder(env):
+    roles = "coder:\n  - klickbae8yt-star\n  - satvik-jain-iitd\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n"
+    pr = good(); pr["author"] = {"login": REVIEWER}; pr["reviews"] = [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}}]
+    refused(*env(pr=pr, roles=roles), "not approved by a reviewer account")
+
+
+def test_s140_a_second_reviewer_account_in_roles_yml_is_honored(env):
+    roles = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\n  - second-reviewer\nowner: satvik-jain-iitd\n"
+    pr = good(); pr["reviews"] = [{"author": {"login": "second-reviewer"}, "state": "APPROVED", "commit": {"oid": "abc123"}}]
+    r, merged = env(pr=pr, roles=roles)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s140_dependabot_is_exempt_from_the_coder_check_but_still_needs_a_real_reviewer_approval(env):
+    pr = good(); pr["author"] = {"login": "dependabot[bot]"}; pr["title"] = "chore(deps): bump x"; pr["body"] = "no issue link\n"
+    r, merged = env(pr=pr)   # good()'s default review is still from REVIEWER, a real reviewer account
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_s140_cannot_read_roles_yml_refuses_it_is_never_treated_as_exempt(env):
+    refused(*env(roles_unreadable=True), "cannot read")

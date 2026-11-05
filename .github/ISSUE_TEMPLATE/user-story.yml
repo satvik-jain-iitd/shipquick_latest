@@ -23,6 +23,24 @@ body:
       description: Copy scenarios here and into matching test names.
     validations:
       required: true
+  - type: dropdown
+    id: frontend-change
+    attributes:
+      label: "Frontend change: yes / no"
+      description: Does this touch the frontend — UI, layout, design or copy? A "yes" needs the next two fields filled before the story leaves Ready (story #121).
+      options: ["no", "yes"]
+    validations:
+      required: true
+  - type: input
+    id: design-board
+    attributes:
+      label: Design board
+      description: Required if Frontend change is yes. The board's name on the design canvas, moved to "Design final not live" by the owner's approval.
+  - type: input
+    id: approved
+    attributes:
+      label: Approved
+      description: Required if Frontend change is yes. The date the owner approved that board.
   - type: checkboxes
     id: dor
     attributes:
@@ -34,3 +52,4 @@ body:
         - label: Dependencies listed and available
         - label: Ponytail check written
         - label: Owner has seen the issue
+        - label: "If Frontend change is yes: a sample screen was shown and approved on the design canvas before code started (story #121)"

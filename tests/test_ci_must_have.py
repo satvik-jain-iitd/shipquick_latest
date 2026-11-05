@@ -1,4 +1,5 @@
 """S0.8 to S0.10: the CI must-have checks (story #43). Text checks only: CI installs pytest and nothing else."""
+import os
 import re
 import shutil
 import subprocess
@@ -86,8 +87,9 @@ def repo(tmp_path):
     return tmp_path
 
 
-def run(repo, *checks):
-    proc = subprocess.run(["bash", str(SCRIPT), *checks], cwd=repo, capture_output=True, text=True)
+def run(repo, *checks, base=None):
+    env = {**os.environ, "BASE": base} if base else None
+    proc = subprocess.run(["bash", str(SCRIPT), *checks], cwd=repo, capture_output=True, text=True, env=env)
     return proc.returncode, proc.stdout + proc.stderr
 
 
@@ -142,6 +144,34 @@ def test_s10_pr_over_fifty_files_fails_fifty_passes(repo):
     assert run(repo, "pr-size")[0] == 0
 
 
+# ---- release PR exemption: only a release/* branch going into main (a release aggregates already-
+# reviewed dev commits, not new review surface); the same branch going into dev is still capped ----
+def test_s10_a_release_branch_into_main_over_fifty_files_is_exempt_from_pr_size(repo):
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+    _git(repo, "branch", "-m", "release/v0.9.0")
+    commit(repo, {f"p/f{i}.txt": "x\n" for i in range(51)})
+    code, out = run(repo, "pr-size", base="main")
+    assert code == 0 and "skip" in out.lower()
+
+
+def test_s10_a_release_branch_into_dev_over_fifty_files_still_fails(repo):
+    _git(repo, "branch", "-m", "release/v0.9.0")
+    commit(repo, {f"p/f{i}.txt": "x\n" for i in range(51)})
+    assert run(repo, "pr-size", base="dev")[0] == 1
+
+
+def test_s10_a_non_release_branch_over_fifty_files_still_fails(repo):
+    _git(repo, "branch", "-m", "feat/not-a-release")
+    commit(repo, {f"p/f{i}.txt": "x\n" for i in range(51)})
+    assert run(repo, "pr-size")[0] == 1
+
+
+def test_s10_cis_pr_size_job_has_the_same_release_exemption_scoped_to_main():
+    section = CI.split("\n  pr-size:\n", 1)[1].split("\n  frontend-design:", 1)[0]
+    assert "release/*" in section and "skip pr-size" in section
+    assert "base_ref" in section.split("skip pr-size", 1)[0], "the exemption must check the base is main, not only the head branch name"
+
+
 @pytest.mark.skipif(shutil.which("gitleaks") is None, reason="gitleaks is installed on the Mac; CI runs the secret-scan job instead")
 def test_s09_a_planted_secret_fails_and_a_clean_repo_passes(repo):
     assert run(repo, "secrets")[0] == 0
@@ -183,6 +213,37 @@ def test_s10_this_repo_passes_its_own_marker_and_markdown_checks():
         assert code == 0, out
 
 
+# ---- story #121: check_local.sh runs the same frontend-design gate on the commit log (no PR body exists yet before a push) ----
+def test_s121_frontend_design_passes_with_nothing_configured(repo):
+    commit(repo, {"a.txt": "1\n"}, "feat: a change")
+    assert run(repo, "frontend-design")[0] == 0
+
+
+def test_s121_frontend_design_fails_when_a_configured_path_is_touched_with_no_board(repo):
+    commit(repo, {"docs/frontend-paths.txt": "frontend/*\n"}, "chore: frontend paths")
+    _git(repo, "update-ref", "refs/remotes/origin/dev", "HEAD")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen with no board")
+    code, out = run(repo, "frontend-design")
+    assert code == 1 and "frontend/screen.tsx" in out
+
+
+def test_s121_frontend_design_passes_when_a_commit_message_names_the_board(repo):
+    commit(repo, {"docs/frontend-paths.txt": "frontend/*\n"}, "chore: frontend paths")
+    _git(repo, "update-ref", "refs/remotes/origin/dev", "HEAD")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen\n\nDesign board: Production/Login\nApproved: 2026-10-30")
+    assert run(repo, "frontend-design")[0] == 0
+
+
+def test_s121_ci_has_a_frontend_design_job_on_every_pr_and_the_gate_waits_for_it():
+    assert "frontend-design" in _jobs()
+    section = CI.split("\n  frontend-design:\n", 1)[1].split("\n  team-block:", 1)[0]
+    assert "check_frontend_design.sh" in section
+    assert "--head" in section and "head_ref" in section   # PR #123 blocker: checkout is detached, the branch name must be passed explicitly
+    gate = CI.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "frontend-design" in needs
+
+
 # ---- S0.8 (stacked PRs, rule 23): CI runs on a PR whatever its base branch is ----
 def test_s08_ci_runs_on_pull_requests_into_any_branch():
     on_block = CI.split("\npermissions:", 1)[0]
@@ -194,3 +255,60 @@ def test_s08_ci_runs_on_pull_requests_into_any_branch():
 def test_s13_ci_runs_the_roadmap_node_tests():
     assert "node --test roadmap/*.test.js" in CI
     assert "actions/setup-node@" in CI  # the pin test above checks it is a full SHA with its tag
+
+
+# ---- story #113: a Dependabot PR has no teammate block, and dependency bumps target dev, not main ----
+def test_s113_team_block_job_exempts_dependabot_before_checking_the_block():
+    section = CI.split("\n  team-block:\n", 1)[1].split("\n  secret-scan:", 1)[0]
+    step = section.split('Check the teammate block in the PR body', 1)[1]
+    assert re.search(r"dependabot", step, re.I), "team-block has no Dependabot exemption, same pattern as check_closes.py"
+    assert step.lower().index("dependabot") < step.index("check_block.py"), "the exemption must run before the block check"
+
+
+def test_s113_dependabot_bumps_target_dev():
+    text = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+    assert re.search(r'target-branch: "?dev"?', text)
+
+
+# ---- story #120: a dev -> main (app promotion) PR's UAT checklist is checked in CI too ----
+def test_s120_ci_has_a_uat_checklist_job_scoped_to_main_only():
+    assert "uat-checklist" in _jobs()
+    section = CI.split("\n  uat-checklist:\n", 1)[1].split("\n  secret-scan:", 1)[0]
+    assert "github.base_ref == 'main'" in section
+    assert "check_uat.py" in section
+    assert "has_dev_link.sh" in section   # exempt by project (story #122), never by PR title
+
+
+def test_s120_the_gate_waits_for_uat_checklist():
+    gate = CI.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "uat-checklist" in needs
+
+
+# ---- story #126: a release freeze is a mechanism, not a sentence ----
+def test_s126_ci_has_a_freeze_job_scoped_to_main_only():
+    assert "freeze" in _jobs()
+    section = CI.split("\n  freeze:\n", 1)[1].split("\n  secret-scan:", 1)[0]
+    assert "github.base_ref == 'main'" in section
+    assert "check_freeze.py" in section
+    assert ".shipquick/freeze" in section
+
+
+def test_s126_the_gate_waits_for_freeze():
+    gate = CI.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "freeze" in needs
+
+
+# ---- story #131: harden the merge gate ----
+def test_s131_ci_has_a_disable_comments_job_on_every_pr():
+    assert "disable-comments" in _jobs()
+    section = CI.split("\n  disable-comments:\n", 1)[1].split("\n  secret-scan:", 1)[0]
+    assert "if: github.event_name == 'pull_request'" in section
+    assert "check_disable_comments.py" in section
+
+
+def test_s131_the_gate_waits_for_disable_comments():
+    gate = CI.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "disable-comments" in needs

@@ -67,3 +67,76 @@ One block per run. Never delete a row.
 - Decision: build `scripts/adopt.sh`, about 100 lines of bash. Copier is the closest fit and is the tool to switch to if the list of files grows past about ten or the child needs a three-way merge of its edits. For five files it is one more thing to install in every child (`pipx install copier`), the SHA and the child's CI name would have to be passed in as answers anyway, and the files are not templates with many variables. cruft and cookiecutter are for first-time project generation, projen owns the whole repo, and actions-template-sync needs a sync PR flow and a token.
 - Confidence that adopt.sh is enough: 0.75. Revisit if a child asks to keep its own edits of a copied file.
 - One more line (asked by the reviewer, 26 Oct 2026): the global skill `/shipquick-mode` (owner only, runs `mode.sh set` for him): scout found no repos. Nothing to adopt.
+- Story #107 (29 Oct 2026, raised from job-search): `scripts/model_calls.sh`, a grep that lists model call sites and checks them against a table. The scout ran with "list LLM API call sites in a repo": no repos found. Built from scratch, about 20 lines of bash.
+
+## 2026-10-29 · need: lay out design artboards from a manifest with background boards sized to content, no overlaps, state prefixes (story #105)
+Runs: `scout.py --need "lay out design artboards on an infinite canvas from a manifest..."`: no repos found. GitHub search "canvas layout artboards json positions auto-layout" and `topic:auto-layout topic:canvas`: Swift UI layout libraries (EasyPeasy, Cassowary, BonMot), none for the claude.ai Design canvas format (canvas.json boards, notes, order). Built from scratch: `scripts/canvas_stage.py` (stdlib), 235 lines (listed by the reviewer).
+
+## 30 Oct 2026, story #124: a reusable GitHub Actions workflow a child must call, with a drift check
+- Need: a `workflow_call` reusable workflow a child repo calls (pinned to a commit), with a job that
+  verifies the caller's pin equals the child's own submodule commit and fails CI otherwise, so
+  adoption is never silent.
+- Run: `scout.py --need "reusable GitHub Actions workflow (workflow_call) that a child repo calls pinned to a commit SHA, with a job that verifies the caller's pin matches a git submodule commit and fails CI otherwise"`: no repos found. GitHub search "topic:github-actions topic:reusable-workflow drift" and "submodule outdated check github action": full platforms (gitea, act) and curated lists (awesome-actions), nothing for this narrow need.
+- Built from scratch: `.github/workflows/checks.yml` (reusable, mirrors the existing `roadmap.yml` two-checkout pattern already in this repo) plus `adopt.sh --check` and a scheduled registry scan. Confidence that nothing fits: 0.85.
+
+## 30 Oct 2026, story #111: ShipQuick inbox, one-line feedback from a child project
+- Need: a CLI command that opens a labelled GitHub issue in a parent repo from a child repo, as a lightweight feedback inbox.
+- Run: `scout.py --need "CLI command that opens a labeled GitHub issue in a parent repo from a child repo as a lightweight feedback inbox"`: no repos found. `gh search repos "gh issue create wrapper feedback script"`: nothing. `gh search repos "topic:feedback topic:cli github-issue"`: whole feedback platforms (forem, fider), not a one-call wrapper.
+- Built from scratch: `scripts/feedback.sh`, about 20 lines of bash around `gh issue create` (the project already has `gh`; this is thinner than any tool on the list).
+- Confidence that nothing fits: 0.85.
+
+## 30 Oct 2026, story #126: a release freeze that is a mechanism, not a sentence
+- Need: a CLI to set/read a release-freeze flag file in a git repo (on/off/status, a reason, an
+  until-date), and a merge-gate script that refuses a PR into `main` while frozen, with a stale
+  freeze (past its until-date) failing loudly instead of silently lifting.
+- Run: `scout.py --need "CLI to set a release freeze flag file in a git repo, with status/on/off
+  and a stale-date check, used by a merge-gate script"`: no repos found. This mirrors story #120's
+  `has_dev_link.sh`/`check_environments.sh` shape exactly (a flag file read through the contents
+  API with `?ref=`, refused by `review_merge.sh`) — no general tool reads a repo's own flag file
+  and feeds a GitHub Actions gate; freeze/change-management tools that exist (ServiceNow, Jira
+  change freeze) are whole platforms, not a two-line file check.
+- Decision: build `scripts/freeze.sh` (bash, mirrors `scripts/feedback.sh`'s size) + wire
+  `review_merge.sh` and `checks.yml`, same contents-API pattern already proven in #120/#122.
+- Confidence that nothing fits better: 0.85.
+
+## 30 Oct 2026, story #125: provenance, not recency, decides board vs app drift
+- Need: refuse to move or rewrite a Production design-canvas board from the app unless the manifest
+  entry cites the PR that changed the app and its approval date (provenance over recency).
+- Run: `scout.py --need "refuse to overwrite an approved design canvas board from code unless the PR
+  that changed the code cites the board and its approval date, provenance over recency"`: no repos
+  found. This is a one-field addition to `scripts/canvas_stage.py`'s own manifest validation (story
+  #105), not a separate concern — no general tool validates provenance on a design-canvas manifest.
+- Decision: extend `canvas_stage.py`'s existing refusal checks (overlap, outside-board) with one more:
+  a Production `boards` entry with no `{"pr", "approved"}` is a refusal, same as any other.
+- Confidence that nothing fits better: 0.85.
+
+## 30 Oct 2026, story #131 (epic #130): harden the merge gate
+- Need: a required GitHub Actions "gate" status check review_merge.sh verifies is SUCCESS, a
+  protected-paths list that refuses an auto-mode merge touching CI config or lint baselines, an
+  adoption-ancestor check (pinned SHA must be merged or tagged), and a disable-comment guard.
+- Run: `scout.py --need "a required GitHub Actions status check named gate that review_merge.sh
+  verifies is SUCCESS, plus a protected-paths list that blocks auto-merge when a PR touches CI
+  config or lint baselines"`: no repos found. This is ShipQuick's own merge-gate script and its
+  reusable workflow, not a general tool — a branch-protection "required status check" exists on
+  GitHub itself, but review_merge.sh runs outside Actions (an agent, not GitHub, decides the merge),
+  so the check still has to be read and enforced in the script.
+- Decision: extend `review_merge.sh` (protected paths, required gate check) and `checks.yml`/`ci.yml`
+  (gate job, disable-comment guard job); a new small stdlib script for the adoption-ancestor check
+  (`scripts/check_adoption_ancestor.py`, pure logic + a thin network-calling CLI, same shape as
+  `adoption_scan.py`'s injected `fetch`).
+- Confidence that nothing fits better: 0.85.
+
+## 31 Oct 2026, story #140 (epic #130): per-role accounts and a protected mode store
+- Need: a per-repo file naming which GitHub accounts may code, review, and own a project, read by a
+  merge-gate script that must never embed an account name itself; a sourced shell helper that exports
+  the right `GH_TOKEN` for one role per session.
+- Run: `scout.py --need "per-repo roles.yml listing which GitHub accounts may code vs review vs own a
+  project, read by a merge-gate script, with a sourced shell helper to export the right GH_TOKEN for a
+  role"`: no repos found. GitHub's own CODEOWNERS and branch protection decide who *may* approve, but
+  neither drives a gate script run outside Actions, and neither can be sourced into a shell to switch
+  `gh`'s active account for one role — that half is ShipQuick's own `scripts/review_merge.sh`/`mode.sh`
+  concern, not a general tool's.
+- Decision: a small fixed-shape parser (`scripts/roles.py`, no YAML dependency — the file never needs
+  more than two keys and two lists), a sourced helper (`scripts/role.sh`), and a CI job
+  (`scripts/check_roles.py`) that all read `.shipquick/roles.yml` instead of a literal account name.
+- Confidence that nothing fits better: 0.85.

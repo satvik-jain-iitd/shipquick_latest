@@ -250,3 +250,14 @@ Scenario: the merge gate picks a merge method
   And with --method fast it exits 2 and merges nothing
 ```
 Tests: `tests/test_review_merge.py` (`test_q0_*`).
+
+## Design canvas layout (#105)
+
+```gherkin
+Scenario: a canvas is laid out from a manifest
+  Given a canvas with boards and a manifest that names sections and rows
+  When canvas_stage lays it out
+  Then every board is placed once with its state prefix, nothing overlaps, each section has a background artboard listed first that holds everything inside it, no tile is taller than 8000 px, and the same input gives the same layout
+  And a board the manifest forgets lands in an Unsorted row, and a box outside its board stops the run
+```
+Tests: `tests/test_canvas_stage.py` (S1 to S8).

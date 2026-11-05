@@ -19,8 +19,10 @@ More roles = more rows. The rule does not change.
 | Role | Who (tool / session) | Account | Writes | Talks to |
 |---|---|---|---|---|
 | owner | human, Satvik | satvik-jain-iitd | merges, decides | everyone |
-| coder | Claude Code session (this repo) | satvik-jain-iitd | commits, PRs | reviewer, owner |
-| reviewer | Claude Code session (tpm-pr-review) | satvik-jain-iitd | reviews, approves | coder, owner |
+| coder | Claude Code session `shipquick-dev` | klickbae8yt-star | commits, PRs | reviewer, owner |
+| reviewer | Claude Code session `shipquick-qa` | satvik-jain-iitd | reviews, approves | coder, owner |
+
+Source of truth for these two accounts: ShipQuick's own `.shipquick/roles.yml` (story #140).
 
 Child projects with two GitHub accounts put the build account on the coder row and the review
 account on the reviewer row (GoServe: `klickbae8yt-star` builds, `satvik-jain-iitd` reviews).

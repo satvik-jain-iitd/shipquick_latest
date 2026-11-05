@@ -5,6 +5,7 @@ on:
   pull_request:
 permissions:
   contents: read
+  pull-requests: read   # story #140: the roles job reads commit authors via `gh api .../pulls/.../commits`
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -85,6 +86,11 @@ jobs:
           fetch-depth: 0
       - name: Check PR size
         run: |
+          if [ "${{ github.base_ref }}" = main ]; then
+            case "${{ github.head_ref }}" in
+              release/*) echo "skip pr-size: a release branch into main aggregates already-reviewed dev commits, not new review surface"; exit 0 ;;
+            esac
+          fi
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
           # Moved files are not new review surface, so renames do not count.
@@ -95,6 +101,51 @@ jobs:
             echo "PR too large ($COUNT files, max 50, excluding renames). Split it."
             exit 1
           fi
+  frontend-design:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - name: Check the design board is named for any frontend change (story #121)
+        run: |
+          BASE="${{ github.base_ref }}"
+          git fetch origin "$BASE"
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          bash scripts/check_frontend_design.sh --body-file /tmp/pr-body.md --base "origin/$BASE" --repo . --head "${{ github.head_ref }}"
+  disable-comments:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - name: Check for a disable comment or ignore-file entry on an added line (story #131)
+        run: |
+          BASE="${{ github.base_ref }}"
+          git fetch origin "$BASE"
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
+  roles:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    env:
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
+        run: |
+          commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '[.[] | "\(.author.login):\(.parents | length)"] | join(",")')
+          coders=$(python3 scripts/roles.py get coder)
+          reviewers=$(python3 scripts/roles.py get reviewer)
+          owner=$(python3 scripts/roles.py get owner)
+          python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner"
   team-block:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -106,10 +157,36 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Check the teammate block in the PR body
         run: |
+          case "$PR_AUTHOR" in
+            dependabot\[bot\]|app/dependabot) echo "Dependabot: team-block exempt"; exit 0 ;;
+          esac
           printf '%s\n' "$PR_BODY" | awk '/^## For the reviewer/{f=1;next} /^## /{f=0} f' | python3 scripts/check_block.py
       - name: Check the PR body links its issue (Closes #n)
         run: |
           printf '%s\n' "$PR_BODY" | python3 scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
+  uat-checklist:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Check the UAT-on-dev checklist is followable (story #120, #122)
+        run: |
+          bash scripts/has_dev_link.sh CLAUDE.md || { echo "no Dev link configured in this repo: UAT checklist exempt"; exit 0; }
+          printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 scripts/check_uat.py
+  freeze:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Check the merge-commit tree's own .shipquick/freeze (story #126)
+        run: |
+          # actions/checkout on a pull_request event checks out the tentative merge of this PR into
+          # main, so a PR that only removes .shipquick/freeze already shows it gone here -- no
+          # separate exemption needed in CI (review_merge.sh, run outside Actions, needs one instead).
+          [ -f .shipquick/freeze ] || { echo "not frozen"; exit 0; }
+          python3 scripts/check_freeze.py < .shipquick/freeze
   secret-scan:
     runs-on: ubuntu-latest
     steps:
@@ -194,7 +271,7 @@ jobs:
   gate:
     name: gate
     runs-on: ubuntu-latest
-    needs: [pre-commit, commit-msg, pr-size, team-block, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -202,7 +279,12 @@ jobs:
           echo "pre-commit: ${{ needs.pre-commit.result }}"
           echo "commit-msg: ${{ needs.commit-msg.result }}"
           echo "pr-size: ${{ needs.pr-size.result }}"
+          echo "frontend-design: ${{ needs.frontend-design.result }}"
+          echo "disable-comments: ${{ needs.disable-comments.result }}"
+          echo "roles: ${{ needs.roles.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
+          echo "uat-checklist: ${{ needs.uat-checklist.result }}"
+          echo "freeze: ${{ needs.freeze.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "test: ${{ needs.test.result }}"

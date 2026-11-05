@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks commits pr-size secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks commits pr-size frontend-design disable-comments secrets secrets-staged   (no argument = all but secrets-staged)
+#   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
 #   secrets    the whole history (push); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
 #   markers    checks tracked files; an untracked file with a marker passes here, CI scans the whole checkout
@@ -45,10 +46,36 @@ check_commits() {
 }
 check_pr_size() {
   have_base pr-size || return 0
-  local n
+  local branch n
+  branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  if [ "$BASE" = main ]; then
+    case "$branch" in
+      release/*) echo "skip pr-size: a release branch into main aggregates already-reviewed dev commits, not new review surface"; report pr-size 0; return 0 ;;
+    esac
+  fi
   n=$(changed | wc -l | tr -d ' ')
   echo "Counted files: $n (max 50, renames ignored)"
   [ "$n" -le 50 ]; report pr-size $?
+}
+check_frontend_design() {
+  have_base frontend-design || return 0
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  bash "$HERE/check_frontend_design.sh" --body-file "$tmp" --base "origin/$BASE" --repo .
+  rc=$?
+  rm -f "$tmp"
+  report frontend-design "$rc"
+}
+check_disable_comments() {
+  have_base disable-comments || return 0
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  python3 "$HERE/check_disable_comments.py" --base "origin/$BASE" --body-file "$tmp"
+  rc=$?
+  rm -f "$tmp"
+  report disable-comments "$rc"
 }
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
@@ -62,14 +89,16 @@ check_secrets_staged() {
 }
 
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks commits pr-size secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks commits pr-size frontend-design disable-comments secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
     md-blocks) check_md_blocks ;;
     secrets-staged) check_secrets_staged ;;
     pr-size) check_pr_size ;;
-    *) echo "unknown check: $c (sizes markers md-blocks commits pr-size secrets secrets-staged)"; exit 2 ;;
+    frontend-design) check_frontend_design ;;
+    disable-comments) check_disable_comments ;;
+    *) echo "unknown check: $c (sizes markers md-blocks commits pr-size frontend-design disable-comments secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"
