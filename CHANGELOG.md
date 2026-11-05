@@ -12,8 +12,28 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-05
+Tag `v0.8.0` (cd.yml tag-check greps for this exact text, so keep it), "the kit enforces itself" (epic #130's first stories, plus the feedback inbox and environments work that led into it). Notes: `docs/RELEASE_NOTES_v0.8.0.md`.
+
 ### Added
-- `docs/DESIGN_PROCESS.md`: the design rules (direction before screens, the canvas by stage, contrast, who owns the canvas, feedback becomes a rule the same day) and `scripts/canvas_stage.py`, the stdlib tool that lays a design canvas out from a manifest, with `tests/test_canvas_stage.py` (#105).
+- `docs/DESIGN_PROCESS.md` and `scripts/canvas_stage.py`, the stdlib tool that lays a design canvas out from a manifest, with `tests/test_canvas_stage.py` (#105).
+- `docs/MODEL_LOAD.md` (model-load rules), `scripts/model_calls.sh --check`, `docs/research/prompt-techniques.md`, CLAUDE.md rule 32 (#107).
+- The ShipQuick feedback inbox: `scripts/feedback.sh`, the nine-section template, a duplicate-issue check, and the `shipquick-feedback` skill, so a child project raises one issue here instead of a PR (#111, #118).
+- Dev and production links from day one: a `## UAT on dev` checklist gate on every `dev -> main` PR (`scripts/check_uat.py`), `docs/ENVIRONMENTS.md` (#120).
+- Design first: a PR touching a project's own frontend paths must name its approved board and approval date, or `scripts/check_frontend_design.sh` fails it (#121).
+- Adoption is never silent: a reusable `checks.yml` with an `adoption` job, `scripts/adoption_scan.py` (daily, opens a `feedback` issue for an unwired or stale child), private-child support via `SHIPQUICK_CHILD_TOKEN` (#124).
+- A release freeze is a mechanism: `scripts/freeze.sh on/off/status`, `.shipquick/freeze` as a protected path, `scripts/check_freeze.py` (#126).
+- Provenance, not recency, decides a Production design board vs. a live-app disagreement: `scripts/canvas_stage.py` requires `{"board", "pr", "approved"}` on a Production board entry (#125).
+- The merge gate hardened before enforcing anything new: a required `gate` status check, `scripts/protected_paths.txt` (a PR can never loosen the rules judging it), `scripts/check_adoption_ancestor.py`, `scripts/check_disable_comments.py` (#131).
+- Per-role accounts and a protected mode store: `.shipquick/roles.yml` (`scripts/roles.py`, `scripts/role.sh`) names which GitHub accounts may code, review and own a project — no account name lives in any gate script; `.shipquick/mode` is a tracked, protected mode file; `mode.sh set auto` refuses when one account plays both roles (#140).
+
+### Fixed
+- `team-block` exempts Dependabot and Dependabot's bumps target `dev`, not `main` (#113).
+- `review_merge.sh` counts only the latest run per check name, instead of an older stale run shadowing a fresh green one (#112).
+- `scripts/freeze.sh` on/off used to switch the caller's own checkout to a new branch before checking whether there was anything to do, leaving a stray branch on a refusal; they now work in a scratch `git worktree`, and `status` reads `origin/main` instead of the local checkout (#142).
+
+### Changed
+- `pm/agile/` Definition of Done names the approved design board for a story that changes a screen.
 
 ## [0.7.0] - 2026-10-27
 Tag `v0.7.0` (cd.yml tag-check greps for this exact text, so keep it), "ShipQuick is the whole protocol" (epic #97, first three stories). Notes: `docs/RELEASE_NOTES_v0.7.0.md`.
