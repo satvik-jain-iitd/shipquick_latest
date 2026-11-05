@@ -140,3 +140,20 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   more than two keys and two lists), a sourced helper (`scripts/role.sh`), and a CI job
   (`scripts/check_roles.py`) that all read `.shipquick/roles.yml` instead of a literal account name.
 - Confidence that nothing fits better: 0.85.
+
+## 31 Oct 2026, story #146 (epic #130, GoServe feedback #146): render the screen before the gate passes
+- Need: render a list of named URLs/viewports headless in CI, write PNGs, upload as a CI artifact; no
+  custom baseline-diff tool needed yet (Part 3 is explicitly deferred, see PR body).
+- Run: `scout.py --need "render a list of named URLs/viewports headless in CI, write PNGs, upload as a
+  CI artifact, optional baseline diff against committed images"`: no repos found. The issue itself
+  names the right tool (Tier A, the tool's own docs, confidence 0.9): Playwright already ships a
+  `screenshot` CLI command (`npx playwright screenshot --viewport-size=WxH <url> <file>`) and
+  `toHaveScreenshot()` for baselines. GoServe (the project that filed this) already has Playwright
+  installed. ShipQuick itself has no frontend of its own and must not bundle Playwright as its own
+  dependency; `scripts/screens.sh` only orchestrates a project's own already-installed `npx playwright`,
+  the same way `scripts/check_frontend_design.sh` only ever reads a project's own config, never ships a
+  renderer.
+- Decision: `scripts/screens.sh` (reads `docs/screens.txt`, calls the project's own `npx playwright
+  screenshot`, skips when unconfigured -- same opt-in shape as `docs/frontend-paths.txt`); a `Render:`
+  line requirement added to `scripts/check_frontend_design.sh`, opt-in on the same file existing.
+- Confidence that nothing fits better: 0.85.

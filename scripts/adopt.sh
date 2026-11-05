@@ -148,6 +148,20 @@ fi
 # 4. the /mode command
 put .claude/commands/mode.md < "$SQ/.claude/commands/mode.md"
 
+# 4b. scripts/screens.sh (story #146, docs/SCREENS.md): generic, always kept in sync like mode.md.
+# docs/screens.txt is a stub only if there is none -- its content (which screens, which viewport) is
+# always the project's own.
+put scripts/screens.sh < "$SQ/scripts/screens.sh"
+chmod +x "$child/scripts/screens.sh"
+if [ -e "$child/docs/screens.txt" ]; then echo "kept      docs/screens.txt (yours)"
+else
+  printf '%s\n' \
+    "# The screens this project renders and compares on every PR (story #146, docs/SCREENS.md)." \
+    "# One screen per line: name | path | viewport (WxH) | setup step. # comments and blanks ignored." \
+    "# Empty for now: fill it in once you have a Playwright spec (start from docs/templates/screens.spec.ts)." \
+    | put docs/screens.txt
+fi
+
 # 5. the pre-commit hooks
 rel="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$SQ" "$child")"
 hooks="  - repo: local

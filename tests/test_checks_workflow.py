@@ -64,6 +64,12 @@ def test_s124_the_adoption_job_fails_on_a_pin_mismatch_and_says_what_to_run():
     assert "check_local.sh" in section   # the pre-commit-hooks marker, same string adopt.sh itself checks
 
 
+def test_s146_the_adoption_job_checks_screens_txt_is_wired_into_the_childs_own_ci():
+    section = CHECKS.split("\n  adoption:\n", 1)[1].split("\n  disable-comments:", 1)[0]
+    assert "check_screens_wired.py" in section
+    assert "project/docs/screens.txt" in section and "project/.github/workflows" in section
+
+
 def test_s124_frontend_design_and_uat_jobs_reuse_the_same_scripts_as_ci_yml():
     assert "check_frontend_design.sh" in CHECKS
     assert "check_uat.py" in CHECKS and "has_dev_link.sh" in CHECKS
