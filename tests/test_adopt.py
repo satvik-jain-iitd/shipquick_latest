@@ -1,5 +1,6 @@
 """S0.18: one command adopts ShipQuick in a child project (story #68). Real git in a throwaway child repo; no network."""
 import hashlib
+import os
 import subprocess
 from pathlib import Path
 
@@ -232,3 +233,31 @@ def test_s140_partial_flags_are_treated_as_no_flags(child):
     assert r.returncode == 0, r.stderr
     assert not (child / ".shipquick" / "roles.yml").exists()
     assert "roles.yml not written" in r.stdout
+
+
+# ---- story #146: scripts/screens.sh is synced like mode.md; docs/screens.txt is a stub, kept once there ----
+def test_s146_screens_sh_is_copied_and_made_executable(child):
+    r = adopt(child)
+    assert r.returncode == 0, r.stderr
+    dest = child / "scripts" / "screens.sh"
+    assert dest.read_text(encoding="utf-8") == (ROOT / "scripts" / "screens.sh").read_text(encoding="utf-8")
+    assert os.access(dest, os.X_OK)
+    assert "created" in r.stdout
+
+
+def test_s146_docs_screens_txt_is_a_stub_only_if_there_is_none(child):
+    adopt(child)
+    stub = (child / "docs" / "screens.txt").read_text(encoding="utf-8")
+    assert "story #146" in stub
+    (child / "docs" / "screens.txt").write_text("welcome | / | 390x844 | welcome\n", encoding="utf-8")
+    r = adopt(child)
+    assert r.returncode == 0, r.stderr
+    assert (child / "docs" / "screens.txt").read_text(encoding="utf-8") == "welcome | / | 390x844 | welcome\n"
+    assert "kept" in r.stdout and "screens.txt" in r.stdout
+
+
+def test_s146_a_second_run_changes_screens_sh_and_screens_txt_nothing(child):
+    adopt(child)
+    before = snapshot(child)
+    r = adopt(child)
+    assert r.returncode == 0 and snapshot(child) == before

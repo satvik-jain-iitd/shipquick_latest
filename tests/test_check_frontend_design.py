@@ -39,13 +39,15 @@ def body_file(tmp_path, text, name="body.md"):
     return p
 
 
-def run(repo, body_text, paths_file=None, base="dev", head=None):
+def run(repo, body_text, paths_file=None, base="dev", head=None, screens_file=None):
     f = body_file(repo, body_text)
     args = ["--repo", str(repo), "--body-file", str(f), "--base", base]
     if paths_file:
         args += ["--paths-file", paths_file]
     if head:
         args += ["--head", head]
+    if screens_file:
+        args += ["--screens-file", screens_file]
     return subprocess.run(["bash", str(SCRIPT), *args], capture_output=True, text=True)
 
 
@@ -153,4 +155,60 @@ def test_a_back_merge_whose_head_is_main_passes_even_into_dev(tmp_path):
     repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
     commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
     r = run(repo, "## What\nno board\n", base="dev", head="main")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+# ---- story #146 (GoServe feedback #146): a project that configures docs/screens.txt also needs a Render: line ----
+def test_with_no_screens_file_a_board_with_no_render_line_still_passes(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\n")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_with_a_screens_file_a_board_with_no_render_line_fails(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"docs/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\n")
+    assert r.returncode == 1 and "render" in r.stdout.lower()
+
+
+def test_with_a_screens_file_a_board_with_a_render_line_passes(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"docs/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\nRender: https://example.test/artifacts/welcome.png\n")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_with_a_screens_file_a_placeholder_render_line_fails(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"docs/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\nRender: <link>\n")
+    assert r.returncode == 1
+
+
+def test_an_empty_screens_file_is_the_same_as_none_configured(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"docs/screens.txt": "# nothing yet\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\n")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_a_custom_screens_file_location(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"config/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "Design board: Production/Login\nApproved: 2026-10-30\n", screens_file="config/screens.txt")
+    assert r.returncode == 1 and "render" in r.stdout.lower()
+
+
+def test_screens_file_requirement_is_skipped_for_a_promotion_to_main(tmp_path):
+    repo = base_repo(tmp_path, paths_file_text="frontend/*\n")
+    commit(repo, {"docs/screens.txt": "welcome|/welcome|390x844\n"}, "chore: configure screens")
+    commit(repo, {"frontend/screen.tsx": "x\n"}, "feat: a screen")
+    r = run(repo, "## What\nno board\n", base="main")
     assert r.returncode == 0, (r.stdout, r.stderr)

@@ -3,16 +3,21 @@
 # approved design board in its body, or fail. A PR that says "no screen change" but still touches
 # those paths also fails. The paths file (one shell glob per line, # comments and blanks ignored)
 # is the project's own config; nothing configured means nothing is checked.
-# usage: check_frontend_design.sh --body-file <f> --base <ref> [--repo <path>] [--paths-file <path>] [--head <branch-name>]
+# Story #146 (GoServe feedback #146): naming a board is cheap, producing a picture is not -- a
+# project that has also configured docs/screens.txt (scripts/screens.sh) must carry a "Render: <url>"
+# line too, so the gate fails until a render was actually attached, not just claimed in prose. A
+# project with no screens file configured is unaffected (opt-in, same shape as the paths file).
+# usage: check_frontend_design.sh --body-file <f> --base <ref> [--repo <path>] [--paths-file <path>] [--screens-file <path>] [--head <branch-name>]
 set -u
-usage() { echo "usage: check_frontend_design.sh --body-file <f> --base <ref> [--repo <path>] [--paths-file <path>] [--head <branch-name>]" >&2; exit 2; }
-body_file=""; base=""; repo="."; paths_file="docs/frontend-paths.txt"; head=""
+usage() { echo "usage: check_frontend_design.sh --body-file <f> --base <ref> [--repo <path>] [--paths-file <path>] [--screens-file <path>] [--head <branch-name>]" >&2; exit 2; }
+body_file=""; base=""; repo="."; paths_file="docs/frontend-paths.txt"; screens_file="docs/screens.txt"; head=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --body-file) [ -n "${2:-}" ] || usage; body_file="$2"; shift 2 ;;
     --base) [ -n "${2:-}" ] || usage; base="$2"; shift 2 ;;
     --repo) [ -n "${2:-}" ] || usage; repo="$2"; shift 2 ;;
     --paths-file) [ -n "${2:-}" ] || usage; paths_file="$2"; shift 2 ;;
+    --screens-file) [ -n "${2:-}" ] || usage; screens_file="$2"; shift 2 ;;
     --head) [ -n "${2:-}" ] || usage; head="$2"; shift 2 ;;
     *) usage ;;
   esac
@@ -77,4 +82,21 @@ case "$approved" in
     exit 1
     ;;
 esac
+
+screens_path="$repo/$screens_file"
+has_screens=""
+if [ -f "$screens_path" ] && grep -qvE '^[[:space:]]*(#|$)' "$screens_path"; then
+  has_screens=1
+fi
+if [ -n "$has_screens" ]; then
+  render="$(grep -E '^Render:' "$body_file" | head -1 | sed -E 's/^Render:[[:space:]]*//; s/[[:space:]]+$//')"
+  case "$render" in
+    "" | "<"*">"*)
+      echo "touches frontend paths with a board but no render attached (\"Render: <url>\" in the PR body, story #146):"
+      printf '  %s\n' "${touched[@]}"
+      exit 1
+      ;;
+  esac
+fi
+
 echo "design board named: $board (approved $approved)"
