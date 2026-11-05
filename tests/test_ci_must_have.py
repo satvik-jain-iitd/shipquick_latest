@@ -1,4 +1,5 @@
 """S0.8 to S0.10: the CI must-have checks (story #43). Text checks only: CI installs pytest and nothing else."""
+import os
 import re
 import shutil
 import subprocess
@@ -86,8 +87,9 @@ def repo(tmp_path):
     return tmp_path
 
 
-def run(repo, *checks):
-    proc = subprocess.run(["bash", str(SCRIPT), *checks], cwd=repo, capture_output=True, text=True)
+def run(repo, *checks, base=None):
+    env = {**os.environ, "BASE": base} if base else None
+    proc = subprocess.run(["bash", str(SCRIPT), *checks], cwd=repo, capture_output=True, text=True, env=env)
     return proc.returncode, proc.stdout + proc.stderr
 
 
@@ -140,6 +142,34 @@ def test_s10_pr_over_fifty_files_fails_fifty_passes(repo):
     _git(repo, "reset", "-q", "--hard", "origin/dev")
     commit(repo, {f"p/f{i}.txt": "x\n" for i in range(50)})
     assert run(repo, "pr-size")[0] == 0
+
+
+# ---- release PR exemption: only a release/* branch going into main (a release aggregates already-
+# reviewed dev commits, not new review surface); the same branch going into dev is still capped ----
+def test_s10_a_release_branch_into_main_over_fifty_files_is_exempt_from_pr_size(repo):
+    _git(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+    _git(repo, "branch", "-m", "release/v0.9.0")
+    commit(repo, {f"p/f{i}.txt": "x\n" for i in range(51)})
+    code, out = run(repo, "pr-size", base="main")
+    assert code == 0 and "skip" in out.lower()
+
+
+def test_s10_a_release_branch_into_dev_over_fifty_files_still_fails(repo):
+    _git(repo, "branch", "-m", "release/v0.9.0")
+    commit(repo, {f"p/f{i}.txt": "x\n" for i in range(51)})
+    assert run(repo, "pr-size", base="dev")[0] == 1
+
+
+def test_s10_a_non_release_branch_over_fifty_files_still_fails(repo):
+    _git(repo, "branch", "-m", "feat/not-a-release")
+    commit(repo, {f"p/f{i}.txt": "x\n" for i in range(51)})
+    assert run(repo, "pr-size")[0] == 1
+
+
+def test_s10_cis_pr_size_job_has_the_same_release_exemption_scoped_to_main():
+    section = CI.split("\n  pr-size:\n", 1)[1].split("\n  frontend-design:", 1)[0]
+    assert "release/*" in section and "skip pr-size" in section
+    assert "base_ref" in section.split("skip pr-size", 1)[0], "the exemption must check the base is main, not only the head branch name"
 
 
 @pytest.mark.skipif(shutil.which("gitleaks") is None, reason="gitleaks is installed on the Mac; CI runs the secret-scan job instead")
