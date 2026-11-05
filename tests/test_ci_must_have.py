@@ -142,6 +142,25 @@ def test_s10_pr_over_fifty_files_fails_fifty_passes(repo):
     assert run(repo, "pr-size")[0] == 0
 
 
+# ---- release PR exemption (a release aggregates already-reviewed dev commits, not new review surface) ----
+def test_s10_a_release_branch_over_fifty_files_is_exempt_from_pr_size(repo):
+    _git(repo, "branch", "-m", "release/v0.9.0")
+    commit(repo, {f"p/f{i}.txt": "x\n" for i in range(51)})
+    code, out = run(repo, "pr-size")
+    assert code == 0 and "skip" in out.lower()
+
+
+def test_s10_a_non_release_branch_over_fifty_files_still_fails(repo):
+    _git(repo, "branch", "-m", "feat/not-a-release")
+    commit(repo, {f"p/f{i}.txt": "x\n" for i in range(51)})
+    assert run(repo, "pr-size")[0] == 1
+
+
+def test_s10_cis_pr_size_job_has_the_same_release_exemption():
+    section = CI.split("\n  pr-size:\n", 1)[1].split("\n  frontend-design:", 1)[0]
+    assert "release/*" in section and "skip pr-size" in section
+
+
 @pytest.mark.skipif(shutil.which("gitleaks") is None, reason="gitleaks is installed on the Mac; CI runs the secret-scan job instead")
 def test_s09_a_planted_secret_fails_and_a_clean_repo_passes(repo):
     assert run(repo, "secrets")[0] == 0
