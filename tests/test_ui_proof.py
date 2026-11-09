@@ -88,3 +88,20 @@ def test_s217_the_build_pins_are_exact_and_agree_with_ci():
     for line in re.findall(r'version "([^"]+)"', build):
         assert re.fullmatch(r"\d+\.\d+\.\d+", line), line
     assert "xcode-select -s /Applications/Xcode_" in ci
+
+
+def ui_changes_step():
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    return re.search(r"  ui-changes:\n.*?\n  ui-android-compile:", ci, re.S).group(0)
+
+
+def test_s217_the_ui_filter_covers_what_decides_the_compile_and_nothing_unrelated():
+    pattern = re.search(r"grep -qE '([^']+)'", ui_changes_step()).group(1)
+    for path in ("ui/android/build.gradle.kts", "scripts/ui_proof.py", ".github/workflows/ci.yml", "design/tokens.json"):
+        assert re.search(pattern, path), f"{path} must run the compile jobs"
+    for path in ("docs/x.md", "scripts/other.py", "tests/test_ui_proof.py"):
+        assert not re.search(pattern, path), f"{path} must not run the compile jobs"
+
+
+def test_s217_a_failed_base_fetch_outputs_ui_true():
+    assert 'git fetch -q origin "$BASE" || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }' in ui_changes_step()
