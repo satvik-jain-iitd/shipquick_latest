@@ -34,8 +34,13 @@ It will add `.package(path: "knowledge/shipquick_latest/ui/ios")`.
 
 - Tokens: `Tokens.swift` comes from `design/tokens.json` in story S6. Until then the templates use the system
   spacing (`.padding()` with no number) and system colours.
-- Compiling and snapshots: a macOS CI job runs when `ui/ios/**` changes. It comes in a later story (#219).
-  Today a text scan checks the templates (`tests/test_ios_templates.py`).
+- Snapshots: a later story (#219). A text scan also checks the templates (`tests/test_ios_templates.py`).
+
+## What CI compiles (story #217)
+
+Job `ui-ios-compile` runs `xcodebuild` for generic iOS on Xcode 16.4 when `ui/**` changes.
+It compiles `templates/` and `proof/ApiProof.swift`. `scripts/ui_proof.py` writes the proof from the contracts:
+it calls every component with every prop its contract names. CI compiles only; it runs nothing.
 - `Package.swift` lists iOS only. So `swift build` on a Mac builds for macOS and fails on iOS-only calls.
   CI must build with `xcodebuild -scheme ShipQuickUI -destination 'generic/platform=iOS'`.
 
