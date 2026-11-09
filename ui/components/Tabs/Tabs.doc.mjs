@@ -87,5 +87,72 @@ export default {
       "description": "The Tab items.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "TabRow",
+      "variants": [
+        {
+          "name": "Tab",
+          "note": "One tab in a tab row: text, an icon or both, and selected and onClick."
+        },
+        {
+          "name": "LeadingIconTab",
+          "note": "A tab with the icon beside the text, not above it."
+        },
+        {
+          "name": "SecondaryTabRow",
+          "note": "A tab row for tabs inside one part of the screen, below a PrimaryTabRow or inside content."
+        },
+        {
+          "name": "PrimaryScrollableTabRow",
+          "note": "A PrimaryTabRow that scrolls sideways. Use it when the tabs do not fit the width."
+        },
+        {
+          "name": "SecondaryScrollableTabRow",
+          "note": "A SecondaryTabRow that scrolls sideways. Use it when the tabs do not fit the width."
+        },
+        {
+          "name": "TabRowDefaults.PrimaryIndicator",
+          "note": "The indicator line PrimaryTabRow draws under the selected tab, as wide as its content."
+        },
+        {
+          "name": "TabRowDefaults.SecondaryIndicator",
+          "note": "The indicator line SecondaryTabRow draws under the selected tab, as wide as the tab."
+        },
+        {
+          "name": "TabRow",
+          "note": "The old tab row.",
+          "status": "deprecated",
+          "replacement": "PrimaryTabRow or SecondaryTabRow (Google: \"Replaced with PrimaryTabRow and SecondaryTabRow.\")"
+        },
+        {
+          "name": "ScrollableTabRow",
+          "note": "The old scrolling tab row.",
+          "status": "deprecated",
+          "replacement": "PrimaryScrollableTabRow or SecondaryScrollableTabRow (Google: \"Replaced with PrimaryScrollableTabRow and SecondaryScrollableTabRow tab variants.\")"
+        },
+        {
+          "name": "TabRowDefaults.Indicator",
+          "note": "The old indicator.",
+          "status": "deprecated",
+          "replacement": "TabRowDefaults.SecondaryIndicator (Google: \"Use SecondaryIndicator instead.\")"
+        }
+      ],
+      "supporting": [
+        {
+          "name": "TabRowDefaults",
+          "use": "Default colours, the indicator composables, and the edge padding and minimum tab width of scrollable rows."
+        },
+        {
+          "name": "TabIndicatorScope",
+          "use": "The scope of a tab row's indicator. Its tabIndicatorOffset moves the indicator under the selected tab."
+        },
+        {
+          "name": "TabPosition",
+          "use": "The left edge, width and content width of one tab, for an old-style indicator."
+        }
+      ]
+    }
+  }
 };
