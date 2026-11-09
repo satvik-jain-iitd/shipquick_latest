@@ -104,7 +104,7 @@ def speaks_to(doc, platform):
 
 def render(src=SRC):
     """({file name: file text} for every topic the sources ask for, [leak lines])."""
-    files, bad = {}, []
+    files, bad, owner = {}, [], {}
     for folder in sorted(p for p in src.iterdir() if p.is_dir()) if src.is_dir() else []:
         doc = read_doc(folder / f"{folder.name}.doc.mjs")
         contract = json.loads((folder / f"{folder.name}.contract.json").read_text(encoding="utf-8"))
@@ -112,6 +112,10 @@ def render(src=SRC):
             if speaks_to(doc, platform):
                 t = topic(doc, contract, platform)
                 bad += leaks(t, platform)
+                # Two docs writing one topic file would hide one of them (PR #255 follow-up).
+                if t["name"] in owner:
+                    bad.append(f"clash: {t['name']} comes from both {owner[t['name']]} and {folder.name}; give each doc its own name")
+                owner[t["name"]] = folder.name
                 files[f"{t['name']}.doc.mjs"] = HEADER + "export default " + json.dumps(t, indent=2, ensure_ascii=False) + ";\n"
     return files, bad
 
@@ -127,7 +131,7 @@ def main(argv=None) -> int:
     if bad:
         for b in bad:
             print(f"ui topics: {b}")
-        print(f"{len(bad)} leak(s): a topic names another platform's API")
+        print(f"{len(bad)} problem(s): a topic names another platform's API, or two docs share a topic name")
         return 1
     have = {p.name: p.read_text(encoding="utf-8") for p in OUT.glob("*.doc.mjs")} if OUT.is_dir() else {}
     if a.check:

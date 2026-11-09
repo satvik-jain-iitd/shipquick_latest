@@ -154,10 +154,6 @@ export default {
         {
           "name": "OutlinedCard",
           "note": "A card with a border and no shadow. Use it to set the card apart with the least weight."
-        },
-        {
-          "name": "Surface",
-          "note": "The base container under cards, sheets and bars: shape, colour, elevation and border. Use it only when no part above fits, like a plain coloured area."
         }
       ],
       "supporting": [

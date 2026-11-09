@@ -202,14 +202,6 @@ export default {
         {
           "name": "BottomAppBar",
           "note": "A bar at the bottom of the screen with up to four actions and an optional FAB."
-        },
-        {
-          "name": "AppBarRow",
-          "note": "A row for app bar actions. Items that do not fit move into an overflow menu. Set maxItemCount and an overflowIndicator."
-        },
-        {
-          "name": "AppBarColumn",
-          "note": "A column for app bar actions. Items that do not fit move into an overflow menu. Set maxItemCount and an overflowIndicator."
         }
       ],
       "supporting": [
@@ -248,22 +240,6 @@ export default {
         {
           "name": "rememberBottomAppBarState",
           "use": "Creates and keeps a BottomAppBarState across recompositions."
-        },
-        {
-          "name": "AppBarScope",
-          "use": "The scope of AppBarRow and AppBarColumn content. Add items with clickableItem, toggleableItem or customItem."
-        },
-        {
-          "name": "AppBarRowScope",
-          "use": "The scope inside AppBarRow, where you add its items."
-        },
-        {
-          "name": "AppBarColumnScope",
-          "use": "The scope inside AppBarColumn, where you add its items."
-        },
-        {
-          "name": "AppBarMenuState",
-          "use": "Says if the overflow menu of AppBarRow or AppBarColumn is open. Call show() and dismiss() from the overflowIndicator."
         }
       ]
     }
