@@ -158,6 +158,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   line requirement added to `scripts/check_frontend_design.sh`, opt-in on the same file existing.
 - Confidence that nothing fits better: 0.85.
 
+## 9 Nov 2026, story #155 (GoServe feedback #155): a story names who does it
+- Need: fail a story issue that has no "who does it" line (actor, app or screen, how often).
+- Run: `scout.py --need "lint a GitHub issue body for a required user-story actor field"`: no repos found.
+  `scout.py --need "issue template required field checker"`: one unrelated repo (score 0, ignore).
+  `gh search repos --topic issue-form`: one browser form generator, not a checker.
+- Decision: reuse GitHub's own issue form (`required: true` on a new field) for stories made in the UI,
+  and a small `scripts/check_story.py` for stories made with `gh issue create --body` (agents do this,
+  and it skips the form). It reuses the `LINK` regex of `close_linked_issues.py`.
 ## 9 Nov 2026, story #163 (GoServe feedback): publish the canvas from canvas.json, then verify the listing
 - Need: derive the exact list of files to publish from a JSON manifest, and check a deploy listing holds every file it names.
 - Run: `scout.py --need "derive the exact list of files to publish from a JSON manifest and verify a deploy listing contains every referenced asset"`: no repos found.
