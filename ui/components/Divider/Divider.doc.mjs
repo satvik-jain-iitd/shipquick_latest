@@ -64,5 +64,28 @@ export default {
       "description": "How thick the line is.",
       "default": "DividerDefaults.Thickness"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "Divider",
+      "variants": [
+        {
+          "name": "VerticalDivider",
+          "note": "A thin vertical line between parts side by side, like items in a row."
+        },
+        {
+          "name": "Divider",
+          "note": "The old divider.",
+          "status": "deprecated",
+          "replacement": "HorizontalDivider (Google: \"Renamed to HorizontalDivider\")"
+        }
+      ],
+      "supporting": [
+        {
+          "name": "DividerDefaults",
+          "use": "The default thickness and colour of a divider."
+        }
+      ]
+    }
+  }
 };

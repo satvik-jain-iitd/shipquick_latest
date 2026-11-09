@@ -148,5 +148,58 @@ export default {
       "platform": "ios",
       "default": "[.large]"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "BottomSheet",
+      "variants": [
+        {
+          "name": "BottomSheetScaffold",
+          "note": "A screen layout with a standard bottom sheet that stays on screen beside the content, partly or fully open. Use it when the sheet is part of the screen, like a map with a list."
+        },
+        {
+          "name": "BottomSheetDefaults.DragHandle",
+          "note": "The default handle at the top of a sheet. The user drags it to move the sheet."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "SheetState",
+          "use": "Says if a sheet is Hidden, PartiallyExpanded or Expanded. Call show(), hide(), expand() or partialExpand() from a coroutine."
+        },
+        {
+          "name": "rememberModalBottomSheetState",
+          "use": "Creates and keeps a SheetState for ModalBottomSheet. Set skipPartiallyExpanded to open it fully."
+        },
+        {
+          "name": "rememberStandardBottomSheetState",
+          "use": "Creates and keeps a SheetState for the standard sheet of BottomSheetScaffold."
+        },
+        {
+          "name": "SheetValue",
+          "use": "The three states of a sheet: Hidden, PartiallyExpanded and Expanded."
+        },
+        {
+          "name": "BottomSheetDefaults",
+          "use": "Default container colour, elevation, shapes, scrim colour, maximum width, peek height, the drag handle and window insets for sheets."
+        },
+        {
+          "name": "ModalBottomSheetDefaults",
+          "use": "The default ModalBottomSheetProperties."
+        },
+        {
+          "name": "ModalBottomSheetProperties",
+          "use": "Window settings for ModalBottomSheet: shouldDismissOnBackPress, shouldDismissOnClickOutside and securePolicy."
+        },
+        {
+          "name": "BottomSheetScaffoldState",
+          "use": "Holds the sheet state and the snackbar host state of a BottomSheetScaffold."
+        },
+        {
+          "name": "rememberBottomSheetScaffoldState",
+          "use": "Creates and keeps a BottomSheetScaffoldState across recompositions."
+        }
+      ]
+    }
+  }
 };

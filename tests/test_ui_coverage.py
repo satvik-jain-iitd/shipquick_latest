@@ -313,3 +313,40 @@ def test_s231_the_gate_has_no_exclusion_list():
 def test_s231_strict_api_fails_on_the_real_repo_today():
     """Red first: the family docs have not landed, so the full lists are not covered yet."""
     assert check_ui_coverage.main(["--strict-api"]) == 1
+
+
+# PR #255 review 2: a component row is covered only by a doc of its own family (Android), and a doc whose Android
+# name is a component row of the generated API list is not an extra, even when the 30-card list does not name it.
+ICON_ROW = "| 4 | `Icon` | component | composable | Icon | `androidx.compose.material3` | - | - | - |\n"
+
+
+def icon_fixture(tmp_path):
+    f = api_fixture(tmp_path)
+    (f / "android-api.md").write_text(ANDROID_API.replace("Count: 3", "Count: 4") + ICON_ROW)
+    return f
+
+
+def test_s231_a_component_row_listed_as_a_variant_of_another_family_is_not_covered(tmp_path, capsys):
+    f = icon_fixture(tmp_path)
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "variants": [v("FilledTonalButton"), v("Icon")]}})
+    assert run_api(f) == 0
+    assert "Icon (component, needs a doc of family Icon)" in capsys.readouterr().out
+    assert run_api(f, "--strict-api") == 1
+
+
+def test_s231_a_doc_named_by_a_component_row_of_the_api_list_is_not_an_extra(tmp_path, capsys):
+    f = icon_fixture(tmp_path)
+    with_api(f, FULL_API)
+    doc(f, "Icon", "androidx.compose.material3.Icon")
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+    doc(f, "Other", "androidx.compose.material3.NotARow")
+    assert run_api(f) == 1
+    assert "android Other: extra" in capsys.readouterr().out
+
+
+def test_s231_a_supporting_entry_naming_a_variant_row_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "supporting": [
+        {"name": "ButtonDefaults", "use": "defaults"}, {"name": "FilledTonalButton", "use": "wrong kind"}]}})
+    assert run_api(f) == 1
+    assert "no such supporting row" in capsys.readouterr().out

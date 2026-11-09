@@ -167,5 +167,21 @@ export default {
       "description": "The detail under the title.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "BasicAlertDialog",
+          "note": "A dialog with no layout of its own: you give the whole content. Use it only when AlertDialog's title, text and buttons do not fit the need."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "AlertDialogDefaults",
+          "use": "Default container colour, shape, tonal elevation, and icon, title and text colours for dialogs."
+        }
+      ]
+    }
+  }
 };

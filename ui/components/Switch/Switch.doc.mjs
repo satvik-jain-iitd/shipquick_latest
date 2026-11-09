@@ -150,5 +150,19 @@ export default {
       "description": "A custom label instead of words.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "supporting": [
+        {
+          "name": "SwitchDefaults",
+          "use": "Default colours and the icon size for the thumb. Make colours with SwitchDefaults.colors()."
+        },
+        {
+          "name": "SwitchColors",
+          "use": "The thumb, track, border and icon colours of a switch, checked and not, on and off."
+        }
+      ]
+    }
+  }
 };

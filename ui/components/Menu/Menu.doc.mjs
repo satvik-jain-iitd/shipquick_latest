@@ -142,5 +142,26 @@ export default {
       "description": "A custom label, like a Label with an icon.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "Menu",
+      "variants": [
+        {
+          "name": "DropdownMenuItem",
+          "note": "One choice in a DropdownMenu: text, optional leading and trailing icons, and onClick."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "MenuDefaults",
+          "use": "Default container colour, shape, elevation, item colours and item padding for menus."
+        },
+        {
+          "name": "MenuItemColors",
+          "use": "The text and icon colours of a menu item, on and off. Make one with MenuDefaults.itemColors()."
+        }
+      ]
+    }
+  }
 };
