@@ -6,7 +6,7 @@ export default {
   "displayName": "Bottom sheet",
   "platforms": {
     "android": "androidx.compose.material3.ModalBottomSheet",
-    "ios": null,
+    "ios": "SwiftUI.View.sheet(isPresented:onDismiss:content:)",
     "web": "@astryxdesign/core/BottomSheet"
   },
   "group": "Sheet",

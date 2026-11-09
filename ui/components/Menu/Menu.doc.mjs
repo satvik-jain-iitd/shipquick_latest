@@ -6,7 +6,7 @@ export default {
   "displayName": "Menu",
   "platforms": {
     "android": "androidx.compose.material3.DropdownMenu",
-    "ios": null,
+    "ios": "SwiftUI.Menu",
     "web": "@astryxdesign/core/DropdownMenu"
   },
   "group": "Menu",

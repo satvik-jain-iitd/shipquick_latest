@@ -6,7 +6,7 @@ export default {
   "displayName": "Segmented button",
   "platforms": {
     "android": "androidx.compose.material3.SegmentedButton",
-    "ios": null,
+    "ios": "SwiftUI.SegmentedPickerStyle",
     "web": "@astryxdesign/core/SegmentedControl"
   },
   "group": "Button",

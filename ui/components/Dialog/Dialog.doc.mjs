@@ -6,7 +6,7 @@ export default {
   "displayName": "Dialog",
   "platforms": {
     "android": "androidx.compose.material3.AlertDialog",
-    "ios": null,
+    "ios": "SwiftUI.View.alert(_:isPresented:actions:)",
     "web": "@astryxdesign/core/AlertDialog"
   },
   "group": "Dialog",

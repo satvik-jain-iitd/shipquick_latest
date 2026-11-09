@@ -6,7 +6,7 @@ export default {
   "displayName": "Date picker",
   "platforms": {
     "android": "androidx.compose.material3.DatePicker",
-    "ios": null,
+    "ios": "SwiftUI.DatePicker",
     "web": null
   },
   "group": "Picker",

@@ -6,7 +6,7 @@ export default {
   "displayName": "App bar",
   "platforms": {
     "android": "androidx.compose.material3.TopAppBar",
-    "ios": null,
+    "ios": "SwiftUI.View.toolbar(content:)",
     "web": null
   },
   "group": "App bar",
