@@ -75,5 +75,13 @@ export default {
       "description": "The SF Symbol name for the icon.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "labelIconToTitleSpacing", "note": "`.labelIconToTitleSpacing(_:)`, iOS 26.0. Apple: \"Set the spacing between the icon and title in labels.\""},
+        {"name": "labelReservedIconWidth", "note": "`.labelReservedIconWidth(_:)`, iOS 26.0. Apple: \"Set the width reserved for icons in labels.\""}
+      ]
+    }
+  }
 };

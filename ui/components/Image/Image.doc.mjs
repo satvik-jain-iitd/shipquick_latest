@@ -66,5 +66,15 @@ export default {
       "type": "string",
       "description": "Apple's init(decorative:) label: the asset name of an unlabeled, decorative image that VoiceOver skips. Use it instead of name."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "symbolColorRenderingMode", "note": "`.symbolColorRenderingMode(_:)`, iOS 26.0. Apple: \"Sets the color rendering mode for symbol images.\""},
+        {"name": "symbolRenderingMode", "note": "`.symbolRenderingMode(_:)`, iOS 15.0. Apple: \"Sets the rendering mode for symbol images within this view.\""},
+        {"name": "symbolVariableValueMode", "note": "`.symbolVariableValueMode(_:)`, iOS 26.0. Apple: \"Sets the variable value mode mode for symbol images within this view.\""},
+        {"name": "symbolVariant", "note": "`.symbolVariant(_:)`, iOS 15.0. Apple: \"Makes symbols within the view show a particular variant.\""}
+      ]
+    }
+  }
 };

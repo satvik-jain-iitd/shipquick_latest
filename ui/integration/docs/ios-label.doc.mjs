@@ -56,6 +56,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "labelIconToTitleSpacing: `.labelIconToTitleSpacing(_:)`, iOS 26.0. Apple: \"Set the spacing between the icon and title in labels.\"",
+            "labelReservedIconWidth: `.labelReservedIconWidth(_:)`, iOS 26.0. Apple: \"Set the width reserved for icons in labels.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

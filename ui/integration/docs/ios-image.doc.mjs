@@ -62,6 +62,21 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "symbolColorRenderingMode: `.symbolColorRenderingMode(_:)`, iOS 26.0. Apple: \"Sets the color rendering mode for symbol images.\"",
+            "symbolRenderingMode: `.symbolRenderingMode(_:)`, iOS 15.0. Apple: \"Sets the rendering mode for symbol images within this view.\"",
+            "symbolVariableValueMode: `.symbolVariableValueMode(_:)`, iOS 26.0. Apple: \"Sets the variable value mode mode for symbol images within this view.\"",
+            "symbolVariant: `.symbolVariant(_:)`, iOS 15.0. Apple: \"Makes symbols within the view show a particular variant.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

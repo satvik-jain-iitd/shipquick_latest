@@ -68,6 +68,37 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "autocorrectionDisabled: `.autocorrectionDisabled(_:)`, iOS 13.0. Apple: \"Sets whether to disable autocorrection for this view.\"",
+            "findDisabled: `.findDisabled(_:)`, iOS 16.0. Apple: \"Prevents find and replace operations in a text editor.\"",
+            "findNavigator: `.findNavigator(isPresented:)`, iOS 16.0. Apple: \"Programmatically presents the find and replace interface for text editor views.\"",
+            "keyboardType: `.keyboardType(_:)`, iOS 13.0. Apple: \"Sets the keyboard type for this view.\"",
+            "replaceDisabled: `.replaceDisabled(_:)`, iOS 16.0. Apple: \"Prevents replace operations in a text editor.\"",
+            "scrollDismissesKeyboard: `.scrollDismissesKeyboard(_:)`, iOS 16.0. Apple: \"Configures the behavior in which scrollable content interacts with the software keyboard.\"",
+            "textContentType: `.textContentType(_:)`, iOS 13.0. Apple: \"Sets the text content type for this view, which the system uses to offer suggestions while the user enters text on an iOS or tvOS device.\"",
+            "textInputAutocapitalization: `.textInputAutocapitalization(_:)`, iOS 15.0. Apple: \"Sets how often the shift key in the keyboard is automatically enabled.\"",
+            "textInputBorderShape: `.textInputBorderShape(_:)`, iOS 27.0. Apple: \"Sets the border shape for text input controls in the view hierarchy.\"",
+            "textInputFormattingControlVisibility: `.textInputFormattingControlVisibility(_:for:)`, iOS 26.0. Apple: \"Specifies which system text formatting controls are available for people to format text.\"",
+            "writingToolsAffordanceVisibility: `.writingToolsAffordanceVisibility(_:)`, iOS 18.4. Apple: \"Specifies whether the system should show the Writing Tools affordance for text input views affected by the environment.\"",
+            "writingToolsBehavior: `.writingToolsBehavior(_:)`, iOS 18.0. Apple: \"Specifies the Writing Tools behavior for text and text input in the environment.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: textInputCompletion. Use searchCompletion.",
+            "Do not use: textInputSuggestions. Use searchSuggestions."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
