@@ -68,6 +68,36 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "CenterAlignedTopAppBar: A top app bar with the title in the middle. Use it on a main screen with one short title.",
+            "MediumTopAppBar: A taller top app bar with the title on its own line. It can shrink to a small bar as the content scrolls.",
+            "LargeTopAppBar: The tallest top app bar, with a big title. It can shrink to a small bar as the content scrolls.",
+            "BottomAppBar: A bar at the bottom of the screen with up to four actions and an optional FAB.",
+            "AppBarRow: A row for app bar actions. Items that do not fit move into an overflow menu. Set maxItemCount and an overflowIndicator.",
+            "AppBarColumn: A column for app bar actions. Items that do not fit move into an overflow menu. Set maxItemCount and an overflowIndicator.",
+            "TopAppBarDefaults: Default colours, heights and window insets for top app bars, and the scroll behaviours pinnedScrollBehavior, enterAlwaysScrollBehavior and exitUntilCollapsedScrollBehavior.",
+            "TopAppBarColors: The colours of a top app bar, before and after the content scrolls under it. Make one with TopAppBarDefaults.",
+            "TopAppBarScrollBehavior: Links a top app bar to a scrolling list, so the bar hides, shrinks or changes colour. Pass it to the bar and its nestedScrollConnection to the list.",
+            "TopAppBarState: The height offset and scroll state a top app bar scroll behaviour reads and writes.",
+            "rememberTopAppBarState: Creates and keeps a TopAppBarState across recompositions.",
+            "BottomAppBarDefaults: Default colours, height, padding and window insets for the bottom app bar, and exitAlwaysScrollBehavior.",
+            "BottomAppBarScrollBehavior: Links a bottom app bar to a scrolling list, so the bar hides while the user scrolls.",
+            "BottomAppBarState: The height offset and scroll state a bottom app bar scroll behaviour reads and writes.",
+            "rememberBottomAppBarState: Creates and keeps a BottomAppBarState across recompositions.",
+            "AppBarScope: The scope of AppBarRow and AppBarColumn content. Add items with clickableItem, toggleableItem or customItem.",
+            "AppBarRowScope: The scope inside AppBarRow, where you add its items.",
+            "AppBarColumnScope: The scope inside AppBarColumn, where you add its items.",
+            "AppBarMenuState: Says if the overflow menu of AppBarRow or AppBarColumn is open. Call show() and dismiss() from the overflowIndicator."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
