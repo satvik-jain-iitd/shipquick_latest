@@ -61,6 +61,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "searchFocused: `.searchFocused(_:)`, iOS 18.0. Apple: \"Modifies this view by binding the focus state of the search field associated with the nearest searchable modifier to the given Boolean value.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

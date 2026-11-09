@@ -68,6 +68,20 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "onSubmit: `.onSubmit(of:_:)`, iOS 15.0. Apple: \"Adds an action to perform when the user submits a value to this view.\"",
+            "submitLabel: `.submitLabel(_:)`, iOS 15.0. Apple: \"Sets the submit label for this view.\"",
+            "submitScope: `.submitScope(_:)`, iOS 15.0. Apple: \"Prevents submission triggers originating from this view to invoke a submission action configured by a submission modifier higher up in the view hierarchy.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

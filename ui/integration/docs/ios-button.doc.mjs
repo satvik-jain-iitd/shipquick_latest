@@ -81,6 +81,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "pasteDestination: `.pasteDestination(for:action:validator:)`, iOS 27.0. Apple: \"Specifies an action that adds validated items to a view in response to the system’s Paste command.\"",
+            "renameAction: `.renameAction(_:)`, iOS 16.0. Apple: \"Sets a closure to run for the rename action.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

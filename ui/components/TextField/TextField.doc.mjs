@@ -174,5 +174,14 @@ export default {
       "description": "Pass .vertical to let the field grow to more lines.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "onSubmit", "note": "`.onSubmit(of:_:)`, iOS 15.0. Apple: \"Adds an action to perform when the user submits a value to this view.\""},
+        {"name": "submitLabel", "note": "`.submitLabel(_:)`, iOS 15.0. Apple: \"Sets the submit label for this view.\""},
+        {"name": "submitScope", "note": "`.submitScope(_:)`, iOS 15.0. Apple: \"Prevents submission triggers originating from this view to invoke a submission action configured by a submission modifier higher up in the view hierarchy.\""}
+      ]
+    }
+  }
 };

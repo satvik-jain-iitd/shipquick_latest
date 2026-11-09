@@ -36,5 +36,13 @@ export default {
     {"name": "isLoading", "type": "boolean", "description": "Shows a spinner and ignores presses until the action ends.", "default": "false"},
     {"name": "onClick", "type": "() => void", "description": "Runs when the user presses the button."},
     {"name": "type", "type": "'button' | 'submit' | 'reset'", "description": "The HTML button type. Web only.", "default": "'button'"}
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "pasteDestination", "note": "`.pasteDestination(for:action:validator:)`, iOS 27.0. Apple: \"Specifies an action that adds validated items to a view in response to the system’s Paste command.\""},
+        {"name": "renameAction", "note": "`.renameAction(_:)`, iOS 16.0. Apple: \"Sets a closure to run for the rename action.\""}
+      ]
+    }
+  }
 };

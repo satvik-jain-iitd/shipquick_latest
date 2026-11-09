@@ -67,5 +67,21 @@ export default {
       "description": "What scrolls.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "defaultScrollAnchor", "note": "`.defaultScrollAnchor(_:)`, iOS 17.0. Apple: \"Associates an anchor to control which part of the scroll view’s content should be rendered by default.\""},
+        {"name": "onScrollGeometryChange", "note": "`.onScrollGeometryChange(for:of:action:)`, iOS 18.0. Apple: \"Adds an action to be performed when a value, created from a scroll geometry, changes.\""},
+        {"name": "onScrollPhaseChange", "note": "`.onScrollPhaseChange(_:)`, iOS 18.0. Apple: \"Adds an action to perform when the scroll phase of the first scroll view in the hierarchy changes.\""},
+        {"name": "onScrollTargetVisibilityChange", "note": "`.onScrollTargetVisibilityChange(idType:threshold:_:)`, iOS 18.0. Apple: \"Adds an action to be called with information about what views would be considered visible.\""},
+        {"name": "onScrollVisibilityChange", "note": "`.onScrollVisibilityChange(threshold:_:)`, iOS 18.0. Apple: \"Adds an action to be called when the view crosses the threshold to be considered on/off screen.\""},
+        {"name": "scrollInputBehavior", "note": "`.scrollInputBehavior(_:for:)`, iOS 18.0. Apple: \"Enables or disables scrolling in scrollable views when using particular inputs.\""},
+        {"name": "scrollPosition", "note": "`.scrollPosition(id:anchor:)`, iOS 17.0. Apple: \"Associates a binding to be updated when a scroll view within this view scrolls.\""},
+        {"name": "scrollTargetBehavior", "note": "`.scrollTargetBehavior(_:)`, iOS 17.0. Apple: \"Sets the scroll behavior of views scrollable in the provided axes.\""},
+        {"name": "scrollTargetLayout", "note": "`.scrollTargetLayout(isEnabled:)`, iOS 17.0. Apple: \"Configures the outermost layout as a scroll target layout.\""},
+        {"name": "scrollTransition", "note": "`.scrollTransition(_:axis:transition:)`, iOS 17.0. Apple: \"Applies the given transition, animating between the phases of the transition as this view appears and disappears within the visible region of the containing scroll view.\""}
+      ]
+    }
+  }
 };
