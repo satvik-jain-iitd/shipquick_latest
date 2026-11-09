@@ -181,5 +181,44 @@ class Layout(unittest.TestCase):
         self.assertTrue(any("C.dc.html" in p and "is not" in p for p in problems), problems)
 
 
+class Publish(unittest.TestCase):
+    """Story #163: the publish list comes from canvas.json, never from memory, and a listing is checked against it."""
+
+    def setUp(self):
+        self.d = tempfile.TemporaryDirectory(); root = Path(self.d.name)
+        c = canvas(["A.dc.html", "B.dc.html"])
+        c["boards"]["bg/section-3-1.dc.html"] = board(); c["boards"]["bg/section-3-2.dc.html"] = board()
+        (root / "project").mkdir(); (root / "project" / "canvas.json").write_text(json.dumps(c))
+        self.root = root
+
+    def tearDown(self): self.d.cleanup()
+
+    def run_main(self, *args):
+        import io, contextlib
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out): code = cs.main(["--canvas", str(self.root), *args])
+        return code, out.getvalue()
+
+    def test_S19_publish_list_prints_canvas_json_every_bg_tile_and_every_board(self):
+        code, out = self.run_main("--publish-list")
+        self.assertEqual(code, 0)
+        self.assertEqual(sorted(out.split()), ["project/A.dc.html", "project/B.dc.html", "project/bg/section-3-1.dc.html",
+                                               "project/bg/section-3-2.dc.html", "project/canvas.json"])
+
+    def test_S20_verify_names_each_tile_or_board_missing_from_the_listing_and_fails(self):
+        listing = self.root / "listing.txt"
+        listing.write_text("project/canvas.json\nproject/A.dc.html  1.2 KB\nproject/B.dc.html\nproject/bg/section-3-1.dc.html\n")
+        code, out = self.run_main("--verify", str(listing))
+        self.assertEqual(code, 1)
+        self.assertIn("project/bg/section-3-2.dc.html", out)
+        self.assertNotIn("MISSING project/A.dc.html", out)
+
+    def test_S21_verify_passes_when_the_listing_holds_every_named_file(self):
+        listing = self.root / "listing.txt"
+        _, full = self.run_main("--publish-list"); listing.write_text(full)
+        code, _ = self.run_main("--verify", str(listing))
+        self.assertEqual(code, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

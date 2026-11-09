@@ -55,6 +55,11 @@ How it is kept:
 - A "start here" note above section 1 says how to read the canvas. Section titles say the purpose; each section note says what it holds and when a board moves.
 - A board the manifest forgets lands in an Unsorted row, so nothing is lost and the gap shows.
 - Chat never cites a canvas version number; the link always opens the latest.
+- Publish from the canvas, never from memory (9 Nov 2026, story #163). A tall section splits into a new tile file on its own. A typed list misses it, and its boards float with no background.
+  1. Read the live canvas first. Run the tool with `--apply`.
+  2. Publish exactly what `canvas_stage.py --canvas <folder> --publish-list` prints: `project/canvas.json`, every bg tile, every board.
+  3. List the artifact's files. Save the listing to a file, one path per line.
+  4. Run `canvas_stage.py --canvas <folder> --verify <listing>`. It fails and names each file that canvas.json needs and the artifact lacks. Publish those, then run it again until it passes.
 
 ## 4. Which bucket (29 Oct 2026)
 

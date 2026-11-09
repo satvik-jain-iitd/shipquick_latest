@@ -14,6 +14,8 @@ provenance, not recency, decides a Production board; with no approved board behi
 
 Use:  canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --check
       canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --apply
+      canvas_stage.py --canvas <folder holding project/> --publish-list      (story #163: the files to publish)
+      canvas_stage.py --canvas <folder holding project/> --verify listing.txt (fails naming each file not published)
 Standard library only. No project value lives in this file: every colour and the font come from the manifest.
 """
 import argparse, json, re, sys
@@ -264,13 +266,30 @@ def check_existing(canvas: dict):
     return out
 
 
+def publish_list(canvas: dict):
+    """Story #163: every file a publish must send, read from canvas.json itself: canvas.json, every bg tile, every board."""
+    return ["project/canvas.json"] + ["project/" + k for k in canvas["boards"]]
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--manifest", required=True); ap.add_argument("--canvas", required=True, help="the folder that holds project/canvas.json")
+    ap.add_argument("--manifest"); ap.add_argument("--canvas", required=True, help="the folder that holds project/canvas.json")
     g = ap.add_mutually_exclusive_group(required=True); g.add_argument("--check", action="store_true"); g.add_argument("--apply", action="store_true")
+    g.add_argument("--publish-list", action="store_true", help="print every file to publish, from canvas.json")
+    g.add_argument("--verify", metavar="LISTING", help="a text file of the artifact's published paths; fails naming each one canvas.json needs and it lacks")
     a = ap.parse_args(argv)
     root = Path(a.canvas); cj = root / "project" / "canvas.json"
-    canvas = json.loads(cj.read_text()); manifest = json.loads(Path(a.manifest).read_text())
+    canvas = json.loads(cj.read_text())
+    if a.publish_list:
+        print("\n".join(publish_list(canvas))); return 0
+    if a.verify:
+        have = set(Path(a.verify).read_text().split())   # any listing shape: one path per line, extra columns ignored
+        missing = [p for p in publish_list(canvas) if p not in have]
+        for p in missing: print("MISSING " + p)
+        print(f"{len(missing)} file(s) named in canvas.json are not published" if missing else "ok, every file canvas.json names is published")
+        return 1 if missing else 0
+    if not a.manifest: ap.error("--check and --apply need --manifest")
+    manifest = json.loads(Path(a.manifest).read_text())
     if a.check:
         for p in check_existing(canvas): print("NOW " + p)   # what overlaps on the canvas as it is, before any relayout
     new, bg_files, problems = layout(canvas, manifest)

@@ -157,3 +157,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   screenshot`, skips when unconfigured -- same opt-in shape as `docs/frontend-paths.txt`); a `Render:`
   line requirement added to `scripts/check_frontend_design.sh`, opt-in on the same file existing.
 - Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #163 (GoServe feedback): publish the canvas from canvas.json, then verify the listing
+- Need: derive the exact list of files to publish from a JSON manifest, and check a deploy listing holds every file it names.
+- Run: `scout.py --need "derive the exact list of files to publish from a JSON manifest and verify a deploy listing contains every referenced asset"`: no repos found.
+- The idea is old and plain (a bundler's asset manifest read by the deploy step; a link check after a static-site deploy). It is a set difference. A tool for it would be bigger than the code.
+- Decision: two modes in `scripts/canvas_stage.py` (`--publish-list`, `--verify <listing>`), about 15 lines, standard library only.
+- Confidence that nothing fits better: 0.9.

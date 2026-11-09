@@ -261,3 +261,15 @@ Scenario: a canvas is laid out from a manifest
   And a board the manifest forgets lands in an Unsorted row, and a box outside its board stops the run
 ```
 Tests: `tests/test_canvas_stage.py` (S1 to S8).
+
+## Publish the canvas from canvas.json (#163)
+
+```gherkin
+Scenario: the publish list and the check come from canvas.json
+  Given a canvas.json that names two boards and two bg tiles
+  When canvas_stage runs with --publish-list
+  Then it prints canvas.json, every bg tile and every board
+  And --verify with a listing that lacks one tile exits 1 and names that tile
+  And --verify with a full listing exits 0
+```
+Tests: `tests/test_canvas_stage.py` (S19 to S21).
