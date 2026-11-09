@@ -12393,6 +12393,39 @@
   {
    "kind": "maven",
    "name": "org.jetbrains.kotlin:kotlin-stdlib",
+   "version": "2.0.21",
+   "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21.jar",
+   "file": "maven/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21.jar",
+   "license": "The Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt",
+   "sha256": "f31cc53f105a7e48c093683bbd5437561d1233920513774b470805641bedbc09",
+   "license_file": "licenses/maven/org.jetbrains.kotlin__kotlin-stdlib@2.0.21/LICENSE.declared",
+   "date": "2026-11-09"
+  },
+  {
+   "kind": "maven",
+   "name": "org.jetbrains.kotlin:kotlin-stdlib",
+   "version": "2.0.21",
+   "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21.module",
+   "file": "maven/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21.module",
+   "license": "The Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt",
+   "sha256": "81fd6d181012487ee3246eff4e2bacb64b58c46e5b5aa72971a4ddf1bd1541ed",
+   "license_file": "licenses/maven/org.jetbrains.kotlin__kotlin-stdlib@2.0.21/LICENSE.declared",
+   "date": "2026-11-09"
+  },
+  {
+   "kind": "maven",
+   "name": "org.jetbrains.kotlin:kotlin-stdlib",
+   "version": "2.0.21",
+   "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21.pom",
+   "file": "maven/org/jetbrains/kotlin/kotlin-stdlib/2.0.21/kotlin-stdlib-2.0.21.pom",
+   "license": "The Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt",
+   "sha256": "fcbada4cd2e9f39658293570ef613752331db69fd1dad1cabaa60548403e17da",
+   "license_file": "licenses/maven/org.jetbrains.kotlin__kotlin-stdlib@2.0.21/LICENSE.declared",
+   "date": "2026-11-09"
+  },
+  {
+   "kind": "maven",
+   "name": "org.jetbrains.kotlin:kotlin-stdlib",
    "version": "2.1.0",
    "url": "https://dl.google.com/dl/android/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.1.0/kotlin-stdlib-2.1.0.jar",
    "file": "maven/org/jetbrains/kotlin/kotlin-stdlib/2.1.0/kotlin-stdlib-2.1.0.jar",
@@ -12795,6 +12828,28 @@
    "license": "The Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt",
    "sha256": "a72b11df08b5322d7a5e8e620789ee3e4cfef38e86c430e7d113bfa9e54c581e",
    "license_file": "licenses/maven/org.jetbrains.kotlin__kotlin-stdlib-common@1.8.22/LICENSE.declared",
+   "date": "2026-11-09"
+  },
+  {
+   "kind": "maven",
+   "name": "org.jetbrains.kotlin:kotlin-stdlib-common",
+   "version": "2.0.21",
+   "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.21/kotlin-stdlib-common-2.0.21.module",
+   "file": "maven/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.21/kotlin-stdlib-common-2.0.21.module",
+   "license": "The Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt",
+   "sha256": "6f5df8af633600a6b9cfb0fcc764af3d5119f376677677b91b6aee816b1d30ab",
+   "license_file": "licenses/maven/org.jetbrains.kotlin__kotlin-stdlib-common@2.0.21/LICENSE.declared",
+   "date": "2026-11-09"
+  },
+  {
+   "kind": "maven",
+   "name": "org.jetbrains.kotlin:kotlin-stdlib-common",
+   "version": "2.0.21",
+   "url": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.21/kotlin-stdlib-common-2.0.21.pom",
+   "file": "maven/org/jetbrains/kotlin/kotlin-stdlib-common/2.0.21/kotlin-stdlib-common-2.0.21.pom",
+   "license": "The Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt",
+   "sha256": "5f402cfb8d773195b967050124c9e89b5f84b172464e1894929789bf5c4c2f29",
+   "license_file": "licenses/maven/org.jetbrains.kotlin__kotlin-stdlib-common@2.0.21/LICENSE.declared",
    "date": "2026-11-09"
   },
   {
