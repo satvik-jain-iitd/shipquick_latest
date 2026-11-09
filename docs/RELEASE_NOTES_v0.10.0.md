@@ -19,12 +19,17 @@ Every public entry of Compose Material 3 and SwiftUI now has a doc that agents c
 
 ## What breaks for children on the bump
 
-The workflow children call (`checks.yml`) did not change since v0.9.0. Only the local tool changed.
+The workflow children call (`checks.yml`) did not change since v0.9.0. Two local tools changed.
 
 1. **`bash knowledge/shipquick_latest/scripts/adopt.sh . --check` now fails when the gate is not a required check**
    from the GitHub Actions app, on the default branch (#260). It also needs a GitHub `origin` to pass.
    Fix: run the ruleset command that `adopt.sh .` prints (it carries `integration_id` 15368).
    A private repo on GitHub Free cannot enforce rulesets, so there the gate only reports until the plan changes.
+   `--check` reads the rules with `gh`, so it needs `gh` logged in with `Administration: read`,
+   or it fails as "cannot read rules". A plain `adopt.sh .` run now also prints the ruleset command.
+2. **The `ui-coverage` step of `scripts/check_local.sh` now runs with `--strict-api`** (#231).
+   A child with `ui/components` runs it from pre-commit. It checks the kit's own files, so it passes today.
+   Fix: none needed now. If it fails after a later bump, bump the kit again; the kit owns those docs.
 
 ## Not yet
 
