@@ -9,6 +9,12 @@ a prop belongs to (SPECS), a value for each type, and which Swift params have no
 whose doc names a platform API but has no spec here fails the script, so nothing is skipped silently.
 @OptIn is added per proof function from Google's current.txt extract, so a wrong opt-in fails too.
 
+What the proof does not prove (limits, not bugs):
+- A spec `v` override is not type-proved against the contract: it is compiled, so a value of the wrong type fails
+  in the compiler, but nothing checks that it matches the contract's prop type.
+- A Kotlin `{}` lambda does not prove arity: `{}` compiles for a callback of any number of parameters.
+  The proof shows the prop name exists, not the callback's signature. Swift closures with `_ in` do check arity.
+
 Usage: python3 scripts/ui_proof.py            write both proof files
        python3 scripts/ui_proof.py --check    exit 1 when a proof file is missing or stale
        python3 scripts/ui_proof.py --check --root <dir>   check against another components folder (tests)
@@ -214,12 +220,13 @@ HOLE = re.compile(r"@([A-Z]+)@")
 
 def value(platform, spec, name, prop):
     if name in spec.get("v", {}):
-        return spec["v"][name]
+        return spec["v"][name]  # an override: not type-proved against the contract (see the module docstring)
     t = prop["type"]
     kind = t["kind"]
     if kind == "fn":
         n = len(t.get("args", []))
         if platform == "android":
+            # a Kotlin `{}` lambda compiles for any arity, so it does not prove the callback's signature
             return "{}" if n <= 1 else "{ " + ", ".join("_" * n) + " -> }"
         return "{}" if n == 0 else "{ " + ", ".join("_" * n) + " in }"
     if kind == "named":

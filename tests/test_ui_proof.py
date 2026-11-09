@@ -82,7 +82,7 @@ def test_s217_the_build_pins_are_exact_and_agree_with_ci():
     version = re.search(r"gradle-([\d.]+)-bin\.zip", props).group(1)
     assert re.search(r"^distributionSha256Sum=[0-9a-f]{64}$", props, re.M)
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    assert f'gradle-version: "{version}"' in ci
+    assert version == "8.14.3"  # the one pin; ci.yml reads it from the properties file, see the gradle-sum test
     build = (ROOT / "ui" / "android" / "build.gradle.kts").read_text(encoding="utf-8")
     assert 'platform("androidx.compose:compose-bom:2025.10.00")' in build  # maps material3 to 1.4.0
     for line in re.findall(r'version "([^"]+)"', build):
@@ -101,6 +101,36 @@ def test_s217_the_ui_filter_covers_what_decides_the_compile_and_nothing_unrelate
         assert re.search(pattern, path), f"{path} must run the compile jobs"
     for path in ("docs/x.md", "scripts/other.py", "tests/test_ui_proof.py"):
         assert not re.search(pattern, path), f"{path} must not run the compile jobs"
+
+
+def job(name):
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    return re.search(rf"\n  {name}:\n.*?(?=\n  [a-z][\w-]*:\n)", ci, re.S).group(0)
+
+
+# The sum Gradle publishes for gradle-8.14.3-bin.zip: https://downloads.gradle.org/distributions/gradle-8.14.3-bin.zip.sha256
+GRADLE_8_14_3_SHA256 = "bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531"
+
+
+def test_s217_the_gradle_distribution_is_checked_against_the_committed_sum():
+    props = (ROOT / "ui" / "android" / "gradle" / "wrapper" / "gradle-wrapper.properties").read_text(encoding="utf-8")
+    assert f"distributionSha256Sum={GRADLE_8_14_3_SHA256}" in props, "the sum is the one Gradle publishes"
+    android = job("ui-android-compile")
+    assert "distributionSha256Sum" in android and "sha256sum -c" in android, "CI checks the zip against the committed sum"
+    assert "gradle-version" not in android and "setup-gradle" not in android, "no tool may download Gradle behind the check"
+    assert android.index("sha256sum -c") < android.index("compileDebugKotlin"), "check before the build"
+
+
+def test_s217_a_failed_git_diff_outputs_ui_true_and_a_move_out_of_ui_is_seen():
+    step = ui_changes_step()
+    assert 'names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }' in step
+    assert "grep -qE" in step and '<<< "$names"' in step
+    assert 'git diff --name-only "$range" |' not in step, "git diff must not sit inside the pipe or the if"
+
+
+def test_s217_the_new_jobs_have_read_only_permissions():
+    for name in ("ui-changes", "ui-android-compile", "ui-ios-compile"):
+        assert re.search(r"\n    permissions:\n      contents: read\n", job(name)), name
 
 
 def test_s217_a_failed_base_fetch_outputs_ui_true():
