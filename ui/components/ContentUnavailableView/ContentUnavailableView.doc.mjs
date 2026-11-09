@@ -22,6 +22,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "ContentUnavailableView",
       "variants": [
         {"name": "ContentUnavailableView", "note": "iOS 17.0. Apple: \"An interface, consisting of a label and additional content, that you display when the content of your app is unavailable to users.\""},
         {"name": "DocumentLaunchView", "note": "iOS 18.0. Apple: \"A view to present when launching document-related user experience.\""}

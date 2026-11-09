@@ -427,3 +427,30 @@ def test_s288_the_saved_framework_names_are_small_and_pinned():
     assert f"sha256 `{hashlib.sha256(raw).hexdigest()}`" in ui_api_lists.FW_MD.read_text(encoding="utf-8")
     for p in json.loads(raw)["packages"]:
         assert p["sources"] and p["version"] and p["names"], p["package"]
+
+
+# Story #285: each iOS row has a doc family: its Family, or the control doc IOS_DOC_FAMILY maps it to.
+def test_s285_an_ios_row_gets_its_doc_family():
+    rows = by_name(ui_api_lists.parse_ios(EXTRACT, ALTS, {"BottomSheet": ["sheet"]}))
+    assert rows["sheet"]["doc_family"] == "BottomSheet" and rows["sheet"]["family"] == "Modal presentations"
+    assert rows["Button"]["doc_family"] == "Button"
+
+
+def test_s285_a_row_mapped_to_two_doc_families_fails():
+    import pytest
+    with pytest.raises(ValueError, match="sheet: mapped to two doc families"):
+        ui_api_lists.parse_ios(EXTRACT, ALTS, {"BottomSheet": ["sheet"], "Dialog": ["sheet"]})
+
+
+def test_s285_every_real_doc_family_entry_names_a_real_row():
+    rows = by_name(ui_api_lists.parse_ios(ui_api_lists.merge_ios(
+        {p.name: p.read_text() for p in ui_api_lists.SOURCES.glob("ios-swiftui-extract*.json")})))
+    named = [n for names in ui_api_lists.IOS_DOC_FAMILY.values() for n in names]
+    assert [n for n in named if n not in rows] == []
+
+
+def test_s285_the_ios_list_has_a_doc_family_column(tmp_path):
+    args, src, out = write_sources(tmp_path)
+    assert ui_api_lists.main(args) == 0
+    md = (out / ui_api_lists.IOS_MD.name).read_text()
+    assert "| Apple page | Doc family |" in md and "Doc family:" in md

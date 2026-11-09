@@ -30,6 +30,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Gradient",
       "variants": [
         {"name": "AngularGradient", "note": "iOS 13.0. Apple: \"An angular gradient.\""},
         {"name": "Color", "note": "iOS 13.0. Apple: \"A representation of a color that adapts to a given context.\""},

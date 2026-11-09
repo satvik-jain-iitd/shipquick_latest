@@ -84,6 +84,7 @@ export default {
   ],
   "platformApi": {
     "ios": {
+      "family": "Badge",
       "variants": [
         {"name": "badge", "note": "`.badge(_:)`, iOS 16.0. Apple: \"Generates a badge for the view from a localized string resource.\""},
         {"name": "badgeProminence", "note": "`.badgeProminence(_:)`, iOS 17.0. Apple: \"Specifies the prominence of badges created by this view.\""}

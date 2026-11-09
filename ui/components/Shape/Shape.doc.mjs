@@ -35,6 +35,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Shape",
       "variants": [
         {"name": "ButtonBorderShape", "note": "iOS 15.0. Apple: \"A shape used to draw a button’s border.\""},
         {"name": "Canvas", "note": "iOS 15.0. Apple: \"A view type that supports immediate mode drawing.\""},

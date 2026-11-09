@@ -24,6 +24,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Technology-specific modifiers",
       "variants": [
         {"name": "imagePlaygroundPersonalizationPolicy", "note": "`.imagePlaygroundPersonalizationPolicy(_:)`, iOS 18.4. Apple: \"Policy determining whether to support the usage of people in the playground or not.\"", "status": "deprecated", "replacement": "imagePlaygroundOptions"},
         {"name": "addOrderToWalletButtonStyle", "note": "`.addOrderToWalletButtonStyle(_:)`, iOS 17.0. Apple: \"Sets the button’s style.\""},

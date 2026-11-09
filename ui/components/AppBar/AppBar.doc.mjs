@@ -155,6 +155,7 @@ export default {
   ],
   "platformApi": {
     "ios": {
+      "family": "AppBar",
       "variants": [
         {"name": "presentedWindowToolbarStyle", "note": "`.presentedWindowToolbarStyle(_:)`, not on iOS. Apple: \"Sets the style for the toolbar in windows created by interacting with this view.\"", "status": "unavailable-ios", "replacement": "toolbar"},
         {"name": "contentToolbar", "note": "`.contentToolbar(for:content:)`, iOS 18.4. Apple: \"Populates the toolbar of the specified content view type with the views you provide.\""},

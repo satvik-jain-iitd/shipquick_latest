@@ -134,6 +134,104 @@ IOS_ALTERNATIVES = {
     "complicationForeground": "none: a watchOS complication; iOS has no complications",
 }
 
+# Story #285: the doc family of each iOS component and modifier row. By default it is the row's Family (a type's own
+# family, or a modifier's Apple page). Our docs place a modifier in the doc of the control it changes (`.sheet` in
+# BottomSheet) and group small types (Capsule in Shape), so these rows map to that doc's family instead. The gate
+# covers a row only from a doc of its doc family. A row moves doc by moving it here, in this protected file.
+IOS_DOC_FAMILY = {
+    "Accessibility modifiers": ["accessibility"],
+    "Animators": ["animation", "contentTransition", "geometryGroup", "KeyframeAnimator", "keyframeAnimator", "matchedGeometryEffect",
+                  "matchedTransitionSource", "PhaseAnimator", "phaseAnimator", "TimelineView", "transaction", "transition"],
+    "AppBar": ["contentToolbar", "ornament", "presentedWindowToolbarStyle", "statusBarHidden", "toolbar", "toolbarBackground",
+               "toolbarBackgroundVisibility", "toolbarColorScheme", "toolbarContainerBehavior", "toolbarForegroundStyle",
+               "toolbarItemHidden", "toolbarMinimizationBehavior", "toolbarMinimizationRestoration",
+               "toolbarMinimizationSafeAreaAdjustment", "toolbarOverflowMenu", "toolbarRole", "toolbarTitleAlignment",
+               "toolbarTitleDisplayMode", "toolbarTitleMenu", "toolbarVerticalBehavior", "toolbarVerticalCompressionBehavior",
+               "toolbarVisibility", "touchBar", "touchBarCustomizationLabel", "touchBarItemPresence", "touchBarItemPrincipal"],
+    "Appearance modifiers": ["accentColor", "colorScheme", "complicationForeground", "foregroundColor", "statusBar"],
+    "Badge": ["badge", "badgeProminence"],
+    "BottomSheet": ["actionSheet", "confirmationDialog", "dismissalConfirmationDialog", "fullScreenCover", "interactiveDismissDisabled",
+                    "presentationBackground", "presentationBackgroundInteraction", "presentationBreakthroughEffect",
+                    "presentationCompactAdaptation", "presentationContentInteraction", "presentationCornerRadius",
+                    "presentationDetents", "presentationDragIndicator", "presentationPlacement",
+                    "presentationPreventsAppTermination", "presentationSizing", "presentedWindowStyle", "sheet"],
+    "Button": ["buttonBorderShape", "buttonRepeatBehavior", "buttonSizing", "buttonStyle", "EditButton", "NewDocumentButton",
+               "PasteButton", "pasteDestination", "renameAction", "RenameButton"],
+    "ContentUnavailableView": ["DocumentLaunchView"],
+    "ControlGroup": ["controlGroupStyle"],
+    "DatePicker": ["datePickerStyle", "MultiDatePicker"],
+    "Dialog": ["alert", "dialogIcon", "dialogPreventsAppTermination", "dialogSeverity", "dialogSuppressionToggle"],
+    "DisclosureGroup": ["disclosureGroupStyle"],
+    "Form": ["formStyle", "LabeledContent", "labeledContentStyle"],
+    "Gauge": ["gaugeStyle"],
+    "Glass": ["glassBackgroundEffect", "glassEffect", "GlassEffectContainer", "glassEffectID", "glassEffectTransition", "glassEffectUnion"],
+    "Gradient": ["AngularGradient", "Color", "EllipticalGradient", "LinearGradient", "MeshGradient", "RadialGradient"],
+    "Graphics and rendering modifiers": ["cornerRadius"],
+    "Grid": ["gridCellAnchor", "gridCellColumns", "gridCellUnsizedAxes", "gridColumnAlignment", "GridRow", "LazyHGrid", "LazyVGrid"],
+    "GroupBox": ["groupBoxStyle"],
+    "Image": ["AsyncImage", "imageScale", "symbolColorRenderingMode", "symbolEffect", "symbolEffectsRemoved", "symbolRenderingMode",
+              "symbolVariableValueMode", "symbolVariant"],
+    "Input and event modifiers": ["draggable"],
+    "Label": ["labelIconToTitleSpacing", "labelReservedIconWidth", "labelStyle"],
+    "Layout modifiers": ["edgesIgnoringSafeArea"],
+    "Link": ["HelpLink", "SettingsLink"],
+    "List": ["alternatingRowBackgrounds", "deleteDisabled", "ForEach", "headerProminence", "listItemTint", "listRowBackground",
+             "listRowHoverEffect", "listRowHoverEffectDisabled", "listRowInsets", "listRowPlatterColor", "listRowSeparator",
+             "listRowSeparatorTint", "listRowSpacing", "listSectionIndexVisibility", "listSectionMargins", "listSectionSeparator",
+             "listSectionSeparatorTint", "listSectionSpacing", "listStyle", "moveDisabled", "OutlineGroup", "refreshable",
+             "Section", "sectionActions", "sectionIndexLabel", "selectionDisabled", "swipeActions", "swipeActionsContainer",
+             "typeSelectEquivalent"],
+    "Menu": ["contextMenu", "menuActionDismissBehavior", "MenuButton", "menuButtonStyle", "menuIndicator", "menuOrder", "menuStyle"],
+    "NavigationSplitView": ["inspector", "inspectorColumnWidth", "navigationSplitViewColumnWidth", "navigationSplitViewStyle"],
+    "NavigationStack": ["homeEmbeddedNavigationDestination", "navigationBarBackButtonHidden", "navigationBarHidden",
+                        "navigationBarItems", "navigationBarTitle", "navigationBarTitleDisplayMode", "navigationDestination",
+                        "navigationDocument", "NavigationLink", "navigationLinkIndicatorVisibility", "navigationSubtitle",
+                        "navigationTitle", "navigationTransition", "NavigationView", "navigationViewStyle"],
+    "PageControl": ["indexViewStyle"],
+    "Picker": ["defaultWheelPickerItemHeight", "horizontalRadioGroupLayout", "paletteSelectionEffect", "pickerStyle"],
+    "Popover": ["popover"],
+    "Presentation modifiers": ["postToPhotosSharedAlbumSheet"],
+    "ProgressView": ["progressViewStyle"],
+    "ScrollView": ["defaultScrollAnchor", "onScrollGeometryChange", "onScrollPhaseChange", "onScrollTargetVisibilityChange",
+                   "onScrollVisibilityChange", "scrollBounceBehavior", "scrollClipDisabled", "scrollContentBackground",
+                   "scrollDisabled", "scrollEdgeEffectHidden", "scrollEdgeEffectStyle", "scrollIndicators", "scrollIndicatorsFlash",
+                   "scrollInputBehavior", "scrollPosition", "scrollTargetBehavior", "scrollTargetLayout", "scrollTransition",
+                   "ScrollViewReader"],
+    "Search modifiers": ["searchFocused"],
+    "Shape": ["ButtonBorderShape", "Canvas", "Capsule", "Circle", "ConcentricRectangle", "ContainerRelativeShape", "Ellipse", "Path",
+              "Rectangle", "RoundedRectangle", "UnevenRoundedRectangle"],
+    "ShapePlumbing": ["AnyShape", "FillShapeView", "OffsetShape", "RotatedShape", "ScaledShape", "StrokeBorderShapeView",
+                      "StrokeShapeView", "TransformedShape"],
+    "Slider": ["sliderThumbVisibility"],
+    "Stacks": ["ArrangementView", "arrangementViewStyle", "GeometryReader", "GeometryReader3D", "Group", "HSplitView", "HStack",
+               "LazyHStack", "LazyVStack", "overlayArrangementEdge", "Spacer", "splitArrangementFixedLayoutSize",
+               "splitArrangementLayoutRatio", "splitArrangementLayoutSize", "ViewThatFits", "VSplitView", "VStack", "ZStack",
+               "ZStackContent3D"],
+    "Table": ["tableColumnHeaders", "tableStyle"],
+    "TabView": ["defaultAdaptableTabBarPlacement", "defaultTabBarPlacement", "sceneAccessory", "tabBarMinimizeBehavior", "tabItem",
+                "tabViewBottomAccessory", "tabViewCustomization", "tabViewSearchActivation", "tabViewSidebarBottomBar",
+                "tabViewSidebarFooter", "tabViewSidebarHeader", "tabViewStyle"],
+    "Technology-specific modifiers": ["deviceMotionAnchor", "directTouchSystemGesturesDisabled", "imagePlaygroundPersonalizationPolicy",
+                                      "locationHeadingAnchor", "multiSeatDataSharingConsentSheet", "multiSeatInvitationBehavior",
+                                      "multiSeatInvitationSheet", "nearbyInteractionOriginAnchor"],
+    "TextField": ["autocapitalization", "autocorrectionDisabled", "disableAutocorrection", "findDisabled", "findNavigator",
+                  "keyboardType", "onSubmit", "replaceDisabled", "scrollDismissesKeyboard", "SecureField", "submitLabel",
+                  "submitScope", "textContentType", "TextEditor", "textEditorStyle", "TextFieldLink", "textFieldStyle",
+                  "textInputAutocapitalization", "TextInputBorderShape", "textInputBorderShape", "textInputCompletion",
+                  "textInputFormattingControlVisibility", "textInputSuggestions", "writingToolsAffordanceVisibility",
+                  "writingToolsBehavior"],
+    "Toggle": ["toggleStyle", "WindowVisibilityToggle"],
+    "Tooltip": ["help"],
+    "ViewPlumbing": ["AnyView", "DebugReplaceableView", "EditableCollectionContent", "EmptyView", "EquatableView",
+                     "GroupElementsOfContent", "GroupSectionsOfContent", "LabeledControlGroupContent",
+                     "LabeledToolbarItemGroupContent", "ModifiedContent", "modifier", "OutlineSubgroupChildren",
+                     "PlaceholderContentView", "PresentedWindowContent", "PreviewModifierContent", "SubscriptionView", "Subview",
+                     "SubviewsCollection", "SubviewsCollectionSlice", "TupleContent", "TupleView"],
+    "web-view": ["webViewBackForwardNavigationGestures", "webViewContentBackground", "webViewContextMenu",
+                 "webViewElementFullscreenBehavior", "webViewLinkPreviews", "webViewMagnificationGestures",
+                 "webViewOnScrollGeometryChange", "webViewScrollInputBehavior", "webViewScrollPosition", "webViewTextSelection"],
+}
+
 HEADER = re.compile(r"^// shipquick: (\w+): (.*)$")
 DEPRECATION = re.compile(r"^// shipquick: deprecation: (\S+) (\{.*\})$")
 NUMBERED = re.compile(r"^(\d+)\t")
@@ -419,9 +517,15 @@ def ios_family(name):
     return name
 
 
-def parse_ios(extract, alternatives=None):
+def parse_ios(extract, alternatives=None, doc_families=None):
     """Every row from the saved extract: each View type and each View modifier (its overloads as one row)."""
     alternatives = IOS_ALTERNATIVES if alternatives is None else alternatives
+    doc_of = {}
+    for fam, names in (IOS_DOC_FAMILY if doc_families is None else doc_families).items():
+        for n in names:
+            if n in doc_of:
+                raise ValueError(f"{n}: mapped to two doc families ({doc_of[n]}, {fam}) in IOS_DOC_FAMILY")
+            doc_of[n] = fam
     rows = []
     for t in extract["types"]:
         name = t["name"]
@@ -447,6 +551,7 @@ def parse_ios(extract, alternatives=None):
     live_names, errs = {r["name"] for r in rows if r["status"] == "-"} | {"none"}, []
     for r in rows:
         r["replacement"], r["detail"] = "", "-"
+        r["doc_family"] = doc_of.get(r["name"], r["family"])
         if r["status"] == "deprecated":
             r["replacement"] = apple_replacement(r["field"]) or ""
             if not r["replacement"]:
@@ -481,7 +586,7 @@ def ios_md(files):
     extract = merge_ios(files)
     rows = parse_ios(extract)
     table = [f"| {i} | `{r['name']}` | {r['kind']} | {r['what']} | {r['family']} | {r['since']} | {r['category']} | "
-             f"{r['status']} | {r['detail']} | {APPLE_PAGE}{r['url']} |" for i, r in enumerate(rows, 1)]
+             f"{r['status']} | {r['detail']} | {APPLE_PAGE}{r['url']} | {r['doc_family']} |" for i, r in enumerate(rows, 1)]
     pins = [f"Saved extract: `docs/research/sources/{k}` sha256 `{sha(v)}`" for k, v in sorted(files.items())]
     return "\n".join([
         "# iOS: the full SwiftUI API list (story #231)",
@@ -506,9 +611,12 @@ def ios_md(files):
         "- Status and detail: the exact `metadata.platforms` field and value from the row's own Apple page, then the",
         "  replacement from Apple's deprecation message, or for `unavailable-ios` the iOS alternative we chose.",
         "  When iOS has nothing to use, the alternative is `none` and the detail says why in one line.",
+        "- Doc family: the family of the one doc that may cover a component or modifier row (story #285). It is the",
+        "  Family, or the control doc `IOS_DOC_FAMILY` maps the row to (`sheet` to BottomSheet). A doc's families are",
+        "  the Doc family of its `platforms.ios` row and its `platformApi.ios.family`.",
         "",
-        "| # | Entry | Kind | What | Family | iOS since | Category | Status | Detail | Apple page |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| # | Entry | Kind | What | Family | iOS since | Category | Status | Detail | Apple page | Doc family |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
         *table,
     ]) + "\n"
 

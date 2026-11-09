@@ -881,3 +881,15 @@ Scenario: a typo in a framework doc fails
   And a saved names file that does not match its pin fails
 ```
 Tests: `tests/test_ui_coverage.py` (s288), `tests/test_ui_api_lists.py` (s288). Local: `bash scripts/check_local.sh ui-coverage`.
+
+## Story #285: iOS docs get a family, and the gate enforces it like Android
+```gherkin
+Scenario: an iOS row is covered only by a doc of its doc family
+  Given the iOS list maps buttonStyle to the doc family Button
+  When a swift-charts doc claims buttonStyle
+  Then check_ui_coverage.py --strict-api fails with "buttonStyle (modifier, needs a doc of family Button)"
+  And a component row mapped to Shape is covered only by the doc whose platformApi.ios.family is Shape
+  And a family that no row maps to, or two docs with one family, fails
+  And an iOS list with no Doc family column fails
+```
+Tests: `tests/test_ui_coverage.py` (s285), `tests/test_ui_api_lists.py` (s285). Local: `bash scripts/check_local.sh ui-coverage`.

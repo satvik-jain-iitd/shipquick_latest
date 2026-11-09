@@ -170,6 +170,7 @@ export default {
   ],
   "platformApi": {
     "ios": {
+      "family": "Dialog",
       "variants": [
         {"name": "alert", "note": "`.alert(_:item:actions:)`, iOS 15.0. Apple: \"Presents an alert using the given data to produce the alert’s content and a text view as a title.\""},
         {"name": "dialogIcon", "note": "`.dialogIcon(_:)`, iOS 17.0. Apple: \"Configures the icon used by dialogs within this view.\""},

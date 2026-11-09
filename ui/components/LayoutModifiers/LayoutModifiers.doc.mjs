@@ -30,6 +30,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Layout modifiers",
       "variants": [
         {"name": "alignmentGuide", "note": "`.alignmentGuide(_:computeValue:)`, iOS 13.0. Apple: \"Sets the view’s horizontal alignment.\""},
         {"name": "containerCornerOffset", "note": "`.containerCornerOffset(_:sizeToFit:)`, iOS 26.0. Apple: \"Adjusts the view’s layout to avoid the container view’s corner insets for the specified edges.\""},
