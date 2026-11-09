@@ -1917,6 +1917,24 @@
   },
   {
    "platform": "ios",
+   "package": "HealthKit",
+   "version": "Apple's documentation as served on 2026-11-09",
+   "sources": [
+    "ed90206839808fd1e3c6046ccf31a607a0c39708085612736c26e661e19a73c3 https://developer.apple.com/tutorials/data/documentation/healthkit/hkactivitysummary.json"
+   ],
+   "names": [
+    "HealthKit.HKActivityMoveMode",
+    "HealthKit.HKActivityMoveModeObject",
+    "HealthKit.HKActivitySummary",
+    "HealthKit.HKActivitySummaryQuery",
+    "HealthKit.HKActivitySummaryQueryDescriptor",
+    "HealthKit.HKCategoryValueAppleStandHour",
+    "HealthKit.HKPredicateKeyPathDateComponents",
+    "HealthKit.HKSample"
+   ]
+  },
+  {
+   "platform": "ios",
    "package": "WidgetKit",
    "version": "Apple's documentation as served on 2026-11-09",
    "sources": [
@@ -1986,12 +2004,15 @@
   },
   {
    "platform": "ios",
-   "package": "SwiftUI (widget types)",
+   "package": "SwiftUI (widget and bridge types)",
    "version": "Apple's documentation as served on 2026-11-09",
    "sources": [
     "d4c215388896d3ce00d731c5081b573c043ff6d017ddf3bb581b9b7975f0aec5 https://developer.apple.com/tutorials/data/documentation/swiftui/widget.json",
     "b402bffc225d03d843f8b573e6d6168af420b6280d23197c8a69eeb8a6acfe93 https://developer.apple.com/tutorials/data/documentation/swiftui/widgetconfiguration.json",
-    "326291dbfc48a4e1719f9904a131de161a98673385ce460f884d1fb21eb6d423 https://developer.apple.com/tutorials/data/documentation/swiftui/controlwidget.json"
+    "326291dbfc48a4e1719f9904a131de161a98673385ce460f884d1fb21eb6d423 https://developer.apple.com/tutorials/data/documentation/swiftui/controlwidget.json",
+    "88ecb91dc945d8ecf4f8bb8d7f89ebc13f06c1b9e01dc15cca3c9dea2bf0201c https://developer.apple.com/tutorials/data/documentation/swiftui/uiviewrepresentable.json",
+    "965ad73f804376e4662937058f391ce849f0c061eca12d04fd162df2996c3608 https://developer.apple.com/tutorials/data/documentation/swiftui/uiviewcontrollerrepresentable.json",
+    "abebac3bf38e0ac3f2a12456950906136d008373f842cea6f160ffc368187191 https://developer.apple.com/tutorials/data/documentation/swiftui/uihostingconfiguration.json"
    ],
    "names": [
     "SwiftUI.Body",
@@ -2000,6 +2021,7 @@
     "SwiftUI.ControlWidgetConfigurationBuilder",
     "SwiftUI.ControlWidgetTemplate",
     "SwiftUI.ControlWidgetTemplateBuilder",
+    "SwiftUI.Coordinator",
     "SwiftUI.EmptyControlWidgetConfiguration",
     "SwiftUI.EmptyControlWidgetTemplate",
     "SwiftUI.EmptyWidgetConfiguration",
@@ -2007,6 +2029,21 @@
     "SwiftUI.Label",
     "SwiftUI.LimitedAvailabilityConfiguration",
     "SwiftUI.Text",
+    "SwiftUI.UIHostingConfiguration",
+    "SwiftUI.UIHostingController",
+    "SwiftUI.UIHostingControllerSizingOptions",
+    "SwiftUI.UIHostingSceneDelegate",
+    "SwiftUI.UIViewControllerRepresentable",
+    "SwiftUI.UIViewControllerRepresentable.Context",
+    "SwiftUI.UIViewControllerRepresentable.LayoutOptions",
+    "SwiftUI.UIViewControllerRepresentableContext",
+    "SwiftUI.UIViewControllerType",
+    "SwiftUI.UIViewRepresentable",
+    "SwiftUI.UIViewRepresentable.Context",
+    "SwiftUI.UIViewRepresentable.LayoutOptions",
+    "SwiftUI.UIViewRepresentableContext",
+    "SwiftUI.UIViewType",
+    "SwiftUI.View",
     "SwiftUI.Widget",
     "SwiftUI.WidgetBundle",
     "SwiftUI.WidgetConfiguration"

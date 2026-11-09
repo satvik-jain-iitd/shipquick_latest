@@ -427,3 +427,14 @@ def test_s288_the_saved_framework_names_are_small_and_pinned():
     assert f"sha256 `{hashlib.sha256(raw).hexdigest()}`" in ui_api_lists.FW_MD.read_text(encoding="utf-8")
     for p in json.loads(raw)["packages"]:
         assert p["sources"] and p["version"] and p["names"], p["package"]
+
+
+def test_s288_review_2_the_saved_names_have_the_bridge_and_health_types():
+    names = {n for p in json.loads(ui_api_lists.FW_SRC.read_text())["packages"] for n in p["names"]}
+    assert {"SwiftUI.UIViewRepresentable", "SwiftUI.UIViewControllerRepresentable", "SwiftUI.UIHostingConfiguration",
+            "HealthKit.HKActivitySummary"} <= names
+
+
+def test_s288_review_2_adr_012_says_the_pin_catches_mistakes_not_tampering():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "catches mistakes, not tampering" in adr and "diff review is the guard" in adr

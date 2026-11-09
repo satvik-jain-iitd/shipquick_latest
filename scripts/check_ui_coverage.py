@@ -108,8 +108,12 @@ def framework_names(names_path, topics_path):
 
 
 def known(name, names):
-    """A doc name is known when a saved qualified name is it or ends with it after a dot (`Charts.BarMark`)."""
-    return name in names or any(n.endswith("." + name) for n in names)
+    """A doc name is known when a saved qualified name is it or ends with it after a dot (`Charts.BarMark`). A bare name
+    must be type-cased (its last segment starts with an uppercase letter), so a fragment like `permission` or a bare
+    function name is not known; write it qualified (`androidx.glance.appwidget.updateAll`)."""
+    if name in names:
+        return True
+    return name.rsplit(".", 1)[-1][:1].isupper() and any(n.endswith("." + name) for n in names)
 
 
 def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None, fw_names=None):
