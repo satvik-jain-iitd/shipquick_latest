@@ -22,7 +22,41 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A card holds one piece of content, like a product, a news story or a message. It lays its content out in a column. ElevatedCard adds a shadow. OutlinedCard adds a border."
+          "text": "A card holds one piece of content, like a product, a news story or a message. On iOS the twin is GroupBox. Apple: \"A stylized view, with an optional label, that visually collects a logical grouping of content.\""
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "The title at the top of the box."
+            ],
+            [
+              "content",
+              "() -> some View",
+              "",
+              "What the box holds."
+            ],
+            [
+              "label",
+              "() -> some View",
+              "",
+              "A custom label instead of a title."
+            ]
+          ]
         }
       ]
     },
@@ -34,14 +68,15 @@ export default {
           "style": "do",
           "items": [
             "Use a card for one item inside a bigger layout.",
-            "Pass onClick when the whole card opens the item."
+            "Give the box a title: GroupBox(\"Title\") { ... }, or a custom label with GroupBox(content:label:).",
+            "Make the whole box tappable by putting it inside a Button or a NavigationLink."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Use a card for a whole screen. Use Scaffold for that."
+            "Nest boxes inside boxes. Apple: group things inside a box with padding and alignment."
           ]
         }
       ]
@@ -53,8 +88,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on a clickable card only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults).",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

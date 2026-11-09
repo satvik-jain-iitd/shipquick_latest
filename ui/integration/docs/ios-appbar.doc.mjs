@@ -23,7 +23,41 @@ export default {
         },
         {
           "type": "prose",
-          "text": "An app bar gives access to key tasks and navigation. A top app bar has the title, main actions and navigation. A bottom app bar has core navigation or actions. Pass app bars to Scaffold."
+          "text": "An app bar gives access to key tasks and navigation. A top app bar has the title, main actions and navigation. A bottom app bar has core navigation or actions. On iOS the bar is the navigation bar at the top, or a toolbar at the bottom. Add items with toolbar(content:) and ToolbarItem. Apple: \"Populates the toolbar or navigation bar with the specified items.\" Set the title with navigationTitle(_:)."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "content",
+              "() -> some ToolbarContent",
+              "",
+              "The ToolbarItems."
+            ],
+            [
+              "placement",
+              "ToolbarItemPlacement",
+              ".automatic",
+              "ToolbarItem: where the item sits, like .topBarTrailing or .bottomBar."
+            ],
+            [
+              "navigationTitle",
+              "LocalizedStringKey",
+              "",
+              "The screen name, set on the view inside the navigation container."
+            ]
+          ]
         }
       ]
     },
@@ -34,15 +68,16 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Pass the bar to Scaffold's topBar or bottomBar.",
-            "Use a scrollBehavior to shrink the bar as the content scrolls."
+            "Put each item in a ToolbarItem with a placement, like .topBarTrailing, .bottomBar or .confirmationAction.",
+            "Set the screen name with navigationTitle(_:) on the view inside the navigation container."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Put more than a few actions in the bar. Move the rest to a menu."
+            "Put more than a few actions in the bar. Move the rest to a menu.",
+            "Build your own top bar out of stacks and buttons."
           ]
         }
       ]
@@ -54,8 +89,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Icon name (1.1.1 Non-text Content, contentDescription): An icon with no words next to it needs a contentDescription that names the action, like \"Add to favorites\".",
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on each action only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+            "VoiceOver (4.1.2 Name, Role, Value, a spoken name and state): An icon with no words needs an accessibilityLabel that names the action, like \"Add to favorites\".",
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

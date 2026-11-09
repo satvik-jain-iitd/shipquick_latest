@@ -29,6 +29,27 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "placement": {
+        "type": {
+          "kind": "named",
+          "name": "ToolbarItemPlacement"
+        },
+        "optional": true
+      },
+      "navigationTitle": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

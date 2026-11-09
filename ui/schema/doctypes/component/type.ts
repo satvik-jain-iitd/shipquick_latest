@@ -22,6 +22,9 @@ import type {
   UsageDoc,
 } from '../base/type.js';
 
+/** ShipQuick addition (story #228): one platform's own usage text. */
+export type PlatformUsageDoc = Partial<Pick<UsageDoc, 'description' | 'bestPractices' | 'accessibility'>>;
+
 /** What replaces a deprecated component (`ComponentBaseDoc.deprecated`). */
 export interface ComponentDeprecation {
   /** `name` of the documented component to use instead, e.g. `'BottomSheet'`. */
@@ -59,7 +62,7 @@ export interface ComponentBaseDoc extends AuthoredDocGraphFields {
    *  regex derivation. Backfill with
    *  `apps/docsite/scripts/backfill-display-name.mjs`. */
   displayName: string;
-  /** ShipQuick addition (the only field added to the upstream copy, see
+  /** ShipQuick addition (one of the two fields added to the upstream copy, see
    *  ui/UPSTREAM.md): the library component this doc maps to on each
    *  platform, e.g. `'androidx.compose.material3.Button'`, `'SwiftUI.Button'`,
    *  `'@astryxdesign/core/Button'`. `null` means the platform does not offer it. */
@@ -67,6 +70,14 @@ export interface ComponentBaseDoc extends AuthoredDocGraphFields {
     android: string | null;
     ios: string | null;
     web: string | null;
+  };
+  /** ShipQuick addition (story #228, ADR-012): usage text that fits only one
+   *  platform, like a Compose or SwiftUI API name. `usage` keeps the text that
+   *  fits every platform. A platform's topic reads `usage` plus its own entry. */
+  platformUsage?: {
+    android?: PlatformUsageDoc;
+    ios?: PlatformUsageDoc;
+    web?: PlatformUsageDoc;
   };
   /** Exact consumer import specifier for integration-owned components. */
   import?: string;
@@ -366,8 +377,10 @@ export interface MultiComponentDoc extends ComponentBaseDoc {
  * (e.g. Switch, Badge, Spinner, TextInput).
  */
 export interface SingleComponentDoc extends ComponentBaseDoc {
-  /** All public props for the component. */
-  props: ComponentPropDoc[];
+  /** All public props for the component. ShipQuick addition (story #228):
+   *  `platform` marks a prop that one platform spells its own way, so the
+   *  same name can carry a Compose type and a SwiftUI type. */
+  props: (ComponentPropDoc & {platform?: 'android' | 'ios' | 'web'})[];
 }
 
 /**

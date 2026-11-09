@@ -9,6 +9,56 @@ export default {
     "ios": "SwiftUI.DatePicker",
     "web": null
   },
+  "platformUsage": {
+    "android": {
+      "description": "It also picks a range, from a calendar or by typing. Docked sits in the layout. Modal shows in DatePickerDialog. DateRangePicker picks a start and an end.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Create the state with rememberDatePickerState and read selectedDateMillis."
+        },
+        {
+          "guidance": true,
+          "description": "Use DatePickerDialog for a modal picker."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "48dp",
+          "description": "Google: anything a user can tap is at least 48dp. Material sets this on each day only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+        }
+      ]
+    },
+    "ios": {
+      "description": "On iOS, DatePicker picks a date, a time, or both. Apple: \"A control for selecting an absolute date.\" datePickerStyle(_:) sets the look: .compact, .graphical (a calendar) or .wheel.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Bind selection to a Date held in @State."
+        },
+        {
+          "guidance": true,
+          "description": "Limit the dates with in:, like Date()... for future dates only."
+        },
+        {
+          "guidance": true,
+          "description": "Pick what shows with displayedComponents: .date, .hourAndMinute, or both."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "44 by 44 pt",
+          "description": "Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
+        }
+      ]
+    }
+  },
   "group": "Picker",
   "category": "Data Input",
   "keywords": [
@@ -18,16 +68,8 @@ export default {
     "range"
   ],
   "usage": {
-    "description": "A date picker lets the user pick a date, a range, or both, from a calendar or by typing. Docked sits in the layout. Modal shows in DatePickerDialog. DateRangePicker picks a start and an end.",
+    "description": "A date picker lets the user pick a date.",
     "bestPractices": [
-      {
-        "guidance": true,
-        "description": "Create the state with rememberDatePickerState and read selectedDateMillis."
-      },
-      {
-        "guidance": true,
-        "description": "Use DatePickerDialog for a modal picker."
-      },
       {
         "guidance": false,
         "description": "Build a calendar grid by hand."
@@ -40,13 +82,6 @@ export default {
         "criterion": "3.3.2 Labels or Instructions",
         "requirement": "visible label",
         "description": "Every input has words that say what to enter. A placeholder alone is not a label."
-      },
-      {
-        "name": "Touch target",
-        "category": "Content",
-        "criterion": "2.5.8 Target Size (Minimum)",
-        "requirement": "48dp",
-        "description": "Google: anything a user can tap is at least 48dp. Material sets this on each day only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
       }
     ],
     "anatomy": [
@@ -89,6 +124,33 @@ export default {
       "type": "boolean",
       "description": "Shows the switch between calendar and text input.",
       "default": "true"
+    },
+    {
+      "name": "titleKey",
+      "type": "LocalizedStringKey",
+      "description": "Says what the date is for. VoiceOver reads it.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "selection",
+      "type": "Binding<Date>",
+      "description": "The picked date.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "in",
+      "type": "ClosedRange<Date>",
+      "description": "The dates the user may pick. Partial ranges work too.",
+      "platform": "ios"
+    },
+    {
+      "name": "displayedComponents",
+      "type": "DatePickerComponents",
+      "description": "Which parts show: .date, .hourAndMinute.",
+      "platform": "ios",
+      "default": "[.hourAndMinute, .date]"
     }
   ]
 };

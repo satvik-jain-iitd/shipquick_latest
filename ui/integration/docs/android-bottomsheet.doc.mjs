@@ -87,8 +87,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Focus (2.4.3 Focus Order, focus moves in and back): Focus moves into the surface when it opens and back to what opened it when it closes. Back closes it.",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "Focus (2.4.3 Focus Order, focus moves in and back): Focus moves into the surface when it opens and back to what opened it when it closes. Back closes it."
           ]
         }
       ]

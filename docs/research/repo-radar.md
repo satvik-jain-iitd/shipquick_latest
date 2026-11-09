@@ -290,3 +290,15 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: build from scratch, about 100 lines of stdlib Python. It reuses `read_doc` from `scripts/check_ui_docs.py`
   and reads the same tables the S4 and S5 tests read. No package added.
 - Confidence that nothing fits better: 0.8 (the input is our own two tables, so a general tool would still need this glue).
+
+## 9 Nov 2026, story #228: per-platform usage text in one shared component doc
+- Need: one shared component doc with usage text per platform, and a check that a platform topic never names the other platform's API.
+- Run: `scout.py --need "keep one shared component doc with per-platform usage text and fail when a platform reference topic names another platform's API (Compose vs SwiftUI)"`: no repos found.
+  `scout.py --need "cross-platform design system docs with per-platform usage guidelines android ios"`: no repos found.
+  `gh search repos --topic=design-system --topic=compose --topic=swiftui`: none. `--topic=design-system --topic=multiplatform`: one app (mrfatworm/ZZZ-Archive) and one React library; not a fit.
+- Read instead: our upstream, meta/astryx `packages/cli/authoring/doctypes/component/type.ts` at the pinned commit (`ui/UPSTREAM.md`).
+  Its `UsageDoc` has one text for the whole component and no per-platform field, so there is nothing there to adopt.
+- Decision: build from scratch, small. One optional field `platformUsage` in our copy of the doc type, with the same
+  fields as upstream's `UsageDoc` (`description`, `bestPractices`, `accessibility`), so it reads like upstream. The leak
+  check is about 10 lines of stdlib regex in `scripts/ui_topics.py`. No package added.
+- Confidence that nothing fits better: 0.8 (the split is about our own two-platform docs; a general tool would still need this glue).

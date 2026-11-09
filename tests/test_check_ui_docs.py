@@ -194,3 +194,33 @@ def test_s182_tokens_json_has_the_feel_group():
     assert feel["motion"]["duration"] and feel["motion"]["easing"]
     for group in ("color", "typography", "spacing", "shape"):
         assert group in t, group
+
+
+# ---- Story #228: one prop name, a Compose type and a SwiftUI type ----
+TWO = {**CONTRACT, "core": {}, "platforms": {"android": {"content": {"type": {"kind": "content"}}},
+                                             "ios": {"content": {"type": {"kind": "content"}}}}}
+COMPOSE = {"name": "content", "type": "@Composable () -> Unit", "description": "Inside."}
+
+
+def test_s228_the_same_prop_name_tagged_for_two_platforms_passes(tmp_path):
+    props = [COMPOSE, {"name": "content", "type": "() -> some View", "description": "Inside.", "platform": "ios"}]
+    r = run(make(tmp_path, doc_text=doc(props), contract=TWO))
+    assert r.returncode == 0, r.stdout
+
+
+def test_s228_a_prop_tagged_for_a_platform_the_contract_lacks_it_on_fails(tmp_path):
+    props = [COMPOSE, {"name": "content", "type": "() -> some View", "description": "Inside.", "platform": "web"}]
+    r = run(make(tmp_path, doc_text=doc(props), contract=TWO))
+    assert r.returncode == 1 and "platforms.web" in r.stdout, r.stdout
+
+
+def test_s228_a_platform_prop_documented_only_for_another_platform_fails(tmp_path):
+    props = [{"name": "content", "type": "() -> some View", "description": "Inside.", "platform": "ios"}]
+    r = run(make(tmp_path, doc_text=doc(props), contract=TWO))
+    assert r.returncode == 1 and "platforms.android" in r.stdout, r.stdout
+
+
+def test_s228_the_same_name_twice_for_one_platform_is_a_duplicate(tmp_path):
+    tagged = {"name": "content", "type": "() -> some View", "description": "Inside.", "platform": "ios"}
+    r = run(make(tmp_path, doc_text=doc([COMPOSE, tagged, tagged]), contract=TWO))
+    assert r.returncode == 1 and "duplicate" in r.stdout and "(ios)" in r.stdout, r.stdout

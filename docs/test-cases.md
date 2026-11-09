@@ -503,3 +503,15 @@ Scenario: no counted component is left out
   And components in the integration must be a literal list of names
 ```
 Tests: `tests/test_ui_coverage.py` (s216). CI: step in job `ui-cli` with `--require-web`. Local: `check_local.sh ui-coverage`.
+
+## Story #228: a platform topic carries only its own platform's words
+```gherkin
+Scenario: an iOS topic never names a Compose API, and an Android topic never names a SwiftUI API
+  Given a shared doc with text in usage and in platformUsage.android and platformUsage.ios
+  When scripts/ui_topics.py builds the ios-<name> and android-<name> topics
+  Then each topic holds the shared usage plus its own platformUsage entry only
+  And each topic lists only props from core or from its own platform in the contract
+  And a topic that holds a name from the other platform's list (OTHER_API) exits 1, naming the topic and the word
+  And every ios topic of a doc with two or more platforms lists at least one prop
+```
+Tests: `tests/test_ui_topics.py` (s228). CI and local: `python3 scripts/ui_topics.py --check`.
