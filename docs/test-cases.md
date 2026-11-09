@@ -374,6 +374,20 @@ Scenario: the QA tools run from the kit with no project facts
 ```
 Tests: `tests/test_qa_scripts.py` (`test_s162_*`).
 
+## Story #139: maker and checker are different sessions (ADR-011)
+```gherkin
+Scenario: the session that built a commit cannot approve the pull request
+  Given roles.yml lists coder_sessions and reviewer_sessions
+  And a commit on the PR carries "Built-by: proj-qa"
+  When proj-qa approves with "Reviewed-by: proj-qa"
+  Then review_merge.sh refuses: "proj-qa built a commit"
+  And an approval that names no session refuses
+  And an approval from a reviewer session that built nothing merges
+  And a commit with no coder session in Built-by fails the roles job
+  And a session name listed twice makes roles.py refuse the file
+  And with no session lists nothing about sessions is checked
+```
+Tests: `tests/test_check_roles.py`, `tests/test_roles.py`, `tests/test_role.py`, `tests/test_review_merge.py` (s139).
 ## Story #180 (S0): a protected PR merges after a second review and the owner's yes (ADR-013)
 ```gherkin
 Scenario: the reviewer merges a protected PR only with both lines in the approving review

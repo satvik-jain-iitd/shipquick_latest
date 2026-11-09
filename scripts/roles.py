@@ -10,10 +10,15 @@ File shape (a tiny fixed format, not full YAML -- parsed without a dependency):
     - account-three
   owner: account-three
   shipquick_repo: owner/repo
+  coder_sessions:          # optional (ADR-011): agent session names, e.g. proj-dev
+    - proj-dev
+  reviewer_sessions:       # optional: e.g. proj-qa. One name may never appear twice.
+    - proj-qa
 
 Several coders or reviewers are allowed (a list per role). Usage:
-  python3 scripts/roles.py get coder|reviewer|owner|shipquick_repo [--file <path>]
-Prints the value (accounts comma-separated for coder/reviewer), or exits 1 with the reason.
+  python3 scripts/roles.py get coder|reviewer|owner|shipquick_repo|coder_sessions|reviewer_sessions [--file <path>]
+Prints the value (lists comma-separated), or exits 1 with the reason. An unset session list
+prints nothing and exits 0: the session checks are opt-in.
 """
 import argparse
 import re
@@ -21,6 +26,7 @@ import sys
 from pathlib import Path
 
 DEFAULT_FILE = ".shipquick/roles.yml"
+SESSION_KEYS = ("coder_sessions", "reviewer_sessions")
 LIST_ITEM = re.compile(r"^\s*-\s*(\S+)\s*$")
 LIST_HEAD = re.compile(r"^(\w+):\s*$")
 SCALAR = re.compile(r"^(\w+):\s*(\S+)\s*$")
@@ -60,13 +66,24 @@ def load(path=DEFAULT_FILE) -> dict:
     missing = [k for k in ("coder", "reviewer", "owner") if not data.get(k)]
     if missing:
         raise ValueError(f"{path} is missing {', '.join(missing)} -- fill it in before any script trusts it")
+    if bool(data.get(SESSION_KEYS[0])) != bool(data.get(SESSION_KEYS[1])):
+        raise ValueError(f"{path}: set both coder_sessions and reviewer_sessions, or neither -- one alone "
+                         "lets a commit skip Built-by: or a session approve its own work (ADR-011)")
+    for k in SESSION_KEYS:
+        if k in data and not isinstance(data[k], list):
+            raise ValueError(f"{path}: {k} must be a list, one '  - <name>' line per session")
+    seen = set()
+    for name in (s.lower() for k in SESSION_KEYS for s in data.get(k, [])):
+        if name in seen:
+            raise ValueError(f"{path}: session {name} appears twice -- one session plays one part (ADR-011)")
+        seen.add(name)
     return data
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("action", choices=["get"])
-    ap.add_argument("field", choices=["coder", "reviewer", "owner", "shipquick_repo"])
+    ap.add_argument("field", choices=["coder", "reviewer", "owner", "shipquick_repo", *SESSION_KEYS])
     ap.add_argument("--file", default=DEFAULT_FILE)
     a = ap.parse_args(argv)
     try:
@@ -75,6 +92,8 @@ def main(argv=None) -> int:
         print(str(e), file=sys.stderr)
         return 1
     value = data.get(a.field)
+    if value is None and a.field in SESSION_KEYS:
+        value = []
     if value is None:
         print(f"{a.field} is not set in {a.file}", file=sys.stderr)
         return 1

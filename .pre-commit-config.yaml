@@ -1,3 +1,5 @@
+# `pre-commit install` then sets up every stage these hooks use (ADR-011: prepare-commit-msg adds Built-by:).
+default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
@@ -19,6 +21,12 @@ repos:
         entry: python3 scripts/check_commit_msg.py
         language: system
         stages: [commit-msg]
+      - id: session-trailer
+        name: Add Built-by <session> to the commit message (ADR-011)
+        entry: bash scripts/session_trailer.sh
+        language: system
+        always_run: true
+        stages: [prepare-commit-msg]
       - id: md-block-check
         name: Markdown code block check
         entry: python3 scripts/check_md_blocks.py

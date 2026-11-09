@@ -39,6 +39,8 @@ case "$1" in
            cat "$STUB_DIR/roles_yml_b64"; exit 0 ;;
          *contents/docs/screens.txt*)
            [ -f "$STUB_DIR/screens_b64" ] && { cat "$STUB_DIR/screens_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
+         *pulls/*/commits*)
+           [ -f "$STUB_DIR/commits.json" ] && { cat "$STUB_DIR/commits.json"; exit 0; }; echo '[]'; exit 0 ;;
          *pulls/*/files*)
            [ -f "$STUB_DIR/pr_files.json" ] && { cat "$STUB_DIR/pr_files.json"; exit 0; }; echo '[]'; exit 0 ;;
        esac
@@ -629,3 +631,60 @@ def test_s153_a_second_reviewers_matches_line_counts_when_the_first_approval_lac
     r, merged = env(pr=pr, roles=roles, screens=SCREENS)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert merged != ""
+
+
+# Story #139 (ADR-011): with session lists in roles.yml, the approver's session must not have built the PR.
+SESSION_ROLES = ("coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n"
+                 "coder_sessions:\n  - proj-dev\nreviewer_sessions:\n  - proj-qa\n")
+
+
+def session_pr(review_body, *built_by, stub_dir):
+    pr = good()
+    pr["reviews"][0]["body"] = review_body
+    (stub_dir / "commits.json").write_text(json.dumps(
+        [{"commit": {"message": f"feat: x\n\nBuilt-by: {s}\n"}} for s in built_by]), encoding="utf-8")
+    return pr
+
+
+@pytest.fixture
+def stub_dir(env, tmp_path):
+    return tmp_path / "stub"
+
+
+def test_s139_an_approval_from_the_session_that_built_a_commit_refuses(env, stub_dir):
+    r, merged = env(pr=session_pr("Reviewed-by: proj-qa", "proj-dev", "proj-qa", stub_dir=stub_dir), roles=SESSION_ROLES)
+    refused(r, merged, "proj-qa built a commit")
+
+
+def test_s139_an_approval_that_names_no_session_refuses(env, stub_dir):
+    r, merged = env(pr=session_pr("LGTM", "proj-dev", stub_dir=stub_dir), roles=SESSION_ROLES)
+    refused(r, merged, "names no session")
+
+
+def test_s139_an_approval_from_a_reviewer_session_that_built_nothing_merges(env, stub_dir):
+    r, merged = env(pr=session_pr("Reviewed-by: proj-qa", "proj-dev", stub_dir=stub_dir), roles=SESSION_ROLES)
+    assert r.returncode == 0, r.stderr
+    assert "pr merge 12" in merged
+
+
+def test_s139_without_session_lists_the_review_body_is_not_read(env):
+    r, merged = env()
+    assert r.returncode == 0, r.stderr
+
+
+def test_s139_every_built_by_line_counts_not_only_the_first(env, stub_dir):
+    # PR #178 review: a prose "Built-by:" line earlier in the body must not hide the real trailer.
+    pr = session_pr("Reviewed-by: proj-qa", stub_dir=stub_dir)
+    (stub_dir / "commits.json").write_text(json.dumps(
+        [{"commit": {"message": "feat: x\n\nBuilt-by: proj-dev is how it works\n\nBuilt-by: proj-qa\n"}}]), encoding="utf-8")
+    r, merged = env(pr=pr, roles=SESSION_ROLES)
+    refused(r, merged, "proj-qa built a commit")
+
+
+def test_s139_a_dev_merge_commit_by_the_reviewer_session_does_not_block_its_approval(env, stub_dir):
+    pr = session_pr("Reviewed-by: proj-qa", stub_dir=stub_dir)
+    (stub_dir / "commits.json").write_text(json.dumps([
+        {"parents": [{}], "commit": {"message": "feat: x\n\nBuilt-by: proj-dev\n"}},
+        {"parents": [{}, {}], "commit": {"message": "Merge dev into feat/x\n\nBuilt-by: proj-qa\n"}}]), encoding="utf-8")
+    r, merged = env(pr=pr, roles=SESSION_ROLES)
+    assert r.returncode == 0, r.stderr

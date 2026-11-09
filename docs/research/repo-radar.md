@@ -221,3 +221,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   act, gitea, ruff, shellcheck; none checks job timeouts. actionlint checks syntax and expressions, not a missing limit.
 - Decision: a 40-line stdlib checker, `scripts/check_timeouts.py` (no YAML dependency, since CI installs only pytest).
 - Confidence that nothing fits better: 0.75.
+
+## 9 Nov 2026, story #139 (ADR-011): maker and checker are different sessions
+- Need: enforce that the agent session that wrote a PR's commits cannot approve it.
+- Run: `scout.py --need "enforce maker checker: the agent session that wrote commits cannot approve the pull request"`:
+  no repos found. `gh search repos topic:four-eyes-principle` and `topic:segregation-of-duties`: a PR-workflow demo
+  (cakarci/pull-request-workflow) and SAP/IAM audit tools; none knows about agent sessions on one account.
+  GitHub's own "require review from someone other than the last pusher" sees accounts only (Tier A, 0.85).
+- Decision: a `Built-by:` commit trailer written by `git interpret-trailers` (git's own tool, no new dependency),
+  checked by the existing `check_roles.py` and `review_merge.sh`.
+- Confidence that nothing fits better: 0.8.

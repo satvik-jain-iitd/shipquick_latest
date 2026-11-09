@@ -56,6 +56,7 @@ roles_tmp="$(mktemp)"
 printf '%s' "$roles_raw" | base64 -d > "$roles_tmp" 2>/dev/null
 coders=$(python3 "$HERE/roles.py" get coder --file "$roles_tmp") || refuse "cannot read coder accounts from $repo's .shipquick/roles.yml"
 reviewers=$(python3 "$HERE/roles.py" get reviewer --file "$roles_tmp") || refuse "cannot read reviewer accounts from $repo's .shipquick/roles.yml"
+reviewer_sessions=$(python3 "$HERE/roles.py" get reviewer_sessions --file "$roles_tmp") || refuse "cannot read reviewer sessions from $repo's .shipquick/roles.yml"
 rm -f "$roles_tmp"
 
 author=$(field .author.login)
@@ -72,6 +73,20 @@ reviewer_account=$(jq -r --arg revs "$reviewers" --arg author "$author" --arg he
   | if length > 0 then .[0].author.login else "" end
 ' <<<"$json")
 [ -n "$reviewer_account" ] || refuse "not approved by a reviewer account (other than the author, $author) on the latest commit"
+
+# story #139 (ADR-011): maker and checker are different SESSIONS, not only different accounts. Opt-in:
+# only when roles.yml lists reviewer_sessions. The approving review names its session; that session must
+# not appear in any non-merge commit's Built-by: trailer (merge commits are exempt, ADR-011).
+if [ -n "$reviewer_sessions" ]; then
+  commits=$(gh api "repos/$repo/pulls/$pr/commits" --paginate) || refuse "cannot read the commits of pull request $pr"
+  built_by=$(jq -rs '[.[][] | select((.parents | length) < 2) | .commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s] | unique | join(",")' <<<"$commits")
+  review_body="$(mktemp)"
+  jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
+    '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" > "$review_body"
+  why=$(python3 "$HERE/check_roles.py" --review-body-file "$review_body" --built-by "$built_by" --reviewer-sessions "$reviewer_sessions") \
+    || { rm -f "$review_body"; refuse "$why"; }
+  rm -f "$review_body"
+fi
 
 # story #153: when the PR's own repo has configured docs/screens.txt (read from GitHub, 404 = not configured),
 # the approving review's body must say the render was compared with the PR's named board.
