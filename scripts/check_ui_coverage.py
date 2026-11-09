@@ -118,9 +118,14 @@ def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
                    "supporting": {r[1].strip("`") for r in rows if r[2] == "supporting"},
                    "family": {r[1].strip("`") for r in rows if r[2] == "family"}}
         word = {"variants": "variant", "supporting": "supporting", "family": "family"}
+        any_row = set().union(*of_kind.values())
         for (slot, n), who in sorted(claims.items()):
-            if all(d in fw_docs for d, _ in who):
-                continue   # a framework doc names its framework's own types
+            if n not in any_row and slot in of_kind:
+                # Review 2 of the iOS stack: only a framework doc, and only for a name that is no row at all (its
+                # framework's own type), skips this check. A real row in the wrong slot still fails.
+                who = [w for w in who if w[0] not in fw_docs]
+                if not who:
+                    continue
             if slot in of_kind and n not in of_kind[slot]:
                 errs.append(f"api {platform}: {', '.join(d for d, _ in who)} names {n} under platformApi.{platform}.{slot}, "
                             f"but the {platform} API list has no such {word[slot]} row")
@@ -147,7 +152,8 @@ def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
         for t in topics:
             d = slug(t)
             speaks = d in docs and (api[d].get(platform) or (usage or {}).get(d, {}).get(platform))
-            if not speaks or not (a.topics / f"{platform}-{d}.doc.mjs").exists():
+            served = a.topics / f"{platform}-{d}.doc.mjs"
+            if not speaks or not served.is_file() or not served.read_text(encoding="utf-8").strip():   # an empty file serves nothing
                 by_family.setdefault("framework topics", []).append(f"{t} (framework)")
         gaps += [f"api {platform} {fam}: " + ", ".join(names) for fam, names in sorted(by_family.items())]
     return gaps
