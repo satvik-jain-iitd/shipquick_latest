@@ -142,7 +142,7 @@ def pom_info(xml: bytes) -> dict:
             and (d.findtext("optional") or "false").strip() != "true"]
     lic = [f"{(x.findtext('name') or '').strip()} {(x.findtext('url') or '').strip()}".strip() for x in root.findall("licenses/license")]
     return {"packaging": (root.findtext("packaging") or "jar").strip(), "deps": deps, "licenses": lic,
-            "managed": [dep(d) for d in root.findall("dependencyManagement/dependencies/dependency")]}
+            "managed": [dep(d) for d in root.findall("dependencyManagement/dependencies/dependency") + root.findall("dependencies/dependency")]}
 
 
 def module_info(raw: bytes) -> dict:
@@ -185,7 +185,7 @@ def resolve_maven(bom, roots, repos, fetch) -> list[dict]:
             continue
         seen.add((g, a, v))
         if not v:
-            raise SystemExit(f"no version for {g}:{a}; the BOM does not manage it")
+            raise SystemExit(f"no version for {g}:{a}; the BOM manages {len(managed)} entries, e.g. {sorted(managed)[:3]}")
         repo, pom = find(repos, fetch, mpath(g, a, v, f"{a}-{v}.pom"))
         if pom is None:
             raise SystemExit(f"{g}:{a}:{v} has no POM in any repository")
