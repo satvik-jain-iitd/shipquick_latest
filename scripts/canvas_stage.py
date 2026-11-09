@@ -14,6 +14,8 @@ provenance, not recency, decides a Production board; with no approved board behi
 
 Use:  canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --check
       canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --apply
+      canvas_stage.py --canvas <folder holding project/> --publish-list      (story #163: the files to publish)
+      canvas_stage.py --canvas <folder holding project/> --verify listing.txt (fails naming each file not published)
 Standard library only. No project value lives in this file: every colour and the font come from the manifest.
 """
 import argparse, json, re, sys
@@ -24,7 +26,11 @@ TITLE_GAP = 230            # a row title sits this far above its row (the editor
 TITLE_H, ROW_TITLE_H = 90, 50
 BAND_H = 300               # the band at the top of a section's first tile: its title and purpose
 MAX_SIDE = 8000            # an artboard's side is capped by the editor
-PREFIXES = ("LIVE", "ON STAGING", "DESIGN", "IN TALK", "REJECTED", "OLD", "UNSORTED")
+PREFIXES = ("LIVE", "ON STAGING", "ON DEV", "DESIGN", "IN TALK", "REJECTED", "OLD", "LEARNINGS", "UNSORTED")
+# story #165: the Design learnings board, made by the tool from the section's "learnings" rows, one column per kind
+LEARN_BOARD = "design-learnings.dc.html"
+LEARN_KINDS = {"owner": "The owner's taste", "craft": "Craft rules", "testing": "What testing taught"}
+LEARN_COL, LEARN_PAD = 560, 48
 MINE = re.compile(r"^cs-")     # the one prefix reserved for notes this tool writes; a user's note is never touched
 DEFAULT_PAPER, DEFAULT_FONT = "#ffffff", "system-ui, sans-serif"
 
@@ -52,6 +58,13 @@ def valid_pr(pr, approved, provenance_since):
     if pr == "baseline":
         return bool(provenance_since) and approved <= provenance_since
     return bool(PR_RE.match(pr or ""))
+
+
+def rejected_without_reason(manifest):
+    """Story #148: every (board, row id) in a REJECTED row that carries no "reason"."""
+    return [(board_name(e), r["id"]) for s in manifest.get("sections") or [] for r in s["rows"]
+            if r.get("prefix", s.get("prefix")) == "REJECTED"
+            for e in r["boards"] if not str((e if isinstance(e, dict) else {}).get("reason") or "").strip()]
 
 
 def overlaps(a, b):
@@ -97,7 +110,7 @@ def theme(manifest: dict):
 def esc(t): return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def bg_html(title, purpose, tint, w, h, th, row_titles=(), band=True):
+def bg_html(title, purpose, tint, w, h, th, row_titles=(), band=True, extra=""):
     """A background board: the fill, a band with the section title and purpose (first tile only: a continued tile has no band,
     so a row title can never sit on it), and every row title drawn ON the board (ink on the light fill, 4.5:1 checked by the tool),
     so no text ever depends on the editor's own note colours."""
@@ -124,6 +137,7 @@ body{{margin:0}}
 <div style="position: relative; width: {w}px; height: {h}px; box-sizing: border-box; overflow: hidden; background: {fill}; border: 2px solid {mix(tint, ink, 0.6)}; font-family: {th['font']}; color: {ink};">
 {head}
 {rows}
+{extra}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{{"$preview":{{"width":{w},"height":{h}}}}}'>
@@ -142,6 +156,25 @@ def text_height(text: str, width_px=1400, size=22):
     return (len(text) // per_line + 1) * int(size * 1.4)
 
 
+def learnings_board(rows, title, tint, th):
+    """Story #165: one board, three columns (owner taste, craft rules, what testing taught), newest on top.
+    Returns (html, w, h, problems). Every word is ink on the tint's fill, the same 4.5:1 the theme checks."""
+    problems, heads, body, bottoms = [], [], [], []
+    for i, (kind, label) in enumerate(LEARN_KINDS.items()):
+        x = LEARN_PAD + i * (LEARN_COL + 40); y = LEARN_PAD + 70
+        heads.append((x, LEARN_PAD, label))
+        for r in sorted((r for r in rows if r.get("kind") == kind), key=lambda r: r.get("date", ""), reverse=True):
+            text = r.get("text", "") + (f" ({r['link']})" if r.get("link") else "")
+            body.append(f'  <p style="position: absolute; left: {x}px; top: {y}px; width: {LEARN_COL}px; margin: 0; font-size: 22px; line-height: 1.4;">'
+                        f'<b>{esc(r.get("date", ""))}</b><br>{esc(text)}</p>')
+            y += 30 + text_height(text, LEARN_COL) + 24
+        bottoms.append(y)
+    for r in rows:
+        if r.get("kind") not in LEARN_KINDS: problems.append(f"learnings row {r.get('text', '')!r}: kind {r.get('kind')!r} is not one of {tuple(LEARN_KINDS)}")
+    w, h = 2 * LEARN_PAD + 3 * LEARN_COL + 80, max(400, max(bottoms) + LEARN_PAD)
+    return bg_html(title, "", tint, w, h, th, heads, band=False, extra="\n".join(body)), w, h, problems
+
+
 def layout(canvas: dict, manifest: dict):
     """Return (new canvas dict, background files {path: html}, problems list). Nothing is written here."""
     c = json.loads(json.dumps(canvas))
@@ -150,15 +183,32 @@ def layout(canvas: dict, manifest: dict):
     sections = json.loads(json.dumps(manifest.get("sections") or []))
     if not sections:
         problems.append("manifest has no sections"); return c, {}, problems
+    columns = manifest.get("layout") == "columns"   # story #165: stages as columns, left to right; "rows" (the default) stacks them
+    tint_of = lambda name: th["tints"].get(name) or (next(iter(th["tints"].values())) if th["tints"] else DEFAULT_PAPER)
+    bg_files = {}
+    learn = [s for s in sections if s.get("id") == "learnings"]
+    if columns and not learn: problems.append('layout "columns" needs a section with "id": "learnings" (the Design learnings board, story #165)')
+    for s in learn:   # the tool makes this board itself, from the section's "learnings" rows, and puts it first in that section
+        html, w, h, bad = learnings_board(s.get("learnings", []), s["title"], tint_of(s.get("tint", "")), th); problems += bad
+        boards[LEARN_BOARD] = {**boards.get(LEARN_BOARD, {"x": 0, "y": 0, "title": "Design learnings"}), "w": w, "h": h}
+        bg_files["project/" + LEARN_BOARD] = html
+        s["rows"] = [{"id": "learnings", "title": "Newest on top · the owner's taste, craft rules, what testing taught", "boards": [LEARN_BOARD], "notes": []}] + s["rows"]   # a new list: the manifest is never changed
     # 1. every board exactly once; unknown boards go to an Unsorted row
     named = {}
     for s in sections:
         for r in s["rows"]:
+            copies = {}   # story #148: options put to the owner differ in their words, not only in layout
             for entry in r["boards"]:
                 b = board_name(entry)
                 if b in named: problems.append(f"{b} is in two rows: {named[b]} and {r['id']}")
                 named[b] = r["id"]
                 if b not in boards: problems.append(f"{b} is in the manifest but not on the canvas (row {r['id']})")
+                meta = entry if isinstance(entry, dict) else {}
+                if r.get("options"):
+                    cp = " ".join(str(meta.get("copy") or "").lower().split())
+                    if not cp: problems.append(f"{b} (options row {r['id']}) has no copy line: write {{\"board\": ..., \"copy\": \"<the sentence that makes it different>\"}}")
+                    elif cp in copies: problems.append(f"{b} and {copies[cp]} (options row {r['id']}) have the same copy: options must differ in their words")
+                    else: copies[cp] = b
                 if s.get("id") == "production":
                     prov = entry if isinstance(entry, dict) else {}
                     pr, approved = prov.get("pr"), prov.get("approved")
@@ -173,6 +223,9 @@ def layout(canvas: dict, manifest: dict):
                                              f"({approved}) on or before it (provenance_since: {since or 'not set'}) — otherwise cite the real PR")
                         else:
                             problems.append(f"{b} (row {r['id']}): pr {pr!r} is not \"baseline\", \"#<n>\" or a PR URL")
+    for b, rid in rejected_without_reason(manifest):
+        if b not in manifest.get("rejected_baseline", []):   # an old board on the baseline only warns (main prints it)
+            problems.append(f"{b} (row {rid}) is rejected with no reason: write {{\"board\": ..., \"reason\": \"<the owner's own words>\"}}")
     for k in [k for k in boards if k.startswith("bg/")]: boards.pop(k)
     unsorted = [k for k in boards if k not in named]
     if unsorted:
@@ -181,8 +234,7 @@ def layout(canvas: dict, manifest: dict):
     # 2. drop the tool's own notes from earlier runs, and the ones the manifest names; keep every other note
     for k in [k for k in notes if MINE.match(k) or k in manifest.get("remove_notes", [])]: notes.pop(k)
     # 3. place everything
-    y = 0; boxes = []; bg_files = {}; bg_entries = []; section_boxes = []
-    tint_of = lambda name: th["tints"].get(name) or (next(iter(th["tints"].values())) if th["tints"] else DEFAULT_PAPER)
+    y = 0; ox = 0; boxes = []; bg_entries = []; section_boxes = []
     sh = manifest.get("start_here")
     if sh:
         # the start note is painted on its own small board, so its colour is measured like every other word
@@ -197,15 +249,15 @@ def layout(canvas: dict, manifest: dict):
     for n, s in enumerate(sections, 1):
         top = y; sboxes = []; row_titles = []
         # the section title and purpose are painted on the board's band (see bg_html); this box reserves the band's space
-        sboxes.append(box(0, top, 3600, BAND_H - 40, f"band {n}"))
+        sboxes.append(box(ox, top, 3600, BAND_H - 40, f"band {n}"))
         ry = top + BAND_H + TITLE_GAP   # the first row starts under the band
         row_tops = []
         for r in s["rows"]:
             rid = "r-" + r["id"]; prefix = r.get("prefix", s.get("prefix", "DESIGN"))
             if prefix not in PREFIXES: problems.append(f"row {r['id']}: prefix {prefix} is not one of {PREFIXES}")
-            row_titles.append((0, ry - TITLE_GAP, r["title"]))   # painted on the board, ink on the fill
-            sboxes.append(box(0, ry - TITLE_GAP, 3600, ROW_TITLE_H, rid)); row_tops.append(ry - TITLE_GAP - 20)
-            x = 0; tallest = 0
+            row_titles.append((ox, ry - TITLE_GAP, r["title"]))   # painted on the board, ink on the fill
+            sboxes.append(box(ox, ry - TITLE_GAP, 3600, ROW_TITLE_H, rid)); row_tops.append(ry - TITLE_GAP - 20)
+            x = ox; tallest = 0
             for entry in r["boards"]:
                 b = board_name(entry)
                 if b not in boards: continue
@@ -237,7 +289,9 @@ def layout(canvas: dict, manifest: dict):
                     if overlaps(band_box, box(rx + x0, ryy + cuts[0], 3600, ROW_TITLE_H, txt)): problems.append(f"row title '{txt}' sits on the band of section {n}")
             bg_files["project/" + path] = bg_html(s["title"], s.get("purpose", "") if t == 0 else "", tint_of(s.get("tint", "")), w, h, th, mine, band=(t == 0))
         section_boxes.append((n, box(x0, y0, x1 - x0, y1 - y0, f"section {n}"), sboxes))
-        boxes += sboxes; y = y1 + SECTION_GAP
+        boxes += sboxes
+        if columns: ox = x1 + SECTION_GAP + PAD   # the next column starts right of this one; every column shares the top line
+        else: y = y1 + SECTION_GAP
     # 5. checks
     for i, a in enumerate(boxes):
         for b in boxes[i + 1:]:
@@ -264,15 +318,40 @@ def check_existing(canvas: dict):
     return out
 
 
+def publish_list(canvas: dict):
+    """Story #163: every file a publish must send, read from canvas.json itself: canvas.json, every bg tile, every board."""
+    return ["project/canvas.json"] + ["project/" + k for k in canvas["boards"]]
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--manifest", required=True); ap.add_argument("--canvas", required=True, help="the folder that holds project/canvas.json")
+    ap.add_argument("--manifest"); ap.add_argument("--canvas", required=True, help="the folder that holds project/canvas.json")
     g = ap.add_mutually_exclusive_group(required=True); g.add_argument("--check", action="store_true"); g.add_argument("--apply", action="store_true")
+    g.add_argument("--publish-list", action="store_true", help="print every file to publish, from canvas.json")
+    g.add_argument("--verify", metavar="LISTING", help="a text file of the artifact's published paths; fails naming each one canvas.json needs and it lacks")
+    g.add_argument("--write-rejected-baseline", action="store_true", help="once: list today's rejected boards with no reason in the manifest, so they only warn")
     a = ap.parse_args(argv)
     root = Path(a.canvas); cj = root / "project" / "canvas.json"
-    canvas = json.loads(cj.read_text()); manifest = json.loads(Path(a.manifest).read_text())
+    canvas = json.loads(cj.read_text())
+    if a.publish_list:
+        print("\n".join(publish_list(canvas))); return 0
+    if a.verify:
+        have = set(Path(a.verify).read_text().split())   # any listing shape: one path per line, extra columns ignored
+        missing = [p for p in publish_list(canvas) if p not in have]
+        for p in missing: print("MISSING " + p)
+        print(f"{len(missing)} file(s) named in canvas.json are not published" if missing else "ok, every file canvas.json names is published")
+        return 1 if missing else 0
+    if not a.manifest: ap.error("--check, --apply and --write-rejected-baseline need --manifest")
+    manifest = json.loads(Path(a.manifest).read_text())
+    if a.write_rejected_baseline:   # once, when a canvas first meets story #148: today's reasonless rejected boards only warn from now on
+        old = sorted({b for b, _ in rejected_without_reason(manifest)} | set(manifest.get("rejected_baseline", [])))
+        manifest["rejected_baseline"] = old
+        Path(a.manifest).write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+        print(f"wrote rejected_baseline ({len(old)} boards) into {a.manifest}"); return 0
     if a.check:
         for p in check_existing(canvas): print("NOW " + p)   # what overlaps on the canvas as it is, before any relayout
+    for b, rid in rejected_without_reason(manifest):
+        if b in manifest.get("rejected_baseline", []): print(f"WARN {b} (row {rid}) is rejected with no reason (on rejected_baseline): add the owner's words when you can")
     new, bg_files, problems = layout(canvas, manifest)
     if problems:
         print("\n".join("PROBLEM " + p for p in problems)); return 1
@@ -282,7 +361,7 @@ def main(argv=None):
     cj.write_text(json.dumps(new, indent=1, ensure_ascii=False))
     for p, html in bg_files.items():
         f = root / p; f.parent.mkdir(parents=True, exist_ok=True); f.write_text(html)
-    print(f"wrote {cj} and {len(bg_files)} background boards: {', '.join(bg_files)}"); return 0
+    print(f"wrote {cj} and {len(bg_files)} generated boards (backgrounds, learnings): {', '.join(bg_files)}"); return 0
 
 
 if __name__ == "__main__":
