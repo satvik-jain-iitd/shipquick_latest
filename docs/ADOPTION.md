@@ -113,3 +113,10 @@ Do these in order, in the child repo. One step at a time.
 ## Adding a child
 
 Add its `owner/repo` to `docs/children.md` once (a one-line PR to ShipQuick, or let the owner do it). Add `private` only when `gh repo view` says it is private. Write one `# <name>: <what GitHub shows>. Next: <step>` note above its line. Then follow the checklist above.
+
+## The offline vendor backup
+
+A child never fetches the vendor backup. It is a private repo, read only by the kit's own CI with a token. It fetches the ShipQuick submodule commit and nothing else. ShipQuick keeps
+a copy of its pinned npm and Compose packages in another repo, `satvik-jain-iitd/shipquick-vendor-backup`, in case a source
+goes closed. A clone or a submodule update never fetches it, so nobody downloads its 286 MB.
+Read `docs/VENDOR_BACKUP.md`.
