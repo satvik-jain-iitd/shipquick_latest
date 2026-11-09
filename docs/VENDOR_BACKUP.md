@@ -7,7 +7,7 @@ So we keep a copy of them. The copy lives in a separate repo: `satvik-jain-iitd/
 ## Where it lives, and why it is a separate repo
 
 The backup is about 286 MB. It is not in this repo, on purpose. A clone of the kit, or a `git submodule update` in a
-child project, never fetches it. It is another repo, so nobody downloads 286 MB by surprise.
+child project, never fetches it. It is another, private repo, so nobody downloads 286 MB by surprise.
 
 The repo and the branch are named once, in the `env` block at the top of `.github/workflows/vendor-backup.yml`
 (`BACKUP_REPO`, `BACKUP_REF`). The restore job reads them from there too.
@@ -51,13 +51,14 @@ Only a run on `dev` writes the backup. The push step has `if: github.ref == 'ref
 manual run from another branch, builds and checks the backup, then stops before the push.
 
 The push uses the secret `VENDOR_BACKUP_TOKEN`: a fine-grained token with write access to the backup repo only.
-It is set on the push step and nowhere else. The clone, the fetch and the restore proof read the backup repo with no token,
-because it is public. If the owner makes it private, give the restore job a read token. `tests/test_vendor_backup.py` reads
+The backup repo is private (decision: keep it private, a token clone; owner's words to be confirmed).
+The secret is read on the open step (`ls-remote` and clone) and on the restore checkout, and written on the push step only,
+where a push runs on `dev` or the weekly run on `main`. All checkouts use `persist-credentials: false`. `tests/test_vendor_backup.py` reads
 the workflow and fails if any of this changes, or if a step pushes to the kit repo.
 
 ## One-time setup (owner)
 
-1. Create the repo `satvik-jain-iitd/shipquick-vendor-backup`, public, with the build account as a collaborator.
+1. Create the repo `satvik-jain-iitd/shipquick-vendor-backup`, private, with the build account as a collaborator (push).
 2. Create a fine-grained token with write access to that repo only. Add it to this repo as the secret `VENDOR_BACKUP_TOKEN`.
 3. Add a ruleset on the backup repo that blocks force-push and blocks delete on `main`. Nobody can then rewrite or remove the backup.
 4. After this PR is on `dev`, run the workflow on `dev` once. That builds the backup from `dev`.

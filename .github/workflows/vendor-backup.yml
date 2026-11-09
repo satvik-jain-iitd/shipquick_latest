@@ -18,7 +18,7 @@ on:
 permissions:
   contents: read
 env:
-  # The one place that names the backup. It is a separate public repo, so a clone of the kit never fetches it.
+  # The one place that names the backup. It is a separate private repo, so a clone of the kit never fetches it.
   BACKUP_REPO: satvik-jain-iitd/shipquick-vendor-backup
   BACKUP_REF: main
 concurrency:
@@ -40,13 +40,16 @@ jobs:
         with:
           node-version: "22"
       - name: Open the backup repo (start an empty branch when it has none)
-        # No token here: the backup repo is public, so reading needs none. The token lives only on the push step.
+        # The backup repo is private: the read goes through VENDOR_BACKUP_TOKEN (contents: read is enough here). No push happens in this step.
+        env:
+          VENDOR_BACKUP_TOKEN: ${{ secrets.VENDOR_BACKUP_TOKEN }}
         run: |
           URL="https://github.com/${BACKUP_REPO}.git"
+          AUTH="http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$VENDOR_BACKUP_TOKEN" | base64 -w0)"
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git ls-remote --exit-code --heads "$URL" "$BACKUP_REF" >/dev/null; then
-            git clone --depth 1 --branch "$BACKUP_REF" "$URL" backup
+          if git -c "$AUTH" ls-remote --exit-code --heads "$URL" "$BACKUP_REF" >/dev/null; then
+            git -c "$AUTH" clone --depth 1 --branch "$BACKUP_REF" "$URL" backup
           else
             git init -q -b "$BACKUP_REF" backup
             git -C backup remote add origin "$URL"
@@ -56,9 +59,9 @@ jobs:
           python3 src/scripts/vendor_backup.py --build backup
           python3 src/scripts/vendor_backup.py --manifest-check backup
       - name: Commit and push to the backup repo
-        # Only a push to dev writes the backup. A branch run or a manual run builds and checks it, and stops here.
+        # Only a push to dev, or the weekly run on main (the schedule's branch), writes the backup. A branch or manual run builds and checks it, and stops here.
         # VENDOR_BACKUP_TOKEN: a fine-grained token with write access to the backup repo only. Set on this step only.
-        if: github.ref == 'refs/heads/dev'
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
         env:
           VENDOR_BACKUP_TOKEN: ${{ secrets.VENDOR_BACKUP_TOKEN }}
         run: |
@@ -72,7 +75,7 @@ jobs:
           python3 -c "import json; print(len(json.load(open('MANIFEST.json'))['artifacts']), 'artifacts')"
   restore:
     # Step 2: take only the backup repo and install from it with npm --offline and Gradle --offline.
-    # It reads the repo and ref from the same env as the backup job. No write token; if the owner makes the repo private, pass a read token here.
+    # It reads the repo and ref from the same env as the backup job, with the read token (the repo is private). No write access is used here.
     needs: backup
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -82,10 +85,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: src
+          persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ env.BACKUP_REPO }}
           ref: ${{ env.BACKUP_REF }}
+          token: ${{ secrets.VENDOR_BACKUP_TOKEN }}
+          persist-credentials: false
           path: backup
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:

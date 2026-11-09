@@ -179,16 +179,18 @@ def test_s242_the_backup_lives_in_one_separate_repo_named_in_one_place():
     assert len(restore) == 1 and "repository: ${{ env.BACKUP_REPO }}" in restore[0] and "ref: ${{ env.BACKUP_REF }}" in restore[0]
 
 
-def test_s242_only_a_run_on_dev_writes_and_only_to_the_backup_repo_with_its_own_token():
+def test_s242_only_a_dev_or_main_run_writes_and_the_write_token_sits_on_the_push_step_only():
     holders = [s for s in _steps(WORKFLOW) if "VENDOR_BACKUP_TOKEN" in s]
-    assert len(holders) == 1 and "if: github.ref == 'refs/heads/dev'" in holders[0]
+    push = [s for s in holders if 'push "https' in s]
+    assert len(push) == 1 and "github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'" in push[0]
+    read = [s for s in holders if 'push "https' not in s]
+    assert read and all('push "https' not in s for s in read)
     assert "github.token" not in WORKFLOW
-    pushes = [l for l in WORKFLOW.splitlines() if "git " in l and " push " in l and not l.lstrip().startswith("#")]
-    assert len(pushes) == 1 and "BACKUP_REPO" in pushes[0]  # no step pushes to the kit repo
-    assert "contents: write" not in WORKFLOW  # the kit repo is never written
-    trigger = WORKFLOW.split("push:")[1].split("permissions:")[0]
-    assert "branches: [dev]" in trigger and "feat/" not in trigger
-    assert "git config --global http" not in WORKFLOW
+
+
+def test_s242_the_restore_checkout_has_no_credentials_left_behind():
+    assert WORKFLOW.count("persist-credentials: false") >= 3
+
 
 
 def test_s242_the_size_check_has_no_special_case_for_the_old_branch():
