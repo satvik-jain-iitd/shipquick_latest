@@ -1,0 +1,33 @@
+{
+  "name": "PageControl",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "indexDisplayMode": {
+      "type": {
+        "kind": "enum",
+        "values": [
+          "automatic",
+          "always",
+          "never"
+        ]
+      },
+      "optional": true
+    },
+    "selection": {
+      "type": {
+        "kind": "named",
+        "name": "Binding<Hashable>"
+      },
+      "optional": true
+    },
+    "content": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

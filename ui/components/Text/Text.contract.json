@@ -1,0 +1,15 @@
+{
+  "name": "Text",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "content": {
+      "type": {
+        "kind": "string"
+      }
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

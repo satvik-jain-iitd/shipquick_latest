@@ -1,0 +1,28 @@
+{
+  "name": "Image",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "name": {
+      "type": {
+        "kind": "string"
+      },
+      "optional": true
+    },
+    "systemName": {
+      "type": {
+        "kind": "string"
+      },
+      "optional": true
+    },
+    "isDecorative": {
+      "type": {
+        "kind": "boolean"
+      },
+      "optional": true
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

@@ -444,3 +444,21 @@ Scenario: an agent looks a native component up
   And a JSON doc that only mentions "Error:" in its text passes
 ```
 Tests: `tests/test_ui_cli.py`; CI job `ui-cli` runs the real CLI.
+
+## Story #135 (S5): the iOS library, from Apple's counted list (rule 38)
+```gherkin
+Scenario: the iOS parts come from Apple's own list
+  Given docs/research/ios-swiftui-components.md names Apple's HIG Components page and the date 2026-11-09
+  When its table is read
+  Then its "Count:" line equals the number of rows, and every row names a SwiftUI type and its Apple doc URL
+  And every row with no Compose M3 twin has a doc in ui/components/<Name>/ with that exact platforms.ios and android null
+  And each of those has a generated ios-<name> topic
+  And a shared row names its M3 component and adds no new doc
+
+Scenario: the iOS screen templates use only standard SwiftUI
+  Given the five templates in ui/ios/templates/ (sign-in, list, detail, settings, step flow)
+  When their text is scanned
+  Then none has a custom Shape, Color(red:, .padding( with a bare number, Canvas {, or a UIView subclass
+  And the step flow puts the filled button last, the bordered one above it, in a bottom inset that rides above the keyboard
+```
+Tests: `tests/test_ios_library.py`, `tests/test_ios_templates.py` (s135).

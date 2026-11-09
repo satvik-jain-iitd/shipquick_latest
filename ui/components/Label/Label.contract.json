@@ -1,0 +1,20 @@
+{
+  "name": "Label",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "title": {
+      "type": {
+        "kind": "string"
+      }
+    },
+    "systemImage": {
+      "type": {
+        "kind": "string"
+      }
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

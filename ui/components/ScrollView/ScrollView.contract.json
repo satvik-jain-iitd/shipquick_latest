@@ -1,0 +1,25 @@
+{
+  "name": "ScrollView",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "axes": {
+      "type": {
+        "kind": "enum",
+        "values": [
+          "vertical",
+          "horizontal"
+        ]
+      },
+      "optional": true
+    },
+    "content": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

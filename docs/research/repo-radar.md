@@ -256,3 +256,15 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   So we use it, not copy it. Three spikes on the owner's Mac: needs core installed; `component` needs a React source file; reference topics work.
 - Decision: pin `@astryxdesign/cli` and `core` `0.7.11` in `ui/tool/`; native parts as generated topics; a fail-closed wrapper.
 - Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #135 (S5): the iOS library (counted SwiftUI list, iOS-only docs, five templates)
+- Need: the list of Apple's standard iOS components with their exact SwiftUI types, and screen templates built only from them.
+- Run: `scout.py --need "list of standard SwiftUI components mapped to Apple HIG, and SwiftUI screen templates using only
+  standard controls"`: no repos found. `gh search repos "topic:swiftui topic:design-system"`: jaywcjlove/awesome-mac and
+  dkhamsing/open-source-ios-apps (lists), jordanbaird/Ice and CodeEditApp/CodeEdit (macOS apps), NativeScript (a cross-platform
+  runtime); none is a component list or a template set.
+- Source used instead: Apple's own SwiftUI and HIG docs (Tier A, the vendor, 0.9), read as the JSON the pages render.
+  Rule 38 says to use SwiftUI as Apple ships it, so there is nothing to adopt; the docs only point at Apple's parts.
+- Decision: `docs/research/ios-swiftui-components.md` (33 counted), 12 iOS-only docs in `ui/components/`, templates in
+  `ui/ios/templates/` from standard controls only. No package added.
+- Confidence that nothing fits better: 0.85.
