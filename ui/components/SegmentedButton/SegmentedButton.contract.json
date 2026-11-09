@@ -33,6 +33,25 @@
           "kind": "content"
         }
       }
+    },
+    "ios": {
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        }
+      },
+      "selection": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<SelectionValue>"
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
     }
   },
   "webOnly": []

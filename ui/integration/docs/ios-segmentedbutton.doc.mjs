@@ -22,7 +22,41 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A segmented button lets the user pick from a few options set side by side. Single-select picks one. Multi-select picks some. Put the buttons in a SingleChoiceSegmentedButtonRow or a MultiChoiceSegmentedButtonRow."
+          "text": "A segmented button lets the user pick from a few options set side by side. On iOS the twin is a Picker with .pickerStyle(.segmented). Apple: the style \"presents the options in a segmented control\". It picks one option. Each option gets a tag(_:) with its value."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "Says what the choice is for. VoiceOver reads it."
+            ],
+            [
+              "selection",
+              "Binding<SelectionValue>",
+              "",
+              "The picked option's tag."
+            ],
+            [
+              "content",
+              "() -> some View",
+              "",
+              "The options, each with a tag(_:)."
+            ]
+          ]
         }
       ]
     },
@@ -33,15 +67,15 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Keep multi-select to two to five options.",
-            "Set each button's shape with SegmentedButtonDefaults.itemShape(index, count)."
+            "Bind selection, and tag each option with its value, like Text(\"Day\").tag(Range.day).",
+            "Use it for a few closely related choices (Apple HIG, Segmented controls)."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Use it for more than five options or complex choices. Use chips."
+            "Mix actions and choices in one control."
           ]
         }
       ]
@@ -53,9 +87,9 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on each segment only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults).",
-            "State is read out (4.1.2 Name, Role, Value, role and state): Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page).",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "VoiceOver (4.1.2 Name, Role, Value, a spoken name and state): VoiceOver says each segment's words and which one is selected.",
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

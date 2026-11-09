@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import ui_topics
@@ -48,23 +50,19 @@ def test_s228_an_ios_word_in_an_android_topic_fails_too():
     assert any("@State" in m for m in ui_topics.leaks(t, "android"))
 
 
-# Story #228 lands in two stacked PRs (50-file cap). These docs get their iOS props in the second PR, which empties this set.
-PENDING = {"List", "NavigationBar", "NavigationDrawer", "ProgressIndicator", "SearchBar", "SegmentedButton", "Switch"}
-
-
 def test_s228_every_ios_topic_of_a_shared_doc_lists_props():
     shared = 0
     for folder in sorted(p for p in (ROOT / "ui/components").iterdir() if p.is_dir()):
         doc = read_doc(folder / f"{folder.name}.doc.mjs")
         on = [p for p, v in doc["platforms"].items() if v]
-        if "ios" not in on or len(on) < 2 or folder.name in PENDING:
+        if "ios" not in on or len(on) < 2:
             continue
         shared += 1
         contract = json.loads((folder / f"{folder.name}.contract.json").read_text(encoding="utf-8"))
         t = ui_topics.topic(doc, contract, "ios")
         props = [s for s in t["sections"] if s["title"] == "Props"]
         assert props and props[0]["content"][0]["rows"], f"ios-{folder.name.lower()} lists no props"
-    assert shared + len(PENDING) >= 15
+    assert shared >= 15
 
 
 def test_s228_platform_usage_is_read_for_its_own_platform_only():
@@ -105,3 +103,31 @@ def test_s228_a_prop_tagged_for_ios_replaces_the_untagged_one_in_the_ios_topic_o
         return [r[1] for s in ui_topics.topic(doc, contract, p)["sections"] if s["title"] == "Props" for r in s["content"][0]["rows"]]
 
     assert types("ios") == ["() -> some View"] and types("android") == ["@Composable () -> Unit"]
+
+
+# PR #230 review: wider leak lists, one injected word each.
+IOS_LEAKS = ["LaunchedEffect", "16dp", "12.sp", "onValueChange", "Material3", "ExperimentalMaterial3Api",
+             "ModalBottomSheet(", "mutableStateOf", "Kotlin"]
+ANDROID_LEAKS = [".toggleStyle(", "@Environment", "@Observable", ".presentationDetents", "Toggle(isOn:", ".alert(",
+                 "Swift", "NavigationView", "$isOn"]
+
+
+def one_word(platform, text):
+    other = "android" if platform == "ios" else "ios"
+    doc = {"name": "X", "platforms": {platform: "X", other: None}, "props": [], "usage": {"description": text}}
+    return ui_topics.leaks(ui_topics.topic(doc, {"core": {}}, platform), platform)
+
+
+@pytest.mark.parametrize("word", IOS_LEAKS)
+def test_s228_an_ios_topic_with_a_compose_word_fails(word):
+    assert one_word("ios", f"Call {word} here."), word
+
+
+@pytest.mark.parametrize("word", ANDROID_LEAKS)
+def test_s228_an_android_topic_with_a_swiftui_word_fails(word):
+    assert one_word("android", f"Call {word} here."), word
+
+
+@pytest.mark.parametrize("text", ["It costs $5.", "Pay in US$ or EUR.", "Use 2 columns.", "Wait 300ms."])
+def test_s228_money_and_plain_numbers_are_not_leaks(text):
+    assert not one_word("android", text) and not one_word("ios", text), text

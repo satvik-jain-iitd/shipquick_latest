@@ -22,7 +22,7 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A search bar is a search field that stays on screen. The user types words to find results in the app. Use it when search is the main job of the app. Google marks SearchBar as experimental."
+          "text": "A search field lets the user type words to find results in the app. The search bar stays on screen. Use it when search is the main job of the app. Google marks SearchBar as experimental."
         }
       ]
     },

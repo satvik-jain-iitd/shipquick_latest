@@ -9,6 +9,20 @@ export default {
     "ios": null,
     "web": "@astryxdesign/core/Toast"
   },
+  "platformUsage": {
+    "android": {
+      "description": "Put a SnackbarHost in Scaffold's snackbarHost slot and call SnackbarHostState.showSnackbar from a coroutine.",
+      "accessibility": [
+        {
+          "name": "Time to act",
+          "category": "Content",
+          "criterion": "2.2.1 Timing Adjustable",
+          "requirement": "Indefinite with an action",
+          "description": "With an action, showSnackbar stays until the user acts (Google's default duration is Indefinite then). Keep that default."
+        }
+      ]
+    }
+  },
   "group": "Snackbar",
   "category": "Feedback & Status",
   "keywords": [
@@ -19,7 +33,7 @@ export default {
     "notice"
   ],
   "usage": {
-    "description": "A snackbar is a short message at the bottom of the screen, like \"Message deleted\" with Undo. It does not stop the user. Put a SnackbarHost in Scaffold's snackbarHost slot and call SnackbarHostState.showSnackbar from a coroutine.",
+    "description": "A snackbar is a short message at the bottom of the screen, like \"Message deleted\" with Undo. It does not stop the user.",
     "bestPractices": [
       {
         "guidance": true,
@@ -35,13 +49,6 @@ export default {
       }
     ],
     "accessibility": [
-      {
-        "name": "Time to act",
-        "category": "Content",
-        "criterion": "2.2.1 Timing Adjustable",
-        "requirement": "Indefinite with an action",
-        "description": "With an action, showSnackbar stays until the user acts (Google's default duration is Indefinite then). Keep that default."
-      },
       {
         "name": "Text contrast",
         "category": "Color contrast",

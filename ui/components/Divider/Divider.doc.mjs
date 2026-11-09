@@ -9,6 +9,21 @@ export default {
     "ios": null,
     "web": "@astryxdesign/core/Divider"
   },
+  "platformUsage": {
+    "android": {
+      "description": "HorizontalDivider splits items in a column. VerticalDivider splits items in a row.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Use modifier padding for space around it."
+        },
+        {
+          "guidance": false,
+          "description": "Draw your own line with a Box or Canvas."
+        }
+      ]
+    }
+  },
   "group": "Divider",
   "category": "Layout",
   "keywords": [
@@ -18,19 +33,11 @@ export default {
     "rule"
   ],
   "usage": {
-    "description": "A divider is a thin line between items in a list or other container. HorizontalDivider splits items in a column. VerticalDivider splits items in a row.",
+    "description": "A divider is a thin line between items in a list or other container.",
     "bestPractices": [
       {
         "guidance": true,
         "description": "Use the default thickness and colour from the theme."
-      },
-      {
-        "guidance": true,
-        "description": "Use modifier padding for space around it."
-      },
-      {
-        "guidance": false,
-        "description": "Draw your own line with a Box or Canvas."
       }
     ],
     "accessibility": [

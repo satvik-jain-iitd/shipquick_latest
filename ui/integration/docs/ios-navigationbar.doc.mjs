@@ -22,7 +22,53 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A navigation bar at the bottom lets the user switch between the app's main places. Each NavigationBarItem is one place."
+          "text": "A navigation bar at the bottom lets the user switch between the app's main places. On iOS the twin is the tab bar: a TabView with one Tab per place. Apple: Tab is \"the content for a tab and the tab's associated tab item in a tab view.\" Tab needs iOS 18; tabItem(_:) is deprecated."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "selection",
+              "Binding<SelectionValue>",
+              "",
+              "The tab on screen now."
+            ],
+            [
+              "content",
+              "() -> some TabContent",
+              "",
+              "The Tabs."
+            ],
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "Tab: the words under the icon."
+            ],
+            [
+              "systemImage",
+              "String",
+              "",
+              "Tab: the SF Symbol name for the icon."
+            ],
+            [
+              "value",
+              "SelectionValue",
+              "",
+              "Tab: the value selection holds when this tab is on screen."
+            ]
+          ]
         }
       ]
     },
@@ -34,14 +80,16 @@ export default {
           "style": "do",
           "items": [
             "Use it for three to five places of equal weight.",
-            "Use it on compact windows. Use a navigation rail on large ones."
+            "Bind selection, and give each Tab a value: Tab(\"Home\", systemImage: \"house\", value: .home) { ... }.",
+            "Keep the tab bar on every screen of a section (Apple HIG, Tab bars)."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Use it for fewer than three or more than five places."
+            "Use it for fewer than three or more than five places.",
+            "Use a tab for an action, like writing a message. Tabs are for places."
           ]
         }
       ]
@@ -53,8 +101,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "State is read out (4.1.2 Name, Role, Value, role and state): Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page).",
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on each item only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+            "VoiceOver (4.1.2 Name, Role, Value, a spoken name and state): Each tab's title is its spoken name, and VoiceOver says which tab is selected.",
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

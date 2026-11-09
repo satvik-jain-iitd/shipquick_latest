@@ -9,6 +9,33 @@ export default {
     "ios": null,
     "web": "@astryxdesign/core/Carousel"
   },
+  "platformUsage": {
+    "android": {
+      "description": "Multi-browse shows items of mixed sizes. Uncontained shows one size that runs past the edge.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Use multi-browse to browse many items at once."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Icon name",
+          "category": "Semantics",
+          "criterion": "1.1.1 Non-text Content",
+          "requirement": "contentDescription",
+          "description": "An icon with no words next to it needs a contentDescription that names the action, like \"Add to favorites\"."
+        },
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "48dp",
+          "description": "Google: anything a user can tap is at least 48dp. Material sets this on each clickable item only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+        }
+      ]
+    }
+  },
   "group": "Carousel",
   "category": "Content",
   "keywords": [
@@ -18,12 +45,8 @@ export default {
     "photos"
   ],
   "usage": {
-    "description": "A carousel is a list of items the user scrolls sideways, sized to the window. It is for related visual content, like photos. Multi-browse shows items of mixed sizes. Uncontained shows one size that runs past the edge.",
+    "description": "A carousel is a list of items the user scrolls sideways, sized to the window. It is for related visual content, like photos.",
     "bestPractices": [
-      {
-        "guidance": true,
-        "description": "Use multi-browse to browse many items at once."
-      },
       {
         "guidance": true,
         "description": "Keep the text on each item short."
@@ -33,22 +56,7 @@ export default {
         "description": "Hide needed content in an item the user may never scroll to."
       }
     ],
-    "accessibility": [
-      {
-        "name": "Icon name",
-        "category": "Semantics",
-        "criterion": "1.1.1 Non-text Content",
-        "requirement": "contentDescription",
-        "description": "An icon with no words next to it needs a contentDescription that names the action, like \"Add to favorites\"."
-      },
-      {
-        "name": "Touch target",
-        "category": "Content",
-        "criterion": "2.5.8 Target Size (Minimum)",
-        "requirement": "48dp",
-        "description": "Google: anything a user can tap is at least 48dp. Material sets this on each clickable item only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
-      }
-    ],
+    "accessibility": [],
     "anatomy": [
       {
         "name": "Item",

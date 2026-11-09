@@ -9,6 +9,35 @@ export default {
     "ios": "SwiftUI.ProgressView",
     "web": "@astryxdesign/core/ProgressBar"
   },
+  "platformUsage": {
+    "android": {
+      "description": "It comes as a line (LinearProgressIndicator) or a circle (CircularProgressIndicator).",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Pass progress when you know how much is done, as a number from 0.0 to 1.0."
+        },
+        {
+          "guidance": true,
+          "description": "Leave progress out when you do not know how long it takes."
+        }
+      ]
+    },
+    "ios": {
+      "description": "On iOS, ProgressView shows a bar when it has a value, and a spinner when it does not. Apple: init(value:total:) \"Creates a progress view for showing determinate progress.\"",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Pass value and total when you know how much is done, like ProgressView(value: done, total: 10)."
+        },
+        {
+          "guidance": true,
+          "description": "Leave value out, or pass nil, when you do not know how long it takes."
+        }
+      ],
+      "accessibility": []
+    }
+  },
   "group": "Progress",
   "category": "Feedback & Status",
   "keywords": [
@@ -19,16 +48,8 @@ export default {
     "upload"
   ],
   "usage": {
-    "description": "A progress indicator shows that work is going on, like loading data or an upload. Determinate shows how much is done. Indeterminate moves until the work ends. It comes as a line (LinearProgressIndicator) or a circle (CircularProgressIndicator).",
+    "description": "A progress indicator shows that work is going on, like loading data or an upload. Determinate shows how much is done. Indeterminate moves until the work ends.",
     "bestPractices": [
-      {
-        "guidance": true,
-        "description": "Pass progress when you know how much is done, as a number from 0.0 to 1.0."
-      },
-      {
-        "guidance": true,
-        "description": "Leave progress out when you do not know how long it takes."
-      },
       {
         "guidance": false,
         "description": "Leave the user with no sign of work during a long wait."
@@ -68,6 +89,26 @@ export default {
       "name": "progress",
       "type": "() => number",
       "description": "How much is done, from 0.0 to 1.0. Leave it out for indeterminate."
+    },
+    {
+      "name": "value",
+      "type": "Double?",
+      "description": "How much is done, out of total. nil means indeterminate.",
+      "platform": "ios",
+      "default": "nil"
+    },
+    {
+      "name": "total",
+      "type": "Double",
+      "description": "The value that means done.",
+      "platform": "ios",
+      "default": "1.0"
+    },
+    {
+      "name": "titleKey",
+      "type": "LocalizedStringKey",
+      "description": "Words that say what loads. VoiceOver reads them.",
+      "platform": "ios"
     }
   ]
 };

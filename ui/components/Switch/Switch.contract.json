@@ -28,6 +28,27 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        },
+        "optional": true
+      },
+      "isOn": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<Bool>"
+        }
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

@@ -23,7 +23,41 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A progress indicator shows that work is going on, like loading data or an upload. Determinate shows how much is done. Indeterminate moves until the work ends. It comes as a line (LinearProgressIndicator) or a circle (CircularProgressIndicator)."
+          "text": "A progress indicator shows that work is going on, like loading data or an upload. Determinate shows how much is done. Indeterminate moves until the work ends. On iOS, ProgressView shows a bar when it has a value, and a spinner when it does not. Apple: init(value:total:) \"Creates a progress view for showing determinate progress.\""
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "value",
+              "Double?",
+              "nil",
+              "How much is done, out of total. nil means indeterminate."
+            ],
+            [
+              "total",
+              "Double",
+              "1.0",
+              "The value that means done."
+            ],
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "Words that say what loads. VoiceOver reads them."
+            ]
+          ]
         }
       ]
     },
@@ -34,8 +68,8 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Pass progress when you know how much is done, as a number from 0.0 to 1.0.",
-            "Leave progress out when you do not know how long it takes."
+            "Pass value and total when you know how much is done, like ProgressView(value: done, total: 10).",
+            "Leave value out, or pass nil, when you do not know how long it takes."
           ]
         },
         {

@@ -23,7 +23,47 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A list shows a set of items. For a long list or one of unknown length, use LazyColumn (a layout container): it only builds the rows on screen. Build each row with ListItem."
+          "text": "A list shows a set of items. On iOS, List shows rows of data in one scrolling column and only builds the rows on screen. listStyle(_:) sets the look, like .insetGrouped or .plain."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "data",
+              "RandomAccessCollection",
+              "",
+              "The items, one row each."
+            ],
+            [
+              "id",
+              "KeyPath<Data.Element, ID>",
+              "",
+              "The stable id of each item."
+            ],
+            [
+              "rowContent",
+              "(Data.Element) -> some View",
+              "",
+              "Builds one row from one item."
+            ],
+            [
+              "selection",
+              "Binding<SelectionValue?>?",
+              "nil",
+              "The picked row, when rows can be picked."
+            ]
+          ]
         }
       ]
     },
@@ -34,15 +74,16 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Use LazyColumn or LazyRow for long lists.",
-            "Give each item a stable key."
+            "Give each item a stable key.",
+            "Pass the data with an id, like List(items, id: \\.id) { item in ... }.",
+            "Bind selection when the user can pick rows."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Put a long list in a plain Column. It builds every row at once."
+            "Put a long list in a ScrollView with a VStack. Use List."
           ]
         }
       ]
@@ -54,8 +95,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on a clickable row only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults).",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

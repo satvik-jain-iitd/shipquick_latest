@@ -22,7 +22,41 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A switch turns one thing on or off, like a setting or a feature. The user drags the thumb or taps the switch."
+          "text": "A switch turns one thing on or off, like a setting or a feature. The user drags the thumb or taps the switch. On iOS the twin is Toggle. Toggle(\"Wi-Fi\", isOn: $isOn) shows the words and the switch as one row."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "The words for the setting."
+            ],
+            [
+              "isOn",
+              "Binding<Bool>",
+              "",
+              "True when it is on."
+            ],
+            [
+              "label",
+              "() -> some View",
+              "",
+              "A custom label instead of words."
+            ]
+          ]
         }
       ]
     },
@@ -34,7 +68,7 @@ export default {
           "style": "do",
           "items": [
             "Use it for a setting that takes effect at once.",
-            "Make the whole row toggleable with its label."
+            "Put the words in the Toggle's own label, so the whole row is one control."
           ]
         },
         {
@@ -53,9 +87,9 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "State is read out (4.1.2 Name, Role, Value, role and state): Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page).",
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on the switch only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults).",
-            "Shape contrast (1.4.11 Non-text Contrast, 3:1): The edge or the mark that shows state has at least 3:1 contrast with what is behind it."
+            "Shape contrast (1.4.11 Non-text Contrast, 3:1): The edge or the mark that shows state has at least 3:1 contrast with what is behind it.",
+            "VoiceOver (4.1.2 Name, Role, Value, a spoken name and state): VoiceOver reads the label, the role, and on or off, as one element.",
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

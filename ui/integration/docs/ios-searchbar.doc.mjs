@@ -22,7 +22,41 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A search bar is a search field that stays on screen. The user types words to find results in the app. Use it when search is the main job of the app. Google marks SearchBar as experimental."
+          "text": "A search field lets the user type words to find results in the app. On iOS, add searchable(text:placement:prompt:) to the view inside a navigation container. Apple: \"Marks this view as searchable, which configures the display of a search field.\" The system places the field, often in the navigation bar."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "text",
+              "Binding<String>",
+              "",
+              "The words in the field."
+            ],
+            [
+              "placement",
+              "SearchFieldPlacement",
+              ".automatic",
+              "Where the field sits, like .navigationBarDrawer or .toolbar."
+            ],
+            [
+              "prompt",
+              "Text?",
+              "nil",
+              "The hint while the field is empty."
+            ]
+          ]
         }
       ]
     },
@@ -33,8 +67,9 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Use SearchBarDefaults.InputField for the field.",
-            "Show suggestions or results in its content when it is expanded."
+            "Bind text to a String held in @State and filter the results as the user types.",
+            "Set a prompt that says what can be found, like \"Search recipes\" (Apple HIG, Search fields).",
+            "Offer suggestions with searchSuggestions(_:)."
           ]
         },
         {
@@ -53,8 +88,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Label (3.3.2 Labels or Instructions, visible label): Every input has words that say what to enter. A placeholder alone is not a label.",
-            "Icon name (1.1.1 Non-text Content, contentDescription): An icon with no words next to it needs a contentDescription that names the action, like \"Add to favorites\"."
+            "Label (3.3.2 Labels or Instructions, visible label): Every input has words that say what to enter. A placeholder alone is not a label."
           ]
         }
       ]

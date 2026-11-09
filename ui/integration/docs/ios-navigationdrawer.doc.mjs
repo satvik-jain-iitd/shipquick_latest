@@ -22,7 +22,41 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A navigation drawer is a menu that slides in from the side. The user swipes or taps a menu icon. Use it for many sections, account links, or features in a complex app."
+          "text": "A navigation drawer lists many sections, account links, or features in a complex app. On iOS the twin is a sidebar: a List with .listStyle(.sidebar), as the first column of a NavigationSplitView. Apple: \"The list style that describes the behavior and appearance of a sidebar list.\" On iPhone the split view folds into one stack."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "sidebar",
+              "() -> some View",
+              "",
+              "NavigationSplitView: the sidebar List."
+            ],
+            [
+              "detail",
+              "() -> some View",
+              "",
+              "NavigationSplitView: what the picked row opens."
+            ],
+            [
+              "selection",
+              "Binding<SelectionValue?>",
+              "",
+              "List: the picked row."
+            ]
+          ]
         }
       ]
     },
@@ -33,15 +67,15 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Put a ModalDrawerSheet with NavigationDrawerItems in drawerContent.",
-            "Open and close it with DrawerState."
+            "Put the sidebar List in NavigationSplitView(sidebar:detail:).",
+            "Group a deep list with sections or disclosure groups (Apple HIG, Sidebars)."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Hide the app's two or three main places in a drawer. Use a navigation bar."
+            "Hide the app's two or three main places in a sidebar on iPhone. Use a tab bar."
           ]
         }
       ]
@@ -53,8 +87,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Focus (2.4.3 Focus Order, focus moves in and back): Focus moves into the surface when it opens and back to what opened it when it closes. Back closes it.",
-            "State is read out (4.1.2 Name, Role, Value, role and state): Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page)."
+            "VoiceOver (4.1.2 Name, Role, Value, a spoken name and state): VoiceOver says the selected row. Bind selection so the list knows which one it is."
           ]
         }
       ]

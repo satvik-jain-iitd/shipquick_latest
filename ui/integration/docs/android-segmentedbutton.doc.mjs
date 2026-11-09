@@ -99,9 +99,9 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
             "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on each segment only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults).",
-            "State is read out (4.1.2 Name, Role, Value, role and state): Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page).",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "State is read out (4.1.2 Name, Role, Value, role and state): Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page)."
           ]
         }
       ]

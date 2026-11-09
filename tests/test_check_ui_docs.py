@@ -220,6 +220,20 @@ def test_s228_a_platform_prop_documented_only_for_another_platform_fails(tmp_pat
     assert r.returncode == 1 and "platforms.android" in r.stdout, r.stdout
 
 
+def test_s228_a_core_prop_documented_only_for_ios_fails(tmp_path):
+    # PR #230 review: it would vanish from the android and web topics.
+    props = [{**p, "platform": "ios"} if p["name"] == "label" else p for p in PROPS]
+    r = run(make(tmp_path, doc_text=doc(props)))
+    assert r.returncode == 1 and "label" in r.stdout and "android" in r.stdout, r.stdout
+
+
+def test_s228_a_core_prop_tagged_once_per_platform_passes(tmp_path):
+    props = [p for p in PROPS if p["name"] != "label"] + [
+        {"name": "label", "type": "string", "description": "The words.", "platform": pl} for pl in ("android", "ios", "web")]
+    r = run(make(tmp_path, doc_text=doc(props)))
+    assert r.returncode == 0, r.stdout
+
+
 def test_s228_the_same_name_twice_for_one_platform_is_a_duplicate(tmp_path):
     tagged = {"name": "content", "type": "() -> some View", "description": "Inside.", "platform": "ios"}
     r = run(make(tmp_path, doc_text=doc([COMPOSE, tagged, tagged]), contract=TWO))
