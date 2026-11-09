@@ -56,14 +56,10 @@ export default {
           "style": "unordered",
           "items": [
             "TimeInput: Picks a time by typing the hour and minute in fields, not on a dial. Use it when space is short or for typing users.",
-            "TimePickerDialog: A dialog that holds a TimePicker or TimeInput, with a title, confirm and dismiss buttons and an optional mode toggle button.",
-            "TimePickerDialogDefaults.Title: The default title of a TimePickerDialog. It changes with the display mode.",
-            "TimePickerDialogDefaults.DisplayModeToggle: The default button that switches a TimePickerDialog between the dial and the input fields.",
             "TimePickerState: Holds the hour (0 to 23), the minute, is24hour and which part is being picked.",
             "rememberTimePickerState: Creates and keeps a TimePickerState, with the first hour and minute and is24Hour.",
             "TimePickerDefaults: Default colours and the layout type for time pickers. Make colours with TimePickerDefaults.colors().",
             "TimePickerColors: The dial, selector, period button and time box colours of a time picker.",
-            "TimePickerDialogDefaults: The default title, mode toggle, container colour, shape and minimum height for TimePickerDialog.",
             "TimePickerDisplayMode: How a time picker dialog shows: Picker (a dial) or Input (text fields).",
             "TimePickerLayoutType: How the dial and the time sit: Vertical (time above the dial) or Horizontal (side by side, for landscape).",
             "TimePickerSelectionMode: Which part the user is picking: Hour or Minute."

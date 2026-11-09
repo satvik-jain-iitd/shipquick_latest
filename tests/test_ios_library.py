@@ -15,6 +15,13 @@ LIST = ROOT / "docs" / "research" / "ios-swiftui-components.md"
 IOS_ONLY = "none (iOS-only)"
 
 
+def android_components():
+    """Full names of the component rows of docs/research/android-m3-api.md."""
+    text = (ROOT / "docs" / "research" / "android-m3-api.md").read_text(encoding="utf-8")
+    cells = [[c.strip() for c in l.strip().strip("|").split("|")] for l in text.splitlines() if l.startswith("|")]
+    return {f"{c[5].strip('`')}.{c[1].strip('`')}" for c in cells if c[0].isdigit() and c[2] == "component"}
+
+
 def rows():
     """Counted table rows: | n | HIG component | SwiftUI type | iOS since | Doc URL | Same as M3 component | Our doc |"""
     out = []
@@ -47,7 +54,9 @@ def test_s135_every_ios_only_row_has_a_doc_folder_and_an_ios_topic():
         name, swift = r[6].strip("`"), r[2].strip("`")
         doc = read_doc(ROOT / "ui" / "components" / name / f"{name}.doc.mjs")
         assert doc["platforms"]["ios"] == swift, (name, doc["platforms"])
-        assert doc["platforms"]["android"] is None, name
+        # No M3 card twin, but the doc may carry an Android component row of the generated API list (PR #255
+        # review 2: Text is both SwiftUI.Text and androidx.compose.material3.Text).
+        assert doc["platforms"]["android"] in {None, *android_components()}, name
         assert (ROOT / "ui" / "integration" / "docs" / f"ios-{name.lower()}.doc.mjs").exists(), name
 
 

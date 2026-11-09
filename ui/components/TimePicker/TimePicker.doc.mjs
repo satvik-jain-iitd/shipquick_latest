@@ -81,18 +81,6 @@ export default {
         {
           "name": "TimeInput",
           "note": "Picks a time by typing the hour and minute in fields, not on a dial. Use it when space is short or for typing users."
-        },
-        {
-          "name": "TimePickerDialog",
-          "note": "A dialog that holds a TimePicker or TimeInput, with a title, confirm and dismiss buttons and an optional mode toggle button."
-        },
-        {
-          "name": "TimePickerDialogDefaults.Title",
-          "note": "The default title of a TimePickerDialog. It changes with the display mode."
-        },
-        {
-          "name": "TimePickerDialogDefaults.DisplayModeToggle",
-          "note": "The default button that switches a TimePickerDialog between the dial and the input fields."
         }
       ],
       "supporting": [
@@ -111,10 +99,6 @@ export default {
         {
           "name": "TimePickerColors",
           "use": "The dial, selector, period button and time box colours of a time picker."
-        },
-        {
-          "name": "TimePickerDialogDefaults",
-          "use": "The default title, mode toggle, container colour, shape and minimum height for TimePickerDialog."
         },
         {
           "name": "TimePickerDisplayMode",

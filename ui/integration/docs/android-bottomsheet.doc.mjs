@@ -67,7 +67,6 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "BottomSheetScaffold: A screen layout with a standard bottom sheet that stays on screen beside the content, partly or fully open. Use it when the sheet is part of the screen, like a map with a list.",
             "BottomSheetDefaults.DragHandle: The default handle at the top of a sheet. The user drags it to move the sheet.",
             "SheetState: Says if a sheet is Hidden, PartiallyExpanded or Expanded. Call show(), hide(), expand() or partialExpand() from a coroutine.",
             "rememberModalBottomSheetState: Creates and keeps a SheetState for ModalBottomSheet. Set skipPartiallyExpanded to open it fully.",
@@ -75,9 +74,7 @@ export default {
             "SheetValue: The three states of a sheet: Hidden, PartiallyExpanded and Expanded.",
             "BottomSheetDefaults: Default container colour, elevation, shapes, scrim colour, maximum width, peek height, the drag handle and window insets for sheets.",
             "ModalBottomSheetDefaults: The default ModalBottomSheetProperties.",
-            "ModalBottomSheetProperties: Window settings for ModalBottomSheet: shouldDismissOnBackPress, shouldDismissOnClickOutside and securePolicy.",
-            "BottomSheetScaffoldState: Holds the sheet state and the snackbar host state of a BottomSheetScaffold.",
-            "rememberBottomSheetScaffoldState: Creates and keeps a BottomSheetScaffoldState across recompositions."
+            "ModalBottomSheetProperties: Window settings for ModalBottomSheet: shouldDismissOnBackPress, shouldDismissOnClickOutside and securePolicy."
           ]
         }
       ]

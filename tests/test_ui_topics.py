@@ -158,3 +158,14 @@ def test_s231_a_doc_level_status_turns_the_use_line_into_do_not_use():
     text = text_of(ui_topics.topic(doc, {"core": {}}, "android"))
     assert "Do not use: androidx.compose.material3.PrimaryTabRow. Use PrimaryTabRow." in text
     assert "as Google ships it" not in text
+
+
+# PR #255 follow-up: two docs that would write the same topic file fail, naming both folders.
+def test_s231_two_docs_with_one_topic_name_fail(tmp_path):
+    for folder in ("Snackbar", "SnackbarMessage"):
+        doc = {"name": "Snackbar", "platforms": {"android": "androidx.compose.material3." + folder, "ios": None, "web": None},
+               "props": [], "usage": {"description": "A short message."}}
+        write_component(tmp_path, folder, doc, {"core": {}, "platforms": {}})
+    r = subprocess.run(["python3", str(TOPICS), "--check", "--root", str(tmp_path)], capture_output=True, text=True, cwd=ROOT)
+    assert r.returncode == 1
+    assert "android-snackbar" in r.stdout and "Snackbar" in r.stdout and "SnackbarMessage" in r.stdout, r.stdout

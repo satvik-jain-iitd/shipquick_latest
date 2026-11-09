@@ -80,16 +80,9 @@ export default {
           "style": "unordered",
           "items": [
             "NavigationBarItem: One destination in a NavigationBar: an icon, an optional label, and selected and onClick.",
-            "ShortNavigationBar: A newer, shorter bottom bar for three to five destinations.",
-            "ShortNavigationBarItem: One destination in a ShortNavigationBar. Its iconPosition puts the label under the icon or beside it.",
             "NavigationBarDefaults: Default container colour, elevation and window insets for NavigationBar.",
             "NavigationBarItemDefaults: Default colours for NavigationBarItem. Make them with NavigationBarItemDefaults.colors().",
-            "NavigationBarItemColors: The icon, text and indicator colours of a NavigationBarItem, selected and not.",
-            "ShortNavigationBarDefaults: Default colours, arrangement and window insets for ShortNavigationBar.",
-            "ShortNavigationBarItemDefaults: Default colours for ShortNavigationBarItem.",
-            "ShortNavigationBarArrangement: How ShortNavigationBar spreads its items: EqualWeight (each item gets the same width) or Centered (the items sit in the middle).",
-            "NavigationItemColors: The icon, text and indicator colours that ShortNavigationBarItem and WideNavigationRailItem use, selected and not.",
-            "NavigationItemIconPosition: Where an item's icon sits next to its label: Top (label below) or Start (label beside)."
+            "NavigationBarItemColors: The icon, text and indicator colours of a NavigationBarItem, selected and not."
           ]
         }
       ]
