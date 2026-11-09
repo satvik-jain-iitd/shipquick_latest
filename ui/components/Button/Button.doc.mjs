@@ -19,7 +19,7 @@ export default {
       {"guidance": false, "description": "Use a button only to go to another page. Use a link instead."}
     ],
     "accessibility": [
-      {"name": "Touch target", "category": "Content", "criterion": "2.5.8 Target Size (Minimum)", "requirement": "48dp Android, 44pt iOS", "description": "The pressable area is at least the feel.touchTarget token in design/tokens.json, even when the drawn button is smaller."},
+      {"name": "Touch target", "category": "Content", "criterion": "2.5.8 Target Size (Minimum)", "requirement": "the feel.touchTarget token","description": "The pressable area is at least the feel.touchTarget token in design/tokens.json, even when the drawn button is smaller."},
       {"name": "Text label", "category": "Color contrast", "criterion": "1.4.3 Contrast (Minimum)", "requirement": "4.5:1", "description": "The label text has at least 4.5:1 contrast with the button fill in every state."}
     ],
     "anatomy": [

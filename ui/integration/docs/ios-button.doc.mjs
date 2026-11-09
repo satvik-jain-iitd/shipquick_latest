@@ -107,7 +107,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Touch target (2.5.8 Target Size (Minimum), 48dp Android, 44pt iOS): The pressable area is at least the feel.touchTarget token in design/tokens.json, even when the drawn button is smaller.",
+            "Touch target (2.5.8 Target Size (Minimum), the feel.touchTarget token): The pressable area is at least the feel.touchTarget token in design/tokens.json, even when the drawn button is smaller.",
             "Text label (1.4.3 Contrast (Minimum), 4.5:1): The label text has at least 4.5:1 contrast with the button fill in every state."
           ]
         }

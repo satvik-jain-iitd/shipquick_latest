@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import ui_topics
@@ -101,3 +103,31 @@ def test_s228_a_prop_tagged_for_ios_replaces_the_untagged_one_in_the_ios_topic_o
         return [r[1] for s in ui_topics.topic(doc, contract, p)["sections"] if s["title"] == "Props" for r in s["content"][0]["rows"]]
 
     assert types("ios") == ["() -> some View"] and types("android") == ["@Composable () -> Unit"]
+
+
+# PR #230 review: wider leak lists, one injected word each.
+IOS_LEAKS = ["LaunchedEffect", "16dp", "12.sp", "onValueChange", "Material3", "ExperimentalMaterial3Api",
+             "ModalBottomSheet(", "mutableStateOf", "Kotlin"]
+ANDROID_LEAKS = [".toggleStyle(", "@Environment", "@Observable", ".presentationDetents", "Toggle(isOn:", ".alert(",
+                 "Swift", "NavigationView", "$isOn"]
+
+
+def one_word(platform, text):
+    other = "android" if platform == "ios" else "ios"
+    doc = {"name": "X", "platforms": {platform: "X", other: None}, "props": [], "usage": {"description": text}}
+    return ui_topics.leaks(ui_topics.topic(doc, {"core": {}}, platform), platform)
+
+
+@pytest.mark.parametrize("word", IOS_LEAKS)
+def test_s228_an_ios_topic_with_a_compose_word_fails(word):
+    assert one_word("ios", f"Call {word} here."), word
+
+
+@pytest.mark.parametrize("word", ANDROID_LEAKS)
+def test_s228_an_android_topic_with_a_swiftui_word_fails(word):
+    assert one_word("android", f"Call {word} here."), word
+
+
+@pytest.mark.parametrize("text", ["It costs $5.", "Pay in US$ or EUR.", "Use 2 columns.", "Wait 300ms."])
+def test_s228_money_and_plain_numbers_are_not_leaks(text):
+    assert not one_word("android", text) and not one_word("ios", text), text

@@ -135,6 +135,11 @@ def check_component(folder, doc_schema, contract_schema):
                 errs.append(f"{name}: prop '{prop}' type \"{p['type']}\" must spell out its values: {literals(t)}")
     untagged = {n for n, pl in keys if not pl}
     errs += [f"{name}: contract prop '{prop}' has no doc entry" for prop in core if prop not in {n for n, _ in keys}]
+    # PR #230 review: a core prop with only tagged entries would vanish from the other platforms' topics.
+    on = [pl for pl, v in doc["platforms"].items() if v]
+    errs += [f"{name}: core prop '{prop}' needs an untagged doc entry, or one per platform (missing: {', '.join(miss)})"
+             for prop in core if prop not in untagged and prop in {n for n, _ in keys}
+             for miss in [[pl for pl in on if (prop, pl) not in keys]] if miss]
     errs += [f"{name}: contract prop '{prop}' (platforms.{pl}) has no doc entry" for pl, props in plats.items()
              for prop in props if prop not in untagged and (prop, pl) not in keys]
     return errs
