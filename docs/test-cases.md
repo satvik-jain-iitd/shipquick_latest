@@ -941,3 +941,14 @@ Scenario: an iOS row is covered only by a doc of its doc family
     ButtonBorderShape in Button, scrollDismissesKeyboard in ScrollView, Canvas and DocumentLaunchView in their own docs)
 ```
 Tests: `tests/test_ui_coverage.py` (s285), `tests/test_ui_api_lists.py` (s285). Local: `bash scripts/check_local.sh ui-coverage`.
+
+## Children registry and the forbidden-name test (owner, 9 Nov 2026)
+```gherkin
+Scenario: the registry lists the public child whose name the hygiene test bans
+  Given docs/children.md is the only exempt file
+  When the hygiene test scans the repo
+  Then the forbidden name is allowed in docs/children.md only
+  And any other file holding it fails the test
+  And docs/children.md lists that child as public
+```
+Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.

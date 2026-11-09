@@ -17,7 +17,8 @@ The steps are the checklist in docs/ADOPTION.md.
 satvik-jain-iitd/GoServe
 # job-search: private, pins edd3c26 on main, has roadmap-call.yml but no shipquick-call.yml (9 Nov 2026). Next: bump main to the release tag, run adopt.sh.
 klickbae8yt-star/job-search private
-# One more child (public, under satvik-jain-iitd) is not listed: its name is on this repo's forbidden-names
-# list (tests/test_repo_hygiene.py). It pins e0bee8a and has no caller (9 Nov 2026). Next: the owner decides how to list it.
+# bhavna-ai: public, pins e0bee8a, has no caller (9 Nov 2026). Next: bump to the release tag, run adopt.sh, then the printed ruleset command.
+# This file is the one file the hygiene test lets hold that name (tests/test_repo_hygiene.py, owner, 9 Nov 2026).
+satvik-jain-iitd/bhavna-ai
 # Miraya: private and empty on GitHub; the local repo has a caller but was never pushed (9 Nov 2026). Next: push the local repo, then bump to the release tag.
 satvik-jain-iitd/Miraya private

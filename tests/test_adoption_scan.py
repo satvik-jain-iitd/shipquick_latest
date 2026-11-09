@@ -227,8 +227,11 @@ def test_s260_a_public_child_that_cannot_be_read_is_still_filed(monkeypatch, cap
 
 def test_s260_the_registry_names_every_known_child_and_marks_the_private_ones():
     got = dict(scan.read_children(ROOT / "docs" / "children.md"))
-    assert got == {"satvik-jain-iitd/GoServe": False, "klickbae8yt-star/job-search": True,
-                   "satvik-jain-iitd/Miraya": True}
+    known = {"satvik-jain-iitd/GoServe": False, "klickbae8yt-star/job-search": True, "satvik-jain-iitd/Miraya": True}
+    assert {k: v for k, v in got.items() if k in known} == known
+    # the fourth child is public and its name is banned everywhere but docs/children.md, so it is not spelled here
+    other = set(got) - set(known)
+    assert len(other) == 1 and got[other.pop()] is False
 
 
 def test_s260_scan_child_is_gone_since_main_skips_private_children_itself():
@@ -241,5 +244,5 @@ def test_s260_adoption_md_is_generic_and_the_per_child_facts_live_in_the_registr
         assert fact not in doc, fact
     assert "<release tag>" in doc
     reg = (ROOT / "docs" / "children.md").read_text(encoding="utf-8")
-    for child in ("GoServe", "job-search", "Miraya"):
+    for child in (r.split("/")[1] for r in dict(scan.read_children(ROOT / "docs" / "children.md"))):
         assert re.search(rf"^# {child}: .*Next:", reg, re.M), child
