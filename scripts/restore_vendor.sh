@@ -40,7 +40,7 @@ configurations {
     canBeConsumed = false
     attributes {
       attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_API))
-      attribute(Attribute.of('org.jetbrains.kotlin.platform.type', String), 'androidJvm')
+      attribute(Attribute.of('org.jetbrains.kotlin.platform.type', String), 'jvm')  // Google publishes its Android variants as platform type jvm
     }
   }
 }
