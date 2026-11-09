@@ -6,6 +6,7 @@ on:
 permissions:
   contents: read
   pull-requests: read   # story #140: the roles job reads commit authors via `gh api .../pulls/.../commits`
+  issues: read          # story #155: the team-block job reads each linked story's body
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -171,6 +172,13 @@ jobs:
       - name: Check the PR body links its issue (Closes #n)
         run: |
           printf '%s\n' "$PR_BODY" | python3 scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
+      - name: Check every linked user story names who does it (story #155)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/check_story.py --pr-body-file /tmp/pr-body.md
   uat-checklist:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -267,7 +275,7 @@ jobs:
       - name: Install dependencies
         timeout-minutes: 5
         run: |
-          pip install pytest
+          pip install pytest==9.0.2 pillow==12.3.0   # pillow: scripts/qa/ flow map and audit report (story #162)
       - name: Run tests
         run: |
           mkdir -p logs

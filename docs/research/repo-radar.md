@@ -158,6 +158,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   line requirement added to `scripts/check_frontend_design.sh`, opt-in on the same file existing.
 - Confidence that nothing fits better: 0.85.
 
+## 9 Nov 2026, story #155 (GoServe feedback #155): a story names who does it
+- Need: fail a story issue that has no "who does it" line (actor, app or screen, how often).
+- Run: `scout.py --need "lint a GitHub issue body for a required user-story actor field"`: no repos found.
+  `scout.py --need "issue template required field checker"`: one unrelated repo (score 0, ignore).
+  `gh search repos --topic issue-form`: one browser form generator, not a checker.
+- Decision: reuse GitHub's own issue form (`required: true` on a new field) for stories made in the UI,
+  and a small `scripts/check_story.py` for stories made with `gh issue create --body` (agents do this,
+  and it skips the form). It reuses the `LINK` regex of `close_linked_issues.py`.
 ## 9 Nov 2026, story #163 (GoServe feedback): publish the canvas from canvas.json, then verify the listing
 - Need: derive the exact list of files to publish from a JSON manifest, and check a deploy listing holds every file it names.
 - Run: `scout.py --need "derive the exact list of files to publish from a JSON manifest and verify a deploy listing contains every referenced asset"`: no repos found.
@@ -178,6 +186,22 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Content-design guides exist (Material 3 content design, Shopify Polaris content; Tier A, the vendors' own docs). They are rules to read, not a check to run.
 - Decision: two checks in the existing manifest loop of `scripts/canvas_stage.py`, read from the manifest only, no render.
 - Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #162: a QA loop with a design audit and the Elephant-Goldfish model
+- Need: tools for a QA loop over an app's approved screens: a scorecard (attack yield, coverage debt,
+  escapes, stop rule), a flow map of every tap, a design-audit report with highlight boxes, a board render.
+- Run: `scout.py --need "QA loop scorecard flow map design audit report for app screens with elephant
+  goldfish review"`: no repos found. `scout.py --need "exploratory QA skill for coding agents with bug
+  taxonomy"`: no repos found. `gh search repos --topic exploratory-testing`: top 3 READMEs read:
+  `srbarrios/agentic-test-explorer` (LangGraph swarm drives a browser, writes Playwright repros; web only),
+  `willcoliveira/qualiow-exploratory-testing-skills` (Claude Code skills, web plus iOS and Android through
+  a Maestro shim), `loukan42/chaosfolk` (simulated users, replayable browser evidence; web only).
+  Also checked: `google/elephant-goldfish-model` (Apache-2.0, pushed 8 Nov 2026, about 15k stars) and
+  `garrytan/gstack` `/qa` (MIT, pushed 9 Nov 2026).
+- Decision: none of them compares the app with the design, keeps an escape log, or writes a design audit
+  as a roadmap. So the kit takes the owner's own `qa-loop` skill (already written, already used) and makes
+  it generic. EGM is used as is for plans (adopt, never fork). `qualiow` is named in `docs/QA_LOOP.md` as
+  the mobile probe driver to borrow. gstack's issue taxonomy shaped the severity list.
 
 ## 9 Nov 2026, story #154: every workflow job has a time limit
 - Need: fail CI when a GitHub Actions job has no `timeout-minutes`.

@@ -16,6 +16,14 @@ body:
       description: Who benefits? Name the persona and FR.
     validations:
       required: true
+  - type: input
+    id: who-does-it
+    attributes:
+      label: Who does it
+      description: "Required at Ready (story #155). Who does this in real life, on which app or screen, how often. Example: the admin, admin app City screen, twice a month. Name the person who has the pain, not the feature."
+      placeholder: "<actor>, <app or screen>, <how often>"
+    validations:
+      required: true
   - type: textarea
     id: scenarios
     attributes:
@@ -49,6 +57,7 @@ body:
         - label: GitHub issue linked to its epic, Gherkin copied in
         - label: Every scenario testable (unit, fixture, or matrix row)
         - label: Persona and FR named
+        - label: "Who does it: the actor, app or screen, and how often are named, and the actor is the person who has the pain (story #155)"
         - label: Dependencies listed and available
         - label: Ponytail check written
         - label: Owner has seen the issue
