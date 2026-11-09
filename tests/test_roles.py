@@ -157,3 +157,25 @@ def test_one_session_list_without_the_other_is_refused(tmp_path):
             assert "both" in str(e)
         else:
             raise AssertionError("one session list alone must be refused")
+
+
+def test_a_session_list_written_on_one_line_is_refused(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD + "coder_sessions: proj-dev\nreviewer_sessions:\n  - proj-qa\n", encoding="utf-8")
+    try:
+        roles.load(f)
+    except ValueError as e:
+        assert "list" in str(e)
+    else:
+        raise AssertionError("a one-line session value must be refused")
+
+
+def test_session_names_that_differ_only_in_case_are_the_same_name(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD + "coder_sessions:\n  - Proj-Dev\nreviewer_sessions:\n  - proj-dev\n", encoding="utf-8")
+    try:
+        roles.load(f)
+    except ValueError as e:
+        assert "twice" in str(e)
+    else:
+        raise AssertionError("names that differ only in case must be refused")

@@ -134,3 +134,11 @@ def test_s139_with_no_session_the_hook_writes_nothing(repo):
     msg.write_text("feat: x\n", encoding="utf-8")
     subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": ""})
     assert "Built-by" not in msg.read_text()
+
+
+def test_s139_an_amend_by_another_session_replaces_the_old_built_by(repo):
+    msg = repo / "MSG"
+    msg.write_text("feat: x\n\nBuilt-by: proj-dev\n", encoding="utf-8")
+    subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": "proj-qa"})
+    text = msg.read_text()
+    assert "Built-by: proj-qa" in text and "Built-by: proj-dev" not in text

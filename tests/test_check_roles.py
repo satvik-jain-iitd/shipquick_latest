@@ -151,3 +151,10 @@ def test_the_reviewer_session_that_built_a_commit_cannot_approve_it():
 
 def test_a_reviewed_by_name_in_backticks_or_with_a_period_is_read():
     assert cr.review_session("Reviewed-by: `proj-qa`.", ["proj-dev"], REVIEWER_SESSIONS) is None
+
+
+def test_a_reviewed_by_line_that_disagrees_with_the_block_header_is_refused():
+    # PR #178 second look: the header said the coder session wrote the review.
+    body = "```\nTo proj-qa, from proj-dev, re x:\n1. ok\nNothing needed from you.\n```\nReviewed-by: proj-qa\n"
+    why = cr.review_session(body.replace("To proj-qa", "To someone"), ["proj-dev"], REVIEWER_SESSIONS)
+    assert why and "proj-dev" in why and "proj-qa" in why

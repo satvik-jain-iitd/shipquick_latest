@@ -69,8 +69,11 @@ def load(path=DEFAULT_FILE) -> dict:
     if bool(data.get(SESSION_KEYS[0])) != bool(data.get(SESSION_KEYS[1])):
         raise ValueError(f"{path}: set both coder_sessions and reviewer_sessions, or neither -- one alone "
                          "lets a commit skip Built-by: or a session approve its own work (ADR-011)")
+    for k in SESSION_KEYS:
+        if k in data and not isinstance(data[k], list):
+            raise ValueError(f"{path}: {k} must be a list, one '  - <name>' line per session")
     seen = set()
-    for name in (s for k in SESSION_KEYS for s in data.get(k, [])):
+    for name in (s.lower() for k in SESSION_KEYS for s in data.get(k, [])):
         if name in seen:
             raise ValueError(f"{path}: session {name} appears twice -- one session plays one part (ADR-011)")
         seen.add(name)

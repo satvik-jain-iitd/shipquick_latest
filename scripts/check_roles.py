@@ -51,10 +51,12 @@ def check(author: str, commits: list, coders: list, reviewers=(), owner=None, co
 
 def review_session(body: str, built_by: list, reviewer_sessions: list) -> str | None:
     """The approving review's own session must be a reviewer session that built no commit here."""
-    m = REVIEWED_BY.search(body or "") or BLOCK_FROM.search(body or "")
-    if not m:
+    names = {m.group(1).strip("`'\".,") for rx in (REVIEWED_BY, BLOCK_FROM) for m in rx.finditer(body or "")}
+    if not names:
         return "the approving review names no session: add a 'Reviewed-by: <session>' line (ADR-011)"
-    s = m.group(1).strip("`'\".,")
+    if len(names) > 1:
+        return f"the approving review names more than one session ({', '.join(sorted(names))}): one review, one session"
+    s = names.pop()
     if s not in reviewer_sessions:
         return f"the approving review is from {s}, not a reviewer session ({', '.join(reviewer_sessions)})"
     if s in built_by:
