@@ -20,8 +20,8 @@ Tag `v0.9.0`, "library first, and children can pin today's gates". Notes: `docs/
 - Protected PRs need a second review and an owner yes line (#180, PR #196).
 - The UI spec layer: `ui/schema/`, `ui/components/`, `scripts/check_ui_docs.py` (#182, PR #198).
 - The `ui` lookup CLI: Astryx CLI pinned in `ui/tool/`, `scripts/ui.sh`, `scripts/ui_topics.py` (#183, PR #202).
-- Android library: the 30 M3 components, their docs and contracts, 5 templates in `ui/android/` (#134, PRs #210, #212-#214).
-- iOS library: the counted SwiftUI list, iOS-only docs, 5 templates, `ui/ios/Package.swift` (#135, PRs #209, #211).
+- Android library: the 30 M3 components, docs and contracts in `ui/components/`, topics in `ui/integration/docs/`, 5 templates in `ui/android/` (#134, PRs #210, #212-#214).
+- iOS library: the counted SwiftUI list, iOS-only docs in `ui/components/`, 5 templates and `Package.swift` in `ui/ios/` (#135, PRs #209, #211).
 - Coverage gate `scripts/check_ui_coverage.py` (#216, PR #226).
 - Platform-matched topics with a cross-platform leak check (#228, PRs #229, #230).
 - API lists generated from M3 1.4.0 and Apple's SwiftUI data, with zero exclusions (#231, PR #233).
