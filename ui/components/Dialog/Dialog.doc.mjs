@@ -167,5 +167,16 @@ export default {
       "description": "The detail under the title.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "alert", "note": "`.alert(_:item:actions:)`, iOS 15.0. Apple: \"Presents an alert using the given data to produce the alert’s content and a text view as a title.\""},
+        {"name": "dialogIcon", "note": "`.dialogIcon(_:)`, iOS 17.0. Apple: \"Configures the icon used by dialogs within this view.\""},
+        {"name": "dialogPreventsAppTermination", "note": "`.dialogPreventsAppTermination(_:)`, not on iOS. Apple: \"Whether the alert or confirmation dialog prevents the app from being quit/terminated by the system or app termination menu item.\"", "status": "unavailable-ios", "replacement": "nothing on iOS ()"},
+        {"name": "dialogSeverity", "note": "`.dialogSeverity(_:)`, not on iOS. Apple's page gives no summary: https://developer.apple.com/documentation/swiftui/view/dialogseverity(_:)", "status": "unavailable-ios", "replacement": "alert"},
+        {"name": "dialogSuppressionToggle", "note": "`.dialogSuppressionToggle(isSuppressed:)`, iOS 17.0. Apple: \"Enables user suppression of dialogs and alerts presented within `self`, with a default suppression message on macOS. Unused on other platforms.\""}
+      ]
+    }
+  }
 };

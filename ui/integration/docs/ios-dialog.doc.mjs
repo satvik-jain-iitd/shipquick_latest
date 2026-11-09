@@ -68,6 +68,28 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "alert: `.alert(_:item:actions:)`, iOS 15.0. Apple: \"Presents an alert using the given data to produce the alert’s content and a text view as a title.\"",
+            "dialogIcon: `.dialogIcon(_:)`, iOS 17.0. Apple: \"Configures the icon used by dialogs within this view.\"",
+            "dialogSuppressionToggle: `.dialogSuppressionToggle(isSuppressed:)`, iOS 17.0. Apple: \"Enables user suppression of dialogs and alerts presented within `self`, with a default suppression message on macOS. Unused on other platforms.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: dialogPreventsAppTermination. Use nothing on iOS ().",
+            "Do not use: dialogSeverity. Use alert."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

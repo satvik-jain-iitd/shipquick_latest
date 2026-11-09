@@ -563,3 +563,14 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
   And a topic prints a status item only as "Do not use: <name>. Use <replacement>."
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
+
+## Story #231, sub-issue #262 (I4): iOS presentation, search and state modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Presentation, Search and State pages is covered
+  Given the 90 I4 modifier rows of docs/research/ios-swiftui-api.md
+  When check_ui_coverage.py runs
+  Then no I4 row is a GAP line
+  And .sheet and the presentation modifiers sit in BottomSheet, .alert in Dialog, .searchable in SearchBar
+  And the Mac-only and visionOS-only rows print as "Do not use: X. Use Y." in their topics
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
