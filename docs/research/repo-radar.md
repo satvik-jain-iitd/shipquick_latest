@@ -338,3 +338,15 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   the classic PUT, so existing protection and its other checks stay.
 - Decision: about 40 lines added to `scripts/kit_branch.py` (stdlib), reusing its `gh api` protection read. No package added.
 - Confidence that nothing fits better: 0.8 (the job is two GitHub API calls; any tool would still need our gate name).
+
+## 9 Nov 2026, story #242: offline vendor backup of npm and Maven dependencies
+- Need: keep an offline, checksummed copy of the pinned npm tarballs and Compose Maven artifacts, and prove a restore with no registry.
+- Run: `scout.py --need "offline vendor backup of npm and maven dependencies"`: no repos found.
+  `gh search repos "offline maven npm mirror vendoring"`: none. `--topic=npm-mirror` and `--topic=offline-mirror`: shrinkpack
+  (JamieMason), netdoctor-ir, a few site mirrors.
+- Read: shrinkpack stores npm tarballs in the repo and installs offline; it is old (npm 5 era), npm only, no Maven. netdoctor-ir
+  switches mirrors; it keeps no copy. The Gradle docs describe a local file Maven repository with `--offline`; no tool needed.
+- Borrowed: shrinkpack's idea of keeping the tarballs and checking them against the lockfile integrity. npm's own cache does the
+  same today (`npm ci --offline --cache`), so we use that. Maven side: a plain folder in Maven layout.
+- Decision: about 300 lines, `scripts/vendor_backup.py` (stdlib) and `scripts/restore_vendor.sh`; npm and Gradle do the installing.
+- Confidence that nothing fits better: 0.8.

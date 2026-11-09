@@ -241,7 +241,7 @@ def build(dest: Path, repos=None, fetch=None) -> None:
         for f in ("package.json", "package-lock.json"):
             shutil.copy(LOCK.parent / f, tmp)
         # --force: also fetch the optional packages built for other systems (esbuild for macOS, and so on).
-        subprocess.run(["npm", "ci", "--ignore-scripts", "--force", "--no-audit", "--no-fund", "--cache", str(dest / "npm-cache")], cwd=tmp, check=True)
+        subprocess.run(["npm", "ci", "--ignore-scripts", "--force", "--no-audit", "--no-fund", "--cache", str(dest.resolve() / "npm-cache")], cwd=tmp, check=True)
         for e in npm_entries():
             rel = cache_path(e["integrity"])
             lic = next(iter(sorted((Path(tmp) / "node_modules" / e["name"]).glob("LICEN[CS]E*"))), None)

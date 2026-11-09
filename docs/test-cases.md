@@ -869,3 +869,31 @@ Scenario: every API row and framework topic is covered, and the gate is strict e
   And under --strict-api each gap prints once, as a FAIL line
 ```
 Tests: `tests/test_ui_coverage.py` (s231). Local: `bash scripts/check_local.sh ui-coverage`.
+
+## Story #242: the offline vendor backup (`backup/vendor`)
+
+```gherkin
+Scenario: s242 a complete backup passes the manifest check
+  Given a backup folder with every lockfile tarball, the pinned Gradle artifacts, their licenses and a MANIFEST
+  When scripts/vendor_backup.py --manifest-check runs on it
+  Then it prints ok and exits 0
+
+Scenario: s242 a broken backup fails, naming the problem
+  Given a changed file, a missing license file, a lockfile entry not in the backup, a tarball that is not the lockfile integrity, or a missing pinned Gradle artifact
+  When the manifest check runs
+  Then it exits 1 with one FAIL line for that problem
+
+Scenario: s242 the plan lists the lockfile and the Gradle pins
+  When vendor_backup.py --plan runs
+  Then every ui/tool lockfile package is listed with its integrity, the BOM, material3 and material-icons-core are listed, and the material3 pin matches docs/research/android-m3-api.md
+
+Scenario: s242 downloads happen on CI only
+  Given CI is not set
+  When vendor_backup.py --build runs, or restore_vendor.sh runs without RESTORE_ALLOW_LOCAL=1
+  Then it exits with a message and downloads nothing; an unchecked download (no checksum) is refused too
+
+Scenario: s242 the workflow proves the restore
+  Given the vendor-backup workflow runs on a branch with no backup/vendor
+  Then the restore job fails; after the backup job builds the branch, restore passes (npm ci --offline, Gradle --offline)
+```
+Tests: `tests/test_vendor_backup.py` (s242). CI: pytest and the `vendor backup` workflow. Local: `python3 -m pytest tests/test_vendor_backup.py`.
