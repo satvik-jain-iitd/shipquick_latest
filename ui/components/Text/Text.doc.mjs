@@ -4,7 +4,7 @@ export default {
   "name": "Text",
   "displayName": "Text",
   "platforms": {
-    "android": null,
+    "android": "androidx.compose.material3.Text",
     "ios": "SwiftUI.Text",
     "web": null
   },
@@ -63,6 +63,48 @@ export default {
       "type": "string",
       "description": "The words to show. init(_:) looks them up for translation; init(verbatim:) shows them as they are.",
       "required": true
+    },
+    {
+      "name": "content",
+      "platform": "android",
+      "type": "string",
+      "description": "The words to show. Compose names this parameter text; an overload takes an AnnotatedString.",
+      "required": true
+    },
+    {
+      "name": "style",
+      "platform": "android",
+      "type": "TextStyle",
+      "description": "The text style. Pass one from MaterialTheme.typography, never a hand-set font size.",
+      "default": "LocalTextStyle.current"
+    },
+    {
+      "name": "maxLines",
+      "platform": "android",
+      "type": "number",
+      "description": "The most lines to show before the text is cut.",
+      "default": "Int.MAX_VALUE"
     }
-  ]
+  ],
+  "platformUsage": {
+    "android": {
+      "description": "On Android, Material 3 Text takes its colour from the content colour of what is behind it, and its style from the theme.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Size text through the type scale, so it grows with the system font size."
+        }
+      ]
+    }
+  },
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "ProvideTextStyle",
+          "note": "Sets the text style for all Text inside it. Parts like buttons and app bars use it for their labels."
+        }
+      ]
+    }
+  }
 };

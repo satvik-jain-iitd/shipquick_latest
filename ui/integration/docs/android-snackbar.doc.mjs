@@ -4,13 +4,11 @@ export default {
   "name": "android-snackbar",
   "title": "Snackbar (Android, Compose Material 3)",
   "category": "guide",
-  "description": "androidx.compose.material3.SnackbarHost used directly: the ShipQuick contract, props, do and do not.",
+  "description": "androidx.compose.material3.Snackbar used directly: the ShipQuick contract, props, do and do not.",
   "keywords": [
     "snackbar",
-    "toast",
     "message",
-    "undo",
-    "notice",
+    "toast",
     "android"
   ],
   "sections": [
@@ -19,11 +17,11 @@ export default {
       "content": [
         {
           "type": "prose",
-          "text": "Use `androidx.compose.material3.SnackbarHost` as Google ships it. Never wrap or redraw it. Brand comes from the tokens in design/tokens.json."
+          "text": "Use `androidx.compose.material3.Snackbar` as Google ships it. Never wrap or redraw it. Brand comes from the tokens in design/tokens.json."
         },
         {
           "type": "prose",
-          "text": "A snackbar is a short message at the bottom of the screen, like \"Message deleted\" with Undo. It does not stop the user. Put a SnackbarHost in Scaffold's snackbarHost slot and call SnackbarHostState.showSnackbar from a coroutine."
+          "text": "Snackbar is the message itself: a short line with an optional action and close button. SnackbarHost shows it for you. Call it directly only to change how the host draws each one."
         }
       ]
     },
@@ -40,34 +38,16 @@ export default {
           ],
           "rows": [
             [
-              "hostState",
-              "SnackbarHostState",
+              "snackbarData",
+              "SnackbarData",
               "",
-              "The state that shows the snackbars. Create it with remember { SnackbarHostState() }."
+              "The message the host gives you to draw."
             ],
             [
-              "message",
-              "string",
-              "",
-              "The words to show."
-            ],
-            [
-              "actionLabel",
-              "string",
-              "",
-              "The words on the one action button. Leave it out for no action."
-            ],
-            [
-              "withDismissAction",
+              "actionOnNewLine",
               "boolean",
               "false",
-              "Shows a close icon."
-            ],
-            [
-              "duration",
-              "'Short' | 'Long' | 'Indefinite'",
-              "'Short', or 'Indefinite' with an action",
-              "How long it stays."
+              "Puts the action under the message, for long text."
             ]
           ]
         }
@@ -80,8 +60,6 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Snackbar: The snackbar itself: a short message with an optional action and close button. SnackbarHost shows it for you; call it directly only to change how the host draws each one.",
-            "SnackbarHostState: Shows snackbars one at a time. Call showSnackbar(message, actionLabel, withDismissAction, duration) from a coroutine; it returns a SnackbarResult.",
             "SnackbarData: The snackbar on show: its visuals, and performAction() and dismiss().",
             "SnackbarVisuals: What a snackbar says: message, actionLabel, withDismissAction and duration.",
             "SnackbarDuration: How long a snackbar stays: Short, Long or Indefinite (until the user acts or it is dismissed).",
@@ -98,15 +76,14 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Use it to confirm an action, show that the app is offline, or say a change saved.",
-            "Offer one short action, like Undo."
+            "Show it through SnackbarHostState.showSnackbar()."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Put the only way to do a task in a snackbar. It goes away."
+            "Put more than one action in it."
           ]
         }
       ]
@@ -118,8 +95,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
-            "Time to act (2.2.1 Timing Adjustable, Indefinite with an action): With an action, showSnackbar stays until the user acts (Google's default duration is Indefinite then). Keep that default."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its container."
           ]
         }
       ]

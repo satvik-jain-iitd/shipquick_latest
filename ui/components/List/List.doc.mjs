@@ -214,10 +214,6 @@ export default {
         {
           "name": "PullToRefreshDefaults.IndicatorBox",
           "note": "The container that moves and clips the indicator. Use it to put your own indicator in place of the spinner."
-        },
-        {
-          "name": "SwipeToDismissBox",
-          "note": "Lets the user swipe a list item to the side to act on it, like delete. backgroundContent shows behind the item while it moves."
         }
       ],
       "supporting": [
@@ -240,22 +236,6 @@ export default {
         {
           "name": "PullToRefreshDefaults",
           "use": "Default colours, shape, elevation, threshold and the Indicator and IndicatorBox for pull to refresh."
-        },
-        {
-          "name": "SwipeToDismissBoxState",
-          "use": "Says where a swiped item rests and is going: currentValue, targetValue and dismissDirection. Call reset() or snapTo() from a coroutine."
-        },
-        {
-          "name": "rememberSwipeToDismissBoxState",
-          "use": "Creates and keeps a SwipeToDismissBoxState, with the first value and the swipe threshold."
-        },
-        {
-          "name": "SwipeToDismissBoxValue",
-          "use": "Where a swiped item rests: Settled, StartToEnd or EndToStart."
-        },
-        {
-          "name": "SwipeToDismissBoxDefaults",
-          "use": "The default positionalThreshold for how far the user must swipe."
         }
       ]
     }

@@ -166,28 +166,12 @@ export default {
     "android": {
       "variants": [
         {
-          "name": "DatePickerDialog",
-          "note": "A dialog that holds a DatePicker, with confirm and dismiss buttons. Use it when the user picks a date from a form."
-        },
-        {
-          "name": "DateRangePicker",
-          "note": "Picks a start date and an end date, like a trip. It takes a DateRangePickerState."
-        },
-        {
           "name": "DatePickerDefaults.DatePickerTitle",
           "note": "The default title at the top of a DatePicker. It changes with the display mode."
         },
         {
           "name": "DatePickerDefaults.DatePickerHeadline",
           "note": "The default headline that shows the chosen date, or a hint when none is chosen."
-        },
-        {
-          "name": "DateRangePickerDefaults.DateRangePickerTitle",
-          "note": "The default title at the top of a DateRangePicker. It changes with the display mode."
-        },
-        {
-          "name": "DateRangePickerDefaults.DateRangePickerHeadline",
-          "note": "The default headline that shows the chosen start and end dates."
         }
       ],
       "supporting": [
@@ -200,20 +184,8 @@ export default {
           "use": "Creates and keeps a DatePickerState, with the first date, year range, display mode and selectable dates you give."
         },
         {
-          "name": "DateRangePickerState",
-          "use": "Holds the chosen start and end dates (in UTC), the month on show, the year range and the display mode."
-        },
-        {
-          "name": "rememberDateRangePickerState",
-          "use": "Creates and keeps a DateRangePickerState across recompositions."
-        },
-        {
           "name": "DatePickerDefaults",
           "use": "Default colours, shape, year range, date formatter, title, headline and sizes for date pickers."
-        },
-        {
-          "name": "DateRangePickerDefaults",
-          "use": "The default title and headline for date range pickers."
         },
         {
           "name": "DatePickerColors",
