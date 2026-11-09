@@ -158,6 +158,25 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   line requirement added to `scripts/check_frontend_design.sh`, opt-in on the same file existing.
 - Confidence that nothing fits better: 0.85.
 
+## 9 Nov 2026, story #155 (GoServe feedback #155): a story names who does it
+- Need: fail a story issue that has no "who does it" line (actor, app or screen, how often).
+- Run: `scout.py --need "lint a GitHub issue body for a required user-story actor field"`: no repos found.
+  `scout.py --need "issue template required field checker"`: one unrelated repo (score 0, ignore).
+  `gh search repos --topic issue-form`: one browser form generator, not a checker.
+- Decision: reuse GitHub's own issue form (`required: true` on a new field) for stories made in the UI,
+  and a small `scripts/check_story.py` for stories made with `gh issue create --body` (agents do this,
+  and it skips the form). It reuses the `LINK` regex of `close_linked_issues.py`.
+
+## 9 Nov 2026, story #153 and #161 (epic #130): the approval says the render matches the board
+- Need: a merge gate that reads the approving review body and checks it says the screenshot was compared
+  with the named design board.
+- Run: `scout.py --need "merge gate that checks a pull request approval review body says the screenshot
+  matches the design"`: no repos found. Visual review tools (Chromatic, Percy) compare a build with an
+  older build, not with the design, which is the gap #161 names.
+- Decision: a small `scripts/check_design_reviewed.py` (pure `check()` + CLI, the `check_closes.py`
+  shape), called from `scripts/review_merge.sh` on the review it already resolves. #161's build rule is
+  text (DESIGN_PROCESS.md, SCREENS.md, the PR template); the approval line is its machine check.
+- Confidence that nothing fits better: 0.8.
 ## 9 Nov 2026, story #163 (GoServe feedback): publish the canvas from canvas.json, then verify the listing
 - Need: derive the exact list of files to publish from a JSON manifest, and check a deploy listing holds every file it names.
 - Run: `scout.py --need "derive the exact list of files to publish from a JSON manifest and verify a deploy listing contains every referenced asset"`: no repos found.
@@ -194,4 +213,11 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   as a roadmap. So the kit takes the owner's own `qa-loop` skill (already written, already used) and makes
   it generic. EGM is used as is for plans (adopt, never fork). `qualiow` is named in `docs/QA_LOOP.md` as
   the mobile probe driver to borrow. gstack's issue taxonomy shaped the severity list.
+
+## 9 Nov 2026, story #154: every workflow job has a time limit
+- Need: fail CI when a GitHub Actions job has no `timeout-minutes`.
+- Run: `scout.py --need "lint GitHub Actions workflows: fail when a job has no timeout-minutes"` and
+  `scout.py --need "github actions workflow linter timeout"`: no repos found. `gh search repos "topic:github-actions linter"`:
+  act, gitea, ruff, shellcheck; none checks job timeouts. actionlint checks syntax and expressions, not a missing limit.
+- Decision: a 40-line stdlib checker, `scripts/check_timeouts.py` (no YAML dependency, since CI installs only pytest).
 - Confidence that nothing fits better: 0.75.

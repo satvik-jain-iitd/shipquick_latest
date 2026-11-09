@@ -262,6 +262,28 @@ Scenario: a canvas is laid out from a manifest
 ```
 Tests: `tests/test_canvas_stage.py` (S1 to S8).
 
+## Story #155: a story names who does it
+```gherkin
+Scenario: a story without a full Who does it line is refused at Ready
+  Given a user-story issue linked from a pull request with Closes #n
+  When its body has no "Who does it:" line, or the line is empty, a placeholder, or misses the screen or how often
+  Then check_story.py exits 1 and names the line to write
+  And a story with "Who does it: <actor>, <app or screen>, <how often>" filled in passes
+  And a pull request that links no issue passes
+```
+Tests: `tests/test_check_story.py` (`test_s155_*`).
+
+## Story #153 and #161: the approval says the render matches the board
+```gherkin
+Scenario: a frontend PR approved on the code diff alone is not merged
+  Given a PR with a Design board line, in a repo with docs/screens.txt configured
+  When the approving review has no "Render: <that board> -- matches" line
+  Then review_merge.sh refuses and names the line to write
+  And with the line, naming the same board, it merges
+  And a repo with no docs/screens.txt, or a PR with no Design board, is unaffected
+```
+Tests: `tests/test_check_design_reviewed.py` (`test_s153_*`, `test_s161_*`), `tests/test_review_merge.py` (`test_s153_*`).
+
 ## Publish the canvas from canvas.json (#163)
 
 ```gherkin
@@ -319,6 +341,19 @@ Scenario: the qa-loop skill installs from the kit as a thin pointer
   And docs/QA_LOOP.md has sections 1 to 15 and covers Web, Android, iOS and CLI
 ```
 Tests: `tests/test_install_skill.py` (`test_s162_*`).
+
+## Story #162 part 2: the QA loop's tools in scripts/qa/
+```gherkin
+Scenario: the QA tools run from the kit with no project facts
+  Given a QA home with runs, a flow manifest, controls and board images
+  When scorecard.py, flow_map.py and audit_report.py run
+  Then the scorecard reads the kit's params.json and flags a bug with no passing auto test
+  And the flow map draws every board with one arrow per tap
+  And the audit report numbers each finding on its screen image
+  And the node helpers parse, board_html.mjs points relative and root links into the canvas folder
+  And no tool names a project, a person, a web font or an OS-only font path
+```
+Tests: `tests/test_qa_scripts.py` (`test_s162_*`).
 
 ## Story #180 (S0): a protected PR merges after a second review and the owner's yes (ADR-013)
 ```gherkin

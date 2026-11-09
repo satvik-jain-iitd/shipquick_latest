@@ -32,6 +32,7 @@ The coder opens every PR, feature to dev and dev to main. The reviewer never ope
 - All comments must be resolved.
 - The coder's block to the reviewer sits in the PR body under `## For the reviewer`. The CI job `team-block` checks its shape with `scripts/check_block.py`.
 - The reviewer's block to the coder is the review body (the approve or comment review). Shape: `To coder, from reviewer, re PR #N:`, numbered, last line = what the reviewer needs. See `docs/TEAM_PROTOCOL.md`.
+- A frontend PR, in a project with `docs/screens.txt`: the approval body also carries `Render: <board> -- matches`, written after the reviewer put the render beside the board. `scripts/review_merge.sh` refuses without it (story #153, `docs/SCREENS.md`).
 
 ## 5. When to merge
 
