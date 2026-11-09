@@ -31,6 +31,7 @@ M3_DOC = ROOT / "docs/research/android-m3-api.md"
 MAX_BYTES = 90 * 1024 * 1024  # GitHub refuses a file over 100 MB
 PLATFORMS = {"androidJvm", "jvm"}
 USAGES = {"java-api", "java-runtime"}
+UNRESOLVED: list[str] = []  # transitive dependencies no repository has a POM for
 # ponytail: a file over MAX_BYTES fails the build, no part-splitting; add .partNNN files if one ever nears it.
 
 
@@ -128,7 +129,7 @@ def pom_info(xml: bytes) -> dict:
     root = ET.fromstring(re.sub(rb"""\sxmlns=(?:"[^"]*"|'[^']*')""", b"", xml, count=1))
     ver = (root.findtext("version") or root.findtext("parent/version") or "").strip()
     grp = (root.findtext("groupId") or root.findtext("parent/groupId") or "").strip()
-    props = {c.tag: (c.text or "").strip() for c in (root.find("properties") or [])}
+    props = {c.tag: (c.text or "").strip() for c in root.findall("properties/*")}
     props.update({"project.version": ver, "version": ver, "project.groupId": grp})
 
     def sub(s):
@@ -197,7 +198,10 @@ def resolve_maven(bom, roots, repos, fetch) -> list[dict]:
             raise SystemExit(f"no version for {g}:{a}; the BOM manages {len(managed)} entries, e.g. {sorted(managed)[:3]}")
         repo, pom = find(repos, fetch, mpath(g, a, v, f"{a}-{v}.pom"))
         if pom is None:
-            raise SystemExit(f"{g}:{a}:{v} has no POM in any repository")
+            if (g, a) in {(x[0], x[1]) for x in roots}:
+                raise SystemExit(f"{g}:{a}:{v} has no POM in any repository")
+            UNRESOLVED.append(f"{g}:{a}:{v}")  # not on Google Maven or Maven Central; named in the MANIFEST
+            continue
         info = pom_info(pom)
         out.append(_file((g, a, v), f"{a}-{v}.pom", repo, pom, info["licenses"]))
         names, deps = [], list(info["deps"])
@@ -274,7 +278,9 @@ def build(dest: Path, repos=None, fetch=None) -> None:
     for e in entries:
         e["date"] = old.get((e["name"], e["version"], e["file"]), today)
     entries.sort(key=lambda e: (e["kind"], e["name"], e["version"], e["file"]))
-    mf.write_text(json.dumps({"made": today, "artifacts": entries}, indent=1) + "\n")
+    if UNRESOLVED:
+        print("NOT BACKED UP (no POM in any repository):", ", ".join(sorted(set(UNRESOLVED))))
+    mf.write_text(json.dumps({"made": today, "unresolved": sorted(set(UNRESOLVED)), "artifacts": entries}, indent=1) + "\n")
 
 
 # ---------- manifest check ----------
