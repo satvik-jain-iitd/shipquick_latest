@@ -86,6 +86,43 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "OutlinedTextField: A text field with a border and no fill. Use it when filled fields look too heavy, for example in a long form. Use one style on a screen.",
+            "SecureTextField: A filled field for a password. It hides what the user types; set textObfuscationMode and textObfuscationCharacter to change how.",
+            "OutlinedSecureTextField: The outlined form of SecureTextField.",
+            "TextFieldDefaults.Container: The default container (fill and indicator line) of a filled field. Use it inside DecorationBox only when you build on BasicTextField.",
+            "TextFieldDefaults.DecorationBox: The label, icons and container of a filled field around a BasicTextField. Use it only when TextField cannot do the job.",
+            "OutlinedTextFieldDefaults.Container: The default container (border) of an outlined field, for use inside its DecorationBox.",
+            "OutlinedTextFieldDefaults.DecorationBox: The label, icons and border of an outlined field around a BasicTextField. Use it only when OutlinedTextField cannot do the job.",
+            "ExposedDropdownMenuBox: Holds a read-only or editable text field and the menu of choices that opens under it. Use it to pick one value from a list.",
+            "ExposedDropdownMenuBoxScope.ExposedDropdownMenu: The menu inside ExposedDropdownMenuBox. It is as wide as the field and opens under it.",
+            "ExposedDropdownMenuDefaults.TrailingIcon: The arrow icon at the end of the field. It turns when the menu opens.",
+            "TextFieldDefaults: Default colours, shapes, sizes, padding and the decorator for filled fields. Make colours with TextFieldDefaults.colors().",
+            "OutlinedTextFieldDefaults: Default colours, shape, sizes, padding and the decorator for outlined fields. Make colours with OutlinedTextFieldDefaults.colors().",
+            "TextFieldColors: The text, container, cursor, icon, label and indicator colours of a field in each state, including error.",
+            "TextFieldLabelPosition: Where the label sits: Attached (inside the field, it moves up when the field has focus or text) or Above (always above the field).",
+            "TextFieldLabelScope: The scope of the label slot. Its labelMinimizedProgress says how far the label has moved to its small form.",
+            "ExposedDropdownMenuBoxScope: The scope inside ExposedDropdownMenuBox. Put menuAnchor on the text field so the menu opens from it.",
+            "ExposedDropdownMenuAnchorType: What the anchor is, for menuAnchor: PrimaryNotEditable (a read-only field), PrimaryEditable (a field the user types in) or SecondaryEditable (an icon inside an editable field).",
+            "ExposedDropdownMenuDefaults: Default colours, padding and the trailing icon for exposed dropdown menus."
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: TextFieldDefaults.ContainerBox. Use TextFieldDefaults.Container (Google: \"Renamed to TextFieldDefaults.Container\").",
+            "Do not use: OutlinedTextFieldDefaults.ContainerBox. Use OutlinedTextFieldDefaults.Container (Google: ReplaceWith names Container in the same object; the message says \"Renamed to TextFieldDefaults.Container\")."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
