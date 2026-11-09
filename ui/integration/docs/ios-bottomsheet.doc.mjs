@@ -67,6 +67,40 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "confirmationDialog: `.confirmationDialog(_:item:titleVisibility:actions:)`, iOS 15.0. Apple: \"Presents a confirmation dialog using data to produce the dialog’s content and a text view for the title.\"",
+            "dismissalConfirmationDialog: `.dismissalConfirmationDialog(_:shouldPresent:actions:)`, iOS 27.0. Apple: \"Presents a confirmation dialog upon an attempt to dismiss the window for this view.\"",
+            "fullScreenCover: `.fullScreenCover(isPresented:onDismiss:content:)`, iOS 14.0. Apple: \"Presents a modal view that covers as much of the screen as possible when binding to a Boolean value you provide is true.\"",
+            "interactiveDismissDisabled: `.interactiveDismissDisabled(_:)`, iOS 15.0. Apple: \"Conditionally prevents interactive dismissal of presentations like popovers, sheets, and inspectors.\"",
+            "presentationBackground: `.presentationBackground(_:)`, iOS 16.4. Apple: \"Sets the presentation background of the enclosing sheet using a shape style.\"",
+            "presentationBackgroundInteraction: `.presentationBackgroundInteraction(_:)`, iOS 16.4. Apple: \"Controls whether people can interact with the view behind a presentation.\"",
+            "presentationCompactAdaptation: `.presentationCompactAdaptation(horizontal:vertical:)`, iOS 16.4. Apple: \"Specifies how to adapt a presentation to horizontally and vertically compact size classes.\"",
+            "presentationContentInteraction: `.presentationContentInteraction(_:)`, iOS 16.4. Apple: \"Configures the behavior of swipe gestures on a presentation.\"",
+            "presentationCornerRadius: `.presentationCornerRadius(_:)`, iOS 16.4. Apple: \"Requests that the presentation have a specific corner radius.\"",
+            "presentationDetents: `.presentationDetents(_:)`, iOS 16.0. Apple: \"Sets the available detents for the enclosing sheet.\"",
+            "presentationDragIndicator: `.presentationDragIndicator(_:)`, iOS 16.0. Apple: \"Sets the visibility of the drag indicator on top of a sheet.\"",
+            "presentationPlacement: `.presentationPlacement(_:)`, iOS 27.0. Apple: \"Sets the placement of a presentation within the presenting view.\"",
+            "presentationSizing: `.presentationSizing(_:)`, iOS 18.0. Apple: \"Sets the sizing of the containing presentation.\"",
+            "sheet: `.sheet(isPresented:onDismiss:content:)`, iOS 13.0. Apple: \"Presents a sheet when a binding to a Boolean value that you provide is true.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: presentationBreakthroughEffect. Use nothing on iOS (visionOS content seen through 3D models; iOS has no 3D occlusion).",
+            "Do not use: presentationPreventsAppTermination. Use nothing on iOS (it stops a Mac app from quitting; iOS apps are not quit from a menu).",
+            "Do not use: presentedWindowStyle. Use sheet."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
