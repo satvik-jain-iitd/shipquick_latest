@@ -17,7 +17,8 @@ from close_linked_issues import LINK   # one rule for "this body links an issue"
 
 INLINE = re.compile(r"^[\s>*_-]*who does it[*_]*\s*:[*_]*\s*(.*)$", re.I | re.M)
 HEADING = re.compile(r"^#+\s*who does it\s*:?\s*\n+(?!#)(.*)$", re.I | re.M)
-SHAPE = "write `Who does it: <actor>, <app or screen>, <how often>`, for example `Who does it: the admin, admin app City screen, twice a month`"
+RULE_DATE = "2026-11-09"   # stories made before the rule (story #155) are skipped, never failed
+SHAPE ="write `Who does it: <actor>, <app or screen>, <how often>`, for example `Who does it: the admin, admin app City screen, twice a month`"
 
 
 def check(body: str) -> str | None:
@@ -33,11 +34,14 @@ def check(body: str) -> str | None:
 
 def check_pr_body(body: str) -> str | None:
     for n in dict.fromkeys(LINK.findall(body)):
-        out = subprocess.run(["gh", "issue", "view", n, "--json", "labels,body"], capture_output=True, text=True)
+        out = subprocess.run(["gh", "issue", "view", n, "--json", "labels,body,createdAt"], capture_output=True, text=True)
         if out.returncode != 0:
             return f"could not read issue #{n}: {out.stderr.strip()}"
         info = json.loads(out.stdout)
         if "user-story" not in {l["name"] for l in info["labels"]}:
+            continue
+        if (info.get("createdAt") or "")[:10] < RULE_DATE:   # ISO dates compare as text
+            print(f"skip #{n}: story created before {RULE_DATE}, when the Who does it rule began")
             continue
         why = check(info["body"] or "")
         if why:

@@ -59,3 +59,50 @@ def test_s155_pr_body_mode_skips_a_body_with_no_linked_issue(tmp_path):
     f.write_text("## What\nNo link.\n", encoding="utf-8")
     r = run("", "--pr-body-file", str(f))
     assert r.returncode == 0, r.stdout
+
+
+# ---- review of PR #168: older stories and a gh that is not logged in ----
+import json
+import os
+
+STUB = """#!/usr/bin/env bash
+case "$1 $2" in
+  "auth status") [ -n "${STUB_NO_AUTH:-}" ] && { echo "You are not logged into any GitHub hosts. Run gh auth login" >&2; exit 1; }; exit 0 ;;
+  "issue view") cat "$STUB_DIR/issue.json"; exit 0 ;;
+esac
+exit 9
+"""
+
+
+def stub_env(tmp_path, issue=None, no_auth=False):
+    stub = tmp_path / "stub"; stub.mkdir()
+    (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
+    if issue is not None:
+        (stub / "issue.json").write_text(json.dumps(issue), encoding="utf-8")
+    return {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "STUB_NO_AUTH": "1" if no_auth else ""}
+
+
+def story_issue(created):
+    return {"labels": [{"name": "user-story"}], "body": "## Value\nNo actor line.\n", "createdAt": created}
+
+
+@pytest.mark.parametrize("created,rc", [("2026-10-01T10:00:00Z", 0), ("2026-11-08T23:59:59Z", 0), ("2026-11-09T00:00:00Z", 1), ("2026-11-20T09:00:00Z", 1)])
+def test_s155_a_story_created_before_the_rule_is_skipped_with_one_line(tmp_path, created, rc):
+    f = tmp_path / "body.md"; f.write_text("Closes #12\n", encoding="utf-8")
+    r = subprocess.run(["python3", str(SCRIPT), "--pr-body-file", str(f)], capture_output=True, text=True, env=stub_env(tmp_path, story_issue(created)))
+    assert r.returncode == rc, r.stdout
+    if rc == 0:
+        assert "skip #12" in r.stdout and "before 2026-11-09" in r.stdout
+
+
+def test_s155_check_local_skips_the_story_check_when_gh_is_not_logged_in(tmp_path):
+    repo = tmp_path / "repo"; repo.mkdir()
+    git = lambda *a: subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True)
+    git("init", "-q", "-b", "dev"); git("config", "user.email", "t@example.com"); git("config", "user.name", "t")
+    git("commit", "-q", "--allow-empty", "-m", "chore: base")
+    git("update-ref", "refs/remotes/origin/dev", "HEAD")
+    git("commit", "-q", "--allow-empty", "-m", "feat: x\n\nCloses #12")
+    env = stub_env(tmp_path, story_issue("2026-11-20T09:00:00Z"), no_auth=True)
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "story"], cwd=repo, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "skip story: gh is not logged in" in r.stdout

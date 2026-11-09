@@ -81,6 +81,7 @@ check_disable_comments() {
 check_story() {
   have_base story || return 0
   command -v gh >/dev/null || { echo "skip story: gh is not installed"; return 0; }
+  gh auth status >/dev/null 2>&1 || { echo "skip story: gh is not logged in (gh auth login); CI still checks it"; return 0; }
   local tmp rc
   tmp="$(mktemp)"
   git log "origin/$BASE..HEAD" --format=%B > "$tmp"
