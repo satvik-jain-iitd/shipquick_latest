@@ -55,6 +55,36 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "Tab: One tab in a tab row: text, an icon or both, and selected and onClick.",
+            "LeadingIconTab: A tab with the icon beside the text, not above it.",
+            "SecondaryTabRow: A tab row for tabs inside one part of the screen, below a PrimaryTabRow or inside content.",
+            "PrimaryScrollableTabRow: A PrimaryTabRow that scrolls sideways. Use it when the tabs do not fit the width.",
+            "SecondaryScrollableTabRow: A SecondaryTabRow that scrolls sideways. Use it when the tabs do not fit the width.",
+            "TabRowDefaults.PrimaryIndicator: The indicator line PrimaryTabRow draws under the selected tab, as wide as its content.",
+            "TabRowDefaults.SecondaryIndicator: The indicator line SecondaryTabRow draws under the selected tab, as wide as the tab.",
+            "TabRowDefaults: Default colours, the indicator composables, and the edge padding and minimum tab width of scrollable rows.",
+            "TabIndicatorScope: The scope of a tab row's indicator. Its tabIndicatorOffset moves the indicator under the selected tab.",
+            "TabPosition: The left edge, width and content width of one tab, for an old-style indicator."
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: TabRow. Use PrimaryTabRow or SecondaryTabRow (Google: \"Replaced with PrimaryTabRow and SecondaryTabRow.\").",
+            "Do not use: ScrollableTabRow. Use PrimaryScrollableTabRow or SecondaryScrollableTabRow (Google: \"Replaced with PrimaryScrollableTabRow and SecondaryScrollableTabRow tab variants.\").",
+            "Do not use: TabRowDefaults.Indicator. Use TabRowDefaults.SecondaryIndicator (Google: \"Use SecondaryIndicator instead.\")."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

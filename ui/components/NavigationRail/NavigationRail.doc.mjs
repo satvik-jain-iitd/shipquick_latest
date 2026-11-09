@@ -70,5 +70,69 @@ export default {
       "description": "The NavigationRailItems.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "NavigationRailItem",
+          "note": "One destination in a NavigationRail: an icon, an optional label, and selected and onClick."
+        },
+        {
+          "name": "WideNavigationRail",
+          "note": "A newer rail that can be collapsed (icons only) or expanded (icons with labels, like a drawer). Its state says which."
+        },
+        {
+          "name": "ModalWideNavigationRail",
+          "note": "A wide rail that opens over the content, with a scrim, when expanded. Set hideOnCollapse to hide it fully when collapsed."
+        },
+        {
+          "name": "WideNavigationRailItem",
+          "note": "One destination in a WideNavigationRail. Its label sits under the icon when collapsed and beside it when expanded."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "NavigationRailDefaults",
+          "use": "Default container colour and window insets for NavigationRail."
+        },
+        {
+          "name": "NavigationRailItemDefaults",
+          "use": "Default colours for NavigationRailItem. Make them with NavigationRailItemDefaults.colors()."
+        },
+        {
+          "name": "NavigationRailItemColors",
+          "use": "The icon, text and indicator colours of a NavigationRailItem, selected and not."
+        },
+        {
+          "name": "WideNavigationRailDefaults",
+          "use": "Default colours, shapes, arrangement and window insets for WideNavigationRail and its modal form."
+        },
+        {
+          "name": "WideNavigationRailItemDefaults",
+          "use": "Default colours and icon position for WideNavigationRailItem."
+        },
+        {
+          "name": "WideNavigationRailColors",
+          "use": "The container, content and modal scrim colours of a WideNavigationRail."
+        },
+        {
+          "name": "WideNavigationRailState",
+          "use": "Says if the rail is collapsed or expanded. Call expand(), collapse(), toggle() or snapTo() from a coroutine."
+        },
+        {
+          "name": "rememberWideNavigationRailState",
+          "use": "Creates and keeps a WideNavigationRailState, with the first value you give."
+        },
+        {
+          "name": "WideNavigationRailValue",
+          "use": "The two states of a wide rail: Collapsed and Expanded."
+        },
+        {
+          "name": "ModalWideNavigationRailProperties",
+          "use": "Window settings for ModalWideNavigationRail: shouldDismissOnBackPress and securePolicy."
+        }
+      ]
+    }
+  }
 };
