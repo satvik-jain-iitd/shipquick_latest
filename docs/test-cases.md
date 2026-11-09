@@ -487,6 +487,29 @@ Scenario: a coder agent starts an Android screen from a template
 ```
 Tests: `tests/test_android_templates.py` (s134).
 
+**Story #225: a rule-24 child keeps the kit on a kit branch.**
+```gherkin
+Scenario: main carries only the caller; the pin, the hooks and roles.yml sit on the kit branch
+  Given a child whose main has only .github/workflows/shipquick-call.yml with kit_branch: dev
+  And dev has the knowledge/shipquick_latest submodule and .pre-commit-config.yaml with the ShipQuick hooks
+  When adopt.sh --check runs on main
+  Then it reads the pin and the hooks from dev, prints one line for main and one for dev, and exits 0
+  And a wrong pin on dev, no hooks on dev, or no dev branch at all exits 1 and names dev
+  And adoption_scan.py flags a wrong pin, no submodule or no hooks on the kit branch
+  And adopt.sh --kit-branch dev writes kit_branch: dev under shipquick_ref in the caller
+  And checks.yml takes kit_branch (default empty) and the adoption and roles jobs read from it, through env
+  And a child without kit_branch is checked exactly as before
+
+Scenario: the kit branch is guarded (second review of PR #227)
+  Given a rule-24 child with kit_branch: dev
+  When dev has no branch protection, or its protection does not require pull request reviews
+  Then adopt.sh --check and adoption_scan.py both fail and say so
+  And kit_branch is parsed by one script (scripts/kit_branch.py): a trailing # comment is stripped, a ${{ }} expression is refused
+  And review_merge.sh reads roles.yml from the kit branch on a PR into another branch, and names the kit branch when it is missing
+  And the CI roles job prints a clear line when the kit branch or its roles.yml is missing
+  And adopt.sh run again without --kit-branch keeps the caller's kit_branch
+```
+Tests: `tests/test_adopt.py`, `tests/test_adoption_scan.py`, `tests/test_checks_workflow.py`, `tests/test_review_merge.py` (s225).
 ## Story #216: the UI coverage gate
 ```gherkin
 Scenario: no counted component is left out
@@ -551,3 +574,12 @@ Scenario: an agent reading a row Apple does not offer on iOS always learns what 
   And every real "none" in the table has a reason
 ```
 Tests: `tests/test_ui_api_lists.py` (s231). Local: `python3 scripts/ui_api_lists.py --check`.
+## Story #231, Android A1 Buttons (issue #234)
+```gherkin
+Scenario: every Buttons row of the Android API list is covered by a structured field
+  Given the 35 rows of android-m3-api.md in Button, IconButton, FloatingActionButton, FabPosition and SegmentedButton
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+```
+Proof: the GAP count for these families drops from 31 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.

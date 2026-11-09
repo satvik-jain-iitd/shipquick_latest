@@ -17,6 +17,13 @@ on:
         description: Commit SHA (or tag) of the ShipQuick scripts. Use the same one as in `uses:`.
         type: string
         required: true
+      kit_branch:
+        description: >-
+          Story #225, a rule-24 child: the branch that carries the knowledge/shipquick_latest submodule,
+          .pre-commit-config.yaml and .shipquick/roles.yml, so `main` can carry only the caller. Empty
+          (the default) means the branch the job runs on.
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -31,22 +38,31 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
-      - name: Check the caller's pin and the pre-commit hooks (story #124)
+      - name: Check the caller's pin and the pre-commit hooks (story #124; kit branch, story #225)
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref || github.ref_name }}
         run: |
-          sub_sha="$(git -C project rev-parse -q --verify "HEAD:knowledge/shipquick_latest" || true)"
+          # The pin and the hooks are read from this commit, or from the kit branch when the job runs on another branch.
+          ref=HEAD; at="at this commit"
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo."; exit 1; }
+            ref="origin/$KIT_BRANCH"; at="on kit branch $KIT_BRANCH"
+          fi
+          sub_sha="$(git -C project rev-parse -q --verify "$ref:knowledge/shipquick_latest" || true)"
           if [ -z "$sub_sha" ]; then
-            echo "no knowledge/shipquick_latest submodule found at this commit. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+            echo "no knowledge/shipquick_latest submodule found $at. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
             exit 1
           fi
           if [ "$sub_sha" != "${{ inputs.shipquick_ref }}" ]; then
-            echo "the caller is pinned to ${{ inputs.shipquick_ref }}, but the submodule is at $sub_sha. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+            echo "the caller is pinned to ${{ inputs.shipquick_ref }}, but the submodule $at is at $sub_sha. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
             exit 1
           fi
-          if ! grep -q "check_local.sh" project/.pre-commit-config.yaml 2>/dev/null; then
-            echo "no ShipQuick pre-commit hooks in .pre-commit-config.yaml. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+          if ! git -C project show "$ref:.pre-commit-config.yaml" 2>/dev/null | grep -q "check_local.sh"; then
+            echo "no ShipQuick pre-commit hooks in .pre-commit-config.yaml $at. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
             exit 1
           fi
-          echo "adoption OK: pinned to $sub_sha, pre-commit hooks present"
+          echo "adoption OK: pinned to $sub_sha $at, pre-commit hooks present"
       - name: Check out the ShipQuick scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -110,12 +126,23 @@ jobs:
           sparse-checkout: scripts
           persist-credentials: false
       - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
         run: |
           commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --paginate --jq '.[] | "\(.author.login):\(.parents | length):\([.commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s][-1] // "")"' | paste -sd, -)
-          coders=$(python3 .shipquick/scripts/roles.py get coder --file project/.shipquick/roles.yml)
-          reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file project/.shipquick/roles.yml)
-          owner=$(python3 .shipquick/scripts/roles.py get owner --file project/.shipquick/roles.yml)
-          coder_sessions=$(python3 .shipquick/scripts/roles.py get coder_sessions --file project/.shipquick/roles.yml)
+          roles_file=project/.shipquick/roles.yml
+          # story #225: a rule-24 child keeps roles.yml on its kit branch; a PR into another branch reads it from there.
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo (the caller's kit_branch)."; exit 1; }
+            ref="origin/$KIT_BRANCH"
+            git -C project show "$ref:.shipquick/roles.yml" > "$RUNNER_TEMP/roles.yml" 2>/dev/null || { echo "no .shipquick/roles.yml on kit branch $KIT_BRANCH. Add it there (bash knowledge/shipquick_latest/scripts/adopt.sh . --coder ... --reviewer ... --owner ...)."; exit 1; }
+            roles_file="$RUNNER_TEMP/roles.yml"
+          fi
+          coders=$(python3 .shipquick/scripts/roles.py get coder --file "$roles_file")
+          reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file "$roles_file")
+          owner=$(python3 .shipquick/scripts/roles.py get owner --file "$roles_file")
+          coder_sessions=$(python3 .shipquick/scripts/roles.py get coder_sessions --file "$roles_file")
           python3 .shipquick/scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner" --coder-sessions "$coder_sessions"
   team-block:
     runs-on: ubuntu-latest
