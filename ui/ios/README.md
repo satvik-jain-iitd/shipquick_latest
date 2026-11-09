@@ -53,3 +53,8 @@ A token reference passes, like `.padding(.top, Tokens.space2)`.
 
 In a child, `lint/swiftlint.yml` does this job (story #185): every rule is a warning locally, and CI runs `swiftlint lint --strict`.
 `tests/test_ui_lint.py` keeps it in step with this list. See `docs/ADOPTION.md`.
+## The tokens (story #184)
+
+`Sources/ShipQuickUI/Tokens.swift` is written by `python3 scripts/emit_tokens.py` from `design/tokens.json`. Do not edit it.
+It holds `ShipQuickTokens`: `Colors` (light and dark), `Fonts`, `Spacing`, `Radius`, `Motion`, `Haptics` and `touchTarget`.
+The feel tokens match Android's. CI compiles it with the templates.

@@ -44,3 +44,11 @@ Using this folder as a Gradle build with `includeBuild("knowledge/shipquick_late
 - The step flow: the filled button comes last, and the screen uses `imePadding()`.
 Lint takes over this job in a child (story #185): `lint/detekt.yml` (local, warnings), `lint/detekt-ci.yml` (CI, errors)
 and `lint/UiRulesKonsistTest.kt`. `tests/test_ui_lint.py` keeps them in step with the bans above. See `docs/ADOPTION.md`.
+Lint takes over this job in story S7.
+
+## The theme (story #184)
+
+`theme/Theme.kt` is written by `python3 scripts/emit_tokens.py` from `design/tokens.json`. Do not edit it.
+It holds `ShipQuickTheme` (Material 3 colours light and dark, type and shapes), and the constants `ShipQuickSpacing`,
+`ShipQuickMotion`, `ShipQuickHaptics` and `ShipQuickTouchTarget`. Brand colours reach an app only through this theme.
+CI compiles it with the templates.

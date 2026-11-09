@@ -362,6 +362,20 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   No custom detekt rule module. The rules are config and one Kotlin test file.
 - Decision: no new tool. We write two configs, one Konsist test, two fixture apps and a drift test (stdlib Python).
 - Confidence that nothing fits better: 0.8 (the three tools are the usual choice for Compose and SwiftUI; no repo does both).
+## 9 Nov 2026, story #184: one tokens.json to a Compose Theme and SwiftUI Tokens
+- Need: turn `design/tokens.json` into a Compose Material 3 `Theme.kt` and a SwiftUI `Tokens.swift`, checked in CI.
+- Run: `scout.py --need "design tokens json to Compose Theme and SwiftUI Tokens"`: no repos found.
+  `gh search repos "style-dictionary"`: style-dictionary/style-dictionary (about 4.9k stars, pushed 3 Nov 2026).
+  `gh search repos "design tokens compose swiftui"`: none.
+- Read: Style Dictionary is a Node tool. It needs `npm install` and a custom format per target, written by us: one for
+  Compose Material 3 roles and one for SwiftUI. Its stock Android and iOS formats write XML and Objective-C style output,
+  not `ColorScheme`, `Typography` or SwiftUI `Color`. Meta's Astryx has a Swift theme emitter
+  (`packages/native/scripts/swift-ios-theme.mjs`, 839 lines, v0.7.11). It reads CSS custom properties resolved from
+  `defineTheme`, not W3C tokens, so it does not fit. Borrowed ideas only: a generated-file header that names the command,
+  the output committed, a test that fails on drift, and a check for reserved words in names. No file was copied.
+- Decision: build from scratch, one stdlib Python file (`scripts/emit_tokens.py`), the same shape as `scripts/ui_proof.py`.
+  It runs on CI with no install, and the output is the part that needs our own mapping anyway.
+- Confidence that nothing fits better: 0.75 (Style Dictionary would save the JSON walk, but not the mapping, and adds Node).
 ## 9 Nov 2026, story #288: save the public names of each framework package
 - Need: save a list of public API names of Android and Apple framework packages to validate names in docs.
 - Run: `scout.py --need "save a list of public API names of Android and Apple framework packages to validate names in docs"`: no repos found.
