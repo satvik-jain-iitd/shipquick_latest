@@ -49,11 +49,22 @@ def fixture(tmp_path, android_n=1, ios_n=2, core=("Button",)):
     return tmp_path
 
 
+REAL_NAMES = ROOT / "docs" / "research" / "sources" / "framework-names.json"   # the default of --framework-names
+
+
+def pin_line(names=REAL_NAMES):
+    import hashlib
+    return f"Saved names: `docs/research/sources/framework-names.json` sha256 `{hashlib.sha256(names.read_bytes()).hexdigest()}`"
+
+
 def run(tmp_path, *extra):
     if not (tmp_path / "rows.json").exists():
         (tmp_path / "rows.json").write_text('{"ios": {}}')
     if not (tmp_path / "frameworks.md").exists():
         (tmp_path / "frameworks.md").write_text("## iOS\n\n| # | Topic | Framework | Official source |\n|---|---|---|---|\n")
+    md = (tmp_path / "frameworks.md").read_text()
+    if "Saved names:" not in md:   # story #288: the saved names (the default file) are pinned by sha256 in framework-topics.md
+        (tmp_path / "frameworks.md").write_text(pin_line() + "\n\n" + md)
     return check_ui_coverage.main([
         "--core-floor", "1", "--row-map", str(tmp_path / "rows.json"), "--frameworks", str(tmp_path / "frameworks.md"),
         "--android-list", str(tmp_path / "android.md"), "--ios-list", str(tmp_path / "ios.md"),
@@ -448,3 +459,89 @@ def test_s231_a_supporting_entry_naming_a_variant_row_fails(tmp_path, capsys):
         {"name": "ButtonDefaults", "use": "defaults"}, {"name": "FilledTonalButton", "use": "wrong kind"}]}})
     assert run_api(f) == 1
     assert "no such supporting row" in capsys.readouterr().out
+
+
+# Story #288: a framework doc's own type names are checked against the saved package names, so a typo fails.
+def test_s288_a_typo_in_a_framework_doc_name_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "Chart", "use": "x"}, {"name": "Chrat", "use": "a typo"}))
+    assert run_api(f, "--strict-api") == 1
+    out = capsys.readouterr().out
+    assert "FAIL api ios: swift-charts names Chrat under platformApi.ios.supporting, but neither the ios API list nor " \
+        "the saved framework names (framework-names.json) have it" in out, out
+    assert "names Chart " not in out
+
+
+def test_s288_a_name_of_the_other_platform_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "GlanceModifier", "use": "an Android name in an iOS slot"},))
+    assert run_api(f, "--strict-api") == 1
+    assert "swift-charts names GlanceModifier" in capsys.readouterr().out
+
+
+def test_s288_a_qualified_name_matches_on_a_dot_boundary_only(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "Charts.BarMark", "use": "x"}, {"name": "arMark", "use": "x"}))
+    assert run_api(f) == 1
+    out = capsys.readouterr().out
+    assert "names arMark" in out and "names Charts.BarMark" not in out
+
+
+def test_s288_saved_names_that_do_not_match_their_pin_fail(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+    md = f / "frameworks.md"
+    md.write_text(md.read_text().replace(pin_line(), "Saved names: `docs/research/sources/framework-names.json` sha256 `" + "0" * 64 + "`"))
+    assert run_api(f) == 1
+    assert "framework-names.json: its sha256" in capsys.readouterr().out
+
+
+def test_s288_a_names_file_edited_after_it_was_pinned_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    names = f / "edited-names.json"
+    names.write_text(REAL_NAMES.read_text().replace("Charts.BarMark", "Charts.Chrat"))
+    (f / "frameworks.md").write_text(pin_line() + "\n\n" + FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f, "--framework-names", str(names)) == 1
+    assert "edited-names.json: its sha256" in capsys.readouterr().out
+
+
+def test_s288_a_missing_names_file_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    run_api(f)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    assert check_ui_coverage.main([
+        "--core-floor", "1", "--row-map", str(f / "rows.json"), "--frameworks", str(f / "frameworks.md"),
+        "--framework-names", str(f / "no-such-names.json"), "--android-list", str(f / "android.md"),
+        "--ios-list", str(f / "ios.md"), "--components", str(f / "components"), "--topics", str(f / "topics"),
+        "--core", str(f / "core"), "--integration", str(f / "integration.mjs")]) == 1
+    assert "no-such-names.json: file not found" in capsys.readouterr().out
+
+
+def test_s288_review_2_a_bare_fragment_is_not_a_known_name():
+    names = {"android.Manifest.permission", "android.Manifest.permission.POST_NOTIFICATIONS", "android.app.Activity",
+             "androidx.glance.appwidget.updateAll"}
+    assert not check_ui_coverage.known("permission", names)          # a lowercase last segment must be qualified
+    assert check_ui_coverage.known("Manifest.permission.POST_NOTIFICATIONS", names)
+    assert check_ui_coverage.known("Activity", names)                 # a type-cased last segment may be bare
+    assert not check_ui_coverage.known("ctivity", names)
+    assert check_ui_coverage.known("androidx.glance.appwidget.updateAll", names)
+    assert not check_ui_coverage.known("updateAll", names)
+
+
+def test_s288_the_notifications_doc_names_the_platform_types_exactly():
+    """Nit from the second review of #287: NotificationChannel is android.app's, POST_NOTIFICATIONS is a Manifest constant."""
+    from check_ui_docs import read_doc
+    d = read_doc(ROOT / "ui" / "components" / "notifications" / "notifications.doc.mjs")
+    names = [i["name"] for i in d["platformApi"]["android"]["supporting"]]
+    assert "android.app.NotificationChannel" in names and "Manifest.permission.POST_NOTIFICATIONS" in names, names

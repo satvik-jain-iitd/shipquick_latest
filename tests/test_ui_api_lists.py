@@ -376,3 +376,65 @@ def test_s231_an_ios_extract_split_into_two_files_gives_the_same_list():
     head = {**EXTRACT, "modifiers": EXTRACT["modifiers"][:1]}
     two = {"ios-swiftui-extract.json": json.dumps(head), "ios-swiftui-extract-2.json": json.dumps({"modifiers": EXTRACT["modifiers"][1:]})}
     assert ui_api_lists.merge_ios(two) == ui_api_lists.merge_ios(one)
+
+
+# Story #288: the saved public names of each framework package.
+GLANCE = """// Signature format: 4.0
+package androidx.glance.appwidget {
+
+  public abstract class GlanceAppWidget {
+    method public abstract suspend Object? provideGlance(android.content.Context context);
+  }
+
+  public final class GlanceAppWidgetKt {
+    method public static suspend Object? updateAll(androidx.glance.appwidget.GlanceAppWidget, android.content.Context);
+  }
+
+}
+
+package android {
+
+  public final class Manifest.permission {
+    field public static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
+  }
+
+}
+"""
+
+
+def test_s288_android_names_keep_classes_top_level_functions_and_fields_but_not_members():
+    assert ui_api_lists.android_names(GLANCE) == [
+        "android.Manifest.permission", "android.Manifest.permission.POST_NOTIFICATIONS",
+        "androidx.glance.appwidget.GlanceAppWidget", "androidx.glance.appwidget.updateAll"]
+    assert ui_api_lists.android_names(GLANCE, r"^android\.Manifest\b") == [
+        "android.Manifest.permission", "android.Manifest.permission.POST_NOTIFICATIONS"]
+
+
+def test_s288_apple_names_keep_module_types_and_return_its_topic_pages():
+    page = {"references": {
+        "a": {"role": "symbol", "title": "BarMark", "url": "/documentation/charts/barmark"},
+        "b": {"role": "symbol", "title": "chartXAxis(_:)", "url": "/documentation/charts/x"},
+        "c": {"role": "symbol", "title": "View", "url": "/documentation/swiftui/view"},
+        "d": {"role": "collectionGroup", "title": "Marks", "url": "/documentation/charts/marks"},
+        "e": {"role": "collectionGroup", "title": "Other", "url": "/documentation/swiftui/other"}}}
+    assert ui_api_lists.apple_names(page, "Charts", "charts") == ({"Charts.BarMark"}, ["/documentation/charts/marks"])
+
+
+def test_s288_the_saved_framework_names_are_small_and_pinned():
+    import hashlib
+    raw = ui_api_lists.FW_SRC.read_bytes()
+    assert len(raw) < 500_000
+    assert f"sha256 `{hashlib.sha256(raw).hexdigest()}`" in ui_api_lists.FW_MD.read_text(encoding="utf-8")
+    for p in json.loads(raw)["packages"]:
+        assert p["sources"] and p["version"] and p["names"], p["package"]
+
+
+def test_s288_review_2_the_saved_names_have_the_bridge_and_health_types():
+    names = {n for p in json.loads(ui_api_lists.FW_SRC.read_text())["packages"] for n in p["names"]}
+    assert {"SwiftUI.UIViewRepresentable", "SwiftUI.UIViewControllerRepresentable", "SwiftUI.UIHostingConfiguration",
+            "HealthKit.HKActivitySummary"} <= names
+
+
+def test_s288_review_2_adr_012_says_the_pin_catches_mistakes_not_tampering():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "catches mistakes, not tampering" in adr and "diff review is the guard" in adr

@@ -62,12 +62,12 @@ export default {
           "use": "Posts, updates and cancels notifications with notify() and cancel()."
         },
         {
-          "name": "NotificationChannel",
+          "name": "android.app.NotificationChannel",
           "use": "A channel for one kind of message, with its own importance. Create it before you post, on Android 8 and later."
         },
         {
-          "name": "POST_NOTIFICATIONS",
-          "use": "The runtime permission to post notifications on Android 13 and later."
+          "name": "Manifest.permission.POST_NOTIFICATIONS",
+          "use": "The constant for the runtime permission to post notifications on Android 13 and later."
         }
       ]
     }
