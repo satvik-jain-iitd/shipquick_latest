@@ -75,5 +75,12 @@ export default {
       "description": "Says what the gauge measures.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "gaugeStyle", "note": "`.gaugeStyle(_:)`, iOS 16.0. Apple: \"Sets the style for gauges within this view.\""}
+      ]
+    }
+  }
 };

@@ -67,6 +67,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "datePickerStyle: `.datePickerStyle(_:)`, iOS 13.0. Apple: \"Sets the style for date pickers within this view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

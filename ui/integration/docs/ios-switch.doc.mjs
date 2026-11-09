@@ -61,6 +61,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "toggleStyle: `.toggleStyle(_:)`, iOS 13.0. Apple: \"Sets the style for toggles in a view hierarchy.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

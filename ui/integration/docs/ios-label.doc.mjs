@@ -56,6 +56,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "labelStyle: `.labelStyle(_:)`, iOS 14.0. Apple: \"Sets the style for labels within this view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

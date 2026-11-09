@@ -142,5 +142,12 @@ export default {
       "description": "A custom label, like a Label with an icon.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "menuStyle", "note": "`.menuStyle(_:)`, iOS 14.0. Apple: \"Sets the style for menus within this view.\""}
+      ]
+    }
+  }
 };

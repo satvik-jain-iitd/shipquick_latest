@@ -563,3 +563,13 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
   And a topic prints a status item only as "Do not use: <name>. Use <replacement>."
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
+
+## Story #231, sub-issue #266 (I6a): iOS style modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Style modifiers page is covered by its control's doc
+  Given the 27 I6a modifier rows of docs/research/ios-swiftui-api.md
+  When check_ui_coverage.py runs
+  Then no I6a row is a GAP line
+  And .buttonStyle sits in Button, .toggleStyle in Switch, .pickerStyle in Picker, .listStyle in List, .glassEffect in Glass
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.

@@ -62,6 +62,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "progressViewStyle: `.progressViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for progress views in this view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

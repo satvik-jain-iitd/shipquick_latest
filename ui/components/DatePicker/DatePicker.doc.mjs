@@ -152,5 +152,12 @@ export default {
       "platform": "ios",
       "default": "[.hourAndMinute, .date]"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "datePickerStyle", "note": "`.datePickerStyle(_:)`, iOS 13.0. Apple: \"Sets the style for date pickers within this view.\""}
+      ]
+    }
+  }
 };

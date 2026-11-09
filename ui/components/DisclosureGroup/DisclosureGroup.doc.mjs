@@ -69,5 +69,12 @@ export default {
       "description": "What shows when the group is open.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "disclosureGroupStyle", "note": "`.disclosureGroupStyle(_:)`, iOS 16.0. Apple: \"Sets the style for disclosure groups within this view.\""}
+      ]
+    }
+  }
 };

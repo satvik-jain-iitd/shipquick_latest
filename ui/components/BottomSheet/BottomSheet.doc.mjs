@@ -148,5 +148,12 @@ export default {
       "platform": "ios",
       "default": "[.large]"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "presentedWindowStyle", "note": "`.presentedWindowStyle(_:)`, not on iOS. Apple: \"Sets the style for windows created by interacting with this view.\"", "status": "unavailable-ios", "replacement": "sheet"}
+      ]
+    }
+  }
 };

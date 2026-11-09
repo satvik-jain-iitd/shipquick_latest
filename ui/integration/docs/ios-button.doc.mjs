@@ -81,6 +81,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "buttonSizing: `.buttonSizing(_:)`, iOS 26.0. Apple: \"The preferred sizing behavior of buttons in the view hierarchy.\"",
+            "buttonStyle: `.buttonStyle(_:)`, iOS 13.0. Apple: \"Sets the style for buttons within this view to a button style with a custom appearance and standard interaction behavior.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

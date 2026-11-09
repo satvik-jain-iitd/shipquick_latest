@@ -110,5 +110,12 @@ export default {
       "description": "Words that say what loads. VoiceOver reads them.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "progressViewStyle", "note": "`.progressViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for progress views in this view.\""}
+      ]
+    }
+  }
 };

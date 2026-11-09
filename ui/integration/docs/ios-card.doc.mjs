@@ -61,6 +61,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "groupBoxStyle: `.groupBoxStyle(_:)`, iOS 14.0. Apple: \"Sets the style for group boxes within this view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

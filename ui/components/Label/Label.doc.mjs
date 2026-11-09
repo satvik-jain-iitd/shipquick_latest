@@ -75,5 +75,12 @@ export default {
       "description": "The SF Symbol name for the icon.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "labelStyle", "note": "`.labelStyle(_:)`, iOS 14.0. Apple: \"Sets the style for labels within this view.\""}
+      ]
+    }
+  }
 };

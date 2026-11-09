@@ -68,6 +68,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "navigationSplitViewStyle: `.navigationSplitViewStyle(_:)`, iOS 16.0. Apple: \"Sets the style for navigation split views within this view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

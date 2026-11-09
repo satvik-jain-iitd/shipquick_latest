@@ -83,5 +83,12 @@ export default {
       "type": "Binding<NavigationSplitViewVisibility>",
       "description": "Which columns show, kept by the screen."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "navigationSplitViewStyle", "note": "`.navigationSplitViewStyle(_:)`, iOS 16.0. Apple: \"Sets the style for navigation split views within this view.\""}
+      ]
+    }
+  }
 };

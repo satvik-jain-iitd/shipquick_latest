@@ -168,5 +168,12 @@ export default {
       "platform": "ios",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "tabViewStyle", "note": "`.tabViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the tab view within the current environment.\""}
+      ]
+    }
+  }
 };

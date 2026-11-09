@@ -162,5 +162,12 @@ export default {
       "platform": "ios",
       "default": "nil"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "listStyle", "note": "`.listStyle(_:)`, iOS 13.0. Apple: \"Sets the style for lists within this view.\""}
+      ]
+    }
+  }
 };

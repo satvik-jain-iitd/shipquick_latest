@@ -150,5 +150,12 @@ export default {
       "description": "A custom label instead of words.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "toggleStyle", "note": "`.toggleStyle(_:)`, iOS 13.0. Apple: \"Sets the style for toggles in a view hierarchy.\""}
+      ]
+    }
+  }
 };

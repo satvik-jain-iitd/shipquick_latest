@@ -73,6 +73,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "tabViewStyle: `.tabViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the tab view within the current environment.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

@@ -174,5 +174,13 @@ export default {
       "description": "Pass .vertical to let the field grow to more lines.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "textEditorStyle", "note": "`.textEditorStyle(_:)`, iOS 17.0. Apple: \"Sets the style for text editors within this view.\""},
+        {"name": "textFieldStyle", "note": "`.textFieldStyle(_:)`, iOS 13.0. Apple: \"Sets the style for text fields within this view.\""}
+      ]
+    }
+  }
 };

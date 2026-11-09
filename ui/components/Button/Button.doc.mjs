@@ -36,5 +36,13 @@ export default {
     {"name": "isLoading", "type": "boolean", "description": "Shows a spinner and ignores presses until the action ends.", "default": "false"},
     {"name": "onClick", "type": "() => void", "description": "Runs when the user presses the button."},
     {"name": "type", "type": "'button' | 'submit' | 'reset'", "description": "The HTML button type. Web only.", "default": "'button'"}
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "buttonSizing", "note": "`.buttonSizing(_:)`, iOS 26.0. Apple: \"The preferred sizing behavior of buttons in the view hierarchy.\""},
+        {"name": "buttonStyle", "note": "`.buttonStyle(_:)`, iOS 13.0. Apple: \"Sets the style for buttons within this view to a button style with a custom appearance and standard interaction behavior.\""}
+      ]
+    }
+  }
 };
