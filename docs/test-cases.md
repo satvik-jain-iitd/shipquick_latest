@@ -307,3 +307,15 @@ Scenario: old rejected boards do not break an old canvas (#148 review)
   And layout run twice on one manifest object leaves the manifest unchanged
 ```
 Tests: `tests/test_canvas_stage.py` (S31 to S33).
+
+## Story #162: the QA loop lives in the kit
+```gherkin
+Scenario: the qa-loop skill installs from the kit as a thin pointer
+  Given a Mac with no ~/.claude/skills/qa-loop
+  When scripts/install_skill.sh runs
+  Then ~/.claude/skills/qa-loop links to the kit's skills/qa-loop, next to shipquick-feedback
+  And a real qa-loop folder already there is kept, named, and the other skill still installs
+  And the pointer names docs/QA_LOOP.md and scripts/qa/, and no project
+  And docs/QA_LOOP.md has sections 1 to 15 and covers Web, Android, iOS and CLI
+```
+Tests: `tests/test_install_skill.py` (`test_s162_*`).
