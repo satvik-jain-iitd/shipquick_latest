@@ -106,3 +106,9 @@ def test_s155_check_local_skips_the_story_check_when_gh_is_not_logged_in(tmp_pat
     r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "story"], cwd=repo, capture_output=True, text=True, env=env)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert "skip story: gh is not logged in" in r.stdout
+
+
+# Story #194: an inline value that wraps onto the next line is read whole.
+def test_s194_an_inline_value_that_crosses_a_line_break_is_read_whole():
+    r = run("Who does it: the admin,\non the admin app City screen,\nabout twice a month\n\n## Scenarios\n")
+    assert r.returncode == 0, r.stdout
