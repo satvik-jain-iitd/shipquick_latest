@@ -35,19 +35,54 @@ def test_required_files_exist():
         assert (ROOT / rel).is_file(), f"missing {rel}"
 
 
-def test_no_forbidden_brand_names():
+# The children registry names real repos, and one real repo carries a forbidden word in its name.
+# Owner, 9 Nov 2026: "children.md ko test se chhoot do". Only this one file is exempt, never the whole docs/ tree.
+EXEMPT = {"docs/children.md"}
+
+
+def forbidden_files(root, exempt=frozenset(EXEMPT)):
+    """Relative paths of scanned files that hold a forbidden name, minus the exempt ones."""
     bad = []
-    for path in ROOT.rglob("*"):
+    for path in root.rglob("*"):
         if ".git/" in str(path) or not path.is_file():
             continue
         if path == Path(__file__).resolve():
             continue
-        if path.suffix.lower() not in SCAN_SUFFIXES:
+        rel = str(path.relative_to(root))
+        if rel in exempt or path.suffix.lower() not in SCAN_SUFFIXES:
             continue
         try:
             text = path.read_text(encoding="utf-8", errors="strict")
         except (UnicodeDecodeError, OSError):
             continue
         if FORBIDDEN.search(text):
-            bad.append(str(path.relative_to(ROOT)))
+            bad.append(rel)
+    return bad
+
+
+def test_no_forbidden_brand_names():
+    bad = forbidden_files(ROOT)
     assert not bad, f"forbidden brand names in: {bad}"
+
+
+def test_only_the_children_registry_is_exempt():
+    assert EXEMPT == {"docs/children.md"}
+
+
+def test_the_exemption_is_one_file_not_a_folder(tmp_path):
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "children.md").write_text("owner/bhavna-ai\n")
+    (tmp_path / "docs" / "other.md").write_text("owner/bhavna-ai\n")
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "x.py").write_text("# amex\n")
+    assert sorted(forbidden_files(tmp_path)) == ["docs/other.md", "scripts/x.py"]
+
+
+def test_the_registry_lists_the_public_child_that_the_ban_hid():
+    import sys
+
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from adoption_scan import read_children
+
+    children = dict(read_children(ROOT / "docs" / "children.md"))
+    assert children.get("satvik-jain-iitd/bhavna-ai") is False, "bhavna-ai is public: listed, not private"
