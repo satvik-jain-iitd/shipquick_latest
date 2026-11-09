@@ -23,7 +23,7 @@ export default {
         },
         {
           "type": "prose",
-          "text": "Text shows read-only words, one line or many. Apple: \"A view that displays one or more lines of read-only text.\" On Android, Material 3 Text takes its colour from the content colour of what is behind it, and its style from the theme."
+          "text": "Text shows read-only words, one line or many. On Android, Material 3 Text takes its colour from the content colour of what is behind it, and its style from the theme."
         }
       ]
     },
@@ -80,8 +80,7 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Use the type tokens for font and size, so Dynamic Type still works.",
-            "Let people select useful text, like an error code, with textSelection(.enabled).",
+            "Use the type tokens for font and size, so the text still grows with the person's text size setting.",
             "Size text through the type scale, so it grows with the system font size."
           ]
         },
@@ -89,7 +88,7 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Use Text for words people must edit. Use a TextField instead."
+            "Use Text for words people must edit. Use a text field instead."
           ]
         }
       ]
@@ -101,7 +100,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Dynamic Type (1.4.4 Resize Text, 200% text size): Text grows with the person's text size setting. Never fix the font size; use the type tokens.",
+            "Text size (1.4.4 Resize Text, 200% text size): Text grows with the person's text size setting. Never fix the font size; use the type tokens.",
             "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Body text has at least 4.5:1 contrast with what is behind it."
           ]
         }

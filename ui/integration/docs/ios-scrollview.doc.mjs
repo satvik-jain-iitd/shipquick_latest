@@ -55,6 +55,36 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "ScrollViewReader: iOS 14.0. Apple: \"A view that provides programmatic scrolling, by working with a proxy to scroll to known child views.\"",
+            "defaultScrollAnchor: `.defaultScrollAnchor(_:)`, iOS 17.0. Apple: \"Associates an anchor to control which part of the scroll view’s content should be rendered by default.\"",
+            "onScrollGeometryChange: `.onScrollGeometryChange(for:of:action:)`, iOS 18.0. Apple: \"Adds an action to be performed when a value, created from a scroll geometry, changes.\"",
+            "onScrollPhaseChange: `.onScrollPhaseChange(_:)`, iOS 18.0. Apple: \"Adds an action to perform when the scroll phase of the first scroll view in the hierarchy changes.\"",
+            "onScrollTargetVisibilityChange: `.onScrollTargetVisibilityChange(idType:threshold:_:)`, iOS 18.0. Apple: \"Adds an action to be called with information about what views would be considered visible.\"",
+            "onScrollVisibilityChange: `.onScrollVisibilityChange(threshold:_:)`, iOS 18.0. Apple: \"Adds an action to be called when the view crosses the threshold to be considered on/off screen.\"",
+            "scrollInputBehavior: `.scrollInputBehavior(_:for:)`, iOS 18.0. Apple: \"Enables or disables scrolling in scrollable views when using particular inputs.\"",
+            "scrollPosition: `.scrollPosition(id:anchor:)`, iOS 17.0. Apple: \"Associates a binding to be updated when a scroll view within this view scrolls.\"",
+            "scrollTargetBehavior: `.scrollTargetBehavior(_:)`, iOS 17.0. Apple: \"Sets the scroll behavior of views scrollable in the provided axes.\"",
+            "scrollTargetLayout: `.scrollTargetLayout(isEnabled:)`, iOS 17.0. Apple: \"Configures the outermost layout as a scroll target layout.\"",
+            "scrollTransition: `.scrollTransition(_:axis:transition:)`, iOS 17.0. Apple: \"Applies the given transition, animating between the phases of the transition as this view appears and disappears within the visible region of the containing scroll view.\"",
+            "scrollBounceBehavior: `.scrollBounceBehavior(_:axes:)`, iOS 16.4. Apple: \"Configures the bounce behavior of scrollable views along the specified axis.\"",
+            "scrollClipDisabled: `.scrollClipDisabled(_:)`, iOS 17.0. Apple: \"Sets whether a scroll view clips its content to its bounds.\"",
+            "scrollContentBackground: `.scrollContentBackground(_:)`, iOS 16.0. Apple: \"Specifies the visibility of the background for scrollable views within this view.\"",
+            "scrollDisabled: `.scrollDisabled(_:)`, iOS 16.0. Apple: \"Disables or enables scrolling in scrollable views.\"",
+            "scrollIndicators: `.scrollIndicators(_:axes:)`, iOS 16.0. Apple: \"Sets the visibility of scroll indicators within this view.\"",
+            "scrollIndicatorsFlash: `.scrollIndicatorsFlash(onAppear:)`, iOS 17.0. Apple: \"Flashes the scroll indicators of a scrollable view when it appears.\"",
+            "scrollEdgeEffectHidden: `.scrollEdgeEffectHidden(_:for:)`, iOS 26.0. Apple: \"Hides any scroll edge effects for scroll views within this hierarchy.\"",
+            "scrollEdgeEffectStyle: `.scrollEdgeEffectStyle(_:for:)`, iOS 26.0. Apple: \"Configures the scroll edge effect style for scroll views within this hierarchy.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

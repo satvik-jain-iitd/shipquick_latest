@@ -107,6 +107,11 @@ export default {
     }
   ],
   "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "help", "note": "`.help(_:)`, iOS 16.0. Apple: \"Adds help text to a view using a localized string resource that you provide.\""}
+      ]
+    },
     "android": {
       "family": "Tooltip",
       "variants": [
