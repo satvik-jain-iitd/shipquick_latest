@@ -49,9 +49,16 @@ field() { jq -r "$1" <<<"$json"; }
 
 # story #140: who may author and who may approve come from the PR's OWN repo's .shipquick/roles.yml,
 # read from GitHub (never the local checkout -- story #122's lesson), not a name hardcoded here.
-roles_raw=$(gh api "repos/$repo/contents/.shipquick/roles.yml?ref=$(field .baseRefName)" --jq '.content' 2>/dev/null)
+# Story #225: a rule-24 child names a kit branch in its caller; roles.yml lives there, the same as in the CI roles job.
+roles_ref=$(field .baseRefName); roles_where="$roles_ref"
+caller_raw=$(gh api "repos/$repo/contents/.github/workflows/shipquick-call.yml?ref=$roles_ref" --jq '.content' 2>/dev/null) || caller_raw=""
+if [ -n "$caller_raw" ]; then
+  kit=$(printf '%s' "$caller_raw" | base64 -d 2>/dev/null | python3 "$HERE/kit_branch.py" parse) || refuse "$repo's shipquick-call.yml on $roles_ref: $kit"
+  if [ -n "$kit" ] && [ "$kit" != "$roles_ref" ]; then roles_ref="$kit"; roles_where="kit branch $kit"; fi
+fi
+roles_raw=$(gh api "repos/$repo/contents/.shipquick/roles.yml?ref=$roles_ref" --jq '.content' 2>/dev/null)
 roles_rc=$?
-[ "$roles_rc" -eq 0 ] && [ -n "$roles_raw" ] || refuse "cannot read $repo's .shipquick/roles.yml on $(field .baseRefName) to check roles"
+[ "$roles_rc" -eq 0 ] && [ -n "$roles_raw" ] || refuse "cannot read $repo's .shipquick/roles.yml on $roles_where to check roles"
 roles_tmp="$(mktemp)"
 printf '%s' "$roles_raw" | base64 -d > "$roles_tmp" 2>/dev/null
 coders=$(python3 "$HERE/roles.py" get coder --file "$roles_tmp") || refuse "cannot read coder accounts from $repo's .shipquick/roles.yml"

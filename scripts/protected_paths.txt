@@ -29,3 +29,5 @@ scripts/check_*.sh
 .shipquick/*
 # story #180 review: a rule file is always owner-yes (rule 38 and every other rule live here)
 CLAUDE.md
+# story #225: the one kit_branch parser the gate (adopt.sh, adoption scan, review_merge.sh) reads
+scripts/kit_branch.py

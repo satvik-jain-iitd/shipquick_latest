@@ -37,6 +37,8 @@ case "$1" in
          *contents/.shipquick/roles.yml*)
            [ -f "$STUB_DIR/roles_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
            cat "$STUB_DIR/roles_yml_b64"; exit 0 ;;
+         *contents/.github/workflows/shipquick-call.yml*)
+           [ -f "$STUB_DIR/caller_b64" ] && { cat "$STUB_DIR/caller_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
          *contents/docs/screens.txt*)
            [ -f "$STUB_DIR/screens_b64" ] && { cat "$STUB_DIR/screens_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
          *pulls/*/commits*)
@@ -74,8 +76,13 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False, screens=None):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False, screens=None, caller=None):
         (stub / "merge.log").unlink(missing_ok=True)
+        (stub / "calls.log").unlink(missing_ok=True)
+        if caller is not None:   # story #225: the PR's own repo's shipquick-call.yml on its base; None = none (404)
+            (stub / "caller_b64").write_text(base64.b64encode(caller.encode()).decode(), encoding="utf-8")
+        else:
+            (stub / "caller_b64").unlink(missing_ok=True)
         if screens is not None:   # story #153: the PR's own repo's docs/screens.txt on its base branch; None = not configured (404)
             (stub / "screens_b64").write_text(base64.b64encode(screens.encode()).decode(), encoding="utf-8")
         else:
@@ -476,6 +483,13 @@ def test_s131_the_enforcer_scripts_are_themselves_protected(env):
         assert result.returncode == 1 and "protected path" in result.stderr, (f, result.stderr)
 
 
+def test_s225_kit_branch_py_is_a_protected_path_since_the_gate_reads_kit_branch_through_it(env):
+    lines = (ROOT / "scripts" / "protected_paths.txt").read_text(encoding="utf-8").splitlines()
+    assert "scripts/kit_branch.py" in lines
+    result, merged = env(pr_files=[{"filename": "scripts/kit_branch.py", "status": "modified"}])
+    assert result.returncode == 1 and "protected path" in result.stderr, result.stderr
+
+
 def test_s131_a_lift_only_freeze_pr_is_refused_in_auto_mode_the_owner_merges_it(env):
     pr = good(); pr["baseRefName"] = "main"
     files = [{"filename": ".shipquick/freeze", "status": "removed"}]
@@ -521,6 +535,37 @@ def test_s140_dependabot_is_exempt_from_the_coder_check_but_still_needs_a_real_r
 
 def test_s140_cannot_read_roles_yml_refuses_it_is_never_treated_as_exempt(env):
     refused(*env(roles_unreadable=True), "cannot read")
+
+
+# ---- story #225, review of PR #227 fix 2: a rule-24 child's roles.yml lives on its kit branch ----
+KIT_CALLER = "jobs:\n  shipquick-checks:\n    with:\n      shipquick_ref: abc\n      kit_branch: documents  # rule 24\n"
+
+
+def test_s225_a_pr_into_main_of_a_rule24_child_reads_roles_yml_from_the_kit_branch(env):
+    pr = {**good(), "baseRefName": "main"}
+    r, merged = env(pr=pr, caller=KIT_CALLER)
+    assert "contents/.shipquick/roles.yml?ref=documents" in merged.calls, merged.calls
+    assert "contents/.shipquick/roles.yml?ref=main" not in merged.calls
+
+
+def test_s225_a_pr_into_the_kit_branch_itself_reads_its_own_base(env):
+    pr = {**good(), "baseRefName": "documents"}
+    r, merged = env(pr=pr, caller=KIT_CALLER)
+    assert "contents/.shipquick/roles.yml?ref=documents" in merged.calls
+
+
+def test_s225_no_caller_or_no_kit_branch_reads_roles_yml_from_the_base_as_before(env):
+    r, merged = env()
+    assert r.returncode == 0, r.stderr
+    assert "contents/.shipquick/roles.yml?ref=dev" in merged.calls
+
+
+def test_s225_an_expression_as_kit_branch_refuses(env):
+    refused(*env(caller=KIT_CALLER.replace("documents  # rule 24", "${{ github.base_ref }}")), "expression")
+
+
+def test_s225_roles_yml_missing_on_the_kit_branch_names_the_kit_branch(env):
+    refused(*env(pr={**good(), "baseRefName": "main"}, caller=KIT_CALLER, roles_unreadable=True), "kit branch documents")
 
 
 # Story #180 (S0): a protected PR merges only when the approving review records a second review and
