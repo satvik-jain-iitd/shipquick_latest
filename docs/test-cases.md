@@ -400,3 +400,34 @@ Scenario: the reviewer merges a protected PR only with both lines in the approvi
   And a PR touching .shipquick/* refuses whatever the review says
 ```
 Tests: `tests/test_review_merge.py` (s180).
+## Story #182 (S2): the spec layer: component schema, contracts, doc guards, tokens
+```gherkin
+Scenario: a component doc and its contract agree
+  Given ui/components/Button/Button.doc.mjs and Button.contract.json
+  When check_ui_docs.py runs
+  Then it passes
+  And a doc naming a prop the contract lacks fails, naming the prop
+  And a contract prop with no doc entry fails
+  And an enum prop typed by a bare name or with a missing literal fails, listing the values
+  And a folder with no doc or no contract fails
+  And a doc without platforms, or a web-only prop without a reason, fails the schema
+Scenario: the schema is copied, not rewritten
+  Given ui/schema/doctypes/component/type.ts
+  Then it keeps the Meta copyright line and adds only platforms {android, ios, web}
+  And ui/UPSTREAM.md names the repo and the full commit
+Scenario: tokens carry the feel
+  Given design/tokens.json
+  Then it has color, typography, spacing, shape and feel (motion, haptics, touch target 48dp / 44pt)
+```
+Tests: `tests/test_check_ui_docs.py` (s182).
+## Story #182 (S2), PR #198 second review: tighter doc guards
+```gherkin
+Scenario: the guard refuses loose docs
+  Given check_ui_docs.py
+  Then an empty or missing root fails and names the path
+  And a web-only prop typed by a bare name fails
+  And a type like 'sm' | string fails
+  And a prop named twice fails
+  And text after the doc's JSON fails, except an export const <name> = {...} block (the dense twin)
+```
+Tests: `tests/test_check_ui_docs.py` (s182).
