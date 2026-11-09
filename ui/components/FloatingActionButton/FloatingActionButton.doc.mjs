@@ -81,5 +81,37 @@ export default {
       "description": "The inside, usually one Icon.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "SmallFloatingActionButton",
+          "note": "A smaller FAB. Use it for a second action, or next to other parts."
+        },
+        {
+          "name": "LargeFloatingActionButton",
+          "note": "A bigger FAB. Use it when the screen has room and the action is the main one."
+        },
+        {
+          "name": "ExtendedFloatingActionButton",
+          "note": "A wider FAB with a text label and an optional icon. Use it when words make the action clearer. Its expanded flag shrinks it to the icon, for example while a list scrolls."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "FloatingActionButtonDefaults",
+          "use": "The default colour, shapes and elevation for every FAB size."
+        },
+        {
+          "name": "FloatingActionButtonElevation",
+          "use": "The shadow of a FAB in each state. Make one with FloatingActionButtonDefaults.elevation() or loweredElevation()."
+        },
+        {
+          "name": "FabPosition",
+          "use": "Where Scaffold puts the FAB: Start, Center, End or EndOverlay. Pass it as floatingActionButtonPosition."
+        }
+      ]
+    }
+  }
 };
