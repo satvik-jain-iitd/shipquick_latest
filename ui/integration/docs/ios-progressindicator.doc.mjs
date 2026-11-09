@@ -62,6 +62,20 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "DefaultDateProgressLabel: iOS 16.0. Apple: \"The default type of the current value label when used by a date-relative progress view.\"",
+            "ProgressViewStyleConfiguration.CurrentValueLabel: iOS 14.0. Apple: \"A type-erased label that describes the current value of a progress view.\"",
+            "ProgressViewStyleConfiguration.Label: iOS 14.0. Apple: \"A type-erased label describing the task represented by the progress view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

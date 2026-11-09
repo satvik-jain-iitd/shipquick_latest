@@ -61,6 +61,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "ScrollViewReader: iOS 14.0. Apple: \"A view that provides programmatic scrolling, by working with a proxy to scroll to known child views.\"",
             "defaultScrollAnchor: `.defaultScrollAnchor(_:)`, iOS 17.0. Apple: \"Associates an anchor to control which part of the scroll view’s content should be rendered by default.\"",
             "onScrollGeometryChange: `.onScrollGeometryChange(for:of:action:)`, iOS 18.0. Apple: \"Adds an action to be performed when a value, created from a scroll geometry, changes.\"",
             "onScrollPhaseChange: `.onScrollPhaseChange(_:)`, iOS 18.0. Apple: \"Adds an action to perform when the scroll phase of the first scroll view in the hierarchy changes.\"",

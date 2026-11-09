@@ -87,8 +87,16 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "EditButton: iOS 13.0. Apple: \"A button that toggles the edit mode environment value.\"",
+            "NewDocumentButton: iOS 18.0. Apple: \"A button that creates and opens new documents.\"",
+            "PasteButton: iOS 16.0. Apple: \"A system button that reads items from the pasteboard and delivers it to a closure.\"",
+            "RenameButton: iOS 16.0. Apple: \"A button that triggers a standard rename action.\"",
             "pasteDestination: `.pasteDestination(for:action:validator:)`, iOS 27.0. Apple: \"Specifies an action that adds validated items to a view in response to the system’s Paste command.\"",
-            "renameAction: `.renameAction(_:)`, iOS 16.0. Apple: \"Sets a closure to run for the rename action.\""
+            "renameAction: `.renameAction(_:)`, iOS 16.0. Apple: \"Sets a closure to run for the rename action.\"",
+            "ButtonStyleConfiguration.Label: iOS 13.0. Apple: \"A type-erased label of a button.\"",
+            "DefaultButtonLabel: iOS 26.0. Apple: \"The default label to use for a button.\"",
+            "DefaultNewDocumentButtonLabel: iOS 27.0. Apple: \"The default label used for a new document button.\"",
+            "PrimitiveButtonStyleConfiguration.Label: iOS 13.0. Apple: \"A type-erased label of a button.\""
           ]
         }
       ]

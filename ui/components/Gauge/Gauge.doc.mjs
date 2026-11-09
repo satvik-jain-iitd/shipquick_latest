@@ -75,5 +75,16 @@ export default {
       "description": "Says what the gauge measures.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "supporting": [
+        {"name": "GaugeStyleConfiguration.CurrentValueLabel", "use": "iOS 16.0. Apple: \"A type-erased value label of a gauge that contains the current value.\""},
+        {"name": "GaugeStyleConfiguration.Label", "use": "iOS 16.0. Apple: \"A type-erased label of a gauge, describing its purpose.\""},
+        {"name": "GaugeStyleConfiguration.MarkedValueLabel", "use": "iOS 16.0. Apple: \"A type-erased label describing a specific value of a gauge.\""},
+        {"name": "GaugeStyleConfiguration.MaximumValueLabel", "use": "iOS 16.0. Apple: \"A type-erased value label of a gauge describing the maximum value.\""},
+        {"name": "GaugeStyleConfiguration.MinimumValueLabel", "use": "iOS 16.0. Apple: \"A type-erased value label of a gauge describing the minimum value.\""}
+      ]
+    }
+  }
 };

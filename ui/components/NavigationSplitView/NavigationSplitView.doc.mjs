@@ -83,5 +83,13 @@ export default {
       "type": "Binding<NavigationSplitViewVisibility>",
       "description": "Which columns show, kept by the screen."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "inspector", "note": "`.inspector(isPresented:content:)`, iOS 17.0. Apple: \"Inserts an inspector at the applied position in the view hierarchy.\""},
+        {"name": "inspectorColumnWidth", "note": "`.inspectorColumnWidth(_:)`, iOS 17.0. Apple: \"Sets a fixed, preferred width for the inspector containing this view when presented as a trailing column.\""}
+      ]
+    }
+  }
 };

@@ -166,6 +166,9 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "ForEach", "note": "iOS 13.0. Apple: \"A structure that computes views on demand from an underlying collection of identified data.\""},
+        {"name": "OutlineGroup", "note": "iOS 14.0. Apple: \"A structure that computes views and disclosure groups on demand from an underlying collection of tree-structured, identified data.\""},
+        {"name": "Section", "note": "iOS 13.0. Apple: \"A container view that you can use to add hierarchy within certain views.\""},
         {"name": "deleteDisabled", "note": "`.deleteDisabled(_:)`, iOS 13.0. Apple: \"Adds a condition for whether the view’s view hierarchy is deletable.\""},
         {"name": "listRowHoverEffect", "note": "`.listRowHoverEffect(_:)`, not on iOS. Apple: \"Requests that the containing list row use the provided hover effect.\"", "status": "unavailable-ios", "replacement": "hoverEffect"},
         {"name": "listRowHoverEffectDisabled", "note": "`.listRowHoverEffectDisabled(_:)`, not on iOS. Apple: \"Requests that the containing list row have its hover effect disabled.\"", "status": "unavailable-ios", "replacement": "hoverEffectDisabled"},
@@ -174,6 +177,9 @@ export default {
         {"name": "selectionDisabled", "note": "`.selectionDisabled(_:)`, iOS 17.0. Apple: \"Adds a condition that controls whether users can select this view.\""},
         {"name": "swipeActions", "note": "`.swipeActions(edge:allowsFullSwipe:content:)`, iOS 15.0. Apple: \"Adds custom swipe actions to a row in a list.\""},
         {"name": "swipeActionsContainer", "note": "`.swipeActionsContainer()`, iOS 27.0. Apple: \"Coordinates swipe action dismissal and mutual exclusion across rows in a container.\""}
+      ],
+      "supporting": [
+        {"name": "SectionConfiguration.Actions", "use": "iOS 18.0. Apple: \"The type-erased actions of a section.\""}
       ]
     }
   }

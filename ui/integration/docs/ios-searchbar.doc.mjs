@@ -67,6 +67,14 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "searchable: `.searchable(text:placement:prompt:)`, iOS 16.0. Apple: \"Marks this view as searchable, which configures the display of a search field.\"",
+            "searchCompletion: `.searchCompletion(_:)`, iOS 15.0. Apple: \"Associates a fully formed string with the value of this view when used as a search suggestion.\"",
+            "searchDictationBehavior: `.searchDictationBehavior(_:)`, iOS 17.0. Apple: \"Configures the dictation behavior for any search fields configured by the searchable modifier.\"",
+            "searchPresentationToolbarBehavior: `.searchPresentationToolbarBehavior(_:)`, iOS 17.1. Apple: \"Configures the search toolbar presentation behavior for any searchable modifiers within this view.\"",
+            "searchScopes: `.searchScopes(_:scopes:)`, iOS 16.0. Apple: \"Configures the search scopes for this view.\"",
+            "searchSelection: `.searchSelection(_:)`, iOS 26.0. Apple: \"Binds the selection of the search field associated with the nearest searchable modifier to the given `TextSelection` value.\"",
+            "searchSuggestions: `.searchSuggestions(_:)`, iOS 16.0. Apple: \"Configures the search suggestions for this view.\"",
+            "searchToolbarBehavior: `.searchToolbarBehavior(_:)`, iOS 26.0. Apple: \"Configures the behavior for search in the toolbar.\"",
             "searchFocused: `.searchFocused(_:)`, iOS 18.0. Apple: \"Modifies this view by binding the focus state of the search field associated with the nearest searchable modifier to the given Boolean value.\""
           ]
         }

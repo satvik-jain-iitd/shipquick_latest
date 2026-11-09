@@ -68,6 +68,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "inspector: `.inspector(isPresented:content:)`, iOS 17.0. Apple: \"Inserts an inspector at the applied position in the view hierarchy.\"",
+            "inspectorColumnWidth: `.inspectorColumnWidth(_:)`, iOS 17.0. Apple: \"Sets a fixed, preferred width for the inspector containing this view when presented as a trailing column.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

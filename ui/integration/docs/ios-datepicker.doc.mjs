@@ -67,6 +67,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "MultiDatePicker: iOS 16.0. Apple: \"A control for picking multiple dates.\"",
+            "DatePickerStyleConfiguration.Label: iOS 16.0. Apple: \"A type-erased label of a `DatePicker`.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
