@@ -93,8 +93,8 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Do not use: presentationBreakthroughEffect. Use nothing on iOS ().",
-            "Do not use: presentationPreventsAppTermination. Use nothing on iOS ()."
+            "Do not use: presentationBreakthroughEffect. Use nothing on iOS (visionOS content seen through 3D models; iOS has no 3D occlusion).",
+            "Do not use: presentationPreventsAppTermination. Use nothing on iOS (it stops a Mac app from quitting; iOS apps are not quit from a menu)."
           ]
         }
       ]

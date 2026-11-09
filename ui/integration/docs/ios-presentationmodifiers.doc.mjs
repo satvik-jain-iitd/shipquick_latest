@@ -81,7 +81,7 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Do not use: foveatedStreamingPauseSheet. Use nothing on iOS ()."
+            "Do not use: foveatedStreamingPauseSheet. Use nothing on iOS (visionOS foveated streaming only)."
           ]
         }
       ]

@@ -83,7 +83,7 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Do not use: dialogPreventsAppTermination. Use nothing on iOS ().",
+            "Do not use: dialogPreventsAppTermination. Use nothing on iOS (it stops a Mac app from quitting; iOS apps are not quit from a menu).",
             "Do not use: dialogSeverity. Use alert."
           ]
         }
