@@ -73,5 +73,12 @@ export default {
       "description": "The pages.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "indexViewStyle", "note": "`.indexViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the index view within the current environment.\""}
+      ]
+    }
+  }
 };

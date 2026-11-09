@@ -136,6 +136,15 @@ export default {
     }
   ],
   "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "groupBoxStyle", "note": "`.groupBoxStyle(_:)`, iOS 14.0. Apple: \"Sets the style for group boxes within this view.\""}
+      ],
+      "supporting": [
+        {"name": "GroupBoxStyleConfiguration.Content", "use": "iOS 14.0. Apple: \"A type-erased content of a group box.\""},
+        {"name": "GroupBoxStyleConfiguration.Label", "use": "iOS 14.0. Apple: \"A type-erased label of a group box.\""}
+      ]
+    },
     "android": {
       "variants": [
         {

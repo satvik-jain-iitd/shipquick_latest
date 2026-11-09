@@ -112,6 +112,16 @@ export default {
     }
   ],
   "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "progressViewStyle", "note": "`.progressViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for progress views in this view.\""}
+      ],
+      "supporting": [
+        {"name": "DefaultDateProgressLabel", "use": "iOS 16.0. Apple: \"The default type of the current value label when used by a date-relative progress view.\""},
+        {"name": "ProgressViewStyleConfiguration.CurrentValueLabel", "use": "iOS 14.0. Apple: \"A type-erased label that describes the current value of a progress view.\""},
+        {"name": "ProgressViewStyleConfiguration.Label", "use": "iOS 14.0. Apple: \"A type-erased label describing the task represented by the progress view.\""}
+      ]
+    },
     "android": {
       "family": "ProgressIndicator",
       "variants": [
