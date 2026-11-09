@@ -49,13 +49,10 @@ def fixture(tmp_path, android_n=1, ios_n=2, core=("Button",)):
     return tmp_path
 
 
-FRAMEWORK_NAMES = {"fetched": "2026-11-09", "packages": [
-    {"platform": "ios", "package": "Charts", "version": "v", "sources": ["0" * 64 + " https://x"], "names": ["Charts.Chart", "Charts.BarMark"]},
-    {"platform": "android", "package": "androidx.glance:glance", "version": "1.2.0", "sources": ["0" * 64 + " https://y"],
-     "names": ["androidx.glance.GlanceModifier", "android.Manifest.permission.POST_NOTIFICATIONS"]}]}
+REAL_NAMES = ROOT / "docs" / "research" / "sources" / "framework-names.json"   # the default of --framework-names
 
 
-def pin_line(names):
+def pin_line(names=REAL_NAMES):
     import hashlib
     return f"Saved names: `docs/research/sources/framework-names.json` sha256 `{hashlib.sha256(names.read_bytes()).hexdigest()}`"
 
@@ -65,15 +62,11 @@ def run(tmp_path, *extra):
         (tmp_path / "rows.json").write_text('{"ios": {}}')
     if not (tmp_path / "frameworks.md").exists():
         (tmp_path / "frameworks.md").write_text("## iOS\n\n| # | Topic | Framework | Official source |\n|---|---|---|---|\n")
-    names = tmp_path / "framework-names.json"
-    if not names.exists():
-        names.write_text(json.dumps(FRAMEWORK_NAMES))
     md = (tmp_path / "frameworks.md").read_text()
-    if "Saved names:" not in md:   # story #288: the saved names are pinned by sha256 in framework-topics.md
-        (tmp_path / "frameworks.md").write_text(pin_line(names) + "\n\n" + md)
+    if "Saved names:" not in md:   # story #288: the saved names (the default file) are pinned by sha256 in framework-topics.md
+        (tmp_path / "frameworks.md").write_text(pin_line() + "\n\n" + md)
     return check_ui_coverage.main([
         "--core-floor", "1", "--row-map", str(tmp_path / "rows.json"), "--frameworks", str(tmp_path / "frameworks.md"),
-        "--framework-names", str(names),
         "--android-list", str(tmp_path / "android.md"), "--ios-list", str(tmp_path / "ios.md"),
         "--components", str(tmp_path / "components"), "--topics", str(tmp_path / "topics"),
         "--core", str(tmp_path / "core"), "--integration", str(tmp_path / "integration.mjs"), *extra])
@@ -506,23 +499,44 @@ def test_s288_saved_names_that_do_not_match_their_pin_fail(tmp_path, capsys):
     (f / "frameworks.md").write_text(FRAMEWORKS)
     framework_doc(f)
     assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
-    names = f / "framework-names.json"
-    names.write_text(names.read_text().replace("Charts.BarMark", "Charts.Chrat"))
+    md = f / "frameworks.md"
+    md.write_text(md.read_text().replace(pin_line(), "Saved names: `docs/research/sources/framework-names.json` sha256 `" + "0" * 64 + "`"))
     assert run_api(f) == 1
     assert "framework-names.json: its sha256" in capsys.readouterr().out
+
+
+def test_s288_a_names_file_edited_after_it_was_pinned_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    names = f / "edited-names.json"
+    names.write_text(REAL_NAMES.read_text().replace("Charts.BarMark", "Charts.Chrat"))
+    (f / "frameworks.md").write_text(pin_line() + "\n\n" + FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f, "--framework-names", str(names)) == 1
+    assert "edited-names.json: its sha256" in capsys.readouterr().out
 
 
 def test_s288_a_missing_names_file_fails(tmp_path, capsys):
     f = api_fixture(tmp_path)
     run_api(f)
-    (f / "framework-names.json").unlink()
     (f / "frameworks.md").write_text(FRAMEWORKS)
     assert check_ui_coverage.main([
         "--core-floor", "1", "--row-map", str(f / "rows.json"), "--frameworks", str(f / "frameworks.md"),
-        "--framework-names", str(f / "framework-names.json"), "--android-list", str(f / "android.md"),
+        "--framework-names", str(f / "no-such-names.json"), "--android-list", str(f / "android.md"),
         "--ios-list", str(f / "ios.md"), "--components", str(f / "components"), "--topics", str(f / "topics"),
         "--core", str(f / "core"), "--integration", str(f / "integration.mjs")]) == 1
-    assert "framework-names.json: file not found" in capsys.readouterr().out
+    assert "no-such-names.json: file not found" in capsys.readouterr().out
+
+
+def test_s288_review_2_a_bare_fragment_is_not_a_known_name():
+    names = {"android.Manifest.permission", "android.Manifest.permission.POST_NOTIFICATIONS", "android.app.Activity",
+             "androidx.glance.appwidget.updateAll"}
+    assert not check_ui_coverage.known("permission", names)          # a lowercase last segment must be qualified
+    assert check_ui_coverage.known("Manifest.permission.POST_NOTIFICATIONS", names)
+    assert check_ui_coverage.known("Activity", names)                 # a type-cased last segment may be bare
+    assert not check_ui_coverage.known("ctivity", names)
+    assert check_ui_coverage.known("androidx.glance.appwidget.updateAll", names)
+    assert not check_ui_coverage.known("updateAll", names)
 
 
 def test_s288_the_notifications_doc_names_the_platform_types_exactly():

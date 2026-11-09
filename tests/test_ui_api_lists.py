@@ -454,3 +454,13 @@ def test_s285_the_ios_list_has_a_doc_family_column(tmp_path):
     assert ui_api_lists.main(args) == 0
     md = (out / ui_api_lists.IOS_MD.name).read_text()
     assert "| Apple page | Doc family |" in md and "Doc family:" in md
+
+def test_s288_review_2_the_saved_names_have_the_bridge_and_health_types():
+    names = {n for p in json.loads(ui_api_lists.FW_SRC.read_text())["packages"] for n in p["names"]}
+    assert {"SwiftUI.UIViewRepresentable", "SwiftUI.UIViewControllerRepresentable", "SwiftUI.UIHostingConfiguration",
+            "HealthKit.HKActivitySummary"} <= names
+
+
+def test_s288_review_2_adr_012_says_the_pin_catches_mistakes_not_tampering():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "catches mistakes, not tampering" in adr and "diff review is the guard" in adr

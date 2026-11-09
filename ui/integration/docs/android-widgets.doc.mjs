@@ -37,7 +37,7 @@ export default {
             "GlanceAppWidget: The widget. Override provideGlance(context, id) and call provideContent with the content.",
             "GlanceAppWidgetReceiver: The receiver the system talks to. Set its glanceAppWidget, and declare it in the manifest with an appwidget-provider file.",
             "GlanceModifier: Glance's modifier for size, padding, background and clicks.",
-            "updateAll: Redraws every placed copy of a GlanceAppWidget after its data changes."
+            "androidx.glance.appwidget.updateAll: Redraws every placed copy of a GlanceAppWidget after its data changes."
           ]
         }
       ]
