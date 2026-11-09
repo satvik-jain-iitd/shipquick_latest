@@ -15,9 +15,9 @@
       },
       "optional": true
     },
-    "isDecorative": {
+    "decorative": {
       "type": {
-        "kind": "boolean"
+        "kind": "string"
       },
       "optional": true
     }

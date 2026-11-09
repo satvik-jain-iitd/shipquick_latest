@@ -48,6 +48,12 @@ SwiftUI also has controls that have no HIG page of their own, so they are not in
 
 ## The counted list
 
+Checked: 2026-11-09. That one date covers every row below.
+"iOS since" is the earliest iOS of the symbol and every overload with the same name. Apple gives each overload its
+own page; the page without a suffix is often the newest overload, not the first. Row 15 was wrong for that reason
+(the unsuffixed page is the iOS 16 `LocalizedStringResource` overload; the `Text` prompt overload is iOS 15.0), so
+every row was checked again the same way on 2026-11-09. No other row changed.
+
 "Same as M3 component" names the component on Google's Compose page that does the same job.
 `none (iOS-only)` means Google's page has nothing for that job. Each iOS-only row has its own doc in `ui/components/`
 (the "Our doc" column). A shared row gets `platforms.ios` added to the Android doc in a later PR, after story S4 merges.
@@ -68,7 +74,7 @@ SwiftUI also has controls that have no HIG page of their own, so they are not in
 | 12 | Pop-up buttons | `SwiftUI.MenuPickerStyle` | 14.0 | https://developer.apple.com/documentation/swiftui/menupickerstyle | Menus | - |
 | 13 | Pull-down buttons | `SwiftUI.Menu` | 14.0 | https://developer.apple.com/documentation/swiftui/menu | Menus | - |
 | 14 | Toolbars | `SwiftUI.View.toolbar(content:)` | 14.0 | https://developer.apple.com/documentation/swiftui/view/toolbar(content:) | App bars | - |
-| 15 | Search fields | `SwiftUI.View.searchable(text:placement:prompt:)` | 16.0 | https://developer.apple.com/documentation/swiftui/view/searchable(text:placement:prompt:) | Search | - |
+| 15 | Search fields | `SwiftUI.View.searchable(text:placement:prompt:)` | 15.0 | https://developer.apple.com/documentation/swiftui/view/searchable(text:placement:prompt:)-18a8f | Search | - |
 | 16 | Sidebars | `SwiftUI.ListStyle.sidebar` | 14.0 | https://developer.apple.com/documentation/swiftui/liststyle/sidebar | Navigation drawer | - |
 | 17 | Tab bars | `SwiftUI.TabView` | 13.0 | https://developer.apple.com/documentation/swiftui/tabview | Navigation bar | - |
 | 18 | Action sheets | `SwiftUI.View.confirmationDialog(_:isPresented:titleVisibility:actions:)` | 15.0 | https://developer.apple.com/documentation/swiftui/view/confirmationdialog(_:ispresented:titlevisibility:actions:)-46zbb | Bottom sheets | - |

@@ -128,6 +128,17 @@ def test_s135_a_doc_with_no_dont_line_writes_no_empty_list():
             assert block["type"] != "table" or block["rows"], (s["title"], block)
 
 
+def test_s135_a_doc_with_no_usage_description_writes_no_empty_prose():
+    # PR #209 second review: an empty usage.description became an empty prose block.
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from ui_topics import topic
+    doc = {"name": "X", "platforms": {"ios": "SwiftUI.X"}, "props": [], "usage": {"description": ""}}
+    for s in topic(doc, {"core": {}}, "ios")["sections"]:
+        for block in s["content"]:
+            assert block["type"] != "prose" or block["text"].strip(), (s["title"], block)
+
+
 # PR #202 second review: scan every line and both streams, and walk the whole JSON.
 def run_stub(tmp_path, stdout, stderr="", *args):
     s = tmp_path / "astryx"

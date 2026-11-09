@@ -62,10 +62,9 @@ export default {
       "description": "The SF Symbol name, like \"star.fill\". init(systemName:)."
     },
     {
-      "name": "isDecorative",
-      "type": "boolean",
-      "description": "true uses init(decorative:): an unlabeled image that VoiceOver skips.",
-      "default": "false"
+      "name": "decorative",
+      "type": "string",
+      "description": "Apple's init(decorative:) label: the asset name of an unlabeled, decorative image that VoiceOver skips. Use it instead of name."
     }
   ]
 };
