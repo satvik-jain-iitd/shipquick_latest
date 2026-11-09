@@ -3,6 +3,10 @@
 ## Value
 <!-- One line. What does the user get? -->
 
+## Who does it
+<!-- Required at Ready (story #155). The person who has the pain, in real life. Not the feature's name. -->
+Who does it: <actor>, <app or screen>, <how often>
+
 ## Why now
 <!-- One line. Why this, why this sprint? -->
 
