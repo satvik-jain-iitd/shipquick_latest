@@ -397,9 +397,20 @@ def test_s231_an_empty_framework_topic_file_does_not_count(tmp_path, capsys):
     assert "Swift Charts (framework)" in capsys.readouterr().out
 
 
-def test_s231_strict_api_fails_on_the_real_repo_today():
-    """Red first: the family docs have not landed, so the full lists are not covered yet."""
-    assert check_ui_coverage.main(["--strict-api"]) == 1
+def test_s231_the_real_repo_passes_strict_api_and_ci_and_check_local_pass_the_flag():
+    """Every Android and iOS row and framework topic has its doc, so the gate runs strict everywhere (story #231 done)."""
+    assert check_ui_coverage.main(["--strict-api"]) == 0
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "python3 scripts/check_ui_coverage.py --require-web --strict-api" in ci
+    local = (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
+    assert 'python3 "$HERE/check_ui_coverage.py" --strict-api;' in local
+
+
+def test_s231_strict_api_prints_each_gap_once(tmp_path, capsys):
+    """Second review nit: under --strict-api a gap was printed as FAIL twice, once as a gap and once as an error."""
+    assert run_api(api_fixture(tmp_path), "--strict-api") == 1
+    out = capsys.readouterr().out
+    assert out.count("api android Button: FilledTonalButton") == 1, out
 
 
 # PR #255 review 2: a component row is covered only by a doc of its own family (Android), and a doc whose Android

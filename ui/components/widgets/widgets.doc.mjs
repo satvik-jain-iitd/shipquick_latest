@@ -24,6 +24,19 @@ export default {
   "platformUsage": {
     "ios": {
       "description": "Use WidgetKit: https://developer.apple.com/documentation/widgetkit."
+    },
+    "android": {
+      "description": "Use Jetpack Glance: https://developer.android.com/develop/ui/compose/glance. A Glance widget is built with Glance's own composables, which become RemoteViews; Material 3 composables do not run in a widget.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Build the content inside provideContent, in your GlanceAppWidget's provideGlance."
+        },
+        {
+          "guidance": false,
+          "description": "Use Material 3 composables or Compose modifiers in a widget. Use Glance's composables and GlanceModifier."
+        }
+      ]
     }
   },
   "platformApi": {
@@ -40,6 +53,26 @@ export default {
         {
           "name": "TimelineProvider",
           "use": "iOS 14.0. Apple: \"A type that advises WidgetKit when to update a widget’s display.\""
+        }
+      ]
+    },
+    "android": {
+      "supporting": [
+        {
+          "name": "GlanceAppWidget",
+          "use": "The widget. Override provideGlance(context, id) and call provideContent with the content."
+        },
+        {
+          "name": "GlanceAppWidgetReceiver",
+          "use": "The receiver the system talks to. Set its glanceAppWidget, and declare it in the manifest with an appwidget-provider file."
+        },
+        {
+          "name": "GlanceModifier",
+          "use": "Glance's modifier for size, padding, background and clicks."
+        },
+        {
+          "name": "updateAll",
+          "use": "Redraws every placed copy of a GlanceAppWidget after its data changes."
         }
       ]
     }
