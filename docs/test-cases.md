@@ -431,3 +431,16 @@ Scenario: the guard refuses loose docs
   And text after the doc's JSON fails, except an export const <name> = {...} block (the dense twin)
 ```
 Tests: `tests/test_check_ui_docs.py` (s182).
+
+## Story #183 (S3): the Astryx CLI as shipped, with the kit's integration (ADR-012)
+```gherkin
+Scenario: an agent looks a native component up
+  Given ui/tool pins @astryxdesign/cli and core at exactly 0.7.11 with a lockfile
+  When it runs "bash scripts/ui.sh docs android-button --dense"
+  Then it sees androidx.compose.material3.Button, its props and its do and do not
+  And the topic was generated from ui/components and a stale one fails ui_topics.py --check
+  And a webOnly prop never reaches a native topic, and the integration registers no web component
+  And the wrapper fails on a non-zero exit, on an "Error:" first line on either stream, and on an ERR_* JSON envelope
+  And a JSON doc that only mentions "Error:" in its text passes
+```
+Tests: `tests/test_ui_cli.py`; CI job `ui-cli` runs the real CLI.

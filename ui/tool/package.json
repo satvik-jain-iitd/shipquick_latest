@@ -1,0 +1,16 @@
+{
+  "name": "shipquick-ui-tool",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dev-only tool package: the pinned Astryx CLI, and core plus its peers, which the CLI needs to run (ADR-012). Never shipped in an app.",
+  "license": "MIT",
+  "dependencies": {
+    "@astryxdesign/cli": "0.7.11"
+  },
+  "devDependencies": {
+    "@astryxdesign/core": "0.7.11",
+    "@stylexjs/stylex": "0.19.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}

@@ -34,3 +34,14 @@ Run `python3 scripts/check_ui_docs.py` (or `--root <folder>` in a library repo).
 
 It runs in `scripts/check_local.sh` and in CI (job `ui-docs`).
 The feel tokens (motion, haptics, touch target) live in `design/tokens.json`.
+
+## Look a component up: `ui`
+
+The kit runs Meta's Astryx CLI as shipped (ADR-012). Set it up once: `(cd ui/tool && npm ci --ignore-scripts)`.
+Then:
+- `bash scripts/ui.sh docs android-button --dense` (or `ios-button`): the native part, its props, do and do not.
+- `bash scripts/ui.sh search <words>`: find a component or topic.
+- `bash scripts/ui.sh doctor`: is the setup sound.
+
+Native topics live in `integration/docs/`. They are generated: run `python3 scripts/ui_topics.py` after you
+change a doc in `components/`. CI fails a stale topic (job `ui-cli`, and `ui-topics` in `check_local.sh`).
