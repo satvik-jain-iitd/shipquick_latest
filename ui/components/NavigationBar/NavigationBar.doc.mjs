@@ -168,5 +168,13 @@ export default {
       "platform": "ios",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "supporting": [
+        {"name": "DefaultTabLabel", "use": "iOS 18.0. Apple: \"The default label to use for a tab or tab section.\""},
+        {"name": "TabContentBuilder.Content", "use": "iOS 18.0. Apple: \"A view representation of the content of a builder-based tab view with selection.\""}
+      ]
+    }
+  }
 };
