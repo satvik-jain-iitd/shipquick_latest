@@ -336,8 +336,17 @@ Scenario: rule 38 exists and points at its docs
   Given CLAUDE.md
   Then rule 38 is "Library first" and comes right after rule 37
   And it links docs/COMPONENT_LIBRARY.md, docs/decisions/ADR-012.md and docs/templates/component-request.md, and each file exists
-  And the request template has Screen, What is missing, Tried, Picture, Platform twin, Owner yes and component-approved
+  And the request template has Screen, What is missing, Tried, Picture, Platform twin and component-approved
   And ADR-012 names Compose M3, SwiftUI, @astryxdesign/core, the dropped Compose Multiplatform and the MIT header
+
+Scenario: rule 38 means what the second review asked (PR #195)
+  Given CLAUDE.md, docs/COMPONENT_LIBRARY.md and ADR-012
+  Then every line naming Compose Multiplatform says it is dropped or not used
+  And every line naming a third-party kit limits the ban to native (Android or iOS)
+  And rule 38 and the library doc say the reviewer checks by hand until S3 to S7 land
+  And the request template has no Owner yes field for the coder; only a reviewer account's issue comment counts
+  And the library doc has the web row (pinned, astryx doctor --built) and says an approved component is never built twice
+  And the last trace row is story #181 and names PR #195
 ```
 Tests: `tests/test_library_first.py` (`test_s181_*`).
 ## Story #162 part 2: the QA loop's tools in scripts/qa/

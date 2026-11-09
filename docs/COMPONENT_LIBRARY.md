@@ -15,7 +15,7 @@ So we use the library, and we build only what it truly lacks.
 |---|---|---|
 | Android | Jetpack Compose Material 3 (Google) | Directly. Our brand through `MaterialTheme`. |
 | iOS | SwiftUI (Apple) | Directly. Our brand through `Tokens.swift`. |
-| Web | `@astryxdesign/core` (Meta) | Directly, exact version pinned. Theme through `defineTheme`. |
+| Web | `@astryxdesign/core` (Meta) | Used directly, exact version pinned. Theme through `defineTheme`. CI runs `astryx doctor --built` as a failing check. |
 
 Both apps share one tokens file, `design/tokens.json`. It holds the feel: colour, type, spacing, shape, motion, haptics and touch-target size.
 So the apps feel the same, even when they look a little different.
@@ -25,14 +25,18 @@ Compose Multiplatform is not used. It draws Android parts on iOS. See ADR-012.
 ## The rule
 
 1. A screen is built only from library components. It starts from a template. Layout containers are allowed.
-2. Lint refuses hand-drawn UI in app code. That means Canvas, a custom Shape or ButtonStyle, drawBehind,
-   controls built from raw gestures, M2 or View widgets, and third-party kits.
+2. No hand-drawn UI in app code. That means Canvas, a custom Shape or ButtonStyle, drawBehind,
+   controls built from raw gestures, and M2 or View widgets. On native (Android or iOS), a third-party UI kit is banned too.
+   The web is different: its library is Astryx.
+   Lint does this from story S7. Until S3 to S7 land, the reviewer checks by hand.
 3. If nothing fits, the coder files a `component-request` and stops. No stand-in is built while waiting.
 4. The reviewer checks if existing components can do the job. If they can, the reviewer rejects the request and says how.
 5. If they cannot, the reviewer asks the owner in one line: the screen, what is missing, why, and a picture.
-6. When the owner says yes, the reviewer writes `Owner yes: <date> "<his words>"` and adds the label `component-approved`.
+6. When the owner says yes, a reviewer account posts an issue comment `Owner yes: <date> "<his words>"` and adds the label `component-approved`.
 7. The coder builds it in the library repo. It comes with a doc, a contract, a preview, a snapshot, a registry row
    and a board on the canvas. Its twin on the other platform is requested at the same time.
+
+An approved component joins the library and is never built twice.
 
 ## The request flow
 
@@ -42,21 +46,23 @@ reviewer -> can a library part do it?
             yes -> rejects, names the part and how
             no  -> asks the owner in one line
 owner  -> yes (or no)
-reviewer -> writes "Owner yes:" and adds the label component-approved
+reviewer -> posts the issue comment "Owner yes:" and adds the label component-approved
 coder  -> builds it in the library repo, with its twin requested on the other platform
 child  -> bumps the library pin, then the screen uses it
 ```
 
-Only the reviewer writes the `Owner yes:` line. The coder never does.
-No label, no build. Story S8 adds a check that fails a custom component with no approved request.
+The coder writes the issue body, so an `Owner yes:` line in the body never counts.
+Only an issue comment by a reviewer account counts, plus the `component-approved` label added by a reviewer account.
+No approved comment and label, no build. Story S8 (#186) reads exactly that, and fails a custom component without it.
 
 ## What "never hand-write" means
 
-These four points are enforced. Until the checks land (stories S3, S7, S8), the reviewer checks them by hand.
+These four points are the rule. The tools that enforce them come in stories S3 to S8.
+Until S3 to S7 land, the reviewer checks by hand.
 
-1. **A screen starts as a copied template.** Run `ui template <name> <path>`. The agent replaces only the content.
-2. **A component is used as the library ships it.** No wrapper that rewrites it. Lint refuses hand-drawn UI in app code.
-3. **An approved custom component starts as a copy too.** `ui swizzle <BaseComponent>` copies the nearest library part's
+1. **A screen starts as a copied template.** Once S3 lands, run `ui template <name> <path>`. The agent replaces only the content.
+2. **A component is used as the library ships it.** No wrapper that rewrites it. From S7, lint refuses hand-drawn UI in app code.
+3. **An approved custom component starts as a copy too.** `ui swizzle <BaseComponent>` (from S3) copies the nearest library part's
    real source into the library repo, licence header included. Then only the approved change is made.
 4. **Nothing ShipQuick writes replaces a library part.** ShipQuick adds only what no library has:
    the tokens bridge, the request flow, the gates and the canvas board.
