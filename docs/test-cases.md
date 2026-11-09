@@ -564,17 +564,6 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
 
-## Story #231, sub-issue #259 (I3): iOS text, images, shapes and plumbing have docs
-```gherkin
-Scenario: every I3 row of the SwiftUI list is covered
-  Given the I3 rows of docs/research/ios-swiftui-api.md (SecureField, TextEditor, AsyncImage, Label parts, Divider,
-        the shapes, Color and the gradients, Canvas, Liquid Glass types, the animators, the 27 plumbing types)
-  When check_ui_coverage.py runs
-  Then no I3 row is a GAP line
-  And the Shape doc says shapes, Path and Canvas never build a control (rule 38)
-  And the plumbing types sit together in two docs, ViewPlumbing and ShapePlumbing
-```
-Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
 ## Story #231, Android A1 Buttons (issue #234)
 ```gherkin
 Scenario: every Buttons row of the Android API list is covered by a structured field
