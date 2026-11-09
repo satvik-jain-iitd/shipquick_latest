@@ -1,0 +1,21 @@
+{
+  "name": "Badge",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "badge": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}
