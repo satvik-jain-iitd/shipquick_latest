@@ -110,5 +110,41 @@ export default {
       "description": "How long it stays.",
       "default": "'Short', or 'Indefinite' with an action"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "Snackbar",
+          "note": "The snackbar itself: a short message with an optional action and close button. SnackbarHost shows it for you; call it directly only to change how the host draws each one."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "SnackbarHostState",
+          "use": "Shows snackbars one at a time. Call showSnackbar(message, actionLabel, withDismissAction, duration) from a coroutine; it returns a SnackbarResult."
+        },
+        {
+          "name": "SnackbarData",
+          "use": "The snackbar on show: its visuals, and performAction() and dismiss()."
+        },
+        {
+          "name": "SnackbarVisuals",
+          "use": "What a snackbar says: message, actionLabel, withDismissAction and duration."
+        },
+        {
+          "name": "SnackbarDuration",
+          "use": "How long a snackbar stays: Short, Long or Indefinite (until the user acts or it is dismissed)."
+        },
+        {
+          "name": "SnackbarResult",
+          "use": "What the user did: ActionPerformed or Dismissed."
+        },
+        {
+          "name": "SnackbarDefaults",
+          "use": "Default colours and shape for snackbars."
+        }
+      ]
+    }
+  }
 };

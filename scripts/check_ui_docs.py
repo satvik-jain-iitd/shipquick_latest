@@ -93,7 +93,8 @@ def literals(spec_type):
 def api_shape_errors(doc):
     """Story #231: what the schema subset cannot say about `platformApi` and `status`. A variant has a one-line
     note or its own props; a supporting item has a one-line use; a deprecated or unavailable entry names its
-    replacement; a name sits only once in one platform's lists."""
+    replacement; a name sits only once in one list. One name may be both a variant and supporting, as the M3 list
+    has MaterialTheme as a composable and as an object: those are two rows."""
     name, errs = doc.get("name", "?"), []
     if doc.get("status") and not str(doc.get("replacement", "")).strip():
         errs.append(f"{name}: status '{doc['status']}' needs a replacement (the doc-level `replacement`)")
@@ -106,14 +107,14 @@ def api_shape_errors(doc):
                     errs.append(f"{where}: item {item!r} must be an object with name and {need}, not a string")
                     continue
                 n = item.get("name", "")
-                names.append(n)
+                names.append((key, n))
                 if key == "variants" and not (str(item.get("note", "")).strip() or item.get("props")):
                     errs.append(f"{where} {n}: needs a one-line note on how it differs, or its own props")
                 if key == "supporting" and not str(item.get("use", "")).strip():
                     errs.append(f"{where} {n}: needs a one-line use (when to use it)")
                 if item.get("status") and not str(item.get("replacement", "")).strip():
                     errs.append(f"{where} {n}: status '{item['status']}' needs a replacement")
-        errs += [f"{name}: platformApi.{plat} lists {n} twice" for n in sorted({n for n in names if names.count(n) > 1})]
+        errs += [f"{name}: platformApi.{plat}.{k} lists {n} twice" for k, n in sorted({kn for kn in names if names.count(kn) > 1})]
     return errs
 
 

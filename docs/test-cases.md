@@ -595,4 +595,94 @@ Scenario: every Buttons row of the Android API list is covered by a structured f
   Then it prints no GAP line for these families
   And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
 ```
+Proof: the GAP count for these families drops from 32 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A8 Theme and base (issue #254)
+```gherkin
+Scenario: every Theme and base row of the Android API list is covered by a structured field
+  Given the 13 rows of android-m3-api.md in MaterialTheme, ColorScheme, Typography, Shapes, Shape, Ripple, RippleConfiguration, Text, Icon, ExperimentalMaterial3Api (Label went to A6)
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 13 to 0. Test: `test_s231_one_name_as_a_variant_and_as_supporting_passes` and the changed `test_s231_a_name_listed_twice_in_one_doc_fails` in `tests/test_ui_api_lists.py`. Local: `python3 scripts/check_ui_coverage.py`.
 Proof: the GAP count for these families drops from 31 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A2 App bars and navigation (issue #238)
+```gherkin
+Scenario: every App bars and navigation row of the Android API list is covered by a structured field
+  Given the 77 rows of android-m3-api.md in AppBar, AppBarColumn, AppBarRow, NavigationBar, ShortNavigationBar, NavigationRail, WideNavigationRail, NavigationDrawer, Drawer, DrawerValue, NavigationItem, NavigationItemIconPosition, Tab, TabRow
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 72 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A3 Text input and menus (issue #240)
+```gherkin
+Scenario: every Text input and menus row of the Android API list is covered by a structured field
+  Given the 39 rows of android-m3-api.md in TextField, OutlinedTextField, SecureTextField, SearchBar, ExposedDropdownMenu, Menu
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 36 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A4 Selection (issue #244)
+```gherkin
+Scenario: every Selection row of the Android API list is covered by a structured field
+  Given the 38 rows of android-m3-api.md in Checkbox, RadioButton, Switch, Slider, Chip, SelectableChip, SelectableChipElevation
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 33 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A5 Date and time pickers (issue #246)
+```gherkin
+Scenario: every Date and time pickers row of the Android API list is covered by a structured field
+  Given the 30 rows of android-m3-api.md in DatePicker, DateRangePicker, DatePickerDialog, TimePicker, TimePickerDialog, DisplayMode, SelectableDates
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 28 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A6 Sheets, dialogs and tooltips (issue #248)
+```gherkin
+Scenario: every Sheets, dialogs and tooltips row of the Android API list is covered by a structured field
+  Given the 35 rows of android-m3-api.md in BottomSheet, ModalBottomSheet, BottomSheetScaffold, DragHandle, AlertDialog, Tooltip, DefaultTooltipCaretShape, plus Label and Scaffold (moved here from A8 and A7, see Decisions)
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 32 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A7 Feedback and containment (issue #251)
+```gherkin
+Scenario: every Feedback and containment row of the Android API list is covered by a structured field
+  Given the 52 rows of android-m3-api.md in Snackbar, SnackbarHost, ProgressIndicator, Badge, Card, Carousel, Divider, ListItem, PullToRefresh, SwipeToDismissBox, Surface (Scaffold moved to A6)
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 44 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, PR #255 review 2: own family, own kind, API list as the Android source
+```gherkin
+Scenario: an Android component row counts only for a doc of its own family
+  Given an API list with a component row Icon of family Icon
+  When the Button doc lists Icon under platformApi.android.variants
+  Then check_ui_coverage.py prints "Icon (component, needs a doc of family Icon)" and --strict-api fails
+  And a doc whose platforms.android is a component row of the API list is not an extra
+  And a doc whose platforms.android is no row at all is still an extra
+  And a supporting entry that names a variant row fails with "no such supporting row"
+```
+Tests: `tests/test_ui_coverage.py` (s231, three new tests). Local: `python3 scripts/check_ui_coverage.py`.
