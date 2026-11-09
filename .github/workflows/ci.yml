@@ -219,6 +219,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native topics are current with the component docs (story #183)
         run: python3 scripts/ui_topics.py --check
+      - name: The compile proofs are current with the contracts (story #217)
+        run: python3 scripts/ui_proof.py --check
       - name: Set up Node (the pinned Astryx CLI needs 22.13 or newer)
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -236,6 +238,81 @@ jobs:
           bash scripts/ui.sh doctor integration validate shipquick-ui
           bash scripts/ui.sh docs android-button --dense | grep -q "androidx.compose.material3.Button"
           bash scripts/ui.sh docs ios-button --json | grep -q '"type": "docs.detail"'
+  ui-changes:
+    # Story #217: the two compile jobs below run only when ui/** changes. A skipped job is not a failure,
+    # so the gate still passes on a PR that does not touch ui/.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      ui: ${{ steps.diff.outputs.ui }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Did ui/** change?
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            git fetch -q origin "$BASE" || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
+            range="origin/$BASE...HEAD"
+          elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            range="$BEFORE..HEAD"
+          else
+            echo "ui=true" >> "$GITHUB_OUTPUT"; exit 0   # first push of a branch: compile to be safe
+          fi
+          # Captured first: a failing git diff inside the `if` below would have written ui=false. --no-renames lists the old path of a move.
+          names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
+          if grep -qE '^(ui/|scripts/ui_proof\.py|\.github/workflows/ci\.yml|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
+  ui-android-compile:
+    # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
+    # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch Gradle, check it against distributionSha256Sum, and put it on PATH
+        # The version and the sum both come from ui/android/gradle/wrapper/gradle-wrapper.properties. sha256sum -c fails
+        # the job when the zip is not the one the sum names; nothing downloads Gradle behind this check.
+        run: |
+          props=ui/android/gradle/wrapper/gradle-wrapper.properties
+          sum=$(sed -n 's/^distributionSha256Sum=//p' "$props")
+          ver=$(sed -n 's#.*gradle-\([0-9.]*\)-bin\.zip#\1#p' "$props")
+          curl -sSfL -o "$RUNNER_TEMP/gradle.zip" "https://services.gradle.org/distributions/gradle-$ver-bin.zip"
+          echo "$sum  $RUNNER_TEMP/gradle.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-$ver/bin" >> "$GITHUB_PATH"
+      - name: Compile the templates and the proof
+        working-directory: ui/android
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+        run: gradle --no-daemon --stacktrace compileDebugKotlin
+  ui-ios-compile:
+    # Story #217: compile every template and the generated proof/ApiProof.swift for iOS. Compile only.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Pin Xcode 16.4
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app
+          xcodebuild -version
+      - name: Compile the templates and the proof for iOS
+        working-directory: ui/ios
+        run: xcodebuild -scheme ShipQuickUI -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
   secret-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -327,7 +404,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -343,6 +420,9 @@ jobs:
           echo "freeze: ${{ needs.freeze.result }}"
           echo "ui-docs: ${{ needs.ui-docs.result }}"
           echo "ui-cli: ${{ needs.ui-cli.result }}"
+          echo "ui-changes: ${{ needs.ui-changes.result }}"
+          echo "ui-android-compile: ${{ needs.ui-android-compile.result }}"
+          echo "ui-ios-compile: ${{ needs.ui-ios-compile.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "test: ${{ needs.test.result }}"
