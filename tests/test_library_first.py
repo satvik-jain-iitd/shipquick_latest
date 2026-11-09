@@ -57,8 +57,12 @@ def test_s181_third_party_kit_ban_is_native_only():
 
 
 def test_s181_rule_says_the_reviewer_checks_by_hand_until_the_tools_land():
-    assert "until S3 to S7 land, the reviewer checks by hand" in rule(38)
-    assert re.search(r"until S3 to S7 land, the reviewer checks by hand", DOCS["docs/COMPONENT_LIBRARY.md"], re.I)
+    # owner, 10 Nov 2026 ("Haan, badlo"): the lint exists in the kit (S7) but reaches no child until S9 (#187) wires it in
+    assert "until S9 (#187) wires the lint into children, the reviewer checks by hand" in rule(38)
+    assert re.search(r"until S9 \(#187\) wires (the|it into) (lint )?(into )?children, the reviewer checks by hand",
+                     DOCS["docs/COMPONENT_LIBRARY.md"], re.I)
+    for path in ("CLAUDE.md", "docs/COMPONENT_LIBRARY.md"):
+        assert "S3 to S7 land" not in DOCS[path], path
 
 
 def test_s181_owner_yes_counts_only_from_a_reviewer_comment():

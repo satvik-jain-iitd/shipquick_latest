@@ -28,7 +28,7 @@ Compose Multiplatform is not used. It draws Android parts on iOS. See ADR-012.
 2. No hand-drawn UI in app code. That means Canvas, a custom Shape or ButtonStyle, drawBehind,
    controls built from raw gestures, and M2 or View widgets. On native (Android or iOS), a third-party UI kit is banned too.
    The web is different: its library is Astryx.
-   Lint does this from story S7. Until S3 to S7 land, the reviewer checks by hand.
+   Lint does this from story S7. Until S9 (#187) wires it into children, the reviewer checks by hand.
 3. If nothing fits, the coder files a `component-request` and stops. No stand-in is built while waiting.
 4. The reviewer checks if existing components can do the job. If they can, the reviewer rejects the request and says how.
 5. If they cannot, the reviewer asks the owner in one line: the screen, what is missing, why, and a picture.
@@ -58,7 +58,7 @@ No approved comment and label, no build. Story S8 (#186) reads exactly that, and
 ## What "never hand-write" means
 
 These four points are the rule. The tools that enforce them come in stories S3 to S8.
-Until S3 to S7 land, the reviewer checks by hand.
+Until S9 (#187) wires the lint into children, the reviewer checks by hand.
 
 1. **A screen starts as a copied template.** Once S3 lands, run `ui template <name> <path>`. The agent replaces only the content.
 2. **A component is used as the library ships it.** No wrapper that rewrites it. From S7, lint refuses hand-drawn UI in app code.
