@@ -80,6 +80,38 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "AssistChip: Helps the user do a task linked to the content, like add an event to the calendar.",
+            "ElevatedAssistChip: An AssistChip with a shadow and no border. Use it on a busy background.",
+            "ElevatedFilterChip: A FilterChip with a shadow and no border. Use it on a busy background.",
+            "InputChip: A piece of input the user gave, like a contact in a To field. It can have an avatar and a remove icon.",
+            "SuggestionChip: A suggestion made from the content, like a smart reply.",
+            "ElevatedSuggestionChip: A SuggestionChip with a shadow and no border. Use it on a busy background.",
+            "AssistChipDefaults: Default colours, border, elevation, height and shape for assist chips.",
+            "FilterChipDefaults: Default colours, border, elevation, height and shape for filter chips.",
+            "InputChipDefaults: Default colours, border, elevation, sizes and shape for input chips.",
+            "SuggestionChipDefaults: Default colours, border, elevation, height and shape for suggestion chips.",
+            "ChipColors: The container, label and icon colours of an assist or suggestion chip, on and off.",
+            "SelectableChipColors: The colours of a filter or input chip, selected and not, on and off.",
+            "ChipElevation: The shadow of an assist or suggestion chip in each state.",
+            "SelectableChipElevation: The shadow of a filter or input chip in each state."
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: ChipBorder. Use the chipBorder functions, like AssistChipDefaults.assistChipBorder() (Google: \"Maintained for binary compatibility. Use the chipBorder functions instead\")."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

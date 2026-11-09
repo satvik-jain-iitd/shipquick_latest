@@ -158,6 +158,25 @@ export default {
         {"name": "MenuStyleConfiguration.Content", "use": "iOS 14.0. Apple: \"A type-erased content of a menu.\""},
         {"name": "MenuStyleConfiguration.Label", "use": "iOS 14.0. Apple: \"A type-erased label of a menu.\""}
       ]
+    },
+    "android": {
+      "family": "Menu",
+      "variants": [
+        {
+          "name": "DropdownMenuItem",
+          "note": "One choice in a DropdownMenu: text, optional leading and trailing icons, and onClick."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "MenuDefaults",
+          "use": "Default container colour, shape, elevation, item colours and item padding for menus."
+        },
+        {
+          "name": "MenuItemColors",
+          "use": "The text and icon colours of a menu item, on and off. Make one with MenuDefaults.itemColors()."
+        }
+      ]
     }
   }
 };

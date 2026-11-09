@@ -49,6 +49,26 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "VerticalDivider: A thin vertical line between parts side by side, like items in a row.",
+            "DividerDefaults: The default thickness and colour of a divider."
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: Divider. Use HorizontalDivider (Google: \"Renamed to HorizontalDivider\")."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

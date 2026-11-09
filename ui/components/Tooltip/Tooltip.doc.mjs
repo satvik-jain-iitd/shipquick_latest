@@ -111,6 +111,49 @@ export default {
       "variants": [
         {"name": "help", "note": "`.help(_:)`, iOS 16.0. Apple: \"Adds help text to a view using a localized string resource that you provide.\""}
       ]
+    },
+    "android": {
+      "family": "Tooltip",
+      "variants": [
+        {
+          "name": "PlainTooltip",
+          "note": "A short line of text that names an icon or a button. Put it in TooltipBox."
+        },
+        {
+          "name": "RichTooltip",
+          "note": "A tooltip with an optional title, more text and an optional action button. Put it in TooltipBox."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "TooltipState",
+          "use": "Says if the tooltip shows. Call show() from a coroutine and dismiss() to hide it. isPersistent keeps it open."
+        },
+        {
+          "name": "rememberTooltipState",
+          "use": "Creates and keeps a TooltipState across recompositions."
+        },
+        {
+          "name": "TooltipScope",
+          "use": "The scope of tooltip content. Its drawCaret draws the small pointer to the anchor."
+        },
+        {
+          "name": "TooltipDefaults",
+          "use": "Default colours, shapes, caret shape and position providers for plain and rich tooltips."
+        },
+        {
+          "name": "RichTooltipColors",
+          "use": "The container, content, title and action colours of a RichTooltip. Make one with TooltipDefaults.richTooltipColors()."
+        },
+        {
+          "name": "TooltipAnchorPosition",
+          "use": "Where the tooltip sits next to its anchor: Above, Below, Start, End, Left or Right."
+        },
+        {
+          "name": "DefaultTooltipCaretShape",
+          "use": "The default pointer shape of a tooltip, with a caretSize. Get it from TooltipDefaults.caretShape()."
+        }
+      ]
     }
   }
 };

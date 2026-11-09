@@ -165,6 +165,54 @@ export default {
       "variants": [
         {"name": "sliderThumbVisibility", "note": "`.sliderThumbVisibility(_:)`, iOS 26.0. Apple: \"Sets the thumb visibility for `Slider`s within this view.\""}
       ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "RangeSlider",
+          "note": "A slider with two thumbs, for a start and an end value, like a price range."
+        },
+        {
+          "name": "SliderDefaults.Thumb",
+          "note": "The default thumb. Pass it to the thumb slot to change only its colours or size."
+        },
+        {
+          "name": "SliderDefaults.Track",
+          "note": "The default track, with its stop and tick marks. Pass it to the track slot to change only its colours."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "SliderDefaults",
+          "use": "Default colours, Thumb, Track, tick size and stop mark size for sliders. Make colours with SliderDefaults.colors()."
+        },
+        {
+          "name": "SliderColors",
+          "use": "The thumb, track and tick colours of a slider, active and inactive, on and off."
+        },
+        {
+          "name": "SliderState",
+          "use": "Holds a slider's value, valueRange, steps and onValueChangeFinished. Pass it to the Slider that takes a state."
+        },
+        {
+          "name": "rememberSliderState",
+          "use": "Creates and keeps a SliderState across recompositions."
+        },
+        {
+          "name": "RangeSliderState",
+          "use": "Holds a range slider's activeRangeStart, activeRangeEnd, valueRange and steps."
+        },
+        {
+          "name": "rememberRangeSliderState",
+          "use": "Creates and keeps a RangeSliderState across recompositions."
+        },
+        {
+          "name": "SliderPositions",
+          "use": "The old holder of tick positions.",
+          "status": "deprecated",
+          "replacement": "SliderState (Google: \"Not necessary with the introduction of Slider state\")"
+        }
+      ]
     }
   }
 };

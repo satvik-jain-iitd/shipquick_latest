@@ -177,6 +177,20 @@ export default {
         {"name": "dialogSeverity", "note": "`.dialogSeverity(_:)`, not on iOS. Apple's page gives no summary: https://developer.apple.com/documentation/swiftui/view/dialogseverity(_:)", "status": "unavailable-ios", "replacement": "alert"},
         {"name": "dialogSuppressionToggle", "note": "`.dialogSuppressionToggle(isSuppressed:)`, iOS 17.0. Apple: \"Enables user suppression of dialogs and alerts presented within `self`, with a default suppression message on macOS. Unused on other platforms.\""}
       ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "BasicAlertDialog",
+          "note": "A dialog with no layout of its own: you give the whole content. Use it only when AlertDialog's title, text and buttons do not fit the need."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "AlertDialogDefaults",
+          "use": "Default container colour, shape, tonal elevation, and icon, title and text colours for dialogs."
+        }
+      ]
     }
   }
 };

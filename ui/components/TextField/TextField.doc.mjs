@@ -204,6 +204,97 @@ export default {
         {"name": "autocapitalization", "note": "`.autocapitalization(_:)`, iOS 13.0. Apple: \"Sets whether to apply auto-capitalization to this view.\"", "status": "deprecated", "replacement": "textInputAutocapitalization"},
         {"name": "disableAutocorrection", "note": "`.disableAutocorrection(_:)`, iOS 13.0. Apple: \"Sets whether to disable autocorrection for this view.\"", "status": "deprecated", "replacement": "autocorrectionDisabled"}
       ]
+    },
+    "android": {
+      "family": "ExposedDropdownMenu",
+      "variants": [
+        {
+          "name": "OutlinedTextField",
+          "note": "A text field with a border and no fill. Use it when filled fields look too heavy, for example in a long form. Use one style on a screen."
+        },
+        {
+          "name": "SecureTextField",
+          "note": "A filled field for a password. It hides what the user types; set textObfuscationMode and textObfuscationCharacter to change how."
+        },
+        {
+          "name": "OutlinedSecureTextField",
+          "note": "The outlined form of SecureTextField."
+        },
+        {
+          "name": "TextFieldDefaults.Container",
+          "note": "The default container (fill and indicator line) of a filled field. Use it inside DecorationBox only when you build on BasicTextField."
+        },
+        {
+          "name": "TextFieldDefaults.DecorationBox",
+          "note": "The label, icons and container of a filled field around a BasicTextField. Use it only when TextField cannot do the job."
+        },
+        {
+          "name": "OutlinedTextFieldDefaults.Container",
+          "note": "The default container (border) of an outlined field, for use inside its DecorationBox."
+        },
+        {
+          "name": "OutlinedTextFieldDefaults.DecorationBox",
+          "note": "The label, icons and border of an outlined field around a BasicTextField. Use it only when OutlinedTextField cannot do the job."
+        },
+        {
+          "name": "TextFieldDefaults.ContainerBox",
+          "note": "The old name of the filled container.",
+          "status": "deprecated",
+          "replacement": "TextFieldDefaults.Container (Google: \"Renamed to TextFieldDefaults.Container\")"
+        },
+        {
+          "name": "OutlinedTextFieldDefaults.ContainerBox",
+          "note": "The old name of the outlined container.",
+          "status": "deprecated",
+          "replacement": "OutlinedTextFieldDefaults.Container (Google: ReplaceWith names Container in the same object; the message says \"Renamed to TextFieldDefaults.Container\")"
+        },
+        {
+          "name": "ExposedDropdownMenuBox",
+          "note": "Holds a read-only or editable text field and the menu of choices that opens under it. Use it to pick one value from a list."
+        },
+        {
+          "name": "ExposedDropdownMenuBoxScope.ExposedDropdownMenu",
+          "note": "The menu inside ExposedDropdownMenuBox. It is as wide as the field and opens under it."
+        },
+        {
+          "name": "ExposedDropdownMenuDefaults.TrailingIcon",
+          "note": "The arrow icon at the end of the field. It turns when the menu opens."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "TextFieldDefaults",
+          "use": "Default colours, shapes, sizes, padding and the decorator for filled fields. Make colours with TextFieldDefaults.colors()."
+        },
+        {
+          "name": "OutlinedTextFieldDefaults",
+          "use": "Default colours, shape, sizes, padding and the decorator for outlined fields. Make colours with OutlinedTextFieldDefaults.colors()."
+        },
+        {
+          "name": "TextFieldColors",
+          "use": "The text, container, cursor, icon, label and indicator colours of a field in each state, including error."
+        },
+        {
+          "name": "TextFieldLabelPosition",
+          "use": "Where the label sits: Attached (inside the field, it moves up when the field has focus or text) or Above (always above the field)."
+        },
+        {
+          "name": "TextFieldLabelScope",
+          "use": "The scope of the label slot. Its labelMinimizedProgress says how far the label has moved to its small form."
+        },
+        {
+          "name": "ExposedDropdownMenuBoxScope",
+          "use": "The scope inside ExposedDropdownMenuBox. Put menuAnchor on the text field so the menu opens from it."
+        },
+        {
+          "name": "ExposedDropdownMenuAnchorType",
+          "use": "What the anchor is, for menuAnchor: PrimaryNotEditable (a read-only field), PrimaryEditable (a field the user types in) or SecondaryEditable (an icon inside an editable field)."
+        },
+        {
+          "name": "ExposedDropdownMenuDefaults",
+          "use": "Default colours, padding and the trailing icon for exposed dropdown menus."
+        }
+      ]
     }
   }
 };

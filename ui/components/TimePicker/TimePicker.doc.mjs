@@ -74,5 +74,61 @@ export default {
       "description": "The picked time. Create it with rememberTimePickerState().",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "TimeInput",
+          "note": "Picks a time by typing the hour and minute in fields, not on a dial. Use it when space is short or for typing users."
+        },
+        {
+          "name": "TimePickerDialog",
+          "note": "A dialog that holds a TimePicker or TimeInput, with a title, confirm and dismiss buttons and an optional mode toggle button."
+        },
+        {
+          "name": "TimePickerDialogDefaults.Title",
+          "note": "The default title of a TimePickerDialog. It changes with the display mode."
+        },
+        {
+          "name": "TimePickerDialogDefaults.DisplayModeToggle",
+          "note": "The default button that switches a TimePickerDialog between the dial and the input fields."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "TimePickerState",
+          "use": "Holds the hour (0 to 23), the minute, is24hour and which part is being picked."
+        },
+        {
+          "name": "rememberTimePickerState",
+          "use": "Creates and keeps a TimePickerState, with the first hour and minute and is24Hour."
+        },
+        {
+          "name": "TimePickerDefaults",
+          "use": "Default colours and the layout type for time pickers. Make colours with TimePickerDefaults.colors()."
+        },
+        {
+          "name": "TimePickerColors",
+          "use": "The dial, selector, period button and time box colours of a time picker."
+        },
+        {
+          "name": "TimePickerDialogDefaults",
+          "use": "The default title, mode toggle, container colour, shape and minimum height for TimePickerDialog."
+        },
+        {
+          "name": "TimePickerDisplayMode",
+          "use": "How a time picker dialog shows: Picker (a dial) or Input (text fields)."
+        },
+        {
+          "name": "TimePickerLayoutType",
+          "use": "How the dial and the time sit: Vertical (time above the dial) or Horizontal (side by side, for landscape)."
+        },
+        {
+          "name": "TimePickerSelectionMode",
+          "use": "Which part the user is picking: Hour or Minute."
+        }
+      ]
+    }
+  }
 };
