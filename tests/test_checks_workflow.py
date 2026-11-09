@@ -103,3 +103,10 @@ def test_s225_the_roles_job_reads_roles_yml_from_the_kit_branch_too():
     section = CHECKS.split("\n  roles:\n", 1)[1].split("\n  team-block:", 1)[0]
     assert "KIT_BRANCH: ${{ inputs.kit_branch }}" in section
     assert 'show "$ref:.shipquick/roles.yml"' in section
+
+
+def test_s225_the_roles_job_says_clearly_when_the_kit_branch_or_its_roles_yml_is_missing():
+    # review of PR #227, fix 3
+    section = CHECKS.split("\n  roles:\n", 1)[1].split("\n  team-block:", 1)[0]
+    assert "kit branch $KIT_BRANCH not found" in section
+    assert "no .shipquick/roles.yml on kit branch $KIT_BRANCH" in section
