@@ -12,6 +12,19 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-09
+Tag `v0.10.0`, "every library entry is documented". Notes: `docs/RELEASE_NOTES_v0.10.0.md`.
+
+### Added
+- Full UI coverage from each library's public API: every row of the M3 1.4.0 list (319) and the SwiftUI list (848) is covered by a structured doc field; `--strict-api` is on in CI (#231; PRs #236, #239, #255, #282, #284, #287 for Android; #241, #277-#280 for iOS).
+- Own-family and own-kind rules for Android coverage; topic name clashes fail (#231).
+- Framework topic docs for both platforms: widgets, notifications, pull to refresh, Swift Charts, web view and more (#231).
+- Every iOS alternative of a not-on-iOS entry is checked, and a "none" needs a reason (#241).
+- Child enforcement: `adopt.sh` prints a ruleset that requires the gate from the GitHub Actions app; `--check` fails when the gate is not required; the scan reports skipped private children (#260, PR #268).
+
+### Changed
+- `scripts/ui_api_lists.py` is a protected path (kit PRs only).
+
 ## [0.9.0] - 2026-11-09
 Tag `v0.9.0`, "library first, and children can pin today's gates". Notes: `docs/RELEASE_NOTES_v0.9.0.md`.
 
