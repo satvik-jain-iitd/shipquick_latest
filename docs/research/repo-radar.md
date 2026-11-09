@@ -172,6 +172,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: a `"layout": "columns"` key and a learnings board inside `scripts/canvas_stage.py`, reusing its board template and contrast check.
 - Confidence that nothing fits better: 0.85.
 
+## 9 Nov 2026, story #148 (GoServe feedback): options differ in copy, rejections carry a reason
+- Need: lint a design options manifest so each option names its copy difference and each rejected option carries a reason.
+- Run: `scout.py --need "lint a design options manifest so each option names its copy difference and each rejected option carries a reason"`: no repos found.
+- Content-design guides exist (Material 3 content design, Shopify Polaris content; Tier A, the vendors' own docs). They are rules to read, not a check to run.
+- Decision: two checks in the existing manifest loop of `scripts/canvas_stage.py`, read from the manifest only, no render.
+- Confidence that nothing fits better: 0.85.
+
 ## 9 Nov 2026, story #162: a QA loop with a design audit and the Elephant-Goldfish model
 - Need: tools for a QA loop over an app's approved screens: a scorecard (attack yield, coverage debt,
   escapes, stop rule), a flow map of every tap, a design-audit report with highlight boxes, a board render.
