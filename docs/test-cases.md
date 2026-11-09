@@ -583,3 +583,12 @@ Scenario: the daily scan never skips a child in silence
   And docs/children.md parses to GoServe, job-search (private) and Miraya (private)
 ```
 Tests: `tests/test_adopt.py`, `tests/test_adoption_scan.py` (s260).
+## Story #231, Android A1 Buttons (issue #234)
+```gherkin
+Scenario: every Buttons row of the Android API list is covered by a structured field
+  Given the 35 rows of android-m3-api.md in Button, IconButton, FloatingActionButton, FabPosition and SegmentedButton
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+```
+Proof: the GAP count for these families drops from 31 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
