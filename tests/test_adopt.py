@@ -1,5 +1,6 @@
 """S0.18: one command adopts ShipQuick in a child project (story #68). Real git in a throwaway child repo; no network."""
 import hashlib
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -12,8 +13,8 @@ HEAD = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=Tru
 CALL = "satvik-jain-iitd/shipquick_latest/.github/workflows/roadmap.yml"
 
 
-def adopt(child, *args):
-    return subprocess.run(["bash", str(ADOPT), str(child), *args], capture_output=True, text=True)
+def adopt(child, *args, env=None):
+    return subprocess.run(["bash", str(ADOPT), str(child), *args], capture_output=True, text=True, env=env)
 
 
 def snapshot(child):
@@ -261,3 +262,139 @@ def test_s146_a_second_run_changes_screens_sh_and_screens_txt_nothing(child):
     before = snapshot(child)
     r = adopt(child)
     assert r.returncode == 0 and snapshot(child) == before
+
+
+# ---- story #225: a rule-24 child keeps the submodule and the hooks on a kit branch, main has only the caller ----
+def add_kit_line(child, kit):
+    call = child / ".github" / "workflows" / "shipquick-call.yml"
+    text = call.read_text(encoding="utf-8")
+    call.write_text(text.replace(f"shipquick_ref: {HEAD}", f"shipquick_ref: {HEAD}\n      kit_branch: {kit}"), encoding="utf-8")
+
+
+GH_STUB = """#!/usr/bin/env bash
+echo "$*" >> "$STUB_DIR/calls.log"
+case "$*" in
+  *repos/owner/child/branches/*/protection*) [ -f "$STUB_DIR/protection.json" ] && { cat "$STUB_DIR/protection.json"; exit 0; }
+    echo "gh: Branch not protected (HTTP 404)" >&2; exit 1 ;;
+esac
+exit 9
+"""
+PROTECTED = {"required_pull_request_reviews": {"required_approving_review_count": 1}, "enforce_admins": {"enabled": True}}
+
+
+class Gh(dict):
+    """The env for adopt.sh with a stub gh on PATH; protect(data) sets the kit branch's protection (None = none)."""
+    def __init__(self, stub):
+        super().__init__({**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub)})
+        self.stub = stub
+
+    def protect(self, data):
+        f = self.stub / "protection.json"
+        if data is None:
+            f.unlink(missing_ok=True)
+        else:
+            f.write_text(json.dumps(data), encoding="utf-8")
+
+    def calls(self):
+        f = self.stub / "calls.log"
+        return f.read_text(encoding="utf-8") if f.exists() else ""
+
+
+@pytest.fixture
+def gh(tmp_path):
+    stub = tmp_path / "stub"; stub.mkdir()
+    (stub / "gh").write_text(GH_STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
+    g = Gh(stub)
+    g.protect(PROTECTED)
+    return g
+
+
+def rule24_child(child, kit_sha=HEAD, hooks=True, kit_line="dev"):
+    """dev carries everything (submodule pin, hooks, caller); main carries only the caller."""
+    subprocess.run(["git", "remote", "add", "origin", "https://github.com/owner/child.git"], cwd=child, check=True)
+    adopt(child)
+    add_kit_line(child, kit_line)
+    if not hooks:
+        (child / ".pre-commit-config.yaml").write_text("repos: []\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=child, check=True)
+    add_fake_submodule(child, kit_sha)
+    caller = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    subprocess.run(["git", "switch", "-q", "--orphan", "main"], cwd=child, check=True)
+    (child / ".github" / "workflows").mkdir(parents=True, exist_ok=True)
+    (child / ".github" / "workflows" / "shipquick-call.yml").write_text(caller, encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=child, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "chore: only the caller on main"], cwd=child, check=True)
+    assert not (child / ".pre-commit-config.yaml").exists()
+    return child
+
+
+def test_s225_check_passes_on_main_of_a_rule24_child_reading_the_pin_and_hooks_from_the_kit_branch(child, gh):
+    r = adopt(rule24_child(child), "--check", env=gh)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "main" in r.stdout and "dev" in r.stdout and "not adopted" not in r.stdout
+    assert "repos/owner/child/branches/dev/protection" in gh.calls()
+
+
+def test_s225_check_fails_when_the_kit_branch_pin_does_not_match_the_caller(child, gh):
+    r = adopt(rule24_child(child, kit_sha="1234567890abcdef1234567890abcdef12345678"), "--check", env=gh)
+    assert r.returncode == 1 and "not adopted" in r.stdout and "dev" in r.stdout
+
+
+def test_s225_check_fails_when_the_kit_branch_has_no_hooks(child, gh):
+    r = adopt(rule24_child(child, hooks=False), "--check", env=gh)
+    assert r.returncode == 1 and "pre-commit" in r.stdout and "dev" in r.stdout
+
+
+def test_s225_check_fails_when_the_kit_branch_does_not_exist(child, gh):
+    rule24_child(child)
+    subprocess.run(["git", "branch", "-q", "-D", "dev"], cwd=child, check=True)
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1 and "dev" in r.stdout
+
+
+# review of PR #227, fix 1: roles.yml comes from the kit branch, so that branch must not take direct pushes
+def test_s225_check_fails_when_the_kit_branch_is_not_protected(child, gh):
+    gh.protect(None)
+    r = adopt(rule24_child(child), "--check", env=gh)
+    assert r.returncode == 1 and "not adopted" in r.stdout and "protect" in r.stdout and "dev" in r.stdout
+
+
+def test_s225_check_fails_when_the_kit_branch_protection_does_not_require_pr_reviews(child, gh):
+    gh.protect({"enforce_admins": {"enabled": True}})
+    r = adopt(rule24_child(child), "--check", env=gh)
+    assert r.returncode == 1 and "pull request reviews" in r.stdout
+
+
+# fix 4: one parser -- a trailing comment is stripped, an expression is refused
+def test_s225_check_strips_a_trailing_comment_after_kit_branch(child, gh):
+    r = adopt(rule24_child(child, kit_line="dev   # the documents branch"), "--check", env=gh)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_s225_check_refuses_an_expression_as_kit_branch(child, gh):
+    r = adopt(rule24_child(child, kit_line="${{ github.base_ref }}"), "--check", env=gh)
+    assert r.returncode == 1 and "expression" in r.stdout
+
+
+# fix 5: a rerun without --kit-branch keeps the kit_branch the caller already has
+def test_s225_a_rerun_without_the_flag_keeps_the_kit_branch(child):
+    adopt(child, "--kit-branch", "documents")
+    r = adopt(child)
+    assert r.returncode == 0, r.stderr
+    call = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    assert "kit_branch: documents" in call and "updated   .github/workflows/shipquick-call.yml" not in r.stdout
+
+
+def test_s225_kit_branch_flag_writes_the_input_into_the_caller(child):
+    r = adopt(child, "--kit-branch", "dev")
+    assert r.returncode == 0, r.stderr
+    call = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    assert f"shipquick_ref: {HEAD}\n      kit_branch: dev\n" in call
+
+
+def test_s225_without_kit_branch_the_caller_has_no_kit_line_and_check_reads_head_as_before(child):
+    adopt(child)
+    assert "kit_branch" not in (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    add_fake_submodule(child, HEAD)
+    r = adopt(child, "--check")
+    assert r.returncode == 0 and r.stdout.strip() == f"adopted: pinned to {HEAD}, pre-commit hooks present"

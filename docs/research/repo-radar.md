@@ -279,6 +279,15 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   Google's pages (`docs/research/android-m3-components.md`), and the templates call M3 composables the way Google's guides show.
 - Confidence that nothing fits better: 0.9 (the library is Google's, so there is nothing to find beyond it).
 
+## 9 Nov 2026, story #225: read the kit pin from a kit branch (rule-24 children)
+- Need: read a git submodule pin and config files from another branch in a CI adoption check.
+- Run: `scout.py --need "read a git submodule pin and config files from another branch in a CI adoption check (git show branch:path)"`:
+  no repos found. `gh search repos "topic:git-submodules"`: junhoyeo/vercel-submodules (fetches private submodules at Vercel
+  deploy), sgoudham/update-git-submodules (an Action that bumps submodules to the latest tag), roehling/git-archive-all
+  (archives a repo with its submodules). READMEs read; none checks a pin on another branch.
+- Decision: no tool. Plain git does it: `git fetch origin <b>`, `git rev-parse <b>:knowledge/shipquick_latest`,
+  `git show <b>:.pre-commit-config.yaml`; the scan uses the GitHub contents API (`type: submodule`, `sha`). Built from scratch.
+- Confidence that nothing fits better: 0.85.
 ## 9 Nov 2026, story #216: the UI coverage gate (every counted component has a doc, a contract and a topic)
 - Need: check that every row of a counted component list has one doc, one contract and one served topic, and that no name we serve shadows a core doc.
 - Run: `scout.py --need "check that every component in a counted design-system list has a doc, a contract and a served topic, and no name shadows the upstream library"`: no repos found.

@@ -4,6 +4,12 @@ ShipQuick commit more than $days old, opens (or reuses) one `feedback` issue in 
 the child and the gap. A child session reports its own gaps with scripts/feedback.sh; this script
 is ShipQuick noticing when a child never ran it at all.
 
+A caller with `kit_branch: <b>` (story #225, a rule-24 child) is also checked on branch <b>: the
+knowledge/shipquick_latest submodule there must equal the caller's pin, and .pre-commit-config.yaml
+there must carry the ShipQuick hooks, and branch <b> must be protected with required pull request
+reviews (roles.yml is read from it). That protection read needs Administration: read on a private
+child's SHIPQUICK_CHILD_TOKEN. A caller without it is scanned exactly as before.
+
 A line in docs/children.md may end with " private" (`owner/repo private`). A private child is
 read with the SHIPQUICK_CHILD_TOKEN secret (fine-grained PAT, contents+metadata read only on that
 repo — see docs/ADOPTION.md); public children keep the workflow's own github.token. A private
@@ -23,6 +29,9 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import kit_branch  # noqa: E402  (the one kit_branch parser, shared with adopt.sh and review_merge.sh)
 
 ROOT = Path(__file__).resolve().parent.parent
 REPO = "satvik-jain-iitd/shipquick_latest"
@@ -70,6 +79,21 @@ def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str |
     if not m:
         return f"{child}: shipquick-call.yml on {branch} has no shipquick_ref pin"
     sha = m.group(1)
+    kit, bad = kit_branch.parse(body)
+    if bad:
+        return f"{child}: shipquick-call.yml on {branch}: {bad}"
+    if kit:   # story #225: a rule-24 child keeps the submodule, the hooks and roles.yml on its kit branch
+        gap = kit_branch.protection_gap(kit, fetch(f"repos/{child}/branches/{kit}/protection"))
+        if gap:
+            return f"{child}: {gap}"
+        sub = fetch(f"repos/{child}/contents/knowledge/shipquick_latest?ref={kit}")
+        if not sub or sub.get("type") != "submodule":
+            return f"{child}: no knowledge/shipquick_latest submodule on kit branch {kit}"
+        if sub.get("sha") != sha:
+            return f"{child}: caller on {branch} pins {sha[:7]}, the submodule on kit branch {kit} is at {str(sub.get('sha'))[:7]}"
+        hooks = fetch(f"repos/{child}/contents/.pre-commit-config.yaml?ref={kit}")
+        if not hooks or "check_local.sh" not in base64.b64decode(hooks.get("content", "")).decode("utf-8", "replace"):
+            return f"{child}: .pre-commit-config.yaml on kit branch {kit} has no ShipQuick hooks"
     commit = fetch(f"repos/{REPO}/commits/{sha}")
     if commit is None:
         return f"{child}: pinned to {sha[:7]}, which {REPO} cannot find"

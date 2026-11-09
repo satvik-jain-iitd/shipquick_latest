@@ -30,6 +30,38 @@ Layer 1 only fires once a child is wired enough to have the caller running. A ch
 
 **Private children.** The workflow's own `github.token` can only ever read this repo, never someone else's private one. A line in `docs/children.md` marked `private` is read instead with the `SHIPQUICK_CHILD_TOKEN` secret — a fine-grained GitHub PAT, scoped to that repo only, with `Contents: read` and `Metadata: read` and nothing else. Set it once: `gh secret set SHIPQUICK_CHILD_TOKEN -R satvik-jain-iitd/shipquick_latest` (same build account, pasting the fine-grained PAT). With no secret set, a private child prints `<child>: private, no SHIPQUICK_CHILD_TOKEN configured — skipping (no daily issue)` and files nothing — a 404 from a missing token would otherwise look exactly like "not adopted," and a false feedback issue is worse than a quiet skip.
 
+## Rule-24 children (story #225)
+
+Some children keep `main` small. Only the code that runs goes there (rule 24). The submodule and the rule files live on another branch, for example `dev` or `documents`. We call it the kit branch.
+
+Such a child puts only one file on `main`: `.github/workflows/shipquick-call.yml`. That file names the kit branch:
+
+```yaml
+    with:
+      shipquick_ref: <SHA>
+      kit_branch: dev
+```
+
+Write it with `bash knowledge/shipquick_latest/scripts/adopt.sh . --kit-branch dev`. Run it on the kit branch. Then copy only the caller file to `main`.
+
+**The kit branch must be protected.** Its roles file says who may code and who may review. A direct push could add a name to it. So protect the kit branch on GitHub, and require pull request reviews there. `adopt.sh --check` and the daily scan both read `branches/<kit branch>/protection`. They fail when the branch has no protection, or when it does not require pull request reviews. For a private child, the `SHIPQUICK_CHILD_TOKEN` also needs `Administration: read` to see the protection.
+
+`kit_branch` must be a plain branch name. A trailing `# comment` is fine. A `${{ ... }}` expression is refused. One script reads it for everyone: `scripts/kit_branch.py`.
+
+If you run `adopt.sh` again without `--kit-branch`, it keeps the kit branch your caller already names.
+
+What changes when `kit_branch` is set:
+- The adoption job reads the submodule pin and `.pre-commit-config.yaml` from the kit branch.
+- The roles job reads `.shipquick/roles.yml` from the kit branch. So does `scripts/review_merge.sh` in auto mode.
+- A job that runs on the kit branch itself still reads its own commit. So a PR that moves the pin is checked against its own change.
+- The rule-37 check still runs. The pin must be merged into ShipQuick `dev` or `main`, or be a tag.
+- `adopt.sh . --check` prints one line for the caller's branch and one for the kit branch.
+- The daily scan also checks the kit branch: the submodule there must match the caller's pin, and the hooks must be there.
+
+What stays the same:
+- With no `kit_branch`, everything works as before.
+- A release freeze still lives on `main` (`.shipquick/freeze`). `freeze.sh` writes it there.
+
 ## Adding a child
 
 Add its `owner/repo` to `docs/children.md` once (a one-line PR to ShipQuick, or let the owner do it). Everything else is automatic from there.
