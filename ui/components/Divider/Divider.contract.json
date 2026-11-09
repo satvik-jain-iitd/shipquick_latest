@@ -1,0 +1,18 @@
+{
+  "name": "Divider",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "thickness": {
+        "type": {
+          "kind": "named",
+          "name": "Dp"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

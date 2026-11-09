@@ -1,0 +1,52 @@
+{
+  "name": "Scaffold",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "topBar": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "bottomBar": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "snackbarHost": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "floatingActionButton": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "floatingActionButtonPosition": {
+        "type": {
+          "kind": "enum",
+          "values": [
+            "Start",
+            "Center",
+            "End",
+            "EndOverlay"
+          ]
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

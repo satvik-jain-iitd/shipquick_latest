@@ -1,0 +1,45 @@
+{
+  "name": "Snackbar",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "hostState": {
+        "type": {
+          "kind": "named",
+          "name": "SnackbarHostState"
+        }
+      },
+      "message": {
+        "type": {
+          "kind": "string"
+        }
+      },
+      "actionLabel": {
+        "type": {
+          "kind": "string"
+        },
+        "optional": true
+      },
+      "withDismissAction": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "duration": {
+        "type": {
+          "kind": "enum",
+          "values": [
+            "Short",
+            "Long",
+            "Indefinite"
+          ]
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

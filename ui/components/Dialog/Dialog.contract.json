@@ -1,0 +1,46 @@
+{
+  "name": "Dialog",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "onDismissRequest": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "confirmButton": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "dismissButton": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "icon": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "title": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "text": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

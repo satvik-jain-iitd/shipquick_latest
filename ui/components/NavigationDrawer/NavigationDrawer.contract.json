@@ -1,0 +1,34 @@
+{
+  "name": "NavigationDrawer",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "drawerContent": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "drawerState": {
+        "type": {
+          "kind": "named",
+          "name": "DrawerState"
+        },
+        "optional": true
+      },
+      "gesturesEnabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

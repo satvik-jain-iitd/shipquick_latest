@@ -1,0 +1,33 @@
+{
+  "name": "Tooltip",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "positionProvider": {
+        "type": {
+          "kind": "named",
+          "name": "PopupPositionProvider"
+        }
+      },
+      "tooltip": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "TooltipState"
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}
