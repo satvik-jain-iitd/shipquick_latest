@@ -9,7 +9,23 @@
       }
     }
   },
-  "platforms": {},
+  "platforms": {
+    "android": {
+      "style": {
+        "type": {
+          "kind": "named",
+          "name": "TextStyle"
+        },
+        "optional": true
+      },
+      "maxLines": {
+        "type": {
+          "kind": "number"
+        },
+        "optional": true
+      }
+    }
+  },
   "webOnly": [],
   "sameMeaning": {}
 }
