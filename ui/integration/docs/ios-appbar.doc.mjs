@@ -62,18 +62,6 @@ export default {
       ]
     },
     {
-      "title": "Variants and supporting API",
-      "content": [
-        {
-          "type": "list",
-          "style": "dont",
-          "items": [
-            "Do not use: presentedWindowToolbarStyle. Use toolbar."
-          ]
-        }
-      ]
-    },
-    {
       "title": "Do and do not",
       "content": [
         {
