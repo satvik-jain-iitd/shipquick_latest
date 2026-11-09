@@ -1,0 +1,26 @@
+{
+  "name": "ShortNavigationBar",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "arrangement": {
+        "type": {
+          "kind": "enum",
+          "values": [
+            "EqualWeight",
+            "Centered"
+          ]
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

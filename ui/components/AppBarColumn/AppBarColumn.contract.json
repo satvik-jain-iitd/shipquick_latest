@@ -1,0 +1,27 @@
+{
+  "name": "AppBarColumn",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "overflowIndicator": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "maxItemCount": {
+        "type": {
+          "kind": "number"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

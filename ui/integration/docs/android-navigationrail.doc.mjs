@@ -62,19 +62,9 @@ export default {
           "style": "unordered",
           "items": [
             "NavigationRailItem: One destination in a NavigationRail: an icon, an optional label, and selected and onClick.",
-            "WideNavigationRail: A newer rail that can be collapsed (icons only) or expanded (icons with labels, like a drawer). Its state says which.",
-            "ModalWideNavigationRail: A wide rail that opens over the content, with a scrim, when expanded. Set hideOnCollapse to hide it fully when collapsed.",
-            "WideNavigationRailItem: One destination in a WideNavigationRail. Its label sits under the icon when collapsed and beside it when expanded.",
             "NavigationRailDefaults: Default container colour and window insets for NavigationRail.",
             "NavigationRailItemDefaults: Default colours for NavigationRailItem. Make them with NavigationRailItemDefaults.colors().",
-            "NavigationRailItemColors: The icon, text and indicator colours of a NavigationRailItem, selected and not.",
-            "WideNavigationRailDefaults: Default colours, shapes, arrangement and window insets for WideNavigationRail and its modal form.",
-            "WideNavigationRailItemDefaults: Default colours and icon position for WideNavigationRailItem.",
-            "WideNavigationRailColors: The container, content and modal scrim colours of a WideNavigationRail.",
-            "WideNavigationRailState: Says if the rail is collapsed or expanded. Call expand(), collapse(), toggle() or snapTo() from a coroutine.",
-            "rememberWideNavigationRailState: Creates and keeps a WideNavigationRailState, with the first value you give.",
-            "WideNavigationRailValue: The two states of a wide rail: Collapsed and Expanded.",
-            "ModalWideNavigationRailProperties: Window settings for ModalWideNavigationRail: shouldDismissOnBackPress and securePolicy."
+            "NavigationRailItemColors: The icon, text and indicator colours of a NavigationRailItem, selected and not."
           ]
         }
       ]
