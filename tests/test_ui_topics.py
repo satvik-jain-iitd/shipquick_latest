@@ -109,7 +109,9 @@ def test_s228_a_prop_tagged_for_ios_replaces_the_untagged_one_in_the_ios_topic_o
 IOS_LEAKS = ["LaunchedEffect", "16dp", "12.sp", "onValueChange", "Material3", "ExperimentalMaterial3Api",
              "ModalBottomSheet(", "mutableStateOf", "Kotlin"]
 ANDROID_LEAKS = [".toggleStyle(", "@Environment", "@Observable", ".presentationDetents", "Toggle(isOn:", ".alert(",
-                 "Swift", "NavigationView", "$isOn"]
+                 "Swift", "NavigationView", "$isOn",
+                 # Story #231 fold: the Text doc's shared text once held these iOS words, and android-text showed them.
+                 "textSelection(.enabled)", "Dynamic Type", "Apple: \"A view\""]
 
 
 def one_word(platform, text):

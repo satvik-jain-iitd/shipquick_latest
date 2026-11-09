@@ -18,24 +18,20 @@ export default {
     "heading"
   ],
   "usage": {
-    "description": "Text shows read-only words, one line or many. Apple: \"A view that displays one or more lines of read-only text.\"",
+    "description": "Text shows read-only words, one line or many.",
     "bestPractices": [
       {
         "guidance": true,
-        "description": "Use the type tokens for font and size, so Dynamic Type still works."
-      },
-      {
-        "guidance": true,
-        "description": "Let people select useful text, like an error code, with textSelection(.enabled)."
+        "description": "Use the type tokens for font and size, so the text still grows with the person's text size setting."
       },
       {
         "guidance": false,
-        "description": "Use Text for words people must edit. Use a TextField instead."
+        "description": "Use Text for words people must edit. Use a text field instead."
       }
     ],
     "accessibility": [
       {
-        "name": "Dynamic Type",
+        "name": "Text size",
         "category": "Content",
         "criterion": "1.4.4 Resize Text",
         "requirement": "200% text size",
@@ -56,6 +52,17 @@ export default {
         "description": "The string shown."
       }
     ]
+  },
+  "platformUsage": {
+    "ios": {
+      "description": "Apple: \"A view that displays one or more lines of read-only text.\" With the type tokens, Text follows Dynamic Type.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Let people select useful text, like an error code, with textSelection(.enabled)."
+        }
+      ]
+    }
   },
   "props": [
     {
