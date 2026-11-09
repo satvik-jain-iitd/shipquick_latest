@@ -354,3 +354,16 @@ Scenario: the QA tools run from the kit with no project facts
   And no tool names a project, a person, a web font or an OS-only font path
 ```
 Tests: `tests/test_qa_scripts.py` (`test_s162_*`).
+
+## Story #180 (S0): a protected PR merges after a second review and the owner's yes (ADR-013)
+```gherkin
+Scenario: the reviewer merges a protected PR only with both lines in the approving review
+  Given a PR that touches a protected path
+  When the approving review on the head says "Second review: ..." and "Owner yes: 2026-11-09 \"...\""
+  Then review_merge.sh merges it
+  And without either line it refuses, naming the missing line
+  And an Owner yes with no date or no quoted words refuses
+  And the same lines in the PR body do not count
+  And a PR touching .shipquick/* refuses whatever the review says
+```
+Tests: `tests/test_review_merge.py` (s180).

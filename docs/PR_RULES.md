@@ -137,6 +137,9 @@ its own gate off from inside itself:
   (`docs/frontend-paths.txt`, `docs/architecture-paths.txt`, `docs/guard.yml`). In auto mode,
   `review_merge.sh` refuses any PR touching one of them outright — "protected path, owner merges" —
   so the owner reviews and merges that PR by hand, never an agent.
+- **A protected PR with the owner's yes (story #180, ADR-013).** The reviewer merges it with the gate only when
+  the approving review records `Second review: <who, findings>` and `Owner yes: <YYYY-MM-DD> "<his words>"`.
+  `.shipquick/*` stays the owner's own merge.
 - **Adoption ancestor.** The adoption job (`scripts/check_adoption_ancestor.py`) also requires the
   pinned ShipQuick commit to be merged into `dev` or `main`, or be a release tag — not just any
   commit that exists in ShipQuick's history, which would let a PR pin a throwaway branch commit that
