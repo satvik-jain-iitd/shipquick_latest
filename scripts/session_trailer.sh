@@ -10,10 +10,16 @@ s="${SHIPQUICK_SESSION:-$(git config --get shipquick.session || true)}"
 if [ -z "$s" ]; then   # no session known: drop an old Built-by from the trailer block, so CI names the fix
   python3 - "$1" <<'PY'
 import sys
-p = sys.argv[1]; text = open(p).read()
-head, sep, last = text.rstrip("\n").rpartition("\n\n")
-kept = "\n".join(l for l in last.split("\n") if not l.startswith("Built-by:"))
-open(p, "w").write((head + sep if sep else "") + kept + "\n")
+p = sys.argv[1]; lines = open(p).read().split("\n")
+# git's own "# ..." comment lines (editor commit, amend) may follow the trailers: skip them to find the trailer block
+end = len(lines)
+while end and (not lines[end - 1].strip() or lines[end - 1].startswith("#")):
+    end -= 1
+start = end
+while start and lines[start - 1].strip():
+    start -= 1
+lines[start:end] = [l for l in lines[start:end] if not l.startswith("Built-by:")]
+open(p, "w").write("\n".join(lines))
 PY
   exit 0
 fi

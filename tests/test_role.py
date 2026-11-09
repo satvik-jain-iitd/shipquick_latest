@@ -151,3 +151,12 @@ def test_s139_with_no_session_known_the_hook_drops_an_old_built_by(repo):
     subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": ""})
     text = msg.read_text()
     assert "Built-by" not in text and "Co-Authored-By: a <a@b>" in text
+
+
+def test_s139_an_old_built_by_above_git_comment_lines_is_still_dropped(repo):
+    # PR #178 verify: an editor commit or amend puts "# ..." lines after the trailers.
+    msg = repo / "MSG"
+    msg.write_text("subj\n\nBuilt-by: old\n\n# Please enter the commit message\n# comment\n", encoding="utf-8")
+    subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": ""})
+    text = msg.read_text()
+    assert "Built-by" not in text and "# comment" in text and text.startswith("subj\n")
