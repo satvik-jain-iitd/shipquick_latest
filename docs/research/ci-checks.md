@@ -44,3 +44,31 @@ https://conf.researchr.org/details/icst-2024/icst-2024-industry/1/Cost-of-Flaky-
   fingerprint in `.gitleaksignore` with a reason and a date when the line can go.
 - **Fast on commit, full on push.** `scripts/check_local.sh secrets-staged` reads only staged files. The full scan runs on push.
 
+
+## Every job has a time limit (story #154, 9 Nov 2026)
+- **Why.** GitHub's default job limit is 360 minutes. One stalled install step (an apt mirror, a browser download)
+  keeps a check pending for hours. The merge waits and someone has to click cancel.
+- **Rule.** Every job that runs on a runner sets `timeout-minutes` (10 is the kit default; a test job may take 20).
+  A step that downloads or installs sets its own, shorter `timeout-minutes` (5). A job that calls a reusable
+  workflow (`uses:`) cannot set one and is skipped.
+- **Check.** `scripts/check_timeouts.py` names each job with no limit. It runs in `scripts/check_local.sh`
+  (`timeouts`), in the kit's own tests, and in the `adoption` job of `checks.yml`, so every child gets it.
+- **Cache what a job installs.** Any stack: restore the tool cache with `actions/cache`, keyed on the tool's
+  version, so the network path runs only on a miss. Worked example, a Playwright browser:
+
+  ```yaml
+  - name: Cache the browser
+    uses: actions/cache@v4
+    with:
+      path: ~/.cache/ms-playwright
+      key: pw-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+  - name: Install the browser
+    timeout-minutes: 5
+    run: npx playwright install --with-deps chromium
+  ```
+
+  Package managers already cache with one line: `cache: npm` on `setup-node`, `cache: pip` on `setup-python`,
+  `cache: gradle` on `setup-java` (Android). Pin each action to a commit SHA, as the kit's own workflows do.
+- **A check stuck as pending.** Pending for more than twice its usual time counts as a failure. The reviewer re-runs
+  it once (`gh run rerun <id> --failed`). Still stuck: tell the owner the run link and the stuck step name.
+  An agent may not be allowed to run `gh run cancel`; then the owner's cancel click in the browser is the fallback.
