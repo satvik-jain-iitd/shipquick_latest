@@ -272,6 +272,18 @@ Scenario: a story without a full Who does it line is refused at Ready
   And a pull request that links no issue passes
 ```
 Tests: `tests/test_check_story.py` (`test_s155_*`).
+
+## Story #153 and #161: the approval says the render matches the board
+```gherkin
+Scenario: a frontend PR approved on the code diff alone is not merged
+  Given a PR with a Design board line, in a repo with docs/screens.txt configured
+  When the approving review has no "Render: <that board> -- matches" line
+  Then review_merge.sh refuses and names the line to write
+  And with the line, naming the same board, it merges
+  And a repo with no docs/screens.txt, or a PR with no Design board, is unaffected
+```
+Tests: `tests/test_check_design_reviewed.py` (`test_s153_*`, `test_s161_*`), `tests/test_review_merge.py` (`test_s153_*`).
+
 ## Publish the canvas from canvas.json (#163)
 
 ```gherkin
