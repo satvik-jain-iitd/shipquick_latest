@@ -29,6 +29,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Link",
       "variants": [
         {"name": "HelpLink", "note": "not on iOS. Apple: \"A button with a standard appearance that opens app-specific help documentation.\"", "status": "unavailable-ios", "replacement": "Link"},
         {"name": "Link", "note": "iOS 14.0. Apple: \"A control for navigating to a URL.\""},

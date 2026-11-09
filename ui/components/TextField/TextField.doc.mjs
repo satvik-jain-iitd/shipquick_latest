@@ -192,7 +192,6 @@ export default {
         {"name": "findNavigator", "note": "`.findNavigator(isPresented:)`, iOS 16.0. Apple: \"Programmatically presents the find and replace interface for text editor views.\""},
         {"name": "keyboardType", "note": "`.keyboardType(_:)`, iOS 13.0. Apple: \"Sets the keyboard type for this view.\""},
         {"name": "replaceDisabled", "note": "`.replaceDisabled(_:)`, iOS 16.0. Apple: \"Prevents replace operations in a text editor.\""},
-        {"name": "scrollDismissesKeyboard", "note": "`.scrollDismissesKeyboard(_:)`, iOS 16.0. Apple: \"Configures the behavior in which scrollable content interacts with the software keyboard.\""},
         {"name": "textContentType", "note": "`.textContentType(_:)`, iOS 13.0. Apple: \"Sets the text content type for this view, which the system uses to offer suggestions while the user enters text on an iOS or tvOS device.\""},
         {"name": "textInputAutocapitalization", "note": "`.textInputAutocapitalization(_:)`, iOS 15.0. Apple: \"Sets how often the shift key in the keyboard is automatically enabled.\""},
         {"name": "textInputBorderShape", "note": "`.textInputBorderShape(_:)`, iOS 27.0. Apple: \"Sets the border shape for text input controls in the view hierarchy.\""},

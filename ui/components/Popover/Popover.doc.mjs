@@ -76,6 +76,7 @@ export default {
   ],
   "platformApi": {
     "ios": {
+      "family": "Popover",
       "variants": [
         {"name": "popover", "note": "`.popover(item:attachmentAnchor:arrowEdge:content:)`, iOS 13.0. Apple: \"Presents a popover using the given item as a data source for the popover’s content.\""}
       ]
