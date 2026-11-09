@@ -1,0 +1,107 @@
+"""Story #228: a platform topic never carries the other platform's API names.
+
+`scripts/ui_topics.py` builds `ios-<name>` and `android-<name>` from one shared doc. Text that fits one platform
+lives in `platformUsage.<platform>`; props come from `core` or that platform only. The generator fails on a leak."""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+import ui_topics
+from check_ui_docs import read_doc
+
+TOPICS = ROOT / "scripts" / "ui_topics.py"
+
+
+def write_component(root, name, doc, contract):
+    d = root / name
+    d.mkdir(parents=True)
+    (d / f"{name}.doc.mjs").write_text("export default " + json.dumps(doc) + ";\n", encoding="utf-8")
+    (d / f"{name}.contract.json").write_text(json.dumps(contract), encoding="utf-8")
+
+
+def text_of(t):
+    return json.dumps(t, ensure_ascii=False)
+
+
+def test_s228_no_topic_on_the_real_repo_names_the_other_platforms_api():
+    r = subprocess.run(["python3", str(TOPICS), "--check"], capture_output=True, text=True, cwd=ROOT)
+    assert "leak" not in r.stdout, r.stdout
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_s228_a_fixture_with_a_leaked_word_fails_naming_the_topic_and_the_word(tmp_path):
+    doc = {"name": "Sheet", "platforms": {"android": "androidx.X", "ios": "SwiftUI.X", "web": None}, "props": [],
+           "usage": {"description": "Create it with rememberSheetState."}}
+    write_component(tmp_path, "Sheet", doc, {"core": {}, "platforms": {}})
+    r = subprocess.run(["python3", str(TOPICS), "--check", "--root", str(tmp_path)], capture_output=True, text=True, cwd=ROOT)
+    assert r.returncode == 1
+    assert "ios-sheet" in r.stdout and "rememberSheetState" in r.stdout, r.stdout
+
+
+def test_s228_an_ios_word_in_an_android_topic_fails_too():
+    doc = {"name": "X", "platforms": {"android": "androidx.X", "ios": None}, "props": [],
+           "usage": {"description": "Bind it with @State."}}
+    t = ui_topics.topic(doc, {"core": {}}, "android")
+    assert any("@State" in m for m in ui_topics.leaks(t, "android"))
+
+
+# Story #228 lands in two stacked PRs (50-file cap). These docs get their iOS props in the second PR, which empties this set.
+PENDING = {"List", "NavigationBar", "NavigationDrawer", "ProgressIndicator", "SearchBar", "SegmentedButton", "Switch"}
+
+
+def test_s228_every_ios_topic_of_a_shared_doc_lists_props():
+    shared = 0
+    for folder in sorted(p for p in (ROOT / "ui/components").iterdir() if p.is_dir()):
+        doc = read_doc(folder / f"{folder.name}.doc.mjs")
+        on = [p for p, v in doc["platforms"].items() if v]
+        if "ios" not in on or len(on) < 2 or folder.name in PENDING:
+            continue
+        shared += 1
+        contract = json.loads((folder / f"{folder.name}.contract.json").read_text(encoding="utf-8"))
+        t = ui_topics.topic(doc, contract, "ios")
+        props = [s for s in t["sections"] if s["title"] == "Props"]
+        assert props and props[0]["content"][0]["rows"], f"ios-{folder.name.lower()} lists no props"
+    assert shared + len(PENDING) >= 15
+
+
+def test_s228_platform_usage_is_read_for_its_own_platform_only():
+    doc = {"name": "X", "platforms": {"android": "androidx.X", "ios": "SwiftUI.X", "web": None}, "props": [],
+           "usage": {"description": "Shared words.", "bestPractices": [{"guidance": True, "description": "Shared do."}]},
+           "platformUsage": {
+               "android": {"description": "Android words.", "bestPractices": [{"guidance": False, "description": "Android dont."}],
+                           "accessibility": [{"name": "A11y A", "description": "Android a11y."}]},
+               "ios": {"description": "Apple words.", "bestPractices": [{"guidance": True, "description": "Apple do."}],
+                       "accessibility": [{"name": "A11y I", "description": "Apple a11y."}]}}}
+    ios, android = (text_of(ui_topics.topic(doc, {"core": {}}, p)) for p in ("ios", "android"))
+    for words in ("Shared words.", "Shared do."):
+        assert words in ios and words in android
+    for words in ("Apple words.", "Apple do.", "Apple a11y."):
+        assert words in ios and words not in android
+    for words in ("Android words.", "Android dont.", "Android a11y."):
+        assert words in android and words not in ios
+
+
+def test_s228_props_come_from_core_or_that_platform_only():
+    doc = {"name": "X", "platforms": {"android": "androidx.X", "ios": "SwiftUI.X", "web": None},
+           "usage": {"description": "d"},
+           "props": [{"name": n, "type": "string", "description": n} for n in ("shared", "aOnly", "iOnly")]}
+    contract = {"core": {"shared": {}}, "platforms": {"android": {"aOnly": {}}, "ios": {"iOnly": {}}}}
+    def rows(p):
+        return [r[0] for s in ui_topics.topic(doc, contract, p)["sections"] if s["title"] == "Props" for r in s["content"][0]["rows"]]
+
+    assert rows("ios") == ["shared", "iOnly"] and rows("android") == ["shared", "aOnly"]
+
+
+def test_s228_a_prop_tagged_for_ios_replaces_the_untagged_one_in_the_ios_topic_only():
+    doc = {"name": "X", "platforms": {"android": "androidx.X", "ios": "SwiftUI.X", "web": None}, "usage": {"description": "d"},
+           "props": [{"name": "content", "type": "@Composable () -> Unit", "description": "c"},
+                     {"name": "content", "type": "() -> some View", "description": "c", "platform": "ios"}]}
+    contract = {"core": {}, "platforms": {"android": {"content": {}}, "ios": {"content": {}}}}
+
+    def types(p):
+        return [r[1] for s in ui_topics.topic(doc, contract, p)["sections"] if s["title"] == "Props" for r in s["content"][0]["rows"]]
+
+    assert types("ios") == ["() -> some View"] and types("android") == ["@Composable () -> Unit"]

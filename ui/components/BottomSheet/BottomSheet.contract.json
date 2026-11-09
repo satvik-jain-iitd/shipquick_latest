@@ -23,6 +23,33 @@
           "kind": "content"
         }
       }
+    },
+    "ios": {
+      "isPresented": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<Bool>"
+        }
+      },
+      "onDismiss": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "presentationDetents": {
+        "type": {
+          "kind": "named",
+          "name": "Set<PresentationDetent>"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

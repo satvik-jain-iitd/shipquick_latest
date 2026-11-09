@@ -9,6 +9,60 @@ export default {
     "ios": "SwiftUI.View.sheet(isPresented:onDismiss:content:)",
     "web": "@astryxdesign/core/BottomSheet"
   },
+  "platformUsage": {
+    "android": {
+      "description": "Its content is laid out in a column. SheetState opens and closes it from code.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Create the state with rememberModalBottomSheetState and pass it as sheetState."
+        },
+        {
+          "guidance": true,
+          "description": "Take the sheet out of the composition after it hides."
+        },
+        {
+          "guidance": false,
+          "description": "Build your own sliding panel. Use ModalBottomSheet."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Focus",
+          "category": "Keyboard",
+          "criterion": "2.4.3 Focus Order",
+          "requirement": "focus moves in and back",
+          "description": "Focus moves into the surface when it opens and back to what opened it when it closes. Back closes it."
+        }
+      ]
+    },
+    "ios": {
+      "description": "On iOS, show it with sheet(isPresented:onDismiss:content:). Apple: \"Presents a sheet when a binding to a Boolean value that you provide is true.\" presentationDetents(_:) sets its heights.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Drive it from one Bool, passed as a Binding to isPresented."
+        },
+        {
+          "guidance": true,
+          "description": "Add presentationDetents([.medium, .large]) for a half-height sheet, and presentationDragIndicator(.visible) to show the handle."
+        },
+        {
+          "guidance": false,
+          "description": "Show more than one sheet at a time (Apple HIG, Sheets)."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "VoiceOver",
+          "category": "Semantics",
+          "criterion": "4.1.2 Name, Role, Value",
+          "requirement": "a spoken name and state",
+          "description": "VoiceOver moves into the sheet when it opens and back to what opened it when it closes. A swipe down or a Cancel button closes it."
+        }
+      ]
+    }
+  },
   "group": "Sheet",
   "category": "Overlay",
   "keywords": [
@@ -18,29 +72,9 @@ export default {
     "drawer"
   ],
   "usage": {
-    "description": "A modal bottom sheet slides up from the bottom over the screen, with more content or actions. Its content is laid out in a column. SheetState opens and closes it from code.",
-    "bestPractices": [
-      {
-        "guidance": true,
-        "description": "Create the state with rememberModalBottomSheetState and pass it as sheetState."
-      },
-      {
-        "guidance": true,
-        "description": "Take the sheet out of the composition after it hides."
-      },
-      {
-        "guidance": false,
-        "description": "Build your own sliding panel. Use ModalBottomSheet."
-      }
-    ],
+    "description": "A modal bottom sheet slides up from the bottom over the screen, with more content or actions.",
+    "bestPractices": [],
     "accessibility": [
-      {
-        "name": "Focus",
-        "category": "Keyboard",
-        "criterion": "2.4.3 Focus Order",
-        "requirement": "focus moves in and back",
-        "description": "Focus moves into the surface when it opens and back to what opened it when it closes. Back closes it."
-      },
       {
         "name": "Text contrast",
         "category": "Color contrast",
@@ -85,6 +119,34 @@ export default {
       "type": "@Composable ColumnScope.() -> Unit",
       "description": "What the sheet holds, in a column.",
       "required": true
+    },
+    {
+      "name": "isPresented",
+      "type": "Binding<Bool>",
+      "description": "Shows the sheet while true. The system sets it to false when the user closes it.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "onDismiss",
+      "type": "(() -> Void)?",
+      "description": "Runs after the sheet closes.",
+      "platform": "ios",
+      "default": "nil"
+    },
+    {
+      "name": "content",
+      "type": "() -> some View",
+      "description": "What the sheet holds.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "presentationDetents",
+      "type": "Set<PresentationDetent>",
+      "description": "The heights the sheet can rest at, like .medium and .large.",
+      "platform": "ios",
+      "default": "[.large]"
     }
   ]
 };

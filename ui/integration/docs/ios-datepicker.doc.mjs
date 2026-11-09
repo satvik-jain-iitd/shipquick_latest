@@ -22,7 +22,47 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A date picker lets the user pick a date, a range, or both, from a calendar or by typing. Docked sits in the layout. Modal shows in DatePickerDialog. DateRangePicker picks a start and an end."
+          "text": "A date picker lets the user pick a date. On iOS, DatePicker picks a date, a time, or both. Apple: \"A control for selecting an absolute date.\" datePickerStyle(_:) sets the look: .compact, .graphical (a calendar) or .wheel."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "Says what the date is for. VoiceOver reads it."
+            ],
+            [
+              "selection",
+              "Binding<Date>",
+              "",
+              "The picked date."
+            ],
+            [
+              "in",
+              "ClosedRange<Date>",
+              "",
+              "The dates the user may pick. Partial ranges work too."
+            ],
+            [
+              "displayedComponents",
+              "DatePickerComponents",
+              "[.hourAndMinute, .date]",
+              "Which parts show: .date, .hourAndMinute."
+            ]
+          ]
         }
       ]
     },
@@ -33,8 +73,9 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Create the state with rememberDatePickerState and read selectedDateMillis.",
-            "Use DatePickerDialog for a modal picker."
+            "Bind selection to a Date held in @State.",
+            "Limit the dates with in:, like Date()... for future dates only.",
+            "Pick what shows with displayedComponents: .date, .hourAndMinute, or both."
           ]
         },
         {
@@ -54,7 +95,7 @@ export default {
           "style": "unordered",
           "items": [
             "Label (3.3.2 Labels or Instructions, visible label): Every input has words that say what to enter. A placeholder alone is not a label.",
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on each day only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

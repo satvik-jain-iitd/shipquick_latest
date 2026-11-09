@@ -9,6 +9,60 @@ export default {
     "ios": "SwiftUI.TextField",
     "web": "@astryxdesign/core/TextInput"
   },
+  "platformUsage": {
+    "android": {
+      "description": "TextField is filled. OutlinedTextField has a border. SecureTextField hides a password. Google says the value-based fields are deprecated: use the state-based ones with TextFieldState.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Use the state-based field: rememberTextFieldState()."
+        },
+        {
+          "guidance": true,
+          "description": "Set keyboardOptions, like KeyboardType.Email for an email."
+        },
+        {
+          "guidance": false,
+          "description": "Use BasicTextField for a form. It has no label or error styling."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Errors",
+          "category": "Content",
+          "criterion": "3.3.1 Error Identification",
+          "requirement": "words, not colour only",
+          "description": "Set isError and put the reason in supportingText, so the error is said in words."
+        }
+      ]
+    },
+    "ios": {
+      "description": "On iOS, TextField(_:text:prompt:) binds a String. SecureField hides a password. Pass axis: .vertical for a field that grows to more lines.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Bind text to a String held in @State."
+        },
+        {
+          "guidance": true,
+          "description": "Set keyboardType(_:), textContentType(_:) and submitLabel(_:), like .emailAddress for an email."
+        },
+        {
+          "guidance": false,
+          "description": "Use a TextField for a password. Use SecureField."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Errors",
+          "category": "Content",
+          "criterion": "3.3.1 Error Identification",
+          "requirement": "the error in words",
+          "description": "Put the error in a Text under the field, so VoiceOver reads it in words."
+        }
+      ]
+    }
+  },
   "group": "Text field",
   "category": "Data Input",
   "keywords": [
@@ -19,21 +73,8 @@ export default {
     "email"
   ],
   "usage": {
-    "description": "A text field lets the user type and change text. TextField is filled. OutlinedTextField has a border. SecureTextField hides a password. Google says the value-based fields are deprecated: use the state-based ones with TextFieldState.",
-    "bestPractices": [
-      {
-        "guidance": true,
-        "description": "Use the state-based field: rememberTextFieldState()."
-      },
-      {
-        "guidance": true,
-        "description": "Set keyboardOptions, like KeyboardType.Email for an email."
-      },
-      {
-        "guidance": false,
-        "description": "Use BasicTextField for a form. It has no label or error styling."
-      }
-    ],
+    "description": "A text field lets the user type and change text.",
+    "bestPractices": [],
     "accessibility": [
       {
         "name": "Label",
@@ -41,13 +82,6 @@ export default {
         "criterion": "3.3.2 Labels or Instructions",
         "requirement": "visible label",
         "description": "Every input has words that say what to enter. A placeholder alone is not a label."
-      },
-      {
-        "name": "Errors",
-        "category": "Content",
-        "criterion": "3.3.1 Error Identification",
-        "requirement": "words, not colour only",
-        "description": "Set isError and put the reason in supportingText, so the error is said in words."
       }
     ],
     "anatomy": [
@@ -112,6 +146,33 @@ export default {
       "type": "KeyboardOptions",
       "description": "The keyboard type and action, like KeyboardType.Email.",
       "default": "KeyboardOptions.Default"
+    },
+    {
+      "name": "titleKey",
+      "type": "LocalizedStringKey",
+      "description": "Says what to type. VoiceOver reads it.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "text",
+      "type": "Binding<String>",
+      "description": "The text.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "prompt",
+      "type": "Text?",
+      "description": "Hint text while empty.",
+      "platform": "ios",
+      "default": "nil"
+    },
+    {
+      "name": "axis",
+      "type": "Axis",
+      "description": "Pass .vertical to let the field grow to more lines.",
+      "platform": "ios"
     }
   ]
 };

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "JSON twin of doctypes/component/type.ts (SingleComponentDoc), so Python checks run without Node. Field names and meanings are Meta's (MIT, ui/LICENSE.meta-astryx.txt); only `platforms` is ShipQuick's. Multi and sub-component docs are not in this twin yet.",
+  "$comment": "JSON twin of doctypes/component/type.ts (SingleComponentDoc), so Python checks run without Node. Field names and meanings are Meta's (MIT, ui/LICENSE.meta-astryx.txt); only `platforms` and `platformUsage` are ShipQuick's. Multi and sub-component docs are not in this twin yet.",
   "title": "ComponentDoc",
   "type": "object",
   "required": ["name", "displayName", "platforms", "usage", "props"],
@@ -18,6 +18,15 @@
         "web": {"type": ["string", "null"]}
       }
     },
+    "platformUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "android": {"$ref": "#/$defs/platformUsage"},
+        "ios": {"$ref": "#/$defs/platformUsage"},
+        "web": {"$ref": "#/$defs/platformUsage"}
+      }
+    },
     "keywords": {"type": "array", "items": {"type": "string"}},
     "group": {"type": "string"},
     "category": {"enum": ["Action", "Chat", "Container", "Content", "Form Controls", "Data Input", "Data Visualization", "Feedback & Status", "Layout", "Navigation", "Overlay", "Table & List", "Utility"]},
@@ -26,8 +35,8 @@
       "required": ["description"],
       "properties": {
         "description": {"type": "string"},
-        "bestPractices": {"type": "array", "items": {"type": "object", "required": ["guidance", "description"], "properties": {"guidance": {"type": "boolean"}, "description": {"type": "string"}}}},
-        "accessibility": {"type": "array", "items": {"type": "object", "required": ["name", "description"], "properties": {"name": {"type": "string"}, "description": {"type": "string"}, "category": {"enum": ["Color contrast", "Keyboard", "Semantics", "Content"]}, "criterion": {"type": "string"}, "requirement": {"type": "string"}, "states": {"type": "array", "items": {"type": "string"}}}}},
+        "bestPractices": {"$ref": "#/$defs/bestPractices"},
+        "accessibility": {"$ref": "#/$defs/accessibility"},
         "anatomy": {"type": "array", "items": {"type": "object", "required": ["name", "required", "description"], "properties": {"name": {"type": "string"}, "required": {"type": "boolean"}, "description": {"type": "string"}}}}
       }
     },
@@ -42,10 +51,20 @@
           "description": {"type": "string"},
           "default": {"type": "string"},
           "required": {"type": "boolean"},
+          "platform": {"enum": ["android", "ios", "web"]},
           "stability": {"enum": ["experimental"]}
         }
       }
     },
     "examples": {"type": "array", "items": {"type": "object", "required": ["code"], "properties": {"label": {"type": "string"}, "code": {"type": "string"}}}}
+  },
+  "$defs": {
+    "bestPractices": {"type": "array", "items": {"type": "object", "required": ["guidance", "description"], "properties": {"guidance": {"type": "boolean"}, "description": {"type": "string"}}}},
+    "accessibility": {"type": "array", "items": {"type": "object", "required": ["name", "description"], "properties": {"name": {"type": "string"}, "description": {"type": "string"}, "category": {"enum": ["Color contrast", "Keyboard", "Semantics", "Content"]}, "criterion": {"type": "string"}, "requirement": {"type": "string"}, "states": {"type": "array", "items": {"type": "string"}}}}},
+    "platformUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {"description": {"type": "string"}, "bestPractices": {"$ref": "#/$defs/bestPractices"}, "accessibility": {"$ref": "#/$defs/accessibility"}}
+    }
   }
 }

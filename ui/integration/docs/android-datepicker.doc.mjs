@@ -22,7 +22,7 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A date picker lets the user pick a date, a range, or both, from a calendar or by typing. Docked sits in the layout. Modal shows in DatePickerDialog. DateRangePicker picks a start and an end."
+          "text": "A date picker lets the user pick a date. It also picks a range, from a calendar or by typing. Docked sits in the layout. Modal shows in DatePickerDialog. DateRangePicker picks a start and an end."
         }
       ]
     },

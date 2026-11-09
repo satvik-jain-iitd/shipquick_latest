@@ -23,7 +23,41 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A drop-down menu opens from an icon, a text field or another part and shows a list of options on a short-lived surface. It can have dividers and icons."
+          "text": "A drop-down menu opens from an icon, a text field or another part and shows a list of options on a short-lived surface. It can have dividers and icons. On iOS, Menu is a button that opens a list of actions. Apple: \"A control for presenting a menu of actions.\""
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "The words on the button that opens the menu."
+            ],
+            [
+              "content",
+              "() -> some View",
+              "",
+              "The Buttons in the menu."
+            ],
+            [
+              "label",
+              "() -> some View",
+              "",
+              "A custom label, like a Label with an icon."
+            ]
+          ]
         }
       ]
     },
@@ -34,8 +68,8 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Open it from an IconButton and set expanded from your state.",
-            "Close it in onDismissRequest."
+            "Start each item with a clear verb, like \"Rename\" (Apple HIG, Menus).",
+            "List the most used items first. Give a delete item role: .destructive."
           ]
         },
         {
@@ -54,8 +88,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Focus (2.4.3 Focus Order, focus moves in and back): Focus moves into the surface when it opens and back to what opened it when it closes. Back closes it.",
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on each item only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+            "VoiceOver (4.1.2 Name, Role, Value, a spoken name and state): The menu's label is its spoken name. Give an icon a name with Label(\"More\", systemImage: \"ellipsis.circle\").",
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

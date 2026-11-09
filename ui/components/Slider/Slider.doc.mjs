@@ -9,6 +9,41 @@ export default {
     "ios": "SwiftUI.Slider",
     "web": "@astryxdesign/core/Slider"
   },
+  "platformUsage": {
+    "android": {
+      "accessibility": [
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "48dp",
+          "description": "Google: anything a user can tap is at least 48dp. Material sets this on the thumb only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+        }
+      ]
+    },
+    "ios": {
+      "description": "On iOS, Slider(value:in:step:onEditingChanged:) binds a number inside a range.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Put the minimum on the leading side (Apple HIG, Sliders)."
+        },
+        {
+          "guidance": true,
+          "description": "Give it a label with Slider(value:in:label:onEditingChanged:), so VoiceOver can name it."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "44 by 44 pt",
+          "description": "Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
+        }
+      ]
+    }
+  },
   "group": "Slider",
   "category": "Form Controls",
   "keywords": [
@@ -34,13 +69,6 @@ export default {
       }
     ],
     "accessibility": [
-      {
-        "name": "Touch target",
-        "category": "Content",
-        "criterion": "2.5.8 Target Size (Minimum)",
-        "requirement": "48dp",
-        "description": "Google: anything a user can tap is at least 48dp. Material sets this on the thumb only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
-      },
       {
         "name": "Value is read out",
         "category": "Semantics",
@@ -102,6 +130,34 @@ export default {
       "name": "onValueChangeFinished",
       "type": "() => void",
       "description": "Runs when the user lets go."
+    },
+    {
+      "name": "value",
+      "type": "Binding<Double>",
+      "description": "The current value.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "in",
+      "type": "ClosedRange<Double>",
+      "description": "The lowest and highest value.",
+      "platform": "ios",
+      "default": "0...1"
+    },
+    {
+      "name": "step",
+      "type": "Double",
+      "description": "The distance between stops.",
+      "platform": "ios",
+      "default": "1"
+    },
+    {
+      "name": "onEditingChanged",
+      "type": "(Bool) -> Void",
+      "description": "Runs with true when a drag starts and false when it ends.",
+      "platform": "ios",
+      "default": "{ _ in }"
     }
   ]
 };

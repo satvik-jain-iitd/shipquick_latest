@@ -23,7 +23,47 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A text field lets the user type and change text. TextField is filled. OutlinedTextField has a border. SecureTextField hides a password. Google says the value-based fields are deprecated: use the state-based ones with TextFieldState."
+          "text": "A text field lets the user type and change text. On iOS, TextField(_:text:prompt:) binds a String. SecureField hides a password. Pass axis: .vertical for a field that grows to more lines."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "Says what to type. VoiceOver reads it."
+            ],
+            [
+              "text",
+              "Binding<String>",
+              "",
+              "The text."
+            ],
+            [
+              "prompt",
+              "Text?",
+              "nil",
+              "Hint text while empty."
+            ],
+            [
+              "axis",
+              "Axis",
+              "",
+              "Pass .vertical to let the field grow to more lines."
+            ]
+          ]
         }
       ]
     },
@@ -34,15 +74,15 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Use the state-based field: rememberTextFieldState().",
-            "Set keyboardOptions, like KeyboardType.Email for an email."
+            "Bind text to a String held in @State.",
+            "Set keyboardType(_:), textContentType(_:) and submitLabel(_:), like .emailAddress for an email."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Use BasicTextField for a form. It has no label or error styling."
+            "Use a TextField for a password. Use SecureField."
           ]
         }
       ]
@@ -55,7 +95,7 @@ export default {
           "style": "unordered",
           "items": [
             "Label (3.3.2 Labels or Instructions, visible label): Every input has words that say what to enter. A placeholder alone is not a label.",
-            "Errors (3.3.1 Error Identification, words, not colour only): Set isError and put the reason in supportingText, so the error is said in words."
+            "Errors (3.3.1 Error Identification, the error in words): Put the error in a Text under the field, so VoiceOver reads it in words."
           ]
         }
       ]

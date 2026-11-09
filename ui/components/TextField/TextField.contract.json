@@ -48,6 +48,34 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        }
+      },
+      "text": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<String>"
+        }
+      },
+      "prompt": {
+        "type": {
+          "kind": "named",
+          "name": "Text?"
+        },
+        "optional": true
+      },
+      "axis": {
+        "type": {
+          "kind": "named",
+          "name": "Axis"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

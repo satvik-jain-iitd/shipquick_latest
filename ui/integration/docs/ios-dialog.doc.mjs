@@ -23,7 +23,47 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A dialog shows a message or asks for input on a layer above the app. It stops the user on purpose. Use it to confirm an action, like deleting a file, or to ask a short question."
+          "text": "A dialog shows a message or asks for input on a layer above the app. It stops the user on purpose. Use it to confirm an action, like deleting a file, or to ask a short question. On iOS the twin is an alert: alert(_:isPresented:actions:message:). Apple: \"Presents an alert with a message when a given condition is true.\""
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "titleKey",
+              "LocalizedStringKey",
+              "",
+              "The question along the top."
+            ],
+            [
+              "isPresented",
+              "Binding<Bool>",
+              "",
+              "Shows the alert while true."
+            ],
+            [
+              "actions",
+              "() -> some View",
+              "",
+              "The buttons, each with a role."
+            ],
+            [
+              "message",
+              "() -> some View",
+              "",
+              "The detail under the title."
+            ]
+          ]
         }
       ]
     },
@@ -35,14 +75,15 @@ export default {
           "style": "do",
           "items": [
             "Say the choice in the title and the buttons, like \"Delete file?\" with Delete and Cancel.",
-            "Give a dismiss button and handle onDismissRequest."
+            "Give each button a role: .cancel for the safe choice, .destructive for a delete.",
+            "Keep the title a short question, and put the detail in message."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Use a dialog for news that does not need an answer. Use a snackbar."
+            "Use an alert only to give news. Apple: use alerts sparingly, and not for actions that can be undone."
           ]
         }
       ]
@@ -54,8 +95,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Focus (2.4.3 Focus Order, focus moves in and back): Focus moves into the surface when it opens and back to what opened it when it closes. Back closes it.",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "VoiceOver (4.1.2 Name, Role, Value, a spoken name and state): VoiceOver moves into the alert when it opens and reads the title first. Focus goes back when it closes."
           ]
         }
       ]

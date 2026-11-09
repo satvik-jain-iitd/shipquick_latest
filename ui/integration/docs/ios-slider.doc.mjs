@@ -22,7 +22,47 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A slider lets the user pick a value from a range, like volume, a price range or a rating. It has a track, a thumb and optional tick marks."
+          "text": "A slider lets the user pick a value from a range, like volume, a price range or a rating. It has a track, a thumb and optional tick marks. On iOS, Slider(value:in:step:onEditingChanged:) binds a number inside a range."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "value",
+              "Binding<Double>",
+              "",
+              "The current value."
+            ],
+            [
+              "in",
+              "ClosedRange<Double>",
+              "0...1",
+              "The lowest and highest value."
+            ],
+            [
+              "step",
+              "Double",
+              "1",
+              "The distance between stops."
+            ],
+            [
+              "onEditingChanged",
+              "(Bool) -> Void",
+              "{ _ in }",
+              "Runs with true when a drag starts and false when it ends."
+            ]
+          ]
         }
       ]
     },
@@ -34,7 +74,9 @@ export default {
           "style": "do",
           "items": [
             "Use steps for a small set of values.",
-            "Show the value in words near the slider."
+            "Show the value in words near the slider.",
+            "Put the minimum on the leading side (Apple HIG, Sliders).",
+            "Give it a label with Slider(value:in:label:onEditingChanged:), so VoiceOver can name it."
           ]
         },
         {
@@ -53,8 +95,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on the thumb only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults).",
-            "Value is read out (4.1.2 Name, Role, Value, label and value): Give the slider a label so the screen reader says what the value is for."
+            "Value is read out (4.1.2 Name, Role, Value, label and value): Give the slider a label so the screen reader says what the value is for.",
+            "Touch target (2.5.8 Target Size (Minimum), 44 by 44 pt): Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
           ]
         }
       ]

@@ -42,6 +42,35 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "value": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<Double>"
+        }
+      },
+      "in": {
+        "type": {
+          "kind": "named",
+          "name": "ClosedRange<Double>"
+        },
+        "optional": true
+      },
+      "step": {
+        "type": {
+          "kind": "named",
+          "name": "Double"
+        },
+        "optional": true
+      },
+      "onEditingChanged": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

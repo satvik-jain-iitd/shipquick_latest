@@ -22,7 +22,47 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A modal bottom sheet slides up from the bottom over the screen, with more content or actions. Its content is laid out in a column. SheetState opens and closes it from code."
+          "text": "A modal bottom sheet slides up from the bottom over the screen, with more content or actions. On iOS, show it with sheet(isPresented:onDismiss:content:). Apple: \"Presents a sheet when a binding to a Boolean value that you provide is true.\" presentationDetents(_:) sets its heights."
+        }
+      ]
+    },
+    {
+      "title": "Props",
+      "content": [
+        {
+          "type": "table",
+          "headers": [
+            "Prop",
+            "Type",
+            "Default",
+            "Description"
+          ],
+          "rows": [
+            [
+              "isPresented",
+              "Binding<Bool>",
+              "",
+              "Shows the sheet while true. The system sets it to false when the user closes it."
+            ],
+            [
+              "onDismiss",
+              "(() -> Void)?",
+              "nil",
+              "Runs after the sheet closes."
+            ],
+            [
+              "content",
+              "() -> some View",
+              "",
+              "What the sheet holds."
+            ],
+            [
+              "presentationDetents",
+              "Set<PresentationDetent>",
+              "[.large]",
+              "The heights the sheet can rest at, like .medium and .large."
+            ]
+          ]
         }
       ]
     },
@@ -33,15 +73,15 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Create the state with rememberModalBottomSheetState and pass it as sheetState.",
-            "Take the sheet out of the composition after it hides."
+            "Drive it from one Bool, passed as a Binding to isPresented.",
+            "Add presentationDetents([.medium, .large]) for a half-height sheet, and presentationDragIndicator(.visible) to show the handle."
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Build your own sliding panel. Use ModalBottomSheet."
+            "Show more than one sheet at a time (Apple HIG, Sheets)."
           ]
         }
       ]
@@ -53,8 +93,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Focus (2.4.3 Focus Order, focus moves in and back): Focus moves into the surface when it opens and back to what opened it when it closes. Back closes it.",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "VoiceOver (4.1.2 Name, Role, Value, a spoken name and state): VoiceOver moves into the sheet when it opens and back to what opened it when it closes. A swipe down or a Cancel button closes it."
           ]
         }
       ]
