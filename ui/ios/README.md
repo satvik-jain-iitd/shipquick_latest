@@ -50,3 +50,9 @@ A custom `Shape` or `ButtonStyle`, `Path`, a raw colour (`Color(red:`, `Color(hu
 a UIKit view (`UIView` subclass, `UIViewRepresentable`), any import but SwiftUI and Foundation, and a number
 written in `.padding`, `.frame`, `.cornerRadius`, `.offset`, `.system(size:` or `spacing:`.
 A token reference passes, like `.padding(.top, Tokens.space2)`.
+
+## The tokens (story #184)
+
+`Sources/ShipQuickUI/Tokens.swift` is written by `python3 scripts/emit_tokens.py` from `design/tokens.json`. Do not edit it.
+It holds `ShipQuickTokens`: `Colors` (light and dark), `Fonts`, `Spacing`, `Radius`, `Motion`, `Haptics` and `touchTarget`.
+The feel tokens match Android's. CI compiles it with the templates.
