@@ -420,3 +420,14 @@ Scenario: tokens carry the feel
   Then it has color, typography, spacing, shape and feel (motion, haptics, touch target 48dp / 44pt)
 ```
 Tests: `tests/test_check_ui_docs.py` (s182).
+## Story #182 (S2), PR #198 second review: tighter doc guards
+```gherkin
+Scenario: the guard refuses loose docs
+  Given check_ui_docs.py
+  Then an empty or missing root fails and names the path
+  And a web-only prop typed by a bare name fails
+  And a type like 'sm' | string fails
+  And a prop named twice fails
+  And text after the doc's JSON fails, except an export const <name> = {...} block (the dense twin)
+```
+Tests: `tests/test_check_ui_docs.py` (s182).

@@ -4,7 +4,9 @@
 Every folder under --root is one component: <Name>/<Name>.doc.mjs plus <Name>/<Name>.contract.json.
 Fails when: a doc or contract is missing; either breaks its JSON schema (ui/schema/); a doc names a prop
 the contract lacks (core, a platform, or webOnly); a contract prop has no doc; an enum prop's doc type
-does not spell out exactly the contract's literal values. Upstream idea: Astryx docPropReferences and
+does not spell out exactly the contract's literal values; any prop (webOnly too) whose type is a bare
+name or mixes literals with an open `string`; a duplicate prop; text after the JSON other than an
+`export const <name> = {...}` block; no component folder at all. Upstream idea: Astryx docPropReferences and
 docPropLiterals tests (meta/astryx, MIT).
 
 A .doc.mjs body is a JSON literal after `export default`, so Node and Python read the same file.
@@ -49,11 +51,36 @@ def validate(value, schema, root, path="$"):
     return errs
 
 
+TAIL = re.compile(r"\s*;?\s*(?:export const \w+ =\s*)?")
+# Bare named types a reader already knows; any other bare PascalCase name hides its values.
+KNOWN_NAMES = {"ReactNode", "ReactElement", "Date"}
+
+
 def read_doc(path):
-    m = re.search(r"^export default\s*", path.read_text(encoding="utf-8"), re.M)
+    """The JSON after `export default`. After it, only `export const <name> = {JSON};` blocks (the dense twin) may follow."""
+    text = path.read_text(encoding="utf-8")
+    m = re.search(r"^export default\s*", text, re.M)
     if not m:
         raise ValueError("no `export default` found")
-    return json.JSONDecoder().raw_decode(path.read_text(encoding="utf-8"), m.end())[0]
+    dec = json.JSONDecoder()
+    doc, pos = dec.raw_decode(text, m.end())
+    while True:
+        t = TAIL.match(text, pos)
+        if t.end() == len(text):
+            return doc
+        if not t.group(0).rstrip().endswith("=") or text[t.end():t.end() + 1] != "{":
+            raise ValueError(f"unexpected text after the JSON at character {t.end()}: {text[t.end():t.end() + 40]!r}")
+        pos = dec.raw_decode(text, t.end())[1]
+
+
+def shape_errors(prop, type_str):
+    """Literal checks every doc prop gets, with or without a contract type."""
+    parts = [p.strip() for p in type_str.split("|")]
+    if any(p.startswith("'") for p in parts) and "string" in parts:
+        return [f"prop '{prop}' type \"{type_str}\" mixes literals with an open `string`; list every value"]
+    if re.fullmatch(r"[A-Z]\w*", type_str.strip()) and type_str.strip() not in KNOWN_NAMES:
+        return [f"prop '{prop}' type \"{type_str}\" is a bare name that hides its values; spell them out"]
+    return []
 
 
 def literals(spec_type):
@@ -81,12 +108,16 @@ def check_component(folder, doc_schema, contract_schema):
     for platform_props in contract["platforms"].values():
         specs.update(platform_props)
     web_only = {w["name"] for w in contract["webOnly"]}
+    names = [p["name"] for p in doc["props"]]
+    errs += [f"{name}: duplicate prop '{n}' in the doc" for n in sorted({n for n in names if names.count(n) > 1})]
     documented = {p["name"]: p for p in doc["props"]}
     for prop, p in documented.items():
         if prop not in specs and prop not in web_only:
             errs.append(f"{name}: doc names prop '{prop}', but the contract has no such prop (add it to core, a platform, or webOnly with a reason)")
             continue
         t = specs.get(prop, {}).get("type", {})
+        if t.get("kind") not in ("named", "content", "icon"):
+            errs += [f"{name}: {e}" for e in shape_errors(prop, p["type"])]
         if t.get("kind") in ("enum", "numberEnum"):
             want = {str(v) for v in t["values"]}
             got = set(re.findall(r"'([^']*)'", p["type"])) if t["kind"] == "enum" else set(re.findall(r"-?\d+(?:\.\d+)?", p["type"]))
@@ -104,8 +135,8 @@ def main():
     contract_schema = json.loads((SCHEMAS / "contract.schema.json").read_text(encoding="utf-8"))
     folders = sorted(p for p in root.iterdir() if p.is_dir()) if root.is_dir() else []
     if not folders:
-        print(f"no components under {root}: nothing to check")
-        return 0
+        print(f"FAIL no component folders under {root} (wrong --root, or the docs are missing)")
+        return 1
     errs = [e for f in folders for e in check_component(f, doc_schema, contract_schema)]
     for e in errs:
         print("FAIL", e)

@@ -27,7 +27,10 @@ Run `python3 scripts/check_ui_docs.py` (or `--root <folder>` in a library repo).
 - a component folder has no doc or no contract;
 - a doc or contract breaks its JSON schema (`schema/*.schema.json`);
 - a doc names a prop the contract does not have, or a contract prop has no doc;
-- an enum prop's doc type does not list the exact values, like `'sm' | 'md' | 'lg'`.
+- an enum prop's doc type does not list the exact values, like `'sm' | 'md' | 'lg'`;
+- any prop, web-only too, is typed by a bare name (like `ButtonType`) or mixes values with `string`;
+- a prop is named twice, or the doc has other text after its JSON (only `export const <name> = {...}` may follow);
+- the folder has no components at all.
 
 It runs in `scripts/check_local.sh` and in CI (job `ui-docs`).
 The feel tokens (motion, haptics, touch target) live in `design/tokens.json`.
