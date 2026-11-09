@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks commits pr-size frontend-design disable-comments secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks ui-docs ui-topics ui-coverage commits pr-size frontend-design disable-comments story secrets secrets-staged   (no argument = all but secrets-staged)
+#   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
 #   secrets    the whole history (push); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
@@ -37,6 +38,10 @@ check_markers() {
   fi
 }
 check_md_blocks() { python3 "$HERE/check_md_blocks.py"; report md-blocks $?; }
+check_ui_docs() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_docs.py" --root ui/components; report ui-docs $?; }   # story #182
+check_ui_topics() { [ -d ui/integration ] || return 0; python3 "$HERE/ui_topics.py" --check; report ui-topics $?; }   # story #183
+check_ui_coverage() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_coverage.py"; report ui-coverage $?; }   # story #216; web part skips without ui/tool/node_modules
+check_timeouts() { [ -d .github/workflows ] || return 0; python3 "$HERE/check_timeouts.py" .github/workflows; report timeouts $?; }
 check_commits() {
   have_base commits || return 0
   local bad
@@ -77,6 +82,18 @@ check_disable_comments() {
   rm -f "$tmp"
   report disable-comments "$rc"
 }
+check_story() {
+  have_base story || return 0
+  command -v gh >/dev/null || { echo "skip story: gh is not installed"; return 0; }
+  gh auth status >/dev/null 2>&1 || { echo "skip story: gh is not logged in (gh auth login); CI still checks it"; return 0; }
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  python3 "$HERE/check_story.py" --pr-body-file "$tmp"
+  rc=$?
+  rm -f "$tmp"
+  report story "$rc"
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   gitleaks git --no-banner --no-color --redact --verbose .
@@ -89,16 +106,21 @@ check_secrets_staged() {
 }
 
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks commits pr-size frontend-design disable-comments secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
     md-blocks) check_md_blocks ;;
+    ui-docs) check_ui_docs ;;
+    ui-topics) check_ui_topics ;;
+    ui-coverage) check_ui_coverage ;;
+    timeouts) check_timeouts ;;
     secrets-staged) check_secrets_staged ;;
     pr-size) check_pr_size ;;
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
-    *) echo "unknown check: $c (sizes markers md-blocks commits pr-size frontend-design disable-comments secrets secrets-staged)"; exit 2 ;;
+    story) check_story ;;
+    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"

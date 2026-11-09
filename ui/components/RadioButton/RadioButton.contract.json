@@ -1,0 +1,28 @@
+{
+  "name": "RadioButton",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "selected": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onClick": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "enabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

@@ -1,0 +1,55 @@
+{
+  "name": "Switch",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "checked": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onCheckedChange": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "thumbContent": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "enabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      }
+    },
+    "ios": {
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        },
+        "optional": true
+      },
+      "isOn": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<Bool>"
+        }
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

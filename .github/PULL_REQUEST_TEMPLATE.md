@@ -28,6 +28,14 @@
 
 - (links to docs/ideas.md)
 
+## Design (frontend PRs only; delete this section otherwise)
+
+Design board: <name>
+Approved: <date>
+Render: <CI run link>
+Board image: <link to the board picture, same scale as the render>
+Measurements: <table: element, board value, app value, for x, y, width, height, padding, gap, font, colour>
+
 ## For the reviewer
 
 ```

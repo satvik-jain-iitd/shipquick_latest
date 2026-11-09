@@ -49,13 +49,21 @@ field() { jq -r "$1" <<<"$json"; }
 
 # story #140: who may author and who may approve come from the PR's OWN repo's .shipquick/roles.yml,
 # read from GitHub (never the local checkout -- story #122's lesson), not a name hardcoded here.
-roles_raw=$(gh api "repos/$repo/contents/.shipquick/roles.yml?ref=$(field .baseRefName)" --jq '.content' 2>/dev/null)
+# Story #225: a rule-24 child names a kit branch in its caller; roles.yml lives there, the same as in the CI roles job.
+roles_ref=$(field .baseRefName); roles_where="$roles_ref"
+caller_raw=$(gh api "repos/$repo/contents/.github/workflows/shipquick-call.yml?ref=$roles_ref" --jq '.content' 2>/dev/null) || caller_raw=""
+if [ -n "$caller_raw" ]; then
+  kit=$(printf '%s' "$caller_raw" | base64 -d 2>/dev/null | python3 "$HERE/kit_branch.py" parse) || refuse "$repo's shipquick-call.yml on $roles_ref: $kit"
+  if [ -n "$kit" ] && [ "$kit" != "$roles_ref" ]; then roles_ref="$kit"; roles_where="kit branch $kit"; fi
+fi
+roles_raw=$(gh api "repos/$repo/contents/.shipquick/roles.yml?ref=$roles_ref" --jq '.content' 2>/dev/null)
 roles_rc=$?
-[ "$roles_rc" -eq 0 ] && [ -n "$roles_raw" ] || refuse "cannot read $repo's .shipquick/roles.yml on $(field .baseRefName) to check roles"
+[ "$roles_rc" -eq 0 ] && [ -n "$roles_raw" ] || refuse "cannot read $repo's .shipquick/roles.yml on $roles_where to check roles"
 roles_tmp="$(mktemp)"
 printf '%s' "$roles_raw" | base64 -d > "$roles_tmp" 2>/dev/null
 coders=$(python3 "$HERE/roles.py" get coder --file "$roles_tmp") || refuse "cannot read coder accounts from $repo's .shipquick/roles.yml"
 reviewers=$(python3 "$HERE/roles.py" get reviewer --file "$roles_tmp") || refuse "cannot read reviewer accounts from $repo's .shipquick/roles.yml"
+reviewer_sessions=$(python3 "$HERE/roles.py" get reviewer_sessions --file "$roles_tmp") || refuse "cannot read reviewer sessions from $repo's .shipquick/roles.yml"
 rm -f "$roles_tmp"
 
 author=$(field .author.login)
@@ -72,6 +80,42 @@ reviewer_account=$(jq -r --arg revs "$reviewers" --arg author "$author" --arg he
   | if length > 0 then .[0].author.login else "" end
 ' <<<"$json")
 [ -n "$reviewer_account" ] || refuse "not approved by a reviewer account (other than the author, $author) on the latest commit"
+
+# story #139 (ADR-011): maker and checker are different SESSIONS, not only different accounts. Opt-in:
+# only when roles.yml lists reviewer_sessions. The approving review names its session; that session must
+# not appear in any non-merge commit's Built-by: trailer (merge commits are exempt, ADR-011).
+if [ -n "$reviewer_sessions" ]; then
+  commits=$(gh api "repos/$repo/pulls/$pr/commits" --paginate) || refuse "cannot read the commits of pull request $pr"
+  built_by=$(jq -rs '[.[][] | select((.parents | length) < 2) | .commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s] | unique | join(",")' <<<"$commits")
+  review_body="$(mktemp)"
+  jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
+    '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" > "$review_body"
+  why=$(python3 "$HERE/check_roles.py" --review-body-file "$review_body" --built-by "$built_by" --reviewer-sessions "$reviewer_sessions") \
+    || { rm -f "$review_body"; refuse "$why"; }
+  rm -f "$review_body"
+fi
+
+# story #153: when the PR's own repo has configured docs/screens.txt (read from GitHub, 404 = not configured),
+# the approving review's body must say the render was compared with the PR's named board.
+if field .body | grep -qE '^Design board:'; then
+  err_tmp="$(mktemp)"
+  screens_raw=$(gh api "repos/$repo/contents/docs/screens.txt?ref=$(field .baseRefName)" --jq '.content' 2>"$err_tmp")
+  screens_rc=$?
+  [ "$screens_rc" -eq 0 ] || grep -q "404" "$err_tmp" || refuse "cannot read $repo's docs/screens.txt on $(field .baseRefName) to check the design review"
+  rm -f "$err_tmp"
+  if [ "$screens_rc" -eq 0 ] && printf '%s' "$screens_raw" | base64 -d 2>/dev/null | grep -qvE '^[[:space:]]*(#|$)'; then
+    pr_body_tmp="$(mktemp)"; review_tmp="$(mktemp)"
+    field .body > "$pr_body_tmp"
+    # each reviewer account's latest verdict, kept when it approves the head commit: any one may carry the matches line
+    jq -r --arg revs "$reviewers" --arg author "$author" --arg head "$(field .headRefOid)" '($revs | split(",")) as $rs
+      | [.reviews[] | select(.author.login as $a | ($rs | index($a)) != null and $a != $author and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED"))]
+      | group_by(.author.login) | map(last) | .[] | select(.state == "APPROVED" and .commit.oid == $head) | .body // ""' <<<"$json" > "$review_tmp"
+    why=$(python3 "$HERE/check_design_reviewed.py" --pr-body-file "$pr_body_tmp" --review-body-file "$review_tmp")
+    design_rc=$?
+    rm -f "$pr_body_tmp" "$review_tmp"
+    [ "$design_rc" -eq 0 ] || refuse "$why"
+  fi
+fi
 
 threads=$(gh api graphql -f query='query($owner: String!, $name: String!, $n: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $n) { reviewThreads(first: 100) { pageInfo { hasNextPage } nodes { isResolved } } } } }' \
   -f owner="${repo%/*}" -f name="${repo#*/}" -F n="$pr") || refuse "cannot read the review threads"
@@ -131,8 +175,26 @@ bad_path=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   if protected_match "$f"; then bad_path="$f"; break; fi
-done < <(jq -r '.[].filename' <<<"$files_json")
-[ -z "$bad_path" ] || refuse "protected path, owner merges ($bad_path)"
+done < <(jq -r '.[] | .filename, (.previous_filename // empty)' <<<"$files_json")   # a rename away from a protected path is still protected
+# story #180 (S0, ADR-013): a protected PR may merge here only when the approving review on the head
+# records a second review and the owner's own yes. `.shipquick/*` (mode, roles, freeze) never: the owner merges it.
+if [ -n "$bad_path" ]; then
+  shipquick_file=$(jq -r '.[] | .filename, (.previous_filename // empty) | select(startswith(".shipquick/"))' <<<"$files_json" | head -1)
+  [ -z "$shipquick_file" ] || refuse "protected path, owner merges ($shipquick_file: mode, roles and freeze are the owner's own merge)"
+  approval=$(jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
+    '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" | tr -d '\r')
+  # a placeholder (<...>) or a few letters is not a second review; the yes is a real date, today or up to 14 days back
+  grep -E '^Second review: ' <<<"$approval" | grep -vE '<[^>]*>' | grep -qE '^Second review: .{10,}' \
+    && grep -E '^Second review: ' <<<"$approval" | sed 's/^Second review: //' | grep -qE '[[:alnum:]]{2,}([^[:alnum:]]+[[:alnum:]]{2,}){2,}' \
+    || refuse "protected path, owner merges ($bad_path) -- or the approving review records 'Second review: <who, findings>'"
+  python3 -c 'import datetime as d, re, sys
+m = [re.fullmatch(r"Owner yes: (\d{4}-\d{2}-\d{2}) \"(?=[^\"]*[^\W\d_])([^\"<>]{2,})\"\s*", l) for l in sys.stdin.read().splitlines()]
+m = next((x for x in m if x), None)
+try: age = (d.date.today() - d.date.fromisoformat(m[1])).days if m else -1
+except ValueError: age = -1
+sys.exit(0 if 0 <= age <= 14 else 1)' <<<"$approval" \
+    || refuse "protected path, owner merges ($bad_path) -- or the approving review records 'Owner yes: <YYYY-MM-DD> \"<his words>\"' (a real date, at most 14 days old)"
+fi
 
 uat_exempt=0
 if [ "$(field .baseRefName)" = main ]; then   # read the PR's OWN repo's CLAUDE.md on its base branch (never the local checkout's: it may be a different repo, story #122)

@@ -28,6 +28,30 @@ One account listed as both the only `coder` and the only `reviewer` can never ru
 refuses it): with one account playing both roles, the gate's "approver is not the author" check can never
 pass, so Auto would just stop on every pull request. Manual and Semi still work; the owner reviews by hand.
 
+### Maker and checker are different sessions (ADR-011, story #139)
+
+Two agent sessions on one machine can see both accounts. So the account check alone cannot tell
+who built a pull request. The session check closes that gap. It is opt-in.
+
+1. Add the session names to `.shipquick/roles.yml` (a protected path, so the owner merges it):
+   `coder_sessions:` and `reviewer_sessions:`, one name per line, from `docs/TEAM_ROSTER.md`.
+   One name may never appear twice; `roles.py` refuses the file.
+2. Each session takes its role once: `SHIPQUICK_SESSION=<name> source scripts/role.sh coder`
+   (or `reviewer`). This saves the name for that worktree.
+3. Install the hook once: `pre-commit install --hook-type prepare-commit-msg`. It adds
+   `Built-by: <session>` to every commit (`scripts/session_trailer.sh`).
+4. The approving review says `Reviewed-by: <session>` (a teammate block header `from <session>` counts).
+
+Then the `roles` CI job fails a commit with no coder session, and `scripts/review_merge.sh`
+refuses an approval that names no session, a session that is not a reviewer, or a session that
+built any commit on the pull request. A reviewer that has to fix something hands the review to
+the other session.
+
+The limit: the trailer is self-declared. It stops the accident (a reviewer builds, then approves
+its own work without noticing). It does not stop a session that types another session's name on
+purpose. The stronger setup, not a gate: give each session only its own `gh` login, so it cannot
+borrow the other account's token.
+
 ## The merge gate (Auto only)
 `scripts/review_merge.sh <pr> [owner/repo]` is the only way an agent merges. It refuses, and says which rule, unless all of these hold:
 1. The mode is `auto`.
@@ -37,7 +61,7 @@ pass, so Auto would just stop on every pull request. Manual and Semi still work;
 5. Every check is `SUCCESS` (`SKIPPED` and `NEUTRAL` count as passed, the way GitHub counts them). No checks at all is a refusal.
 6. The body has `Closes #n` (or Fixes, Resolves), by the same rule as CI. Release, sync (`chore:`) and Dependabot pull requests are exempt.
 7. **(story #131)** A check named exactly `gate` (ShipQuick) or `shipquick-checks / gate` (a child calling the reusable workflow) exists and is itself `SUCCESS`. Rule 5's generic loop cannot be trusted alone: a PR that deletes a job from its own caller never produces a *bad* result for that job, it simply has none — so the gate's own existence is checked too.
-8. **(story #131)** The PR touches no path in `scripts/protected_paths.txt` (CI config, lint baselines, path lists a check reads its own rules from). Any such PR is refused outright, "protected path, owner merges" — a check's rules can never be loosened by the PR that check is judging.
+8. **(story #131)** The PR touches no path in `scripts/protected_paths.txt` (CI config, lint baselines, path lists a check reads its own rules from). Any such PR is refused outright, "protected path, owner merges" — a check's rules can never be loosened by the PR that check is judging. **(story #180, ADR-013)** The one way through: the approving review on the head records `Second review: <who, findings>` (a fresh reviewer agent) and `Owner yes: <YYYY-MM-DD> "<his words>"`. Lines in the PR body do not count. A PR touching `.shipquick/*` (mode, roles, freeze) is always the owner's own merge.
 
 Then it runs `gh pr merge` with the method `--squash` when the base branch requires linear history, or the one given by `--method squash|rebase|merge` (the flag wins), and `--merge` otherwise, with the review account's own token, and right after it closes the story issues the PR links, with `scripts/close_linked_issues.py <pr> --yes` (GitHub does that only for a merge into `main`). So the roadmap updates at merge time. If the merge worked but the closing failed, the gate exits 4 and prints the command to run. It never changes the active `gh` account. In Semi or Manual the script refuses with "mode is semi" or "mode is manual".
 An agent in Auto mode never merges with any other command. The owner turns Auto on himself, with `! bash scripts/mode.sh set auto`.

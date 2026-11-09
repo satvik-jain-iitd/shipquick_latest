@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-LOGS = ("docs/process-trace.md", "docs/LEARNINGS.md")   # only logs whose rows are never edited; ideas.md rows get status edits, so it is not on the list
+LOGS = ("docs/process-trace.md", "docs/LEARNINGS.md", "docs/research/repo-radar.md", "docs/test-cases.md")   # only logs whose rows are never edited; ideas.md rows get status edits, so it is not on the list
 
 
 def git(cwd, *args, check=True):

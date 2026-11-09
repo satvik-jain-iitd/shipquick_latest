@@ -204,7 +204,7 @@ def test_s10_pre_commit_runs_the_local_checks():
     text = (ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8")
     assert "scripts/check_local.sh" in text
     assert "pre-push" in text
-    assert "secrets-staged" in text.split("pre-push")[0], "the commit stage must use the staged-only secret check"
+    assert "secrets-staged" in text.split("stages: [pre-push]")[0], "the commit stage must use the staged-only secret check"
 
 
 def test_s10_this_repo_passes_its_own_marker_and_markdown_checks():

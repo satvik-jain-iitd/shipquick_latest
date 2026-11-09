@@ -1,0 +1,49 @@
+{
+  "name": "Card",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "onClick": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        },
+        "optional": true
+      },
+      "enabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    },
+    "ios": {
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

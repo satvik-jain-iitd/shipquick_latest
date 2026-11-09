@@ -1,0 +1,34 @@
+{
+  "name": "ShareLink",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "title": {
+      "type": {
+        "kind": "string"
+      },
+      "optional": true
+    },
+    "item": {
+      "type": {
+        "kind": "named",
+        "name": "Transferable"
+      }
+    },
+    "subject": {
+      "type": {
+        "kind": "string"
+      },
+      "optional": true
+    },
+    "message": {
+      "type": {
+        "kind": "string"
+      },
+      "optional": true
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

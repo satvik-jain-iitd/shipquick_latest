@@ -1,0 +1,54 @@
+{
+  "name": "SearchBar",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "inputField": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "expanded": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onExpandedChange": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    },
+    "ios": {
+      "text": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<String>"
+        }
+      },
+      "placement": {
+        "type": {
+          "kind": "named",
+          "name": "SearchFieldPlacement"
+        },
+        "optional": true
+      },
+      "prompt": {
+        "type": {
+          "kind": "named",
+          "name": "Text?"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

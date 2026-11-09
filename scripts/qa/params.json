@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "changed": "2026-11-09",
+  "new_attacks_per_run": 3,
+  "clean_runs_to_stop": 2,
+  "browsers": [
+    "chromium",
+    "webkit"
+  ],
+  "viewports": [
+    "390x844",
+    "375x667",
+    "430x932"
+  ],
+  "owner_cases_per_message": 1,
+  "bounds": {
+    "new_attacks_per_run": [
+      1,
+      10
+    ],
+    "clean_runs_to_stop": [
+      1,
+      5
+    ],
+    "goldfish_screens_per_agent": [
+      1,
+      1
+    ]
+  },
+  "goldfish_screens_per_agent": 1,
+  "goldfish_at_once": 1
+}

@@ -1,0 +1,34 @@
+{
+  "name": "Stepper",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "title": {
+      "type": {
+        "kind": "string"
+      }
+    },
+    "value": {
+      "type": {
+        "kind": "named",
+        "name": "Binding<Strideable>"
+      }
+    },
+    "bounds": {
+      "type": {
+        "kind": "named",
+        "name": "ClosedRange<Strideable>"
+      },
+      "optional": true
+    },
+    "step": {
+      "type": {
+        "kind": "number"
+      },
+      "optional": true
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

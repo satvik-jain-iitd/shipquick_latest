@@ -261,3 +261,305 @@ Scenario: a canvas is laid out from a manifest
   And a board the manifest forgets lands in an Unsorted row, and a box outside its board stops the run
 ```
 Tests: `tests/test_canvas_stage.py` (S1 to S8).
+
+## Story #155: a story names who does it
+```gherkin
+Scenario: a story without a full Who does it line is refused at Ready
+  Given a user-story issue linked from a pull request with Closes #n
+  When its body has no "Who does it:" line, or the line is empty, a placeholder, or misses the screen or how often
+  Then check_story.py exits 1 and names the line to write
+  And a story with "Who does it: <actor>, <app or screen>, <how often>" filled in passes
+  And a pull request that links no issue passes
+```
+Tests: `tests/test_check_story.py` (`test_s155_*`).
+
+## Story #153 and #161: the approval says the render matches the board
+```gherkin
+Scenario: a frontend PR approved on the code diff alone is not merged
+  Given a PR with a Design board line, in a repo with docs/screens.txt configured
+  When the approving review has no "Render: <that board> -- matches" line
+  Then review_merge.sh refuses and names the line to write
+  And with the line, naming the same board, it merges
+  And a repo with no docs/screens.txt, or a PR with no Design board, is unaffected
+```
+Tests: `tests/test_check_design_reviewed.py` (`test_s153_*`, `test_s161_*`), `tests/test_review_merge.py` (`test_s153_*`).
+
+## Publish the canvas from canvas.json (#163)
+
+```gherkin
+Scenario: the publish list and the check come from canvas.json
+  Given a canvas.json that names two boards and two bg tiles
+  When canvas_stage runs with --publish-list
+  Then it prints canvas.json, every bg tile and every board
+  And --verify with a listing that lacks one tile exits 1 and names that tile
+  And --verify with a full listing exits 0
+```
+Tests: `tests/test_canvas_stage.py` (S19 to S21).
+
+## Stages as columns, and the Design learnings board (#165)
+
+```gherkin
+Scenario: a column layout ends on the learnings board
+  Given a manifest with "layout": "columns" and a section with "id": "learnings"
+  When canvas_stage lays it out
+  Then every section sits fully right of the one before it, on one top line, and the same input gives the same layout
+  And the learnings board has three columns (owner taste, craft rules, what testing taught), newest on top, inside its section
+  And a column layout with no learnings section, or a learnings row with an unknown kind, stops the run
+```
+Tests: `tests/test_canvas_stage.py` (S22 to S26).
+
+## Options differ in copy, rejections carry a reason (#148)
+
+```gherkin
+Scenario: an options row and a rejected row carry their words
+  Given a manifest row with "options": true and a row whose prefix is REJECTED
+  When canvas_stage lays it out
+  Then options with different copy lines pass
+  And an option with no copy line, or two options with the same copy, stop the run
+  And a rejected board with no reason stops the run, and one with a reason passes
+```
+Tests: `tests/test_canvas_stage.py` (S27 to S30).
+
+```gherkin
+Scenario: old rejected boards do not break an old canvas (#148 review)
+  Given rejected boards with no reason from before the rule
+  When canvas_stage runs --write-rejected-baseline once
+  Then they go into the manifest's rejected_baseline and --apply passes with a WARN for each
+  And a new rejected board with no reason still stops the run
+  And layout run twice on one manifest object leaves the manifest unchanged
+```
+Tests: `tests/test_canvas_stage.py` (S31 to S33).
+
+## Story #162: the QA loop lives in the kit
+```gherkin
+Scenario: the qa-loop skill installs from the kit as a thin pointer
+  Given a Mac with no ~/.claude/skills/qa-loop
+  When scripts/install_skill.sh runs
+  Then ~/.claude/skills/qa-loop links to the kit's skills/qa-loop, next to shipquick-feedback
+  And a real qa-loop folder already there is kept, named, and the other skill still installs
+  And the pointer names docs/QA_LOOP.md and scripts/qa/, and no project
+  And docs/QA_LOOP.md has sections 1 to 15 and covers Web, Android, iOS and CLI
+```
+Tests: `tests/test_install_skill.py` (`test_s162_*`).
+
+## Story #181: rule 38, library first
+```gherkin
+Scenario: rule 38 exists and points at its docs
+  Given CLAUDE.md
+  Then rule 38 is "Library first" and comes right after rule 37
+  And it links docs/COMPONENT_LIBRARY.md, docs/decisions/ADR-012.md and docs/templates/component-request.md, and each file exists
+  And the request template has Screen, What is missing, Tried, Picture, Platform twin and component-approved
+  And ADR-012 names Compose M3, SwiftUI, @astryxdesign/core, the dropped Compose Multiplatform and the MIT header
+
+Scenario: rule 38 means what the second review asked (PR #195)
+  Given CLAUDE.md, docs/COMPONENT_LIBRARY.md and ADR-012
+  Then every line naming Compose Multiplatform says it is dropped or not used
+  And every line naming a third-party kit limits the ban to native (Android or iOS)
+  And rule 38 and the library doc say the reviewer checks by hand until S3 to S7 land
+  And the request template has no Owner yes field for the coder; only a reviewer account's issue comment counts
+  And the library doc has the web row (pinned, astryx doctor --built) and says an approved component is never built twice
+  And the last trace row is story #181 and names PR #195
+```
+Tests: `tests/test_library_first.py` (`test_s181_*`).
+## Story #162 part 2: the QA loop's tools in scripts/qa/
+```gherkin
+Scenario: the QA tools run from the kit with no project facts
+  Given a QA home with runs, a flow manifest, controls and board images
+  When scorecard.py, flow_map.py and audit_report.py run
+  Then the scorecard reads the kit's params.json and flags a bug with no passing auto test
+  And the flow map draws every board with one arrow per tap
+  And the audit report numbers each finding on its screen image
+  And the node helpers parse, board_html.mjs points relative and root links into the canvas folder
+  And no tool names a project, a person, a web font or an OS-only font path
+```
+Tests: `tests/test_qa_scripts.py` (`test_s162_*`).
+
+## Story #139: maker and checker are different sessions (ADR-011)
+```gherkin
+Scenario: the session that built a commit cannot approve the pull request
+  Given roles.yml lists coder_sessions and reviewer_sessions
+  And a commit on the PR carries "Built-by: proj-qa"
+  When proj-qa approves with "Reviewed-by: proj-qa"
+  Then review_merge.sh refuses: "proj-qa built a commit"
+  And an approval that names no session refuses
+  And an approval from a reviewer session that built nothing merges
+  And a commit with no coder session in Built-by fails the roles job
+  And a session name listed twice makes roles.py refuse the file
+  And with no session lists nothing about sessions is checked
+```
+Tests: `tests/test_check_roles.py`, `tests/test_roles.py`, `tests/test_role.py`, `tests/test_review_merge.py` (s139).
+## Story #180 (S0): a protected PR merges after a second review and the owner's yes (ADR-013)
+```gherkin
+Scenario: the reviewer merges a protected PR only with both lines in the approving review
+  Given a PR that touches a protected path
+  When the approving review on the head says "Second review: ..." and "Owner yes: 2026-11-09 \"...\""
+  Then review_merge.sh merges it
+  And without either line it refuses, naming the missing line
+  And an Owner yes with no date or no quoted words refuses
+  And the same lines in the PR body do not count
+  And a PR touching .shipquick/* refuses whatever the review says
+```
+Tests: `tests/test_review_merge.py` (s180).
+## Story #182 (S2): the spec layer: component schema, contracts, doc guards, tokens
+```gherkin
+Scenario: a component doc and its contract agree
+  Given ui/components/Button/Button.doc.mjs and Button.contract.json
+  When check_ui_docs.py runs
+  Then it passes
+  And a doc naming a prop the contract lacks fails, naming the prop
+  And a contract prop with no doc entry fails
+  And an enum prop typed by a bare name or with a missing literal fails, listing the values
+  And a folder with no doc or no contract fails
+  And a doc without platforms, or a web-only prop without a reason, fails the schema
+Scenario: the schema is copied, not rewritten
+  Given ui/schema/doctypes/component/type.ts
+  Then it keeps the Meta copyright line and adds only platforms {android, ios, web}
+  And ui/UPSTREAM.md names the repo and the full commit
+Scenario: tokens carry the feel
+  Given design/tokens.json
+  Then it has color, typography, spacing, shape and feel (motion, haptics, touch target 48dp / 44pt)
+```
+Tests: `tests/test_check_ui_docs.py` (s182).
+## Story #182 (S2), PR #198 second review: tighter doc guards
+```gherkin
+Scenario: the guard refuses loose docs
+  Given check_ui_docs.py
+  Then an empty or missing root fails and names the path
+  And a web-only prop typed by a bare name fails
+  And a type like 'sm' | string fails
+  And a prop named twice fails
+  And text after the doc's JSON fails, except an export const <name> = {...} block (the dense twin)
+```
+Tests: `tests/test_check_ui_docs.py` (s182).
+
+## Story #183 (S3): the Astryx CLI as shipped, with the kit's integration (ADR-012)
+```gherkin
+Scenario: an agent looks a native component up
+  Given ui/tool pins @astryxdesign/cli and core at exactly 0.7.11 with a lockfile
+  When it runs "bash scripts/ui.sh docs android-button --dense"
+  Then it sees androidx.compose.material3.Button, its props and its do and do not
+  And the topic was generated from ui/components and a stale one fails ui_topics.py --check
+  And a webOnly prop never reaches a native topic, and the integration registers no web component
+  And the wrapper fails on a non-zero exit, on an "Error:" first line on either stream, and on an ERR_* JSON envelope
+  And a JSON doc that only mentions "Error:" in its text passes
+```
+Tests: `tests/test_ui_cli.py`; CI job `ui-cli` runs the real CLI.
+
+## Story #135 (S5): the iOS library, from Apple's counted list (rule 38)
+```gherkin
+Scenario: the iOS parts come from Apple's own list
+  Given docs/research/ios-swiftui-components.md names Apple's HIG Components page and the date 2026-11-09
+  When its table is read
+  Then its "Count:" line equals the number of rows, and every row names a SwiftUI type and its Apple doc URL
+  And every row with no Compose M3 twin has a doc in ui/components/<Name>/ with that exact platforms.ios and android null
+  And each of those has a generated ios-<name> topic
+  And a shared row names its M3 component and adds no new doc
+
+Scenario: the iOS screen templates use only standard SwiftUI
+  Given every template in ui/ios/templates/*.swift (sign-in, list, detail, settings, step flow today)
+  When their text is scanned
+  Then none has a custom Shape or ButtonStyle, Path, a raw colour, Canvas, a UIKit view, an import but SwiftUI or Foundation,
+    or a numeric literal in padding, frame, cornerRadius, offset, a system font size or spacing
+  And a token reference such as .padding(.top, Tokens.space2) passes, and each refused form is injected and caught
+  And the step flow puts the filled button last, the bordered one above it, in a bottom inset that rides above the keyboard
+```
+Tests: `tests/test_ios_library.py`, `tests/test_ios_templates.py` (s135).
+## Story #134 (S4): the Android library, counted from Google's own page
+```gherkin
+Scenario: every Material 3 component on Google's page has a ShipQuick doc
+  Given docs/research/android-m3-components.md names Google's components page, the date 2026-11-09 and "Count: N"
+  Then the table has exactly N numbered rows
+  And every row with a doc folder has a doc, a contract and an android topic
+  And the doc's platforms.android is the row's Compose API
+```
+Tests: `tests/test_android_library.py` (s134).
+
+## Story #134 (S4), part D: five Android screen templates
+```gherkin
+Scenario: a coder agent starts an Android screen from a template
+  Given ui/android/templates holds SignIn, List, Detail, Settings and StepFlow templates
+  Then every import is on the allow-list: androidx.compose.material3, foundation, runtime, ui, material.icons, kotlin
+  And no template has Canvas(, drawBehind, drawWithContent, Color(, .background(Color., GenericShape, RoundedCornerShape( or a custom Shape class
+  And each banned pattern and each off-list import, injected, is caught
+  And clickable, selectable, toggleable and verticalScroll stay allowed
+  And a call to an experimental M3 part without @OptIn(ExperimentalMaterial3Api::class) is caught
+  And the step flow puts the outline button before the filled one and uses imePadding()
+```
+Tests: `tests/test_android_templates.py` (s134).
+
+**Story #225: a rule-24 child keeps the kit on a kit branch.**
+```gherkin
+Scenario: main carries only the caller; the pin, the hooks and roles.yml sit on the kit branch
+  Given a child whose main has only .github/workflows/shipquick-call.yml with kit_branch: dev
+  And dev has the knowledge/shipquick_latest submodule and .pre-commit-config.yaml with the ShipQuick hooks
+  When adopt.sh --check runs on main
+  Then it reads the pin and the hooks from dev, prints one line for main and one for dev, and exits 0
+  And a wrong pin on dev, no hooks on dev, or no dev branch at all exits 1 and names dev
+  And adoption_scan.py flags a wrong pin, no submodule or no hooks on the kit branch
+  And adopt.sh --kit-branch dev writes kit_branch: dev under shipquick_ref in the caller
+  And checks.yml takes kit_branch (default empty) and the adoption and roles jobs read from it, through env
+  And a child without kit_branch is checked exactly as before
+
+Scenario: the kit branch is guarded (second review of PR #227)
+  Given a rule-24 child with kit_branch: dev
+  When dev has no branch protection, or its protection does not require pull request reviews
+  Then adopt.sh --check and adoption_scan.py both fail and say so
+  And kit_branch is parsed by one script (scripts/kit_branch.py): a trailing # comment is stripped, a ${{ }} expression is refused
+  And review_merge.sh reads roles.yml from the kit branch on a PR into another branch, and names the kit branch when it is missing
+  And the CI roles job prints a clear line when the kit branch or its roles.yml is missing
+  And adopt.sh run again without --kit-branch keeps the caller's kit_branch
+```
+Tests: `tests/test_adopt.py`, `tests/test_adoption_scan.py`, `tests/test_checks_workflow.py`, `tests/test_review_merge.py` (s225).
+## Story #216: the UI coverage gate
+```gherkin
+Scenario: no counted component is left out
+  Given the Android list and the iOS list each have a "Count: N" line and a numbered table
+  Then each Count equals its rows
+  And every Android row has one doc folder with a contract, platforms.android set, and an android-<name> topic
+  And every iOS row (iOS-only by "Our doc", shared by its M3 twin's folder) has platforms.ios set and an ios-<name> topic
+  And a doc that sets a platform no row names fails as extra
+  And when core is installed, a topic or registered component whose name equals a core doc name fails
+  And without core it prints "skip web: run npm ci --ignore-scripts in ui/tool" and passes, unless --require-web
+  And core with no docs, or fewer than 100, fails
+  And row numbers run 1 to N, and a missing list file is a clear FAIL line
+  And a doc that several iOS rows share must match the row map row for row, so a deleted row fails
+  And components in the integration must be a literal list of names
+```
+Tests: `tests/test_ui_coverage.py` (s216). CI: step in job `ui-cli` with `--require-web`. Local: `check_local.sh ui-coverage`.
+
+## Story #228: a platform topic carries only its own platform's words
+```gherkin
+Scenario: an iOS topic never names a Compose API, and an Android topic never names a SwiftUI API
+  Given a shared doc with text in usage and in platformUsage.android and platformUsage.ios
+  When scripts/ui_topics.py builds the ios-<name> and android-<name> topics
+  Then each topic holds the shared usage plus its own platformUsage entry only
+  And each topic lists only props from core or from its own platform in the contract
+  And a topic that holds a name from the other platform's list (OTHER_API) exits 1, naming the topic and the word
+  And every ios topic of a doc with two or more platforms lists at least one prop
+```
+Tests: `tests/test_ui_topics.py` (s228). CI and local: `python3 scripts/ui_topics.py --check`.
+
+## Story #231: the full API lists, generated from each library's own public API
+```gherkin
+Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and the gate names each one with no doc
+  Given Google's current.txt for material3 1.4.0 and Apple's SwiftUI documentation JSON, saved as small extracts
+  When scripts/ui_api_lists.py parses the extracts offline
+  Then a top-level composable named like its file is a component, another composable of that file is a variant
+  And a composable inside a *Defaults object or a scope is a variant row of its own
+  And rememberX, other lower-case composables and every public top-level class, interface and enum are supporting
+  And a family with no live component of its own name gets a family row
+  And iOS modifiers come from the View page and every View collection page it links
+  And @BytecodeOnly twins are not rows, and an experimental annotation is marked
+  And nothing is left out: a deprecated row names the vendor's replacement and the data field it came from
+  And a row Apple does not offer on iOS has status unavailable-ios, the platforms Apple lists, and an iOS alternative
+  And SwiftUI plumbing types keep category plumbing
+  And each list has its source, version, date, Count and the sha256 of every saved extract
+  And --check exits 1 when a list no longer matches its extracts or an extract no longer matches its sha256
+  And check_ui_coverage.py prints one GAP line per family of uncovered rows, and --strict-api fails on them
+  And a row is covered only by one doc's platforms name, or an object in platformApi.<platform>.variants,
+      .supporting or .family, carrying the row's status
+  And a string item, a name the list does not have, a row two docs claim, an empty note or use,
+      and a status with no replacement all fail
+  And a topic prints a status item only as "Do not use: <name>. Use <replacement>."
+```
+Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.

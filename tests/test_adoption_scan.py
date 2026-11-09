@@ -2,6 +2,7 @@
 shipquick-call.yml, or pins a ShipQuick commit older than 14 days. The gh-api calls are injected
 so the decision logic is tested without network."""
 import datetime
+import re
 import sys
 from pathlib import Path
 
@@ -84,6 +85,25 @@ def test_read_children_marks_a_line_ending_in_private(tmp_path):
     assert scan.read_children(f) == [("owner/a", False), ("owner/b", True)]
 
 
+def test_read_children_ignores_prose_lines_in_the_real_registry():
+    # Bugs #156-#159: prose with a "/" ("contents+metadata", "`github.token`") was read as a repo.
+    got = scan.read_children(Path(__file__).resolve().parent.parent / "docs/children.md")
+    assert got and all(re.fullmatch(r"[\w.-]+/[\w.-]+", name) for name, _ in got)
+
+
+def test_read_children_skips_a_line_that_is_not_exactly_owner_repo(tmp_path):
+    f = tmp_path / "children.md"
+    f.write_text("One `owner/repo` per line, optionally private.\nissue for any child\n"
+                 "owner/a\nowner/b private\nowner/c private extra\n", encoding="utf-8")
+    assert scan.read_children(f) == [("owner/a", False), ("owner/b", True)]
+
+
+def test_read_children_accepts_any_whitespace_before_private(tmp_path):
+    f = tmp_path / "children.md"
+    f.write_text("owner/a  private\nowner/b\tprivate\n", encoding="utf-8")
+    assert scan.read_children(f) == [("owner/a", True), ("owner/b", True)]
+
+
 def test_a_private_child_with_no_token_is_skipped_with_no_issue_filed():
     fetch = api(call_content=None)
     why, should_file = scan.scan_child("owner/child", True, fetch, 14, TODAY, has_token=False)
@@ -108,3 +128,84 @@ def test_a_public_child_ignores_has_token():
 def _b64(text):
     import base64
     return base64.b64encode(text.encode()).decode()
+
+
+# ---- story #225: a rule-24 child names a kit branch; the scan reads the pin and the hooks from it ----
+PROTECTED = {"required_pull_request_reviews": {"required_approving_review_count": 1}, "enforce_admins": {"enabled": True}}
+
+
+def kit_api(kit_sha=FRESH_SHA, hooks=True, kit="dev", seen=None, protection=PROTECTED):
+    def fetch(path):
+        if seen is not None:
+            seen.append(path)
+        if path == "repos/owner/child":
+            return {"default_branch": "main"}
+        if path == "repos/owner/child/branches/dev/protection":
+            return protection
+        if path == "repos/owner/child/contents/.github/workflows/shipquick-call.yml?ref=main":
+            line = f"\n      kit_branch: {kit}" if kit else ""
+            return {"content": _b64(f"    with:\n      shipquick_ref: {FRESH_SHA}{line}\n")}
+        if path == "repos/owner/child/contents/knowledge/shipquick_latest?ref=dev":
+            return {"type": "submodule", "sha": kit_sha}
+        if path == "repos/owner/child/contents/.pre-commit-config.yaml?ref=dev":
+            return {"content": _b64("entry: bash x/scripts/check_local.sh\n" if hooks else "repos: []\n")}
+        if path.startswith(f"repos/{scan.REPO}/commits/"):
+            return {"commit": {"committer": {"date": (TODAY - datetime.timedelta(days=1)).isoformat()}}}
+        return None
+    return fetch
+
+
+def test_s225_a_rule24_child_with_a_matching_pin_and_hooks_on_the_kit_branch_is_adopted():
+    assert scan.check_child("owner/child", kit_api(), days=14, today=TODAY) is None
+
+
+def test_s225_a_rule24_child_whose_kit_branch_pin_differs_is_flagged():
+    why = scan.check_child("owner/child", kit_api(kit_sha=STALE_SHA), days=14, today=TODAY)
+    assert why and "dev" in why and STALE_SHA[:7] in why
+
+
+def test_s225_a_rule24_child_whose_kit_branch_has_no_submodule_is_flagged():
+    def fetch(path):
+        return None if "knowledge/shipquick_latest" in path else kit_api()(path)
+    why = scan.check_child("owner/child", fetch, days=14, today=TODAY)
+    assert why and "dev" in why and "submodule" in why
+
+
+def test_s225_a_rule24_child_with_no_hooks_on_the_kit_branch_is_flagged():
+    why = scan.check_child("owner/child", kit_api(hooks=False), days=14, today=TODAY)
+    assert why and "dev" in why and "pre-commit" in why
+
+
+def test_s225_a_rule24_child_whose_kit_branch_is_not_protected_is_flagged():
+    why = scan.check_child("owner/child", kit_api(protection=None), days=14, today=TODAY)
+    assert why and "dev" in why and "protect" in why
+
+
+def test_s225_a_rule24_child_whose_kit_branch_takes_pushes_without_a_pr_is_flagged():
+    why = scan.check_child("owner/child", kit_api(protection={"enforce_admins": {"enabled": True}}), days=14, today=TODAY)
+    assert why and "pull request reviews" in why
+
+
+def test_s225_the_scan_strips_a_trailing_comment_after_kit_branch():
+    assert scan.check_child("owner/child", kit_api(kit="dev  # documents"), days=14, today=TODAY) is None
+
+
+def test_s225_the_scan_refuses_an_expression_as_kit_branch():
+    why = scan.check_child("owner/child", kit_api(kit="${{ github.base_ref }}"), days=14, today=TODAY)
+    assert why and "expression" in why
+
+
+def test_s225_adopt_sh_and_the_scan_share_one_kit_branch_parser():
+    import kit_branch
+    assert kit_branch.parse("      kit_branch: 'dev' # x\n") == ("dev", None)
+    assert kit_branch.parse("name: x\n") == (None, None)
+    assert kit_branch.parse("      kit_branch: ${{ inputs.b }}\n")[1]
+    assert kit_branch.parse("      kit_branch:\n")[1]
+    assert "kit_branch.py" in (ROOT / "scripts" / "adopt.sh").read_text(encoding="utf-8")
+    assert "kit_branch.py" in (ROOT / "scripts" / "review_merge.sh").read_text(encoding="utf-8")
+
+
+def test_s225_a_child_without_kit_branch_is_scanned_as_before():
+    seen = []
+    assert scan.check_child("owner/child", kit_api(kit=None, seen=seen), days=14, today=TODAY) is None
+    assert not any("knowledge/shipquick_latest" in p or "pre-commit" in p or "protection" in p for p in seen)

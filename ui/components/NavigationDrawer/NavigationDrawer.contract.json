@@ -1,0 +1,53 @@
+{
+  "name": "NavigationDrawer",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "drawerContent": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "drawerState": {
+        "type": {
+          "kind": "named",
+          "name": "DrawerState"
+        },
+        "optional": true
+      },
+      "gesturesEnabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    },
+    "ios": {
+      "sidebar": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "detail": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "selection": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<SelectionValue?>"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

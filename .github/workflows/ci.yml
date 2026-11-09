@@ -6,11 +6,13 @@ on:
 permissions:
   contents: read
   pull-requests: read   # story #140: the roles job reads commit authors via `gh api .../pulls/.../commits`
+  issues: read          # story #155: the team-block job reads each linked story's body
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Check file sizes (changed files only)
@@ -61,9 +63,10 @@ jobs:
           "
   commit-msg:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Validate commit messages
@@ -79,9 +82,10 @@ jobs:
           echo "Commit messages OK"
   pr-size:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Check PR size
@@ -103,11 +107,12 @@ jobs:
           fi
   frontend-design:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Check the design board is named for any frontend change (story #121)
@@ -118,11 +123,12 @@ jobs:
           bash scripts/check_frontend_design.sh --body-file /tmp/pr-body.md --base "origin/$BASE" --repo . --head "${{ github.head_ref }}"
   disable-comments:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Check for a disable comment or ignore-file entry on an added line (story #131)
@@ -133,28 +139,31 @@ jobs:
           python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
   roles:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
         run: |
-          commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '[.[] | "\(.author.login):\(.parents | length)"] | join(",")')
+          commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --paginate --jq '.[] | "\(.author.login):\(.parents | length):\([.commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s][-1] // "")"' | paste -sd, -)
           coders=$(python3 scripts/roles.py get coder)
           reviewers=$(python3 scripts/roles.py get reviewer)
           owner=$(python3 scripts/roles.py get owner)
-          python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner"
+          coder_sessions=$(python3 scripts/roles.py get coder_sessions)
+          python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner" --coder-sessions "$coder_sessions"
   team-block:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
       PR_TITLE: ${{ github.event.pull_request.title }}
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check the teammate block in the PR body
         run: |
           case "$PR_AUTHOR" in
@@ -164,22 +173,31 @@ jobs:
       - name: Check the PR body links its issue (Closes #n)
         run: |
           printf '%s\n' "$PR_BODY" | python3 scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
+      - name: Check every linked user story names who does it (story #155)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/check_story.py --pr-body-file /tmp/pr-body.md
   uat-checklist:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check the UAT-on-dev checklist is followable (story #120, #122)
         run: |
           bash scripts/has_dev_link.sh CLAUDE.md || { echo "no Dev link configured in this repo: UAT checklist exempt"; exit 0; }
           printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 scripts/check_uat.py
   freeze:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check the merge-commit tree's own .shipquick/freeze (story #126)
         run: |
           # actions/checkout on a pull_request event checks out the tentative merge of this PR into
@@ -187,13 +205,46 @@ jobs:
           # separate exemption needed in CI (review_merge.sh, run outside Actions, needs one instead).
           [ -f .shipquick/freeze ] || { echo "not frozen"; exit 0; }
           python3 scripts/check_freeze.py < .shipquick/freeze
+  ui-docs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check every component doc matches its contract (story #182)
+        run: python3 scripts/check_ui_docs.py --root ui/components
+  ui-cli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Native topics are current with the component docs (story #183)
+        run: python3 scripts/ui_topics.py --check
+      - name: Set up Node (the pinned Astryx CLI needs 22.13 or newer)
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Install the pinned CLI, no install scripts (ADR-012)
+        timeout-minutes: 5
+        working-directory: ui/tool
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Every counted component has a doc, a contract and a topic, and no name shadows core (story #216)
+        timeout-minutes: 2
+        run: python3 scripts/check_ui_coverage.py --require-web
+      - name: The CLI serves the kit's integration as shipped
+        shell: bash   # pipefail: a failing ui.sh piped to grep must fail the step
+        run: |
+          bash scripts/ui.sh doctor integration validate shipquick-ui
+          bash scripts/ui.sh docs android-button --dense | grep -q "androidx.compose.material3.Button"
+          bash scripts/ui.sh docs ios-button --json | grep -q '"type": "docs.detail"'
   secret-scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Install gitleaks 8.30.1 (SHA-256 checked)
+        timeout-minutes: 5
         run: |
           curl -sSfL -o gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
           echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tgz" | sha256sum -c -
@@ -214,8 +265,9 @@ jobs:
     # so enabling the graph (Settings -> Advanced Security) switches the real check on.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Probe Dependency graph availability
         id: graph
         run: |
@@ -231,47 +283,51 @@ jobs:
           fi
       - name: Dependency review
         if: steps.graph.outputs.enabled == 'true'
-        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [pre-commit]
     strategy:
       matrix:
         python-version: ["3.12"]
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install uv
-        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
+        timeout-minutes: 5
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "0.4.x"
       - name: Install dependencies
+        timeout-minutes: 5
         run: |
-          pip install pytest
+          pip install pytest==9.0.2 pillow==12.3.0   # pillow: scripts/qa/ flow map and audit report (story #162)
       - name: Run tests
         run: |
           mkdir -p logs
           pytest --tb=short
       - name: Set up Node (roadmap tests)
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
       - name: Run roadmap tests
         run: node --test roadmap/*.test.js
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: test-results
           path: logs/
   gate:
     name: gate
     runs-on: ubuntu-latest
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, secret-scan, dependency-review, test]
+    timeout-minutes: 10
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -285,6 +341,8 @@ jobs:
           echo "team-block: ${{ needs.team-block.result }}"
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"
           echo "freeze: ${{ needs.freeze.result }}"
+          echo "ui-docs: ${{ needs.ui-docs.result }}"
+          echo "ui-cli: ${{ needs.ui-cli.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "test: ${{ needs.test.result }}"

@@ -1,0 +1,58 @@
+{
+  "name": "SegmentedButton",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "selected": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onClick": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "shape": {
+        "type": {
+          "kind": "named",
+          "name": "Shape"
+        }
+      },
+      "enabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    },
+    "ios": {
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        }
+      },
+      "selection": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<SelectionValue>"
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

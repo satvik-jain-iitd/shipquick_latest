@@ -140,3 +140,188 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   more than two keys and two lists), a sourced helper (`scripts/role.sh`), and a CI job
   (`scripts/check_roles.py`) that all read `.shipquick/roles.yml` instead of a literal account name.
 - Confidence that nothing fits better: 0.85.
+
+## 31 Oct 2026, story #146 (epic #130, GoServe feedback #146): render the screen before the gate passes
+- Need: render a list of named URLs/viewports headless in CI, write PNGs, upload as a CI artifact; no
+  custom baseline-diff tool needed yet (Part 3 is explicitly deferred, see PR body).
+- Run: `scout.py --need "render a list of named URLs/viewports headless in CI, write PNGs, upload as a
+  CI artifact, optional baseline diff against committed images"`: no repos found. The issue itself
+  names the right tool (Tier A, the tool's own docs, confidence 0.9): Playwright already ships a
+  `screenshot` CLI command (`npx playwright screenshot --viewport-size=WxH <url> <file>`) and
+  `toHaveScreenshot()` for baselines. GoServe (the project that filed this) already has Playwright
+  installed. ShipQuick itself has no frontend of its own and must not bundle Playwright as its own
+  dependency; `scripts/screens.sh` only orchestrates a project's own already-installed `npx playwright`,
+  the same way `scripts/check_frontend_design.sh` only ever reads a project's own config, never ships a
+  renderer.
+- Decision: `scripts/screens.sh` (reads `docs/screens.txt`, calls the project's own `npx playwright
+  screenshot`, skips when unconfigured -- same opt-in shape as `docs/frontend-paths.txt`); a `Render:`
+  line requirement added to `scripts/check_frontend_design.sh`, opt-in on the same file existing.
+- Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #155 (GoServe feedback #155): a story names who does it
+- Need: fail a story issue that has no "who does it" line (actor, app or screen, how often).
+- Run: `scout.py --need "lint a GitHub issue body for a required user-story actor field"`: no repos found.
+  `scout.py --need "issue template required field checker"`: one unrelated repo (score 0, ignore).
+  `gh search repos --topic issue-form`: one browser form generator, not a checker.
+- Decision: reuse GitHub's own issue form (`required: true` on a new field) for stories made in the UI,
+  and a small `scripts/check_story.py` for stories made with `gh issue create --body` (agents do this,
+  and it skips the form). It reuses the `LINK` regex of `close_linked_issues.py`.
+
+## 9 Nov 2026, story #153 and #161 (epic #130): the approval says the render matches the board
+- Need: a merge gate that reads the approving review body and checks it says the screenshot was compared
+  with the named design board.
+- Run: `scout.py --need "merge gate that checks a pull request approval review body says the screenshot
+  matches the design"`: no repos found. Visual review tools (Chromatic, Percy) compare a build with an
+  older build, not with the design, which is the gap #161 names.
+- Decision: a small `scripts/check_design_reviewed.py` (pure `check()` + CLI, the `check_closes.py`
+  shape), called from `scripts/review_merge.sh` on the review it already resolves. #161's build rule is
+  text (DESIGN_PROCESS.md, SCREENS.md, the PR template); the approval line is its machine check.
+- Confidence that nothing fits better: 0.8.
+## 9 Nov 2026, story #163 (GoServe feedback): publish the canvas from canvas.json, then verify the listing
+- Need: derive the exact list of files to publish from a JSON manifest, and check a deploy listing holds every file it names.
+- Run: `scout.py --need "derive the exact list of files to publish from a JSON manifest and verify a deploy listing contains every referenced asset"`: no repos found.
+- The idea is old and plain (a bundler's asset manifest read by the deploy step; a link check after a static-site deploy). It is a set difference. A tool for it would be bigger than the code.
+- Decision: two modes in `scripts/canvas_stage.py` (`--publish-list`, `--verify <listing>`), about 15 lines, standard library only.
+- Confidence that nothing fits better: 0.9.
+
+## 9 Nov 2026, story #165 (GoServe feedback): stages as columns, and a Design learnings board
+- Need: lay out design canvas stage sections as kanban columns, left to right, and render a design decision log board from JSON.
+- Run: `scout.py --need "lay out design canvas stage sections as kanban columns left to right and render a design decision log board from json"`: no repos found.
+- Kanban tools (Trello, Jira, GitHub Projects) show the idea; none writes boards for the claude.ai Design canvas. The layout is one x offset in the existing loop.
+- Decision: a `"layout": "columns"` key and a learnings board inside `scripts/canvas_stage.py`, reusing its board template and contrast check.
+- Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #148 (GoServe feedback): options differ in copy, rejections carry a reason
+- Need: lint a design options manifest so each option names its copy difference and each rejected option carries a reason.
+- Run: `scout.py --need "lint a design options manifest so each option names its copy difference and each rejected option carries a reason"`: no repos found.
+- Content-design guides exist (Material 3 content design, Shopify Polaris content; Tier A, the vendors' own docs). They are rules to read, not a check to run.
+- Decision: two checks in the existing manifest loop of `scripts/canvas_stage.py`, read from the manifest only, no render.
+- Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #162: a QA loop with a design audit and the Elephant-Goldfish model
+- Need: tools for a QA loop over an app's approved screens: a scorecard (attack yield, coverage debt,
+  escapes, stop rule), a flow map of every tap, a design-audit report with highlight boxes, a board render.
+- Run: `scout.py --need "QA loop scorecard flow map design audit report for app screens with elephant
+  goldfish review"`: no repos found. `scout.py --need "exploratory QA skill for coding agents with bug
+  taxonomy"`: no repos found. `gh search repos --topic exploratory-testing`: top 3 READMEs read:
+  `srbarrios/agentic-test-explorer` (LangGraph swarm drives a browser, writes Playwright repros; web only),
+  `willcoliveira/qualiow-exploratory-testing-skills` (Claude Code skills, web plus iOS and Android through
+  a Maestro shim), `loukan42/chaosfolk` (simulated users, replayable browser evidence; web only).
+  Also checked: `google/elephant-goldfish-model` (Apache-2.0, pushed 8 Nov 2026, about 15k stars) and
+  `garrytan/gstack` `/qa` (MIT, pushed 9 Nov 2026).
+- Decision: none of them compares the app with the design, keeps an escape log, or writes a design audit
+  as a roadmap. So the kit takes the owner's own `qa-loop` skill (already written, already used) and makes
+  it generic. EGM is used as is for plans (adopt, never fork). `qualiow` is named in `docs/QA_LOOP.md` as
+  the mobile probe driver to borrow. gstack's issue taxonomy shaped the severity list.
+
+## 9 Nov 2026, story #154: every workflow job has a time limit
+- Need: fail CI when a GitHub Actions job has no `timeout-minutes`.
+- Run: `scout.py --need "lint GitHub Actions workflows: fail when a job has no timeout-minutes"` and
+  `scout.py --need "github actions workflow linter timeout"`: no repos found. `gh search repos "topic:github-actions linter"`:
+  act, gitea, ruff, shellcheck; none checks job timeouts. actionlint checks syntax and expressions, not a missing limit.
+- Decision: a 40-line stdlib checker, `scripts/check_timeouts.py` (no YAML dependency, since CI installs only pytest).
+- Confidence that nothing fits better: 0.75.
+
+## 9 Nov 2026, story #139 (ADR-011): maker and checker are different sessions
+- Need: enforce that the agent session that wrote a PR's commits cannot approve it.
+- Run: `scout.py --need "enforce maker checker: the agent session that wrote commits cannot approve the pull request"`:
+  no repos found. `gh search repos topic:four-eyes-principle` and `topic:segregation-of-duties`: a PR-workflow demo
+  (cakarci/pull-request-workflow) and SAP/IAM audit tools; none knows about agent sessions on one account.
+  GitHub's own "require review from someone other than the last pusher" sees accounts only (Tier A, 0.85).
+- Decision: a `Built-by:` commit trailer written by `git interpret-trailers` (git's own tool, no new dependency),
+  checked by the existing `check_roles.py` and `review_merge.sh`.
+- Confidence that nothing fits better: 0.8.
+
+## 9 Nov 2026, story #182 (S2): the spec layer (component doc schema, contracts, doc guards, tokens)
+- Need: one doc schema and one cross-platform contract per component, plus a check that fails when a doc
+  names a prop the contract lacks or hides an enum's literal values.
+- Run: `scout.py --need "component documentation schema and doc guard: fail when a component doc names a prop
+  the cross-platform contract lacks or hides literal union values"` and `scout.py --need "design system
+  component docs schema for AI agents"`: no repos found. `gh search repos "topic:design-tokens topic:schema"`:
+  VoltAgent/awesome-design-md (a list), chakra-ui/panda, system-ui/theme-ui, Manavarya09/design-extract
+  (DTCG token extraction); none has a per-component doc schema with a native contract.
+- Top READMEs read: `meta/astryx` (MIT, pushed 9 Nov 2026, commit `86a32152f4ed`), its `packages/native`
+  README (contracts: core, per-platform, web-only with reason), and design-extract (DTCG tokens, multi-platform emitters).
+- Decision: copy Astryx's doc types, contract types and dense guide (ADR-012, rule 38; files and commit in
+  `ui/UPSTREAM.md`). Its guards (`docPropReferences`, `docPropLiterals`) read TypeScript sources we do not have,
+  so `scripts/check_ui_docs.py` re-applies their two ideas against our JSON contracts (stdlib). Tokens use the
+  W3C Design Tokens format (`$value`, `$type`), the one the emitters in S6 already read.
+- Confidence that nothing fits better: 0.8.
+
+## 9 Nov 2026, story #183 (S3): run Meta's Astryx CLI for the kit's components
+- Need: one lookup CLI agents run before UI work (`component`, `docs`, `--dense`, `--json`, `init` agent block, `doctor`), for web, Android and iOS.
+- Run: the plan already names the source, Meta's Astryx (`meta/astryx`, MIT, read in S2). No other tool has a managed agent block
+  plus dense docs. Read at tag `v0.7.11`: `packages/cli/README.md` and `authoring/integration/type.ts` (Tier A, the vendor's own code, 0.9).
+- Finding: the CLI is built to be extended. An `astryx.integration.*` manifest adds `docs`, `templates`, `agentDocs.append`.
+  So we use it, not copy it. Three spikes on the owner's Mac: needs core installed; `component` needs a React source file; reference topics work.
+- Decision: pin `@astryxdesign/cli` and `core` `0.7.11` in `ui/tool/`; native parts as generated topics; a fail-closed wrapper.
+- Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #135 (S5): the iOS library (counted SwiftUI list, iOS-only docs, five templates)
+- Need: the list of Apple's standard iOS components with their exact SwiftUI types, and screen templates built only from them.
+- Run: `scout.py --need "list of standard SwiftUI components mapped to Apple HIG, and SwiftUI screen templates using only
+  standard controls"`: no repos found. `gh search repos "topic:swiftui topic:design-system"`: jaywcjlove/awesome-mac and
+  dkhamsing/open-source-ios-apps (lists), jordanbaird/Ice and CodeEditApp/CodeEdit (macOS apps), NativeScript (a cross-platform
+  runtime); none is a component list or a template set.
+- Source used instead: Apple's own SwiftUI and HIG docs (Tier A, the vendor, 0.9), read as the JSON the pages render.
+  Rule 38 says to use SwiftUI as Apple ships it, so there is nothing to adopt; the docs only point at Apple's parts.
+- Decision: `docs/research/ios-swiftui-components.md` (33 counted), 12 iOS-only docs in `ui/components/`, templates in
+  `ui/ios/templates/` from standard controls only. No package added.
+- Confidence that nothing fits better: 0.85.
+## 9 Nov 2026, story #134 (S4): the Android library (Compose Material 3 docs and screen templates)
+- Need: one doc and contract per Material 3 component, and five Compose screen templates built only from M3 parts.
+- Run: `scout.py --need "Jetpack Compose Material 3 component catalog with per-component docs and screen templates"`: no repos found.
+  `gh search repos "topic:jetpack-compose topic:material3"`: gkd-kit/gkd and JunkFood02/Seal (apps, not libraries),
+  android/compose-samples and android/nowinandroid (Google's own samples).
+- Top READMEs read: android/compose-samples (Jetnews, Jetchat, Reply: M3 apps, Tier A), android/nowinandroid
+  (one app built with Compose, "follows Android design and development best practices", Tier A), gkd-kit/gkd (not a fit).
+- Decision: the source is Google's own Material 3, used as shipped (rule 38). Nothing is copied: the docs restate
+  Google's pages (`docs/research/android-m3-components.md`), and the templates call M3 composables the way Google's guides show.
+- Confidence that nothing fits better: 0.9 (the library is Google's, so there is nothing to find beyond it).
+
+## 9 Nov 2026, story #225: read the kit pin from a kit branch (rule-24 children)
+- Need: read a git submodule pin and config files from another branch in a CI adoption check.
+- Run: `scout.py --need "read a git submodule pin and config files from another branch in a CI adoption check (git show branch:path)"`:
+  no repos found. `gh search repos "topic:git-submodules"`: junhoyeo/vercel-submodules (fetches private submodules at Vercel
+  deploy), sgoudham/update-git-submodules (an Action that bumps submodules to the latest tag), roehling/git-archive-all
+  (archives a repo with its submodules). READMEs read; none checks a pin on another branch.
+- Decision: no tool. Plain git does it: `git fetch origin <b>`, `git rev-parse <b>:knowledge/shipquick_latest`,
+  `git show <b>:.pre-commit-config.yaml`; the scan uses the GitHub contents API (`type: submodule`, `sha`). Built from scratch.
+- Confidence that nothing fits better: 0.85.
+## 9 Nov 2026, story #216: the UI coverage gate (every counted component has a doc, a contract and a topic)
+- Need: check that every row of a counted component list has one doc, one contract and one served topic, and that no name we serve shadows a core doc.
+- Run: `scout.py --need "check that every component in a counted design-system list has a doc, a contract and a served topic, and no name shadows the upstream library"`: no repos found.
+  `scout.py --need "design system component documentation coverage check"`: no repos found.
+  `gh search repos "topic:design-system documentation coverage"`: system-design-primer, FreeDomain, the-art-of-command-line,
+  VoltAgent/awesome-design-md, Leonxlnx/taste-skill (none check coverage). `gh search repos "storybook coverage"`: small demos.
+- Top READMEs read: yannbf/storybook-coverage-recipes (code coverage of rendered stories, not doc coverage),
+  tomnar/storybook-coverage (a Chromatic Angular template), VoltAgent/awesome-design-md (a list of DESIGN.md files). Not a fit.
+- Decision: build from scratch, about 100 lines of stdlib Python. It reuses `read_doc` from `scripts/check_ui_docs.py`
+  and reads the same tables the S4 and S5 tests read. No package added.
+- Confidence that nothing fits better: 0.8 (the input is our own two tables, so a general tool would still need this glue).
+
+## 9 Nov 2026, story #228: per-platform usage text in one shared component doc
+- Need: one shared component doc with usage text per platform, and a check that a platform topic never names the other platform's API.
+- Run: `scout.py --need "keep one shared component doc with per-platform usage text and fail when a platform reference topic names another platform's API (Compose vs SwiftUI)"`: no repos found.
+  `scout.py --need "cross-platform design system docs with per-platform usage guidelines android ios"`: no repos found.
+  `gh search repos --topic=design-system --topic=compose --topic=swiftui`: none. `--topic=design-system --topic=multiplatform`: one app (mrfatworm/ZZZ-Archive) and one React library; not a fit.
+- Read instead: our upstream, meta/astryx `packages/cli/authoring/doctypes/component/type.ts` at the pinned commit (`ui/UPSTREAM.md`).
+  Its `UsageDoc` has one text for the whole component and no per-platform field, so there is nothing there to adopt.
+- Decision: build from scratch, small. One optional field `platformUsage` in our copy of the doc type, with the same
+  fields as upstream's `UsageDoc` (`description`, `bestPractices`, `accessibility`), so it reads like upstream. The leak
+  check is about 10 lines of stdlib regex in `scripts/ui_topics.py`. No package added.
+- Confidence that nothing fits better: 0.8 (the split is about our own two-platform docs; a general tool would still need this glue).
+
+## 9 Nov 2026, story #231: generate the full UI lists from each library's public API
+- Need: parse a Jetpack Compose `api/current.txt` dump and Apple's DocC documentation JSON into lists of public UI components.
+- Run: `scout.py --need "parse a Jetpack Compose api current.txt dump and Apple DocC documentation JSON into lists of public UI components"`: no repos found.
+  `scout.py --need "parse Apple DocC documentation JSON symbol graph"`: no repos found.
+  `gh search repos --topic=docc`: DoccZz/docc2html, tayloraswift/swift-biome, and others not a fit. `gh search repos "docc json"`: thehammer/callimachus-adapter-docs.
+  `gh search repos "metalava api current.txt parser"`: none.
+- Read: the top 3 READMEs. docc2html turns a DocC archive into HTML (Swift, a whole site). swift-biome is superseded
+  by swift-unidoc and compiles symbol graphs into a docs server. callimachus-adapter-docs indexes DocC JSON into its own
+  knowledge store. None lists View conformers with iOS availability, and none reads a Compose API dump.
+- Borrowed: the callimachus idea of reading `metadata.symbolKind` and the relationship sections of each DocC page
+  (we read `conformingTypes` on the `View` page and `metadata.platforms` on each type's page).
+- Decision: build from scratch, about 300 lines of stdlib Python (`scripts/ui_api_lists.py`). No package added.
+- Confidence that nothing fits better: 0.8 (both inputs are vendor formats with no maintained parser for this job).

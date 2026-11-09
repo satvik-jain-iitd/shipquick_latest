@@ -19,15 +19,37 @@ Never jump to making screens before the direction is final.
 - After the code ships to production, the board moves to "Production" (rule 3).
 - A PR that touches the project's own frontend paths (`scripts/check_frontend_design.sh`, globs configured per project) must name the approved board and its approval date in its body (`Design board: <name>` and `Approved: <date>`), or the check fails — in CI and in `scripts/check_local.sh`. A PR that says "no screen change" while still touching those paths also fails. A `dev -> main` promotion or a `main -> dev` back-merge (base or head is `main`) is never a frontend story and is always skipped.
 - Nothing on the canvas is deleted. An old version moves to the mistakes section (rule 4).
+- **Build from the board** (story #161). The approved board is the source, not the story text.
+  1. Before code, render the board and read its measurements from its markup: x, y, width, height, padding, gap, font, colour. Write them in a short table.
+  2. Port the board's markup and styles. Do not rebuild the screen from the story's words.
+  3. After each change, render the app screen in the same state. Put it beside the board: same scale, full height, all four edges.
+  4. The PR body carries `Board image:`, `Render:` and the `Measurements:` table (`.github/PULL_REQUEST_TEMPLATE.md`). The reviewer rejects a frontend PR without them.
+  5. The reviewer compares the two pictures, then writes `Render: <board> -- matches` in the approval. `scripts/review_merge.sh` refuses the merge without it (story #153, `docs/SCREENS.md`).
+  - Applies when: the screen has an approved board. Does not apply to: backend-only stories, a screen with no approved board yet (design first), a copy change with no layout change.
 
 ## 3. The canvas by stage (29 Oct 2026)
 
-One canvas per project, five sections top to bottom, each on its own background board:
-1. Production: the screen as it is live today, the latest version only.
-2. Design final, not live: the owner said yes; not coded yet, or coded behind a flag the live build does not carry.
-3. In discussion: no decision yet, or on hold.
-4. Rejected: tried and not taken, or replaced by a later pick.
-5. Mistakes, fixed: the old screen as it was when it was wrong, with a note naming the fix and the corrected board in section 1.
+One canvas per project. Each stage is a section on its own background board.
+
+Stages are columns, read left to right (9 Nov 2026, story #165). The owner reads a process left to right, like a kanban board. So the columns follow the order a design moves, and end on what the team learned:
+1. In discussion: no decision yet, or on hold. Prefix IN TALK.
+2. Approved, not built: the owner said yes; no code yet. Prefix DESIGN.
+3. On dev: coded and on the dev link, or behind a flag the live build does not carry. Prefix ON DEV (or ON STAGING).
+4. Production: the screen as it is live today, the latest version only. Prefix LIVE.
+5. Mistakes, fixed: the old screen as it was when it was wrong, with a note naming the fix and the corrected board in Production. Prefix OLD.
+6. Rejected: tried and not taken, or replaced by a later pick. It sits near the end because it is the feedback loop. Prefix REJECTED.
+7. Design learnings: one board the tool makes for you (see below). Prefix LEARNINGS.
+
+Set `"layout": "columns"` in the manifest. Each section is one column; its rows stack top to bottom inside it. A column that grows past 8000 px splits into tiles downward, as before. Every run places every column again, so a growing column never meets the next one. Without the key, sections stack top to bottom (the old layout), so an old canvas does not move until you choose.
+
+The Design learnings board (9 Nov 2026, story #165). The owner is learning design; the reviewer is the expert. The board keeps what he likes and dislikes, and teaches him back.
+- It lives in the section with `"id": "learnings"`. In column layout that section is required; the tool stops without it.
+- Its rows are in that section's `"learnings"` list: `{"date": "2026-11-09", "kind": "owner", "text": "...", "link": "..."}`. `link` is optional.
+- `kind` is one of three columns: `owner` (the owner's own taste, credited to him), `craft` (a craft rule the reviewer taught), `testing` (what testing taught both). Any other kind stops the run.
+- The tool draws one board, `design-learnings.dc.html`, three columns, newest on top. Never edit the board by hand; edit the list.
+- After every owner design decision, the reviewer adds one row the same day.
+- An `owner` row is his call. A generic rule never overwrites it. When they disagree, both rows stay, and the note says which one stands for this project.
+- Each new frame says in one line which rule it shows and why, so the owner learns while he picks.
 
 How it is kept:
 - The layout comes from a manifest (`design/canvas-stages.json`: sections, rows, the boards in each row, the purpose of each section) through `scripts/canvas_stage.py`. A board moves by editing the manifest and running the tool, never by dragging.
@@ -39,11 +61,14 @@ How it is kept:
     "ink": "#rrggbb", "paper": "#ffffff", "font": "'Project Sans', system-ui, sans-serif",
     "start_here": "How to read this canvas: ...", "start_tint": "sage",
     "remove_notes": ["an-old-title-note"],
+    "layout": "columns",
     "sections": [
-      {"id": "production", "title": "Section 1 · Production", "purpose": "What is live today.", "prefix": "LIVE", "tint": "sage",
-       "rows": [{"id": "1a", "title": "1a · First open", "boards": ["Welcome.dc.html"], "notes": ["first-open"]}]},
-      {"id": "final", "title": "Section 2 · Design final, not live", "purpose": "...", "prefix": "DESIGN", "tint": "teal",
-       "rows": [{"id": "2a", "title": "2a · Approved, being coded", "prefix": "ON STAGING", "boards": ["Map.dc.html"], "notes": []}]}
+      {"id": "talk", "title": "1 · In discussion", "purpose": "Waiting on a pick.", "prefix": "IN TALK", "tint": "yellow",
+       "rows": [{"id": "1a", "title": "1a · Sign-in options", "boards": ["SignIn-A.dc.html", "SignIn-B.dc.html"], "notes": []}]},
+      {"id": "production", "title": "4 · Production", "purpose": "What is live today.", "prefix": "LIVE", "tint": "sage",
+       "rows": [{"id": "4a", "title": "4a · First open", "boards": [{"board": "Welcome.dc.html", "pr": "#12", "approved": "2026-10-20"}], "notes": ["first-open"]}]},
+      {"id": "learnings", "title": "7 · Design learnings", "purpose": "What we learned, newest on top.", "prefix": "LEARNINGS", "tint": "gray",
+       "rows": [], "learnings": [{"date": "2026-11-09", "kind": "owner", "text": "Main button at the bottom, same place every step."}]}
     ]
   }
   ```
@@ -51,10 +76,15 @@ How it is kept:
 - A background is an artboard, listed first in the canvas order, sized around everything inside it. A drawn note never sits under a screen, so a note is never a frame.
 - Nothing ever sits outside its background board: no text, icon, image, note or screen. The tool refuses a layout where a box is outside its board or two boxes overlap.
 - Inside Production the rows follow the user's journey left to right, then the other roles (staff, admin).
-- Every board's name starts with its state: LIVE, ON STAGING, DESIGN, IN TALK, REJECTED, OLD, UNSORTED.
-- A "start here" note above section 1 says how to read the canvas. Section titles say the purpose; each section note says what it holds and when a board moves.
+- Every board's name starts with its state: LIVE, ON STAGING, ON DEV, DESIGN, IN TALK, REJECTED, OLD, LEARNINGS, UNSORTED.
+- A "start here" note above the first section says how to read the canvas. In column layout it says: one stage per column, read left to right, end on the learnings. Section titles say the purpose; each section note says what it holds and when a board moves.
 - A board the manifest forgets lands in an Unsorted row, so nothing is lost and the gap shows.
 - Chat never cites a canvas version number; the link always opens the latest.
+- Publish from the canvas, never from memory (9 Nov 2026, story #163). A tall section splits into a new tile file on its own. A typed list misses it, and its boards float with no background.
+  1. Read the live canvas first. Run the tool with `--apply`.
+  2. Publish exactly what `canvas_stage.py --canvas <folder> --publish-list` prints: `project/canvas.json`, every bg tile, every board.
+  3. List the artifact's files. Save the listing to a file, one path per line.
+  4. Run `canvas_stage.py --canvas <folder> --verify <listing>`. It fails and names each file that canvas.json needs and the artifact lacks. Publish those, then run it again until it passes.
 
 ## 4. Which bucket (29 Oct 2026)
 
@@ -121,3 +151,37 @@ When a Production board and the live app disagree, the question is never "which 
 ## 11. Feedback becomes a rule the same day (29 Oct 2026)
 
 - Every generic design feedback from the owner (anything that would apply to another project) is written into this page the same day, with its date, by the session that received it, and into that session's own instruction file. Project-specific feedback goes to the project's docs. Nothing stays only in chat.
+
+## 12. Step-by-step flows: the main action is last, in the same place on every step (9 Nov 2026, story #164)
+
+A flow of two or more steps (onboarding, sign-up, checkout steps) is read as one thing, not as separate screens. A person taps "next, next, next" with one thumb. The main action must never move.
+The rule is the same on web, Android and iOS. Each platform's own words are in brackets.
+
+1. The main action is one full-width button, anchored to the bottom of the content area. It sits above the safe area (iOS home indicator, Android gesture bar, a web page's bottom edge). The last element ends 24 px above that edge plus the safe area.
+2. With two actions, the main one (filled) is LAST, at the very bottom. The other one (outline or text) sits above it. So the main button is in the same place on every step, whether a step has one button or two.
+3. The hero visual of a step (an icon, an image, an illustration) is centred on one line shared by every step of the flow. Measure the centre on the visual's own shape (its circle), not its box, since boxes carry uneven padding.
+4. On a step with typing, the button rides on top of the keyboard (iOS keyboard layout guide, Android `imePadding`, the web `visualViewport` or `interactive-widget=resizes-content`). It never hides under the keyboard and never jumps to the top.
+5. The steps fill the space. A big empty area under a button that sits high is a bug, not air.
+
+Exceptions:
+- A danger or cancel pair (delete, sign out) keeps its own pattern: the danger action is never the easy default.
+- A long list or a form that scrolls keeps a sticky bottom bar with the same button; the rule still holds.
+- One dialog alone, or a wide desktop layout, is not a step flow.
+
+How it is checked: the reviewer looks at the steps side by side, not one screen at a time. Measure the main button's top edge and the hero's centre on every step. They match within 2 px, or the flow goes back.
+Why: the bottom of a phone is where the thumb rests (Steven Hoober, 2013, observed one-thumb use). Apple and Google's own guides put main actions within easy reach.
+
+## 13. A default screen is not a design (9 Nov 2026, story #148)
+
+On a screen with one job (sign-in, an empty state, a permission ask, a confirmation, an error with one way out), the words are most of what the person sees. So the words are the design.
+1. Options put to the owner differ in their words, not only in layout. Each option board says in one line the sentence that makes it different.
+2. A board whose text could be pasted into any other product unchanged is not an option. It is the default, and the default is not a design.
+3. A rejected option is annotated the same day: on the canvas, beside the board, in the owner's own words, with the one rule it leaves behind. The same reason goes on the story issue, so the coder reads it without opening the canvas. Add the rule to the Design learnings board too (rule 3).
+
+The manifest carries it, and `scripts/canvas_stage.py` stops the run without it:
+- A row with `"options": true` lists each board as `{"board": "<name>", "copy": "<the sentence that makes it different>"}`. A board with no `copy`, or two boards with the same `copy`, stops the run.
+- A row whose prefix is `REJECTED` lists each board as `{"board": "<name>", "reason": "<the owner's own words>"}`. A rejected board with no `reason` stops the run.
+- Old canvases do not break. Boards rejected before this rule have no reason written down. Run `canvas_stage.py --manifest <m> --canvas <folder> --write-rejected-baseline` once. It lists them in the manifest's `rejected_baseline`. A board on that list only warns (`WARN ...`). Any new rejected board needs a reason, or the run stops. Add the owner's words to an old board when you can, then take it off the list.
+
+Applies to: any options board shown to the owner for a pick, and any screen with one main action and little else.
+Does not apply to: dense screens where the real question is layout; motion frames; a board that only restates an approved screen; a screen with no text.

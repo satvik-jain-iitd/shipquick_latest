@@ -115,3 +115,67 @@ def test_s140_no_account_name_lives_in_a_gate_script(rel):
     text = (ROOT / rel).read_text(encoding="utf-8")
     for acct in ACCOUNTS:
         assert acct not in text, f"{rel} hardcodes {acct}"
+
+
+# Story #139 (ADR-011): optional session lists; one name may never play two parts.
+SESSIONS = GOOD + "coder_sessions:\n  - proj-dev\nreviewer_sessions:\n  - proj-qa\n"
+
+
+def test_session_lists_are_read(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(SESSIONS, encoding="utf-8")
+    assert roles.load(f)["coder_sessions"] == ["proj-dev"]
+    assert roles.main(["get", "reviewer_sessions", "--file", str(f)]) == 0
+
+
+def test_an_unset_session_list_prints_nothing_and_succeeds(tmp_path, capsys):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD, encoding="utf-8")
+    assert roles.main(["get", "coder_sessions", "--file", str(f)]) == 0
+    assert capsys.readouterr().out.strip() == ""
+
+
+def test_two_sessions_with_the_same_name_are_refused(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD + "coder_sessions:\n  - proj-dev\nreviewer_sessions:\n  - proj-dev\n", encoding="utf-8")
+    try:
+        roles.load(f)
+    except ValueError as e:
+        assert "proj-dev" in str(e) and "twice" in str(e)
+    else:
+        raise AssertionError("a repeated session name must be refused")
+
+
+def test_one_session_list_without_the_other_is_refused(tmp_path):
+    # PR #178 review: reviewer_sessions alone let commits skip the trailer and a session approve itself.
+    for extra in ("coder_sessions:\n  - proj-dev\n", "reviewer_sessions:\n  - proj-qa\n"):
+        f = tmp_path / "roles.yml"
+        f.write_text(GOOD + extra, encoding="utf-8")
+        try:
+            roles.load(f)
+        except ValueError as e:
+            assert "both" in str(e)
+        else:
+            raise AssertionError("one session list alone must be refused")
+
+
+def test_a_session_list_written_on_one_line_is_refused(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD + "coder_sessions: proj-dev\nreviewer_sessions:\n  - proj-qa\n", encoding="utf-8")
+    try:
+        roles.load(f)
+    except ValueError as e:
+        assert "list" in str(e)
+    else:
+        raise AssertionError("a one-line session value must be refused")
+
+
+def test_session_names_that_differ_only_in_case_are_the_same_name(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD + "coder_sessions:\n  - Proj-Dev\nreviewer_sessions:\n  - proj-dev\n", encoding="utf-8")
+    try:
+        roles.load(f)
+    except ValueError as e:
+        assert "twice" in str(e)
+    else:
+        raise AssertionError("names that differ only in case must be refused")

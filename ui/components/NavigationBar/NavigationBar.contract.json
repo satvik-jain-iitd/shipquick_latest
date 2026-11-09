@@ -1,0 +1,69 @@
+{
+  "name": "NavigationBar",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "selected": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onClick": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "icon": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
+    },
+    "ios": {
+      "selection": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<SelectionValue>"
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        }
+      },
+      "systemImage": {
+        "type": {
+          "kind": "named",
+          "name": "String"
+        }
+      },
+      "value": {
+        "type": {
+          "kind": "named",
+          "name": "SelectionValue"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

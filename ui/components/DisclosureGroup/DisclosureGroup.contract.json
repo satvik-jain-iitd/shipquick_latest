@@ -1,0 +1,27 @@
+{
+  "name": "DisclosureGroup",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "title": {
+      "type": {
+        "kind": "string"
+      }
+    },
+    "isExpanded": {
+      "type": {
+        "kind": "named",
+        "name": "Binding<Bool>"
+      },
+      "optional": true
+    },
+    "content": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

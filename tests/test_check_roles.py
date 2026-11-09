@@ -99,3 +99,68 @@ def test_cli_a_bare_login_with_no_colon_is_treated_as_a_non_merge_commit(capsys)
     ])
     assert rc == 1
     assert "reviewer-one" in capsys.readouterr().out
+
+
+# Story #139 (ADR-011): maker and checker are different sessions, not only different accounts.
+CODER_SESSIONS = ["proj-dev"]
+REVIEWER_SESSIONS = ["proj-qa"]
+
+
+def test_with_session_lists_every_commit_must_name_a_coder_session():
+    why = cr.check("coder-one", [("coder-one", 1, "proj-qa")], CODERS, coder_sessions=CODER_SESSIONS)
+    assert why and "proj-qa" in why and "Built-by" in why
+
+
+def test_a_commit_with_no_built_by_trailer_fails_and_names_the_fix():
+    why = cr.check("coder-one", [("coder-one", 1, "")], CODERS, coder_sessions=CODER_SESSIONS)
+    assert why and "Built-by" in why
+
+
+def test_a_merge_commit_needs_no_session():
+    assert cr.check("coder-one", [("coder-one", 1, "proj-dev"), ("reviewer-one", 2, "")], CODERS,
+                    REVIEWERS, OWNER, coder_sessions=CODER_SESSIONS) is None
+
+
+def test_without_session_lists_the_session_is_not_checked():
+    assert cr.check("coder-one", [("coder-one", 1, "")], CODERS) is None
+
+
+def test_an_approval_from_a_reviewer_session_that_built_nothing_passes():
+    assert cr.review_session("Reviewed-by: proj-qa\nLooks good.", ["proj-dev"], REVIEWER_SESSIONS) is None
+
+
+def test_the_teammate_block_header_names_the_reviewer_session():
+    body = "```\nTo proj-dev, from proj-qa, re PR #9:\n1. ok\nNothing needed from you.\n```"
+    assert cr.review_session(body, ["proj-dev"], REVIEWER_SESSIONS) is None
+
+
+def test_an_approval_naming_no_session_is_refused():
+    why = cr.review_session("LGTM", ["proj-dev"], REVIEWER_SESSIONS)
+    assert why and "Reviewed-by" in why
+
+
+def test_an_approval_from_a_session_that_is_not_a_reviewer_is_refused():
+    why = cr.review_session("Reviewed-by: proj-dev", ["proj-dev"], REVIEWER_SESSIONS)
+    assert why and "not a reviewer session" in why
+
+
+def test_the_reviewer_session_that_built_a_commit_cannot_approve_it():
+    why = cr.review_session("Reviewed-by: proj-qa", ["proj-dev", "proj-qa"], REVIEWER_SESSIONS)
+    assert why and "built" in why and "proj-qa" in why
+
+
+def test_a_reviewed_by_name_in_backticks_or_with_a_period_is_read():
+    assert cr.review_session("Reviewed-by: `proj-qa`.", ["proj-dev"], REVIEWER_SESSIONS) is None
+
+
+def test_a_reviewed_by_line_that_disagrees_with_the_block_header_is_refused():
+    # PR #178 second look: the header said the coder session wrote the review.
+    body = "```\nTo proj-qa, from proj-dev, re x:\n1. ok\nNothing needed from you.\n```\nReviewed-by: proj-qa\n"
+    why = cr.review_session(body.replace("To proj-qa", "To someone"), ["proj-dev"], REVIEWER_SESSIONS)
+    assert why and "proj-dev" in why and "proj-qa" in why
+
+
+def test_session_names_compare_without_case():
+    assert cr.review_session("Reviewed-by: Proj-QA", ["proj-dev"], REVIEWER_SESSIONS) is None
+    why = cr.review_session("Reviewed-by: proj-qa", ["Proj-QA"], REVIEWER_SESSIONS)
+    assert why and "built a commit" in why

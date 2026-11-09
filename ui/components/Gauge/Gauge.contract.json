@@ -1,0 +1,27 @@
+{
+  "name": "Gauge",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "value": {
+      "type": {
+        "kind": "number"
+      }
+    },
+    "bounds": {
+      "type": {
+        "kind": "named",
+        "name": "ClosedRange<BinaryFloatingPoint>"
+      },
+      "optional": true
+    },
+    "label": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

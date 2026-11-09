@@ -1,0 +1,56 @@
+{
+  "name": "AppBar",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "title": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "navigationIcon": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "actions": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "scrollBehavior": {
+        "type": {
+          "kind": "named",
+          "name": "TopAppBarScrollBehavior"
+        },
+        "optional": true
+      }
+    },
+    "ios": {
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "placement": {
+        "type": {
+          "kind": "named",
+          "name": "ToolbarItemPlacement"
+        },
+        "optional": true
+      },
+      "navigationTitle": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

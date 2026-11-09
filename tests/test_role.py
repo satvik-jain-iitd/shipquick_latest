@@ -95,3 +95,68 @@ def test_no_roles_yml_at_all_refuses_with_a_clear_reason(tmp_path, stub):
     r = source(c, stub, f"source {ROLE} coder")
     assert "RC:1" in r.stdout
     assert "adopt.sh" in r.stderr
+
+
+# Story #139 (ADR-011): the session name rides on every commit as a Built-by: trailer.
+TRAILER = ROOT / "scripts" / "session_trailer.sh"
+
+
+def with_sessions(repo):
+    f = repo / ".shipquick" / "roles.yml"
+    f.write_text(f.read_text() + "coder_sessions:\n  - proj-dev\nreviewer_sessions:\n  - proj-qa\n", encoding="utf-8")
+
+
+def test_s139_a_coder_with_session_lists_must_name_a_coder_session(repo, stub):
+    with_sessions(repo)
+    r = source(repo, stub, f"SHIPQUICK_SESSION=proj-qa source {ROLE} coder")
+    assert "RC:1" in r.stdout and "proj-qa" in r.stderr and "not a coder session" in r.stderr
+
+
+def test_s139_the_session_is_saved_for_this_worktree_so_the_hook_finds_it(repo, stub):
+    with_sessions(repo)
+    r = source(repo, stub, f"SHIPQUICK_SESSION=proj-dev source {ROLE} coder")
+    assert "RC:0" in r.stdout, r.stderr
+    got = subprocess.run(["git", "config", "--get", "shipquick.session"], cwd=repo, capture_output=True, text=True)
+    assert got.stdout.strip() == "proj-dev"
+
+
+def test_s139_the_hook_adds_built_by_once(repo):
+    subprocess.run(["git", "config", "shipquick.session", "proj-dev"], cwd=repo, check=True)
+    msg = repo / "MSG"
+    msg.write_text("feat: x\n\nbody\n", encoding="utf-8")
+    for _ in range(2):
+        subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True)
+    assert msg.read_text().count("Built-by: proj-dev") == 1
+
+
+def test_s139_with_no_session_the_hook_writes_nothing(repo):
+    msg = repo / "MSG"
+    msg.write_text("feat: x\n", encoding="utf-8")
+    subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": ""})
+    assert "Built-by" not in msg.read_text()
+
+
+def test_s139_an_amend_by_another_session_replaces_the_old_built_by(repo):
+    msg = repo / "MSG"
+    msg.write_text("feat: x\n\nBuilt-by: proj-dev\n", encoding="utf-8")
+    subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": "proj-qa"})
+    text = msg.read_text()
+    assert "Built-by: proj-qa" in text and "Built-by: proj-dev" not in text
+
+
+def test_s139_with_no_session_known_the_hook_drops_an_old_built_by(repo):
+    # PR #178 verify: an amend with no session must not keep someone else's name.
+    msg = repo / "MSG"
+    msg.write_text("feat: x\n\nBuilt-by: proj-dev\nCo-Authored-By: a <a@b>\n", encoding="utf-8")
+    subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": ""})
+    text = msg.read_text()
+    assert "Built-by" not in text and "Co-Authored-By: a <a@b>" in text
+
+
+def test_s139_an_old_built_by_above_git_comment_lines_is_still_dropped(repo):
+    # PR #178 verify: an editor commit or amend puts "# ..." lines after the trailers.
+    msg = repo / "MSG"
+    msg.write_text("subj\n\nBuilt-by: old\n\n# Please enter the commit message\n# comment\n", encoding="utf-8")
+    subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": ""})
+    text = msg.read_text()
+    assert "Built-by" not in text and "# comment" in text and text.startswith("subj\n")

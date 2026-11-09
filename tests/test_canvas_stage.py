@@ -181,5 +181,162 @@ class Layout(unittest.TestCase):
         self.assertTrue(any("C.dc.html" in p and "is not" in p for p in problems), problems)
 
 
+LEARN = [{"date": "2026-11-01", "kind": "craft", "text": "Main button last"},
+         {"date": "2026-11-09", "kind": "owner", "text": "He likes warm words", "link": "https://example.com/1"},
+         {"date": "2026-11-05", "kind": "owner", "text": "No grey on grey"},
+         {"date": "2026-11-03", "kind": "testing", "text": "Thumbs miss the top"}]
+
+
+class Columns(unittest.TestCase):
+    """Story #165: stages as columns, left to right, ending on a Design learnings board."""
+
+    def setUp(self):
+        self.c = canvas(["A.dc.html", "B.dc.html", "C.dc.html", "D.dc.html"])
+        self.m = manifest([[{"id": "1a", "title": "1a", "boards": ["A.dc.html", "B.dc.html"], "notes": []}],
+                           [{"id": "2a", "title": "2a", "boards": ["C.dc.html"], "notes": []}],
+                           [{"id": "3a", "title": "3a", "boards": ["D.dc.html"], "notes": []}]])
+        self.m["layout"] = "columns"
+        self.m["sections"].append({"id": "learnings", "title": "Section 4 · Design learnings", "purpose": "p", "prefix": "LEARNINGS",
+                                   "tint": "sage", "rows": [], "learnings": LEARN})
+
+    def first_tiles(self, new):
+        return [new["boards"][f"bg/section-{n}-1.dc.html"] for n in range(1, 5)]
+
+    def test_S22_columns_mode_puts_each_section_right_of_the_one_before_on_one_top_line(self):
+        new, _, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+        tiles = self.first_tiles(new)
+        for a, b in zip(tiles, tiles[1:]):
+            self.assertGreater(b["x"], a["x"] + a["w"])   # fully right of the column before it
+            self.assertEqual(a["y"], b["y"])               # every column starts on the same line
+        self.assertEqual(cs.check_existing(new), [])
+
+    def test_S23_columns_mode_without_a_learnings_section_is_a_problem(self):
+        self.m["sections"].pop()
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("learnings" in p for p in problems), problems)
+
+    def test_S24_the_learnings_board_has_three_columns_newest_on_top_and_sits_in_its_section(self):
+        new, files, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+        html = files["project/design-learnings.dc.html"]
+        for head in ("The owner's taste", "Craft rules", "What testing taught"): self.assertIn(head, html)
+        self.assertLess(html.index("He likes warm words"), html.index("No grey on grey"))   # newest on top
+        e = new["boards"]["design-learnings.dc.html"]; s4 = new["boards"]["bg/section-4-1.dc.html"]
+        self.assertTrue(cs.inside(cs.box(e["x"], e["y"], e["w"], e["h"], "l"), cs.box(s4["x"], s4["y"], s4["w"], s4["h"], "s4"), cs.PAD - 1))
+        self.assertTrue(e["title"].startswith("LEARNINGS · "))
+
+    def test_S25_a_learnings_row_with_an_unknown_kind_is_a_problem(self):
+        self.m["sections"][3]["learnings"] = LEARN + [{"date": "2026-11-09", "kind": "vibes", "text": "x"}]
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("vibes" in p for p in problems), problems)
+
+    def test_S33_layout_twice_on_one_manifest_object_leaves_the_manifest_as_it_was(self):
+        before = json.dumps(self.m, sort_keys=True)
+        cs.layout(self.c, self.m); new, _, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+        self.assertEqual(json.dumps(self.m, sort_keys=True), before)   # the learnings row goes into a copy, never the manifest's own rows
+        self.assertEqual(self.m["sections"][3]["rows"], [])
+
+    def test_S26_columns_mode_gives_the_same_layout_twice(self):
+        a, _, _ = cs.layout(self.c, self.m); b, _, problems = cs.layout(a, self.m)
+        self.assertEqual(problems, [])
+        self.assertEqual({k: (v["x"], v["y"]) for k, v in a["boards"].items()}, {k: (v["x"], v["y"]) for k, v in b["boards"].items()})
+
+
+class Options(unittest.TestCase):
+    """Story #148: options put to the owner differ in their words; a rejected board carries the owner's reason."""
+
+    def setUp(self):
+        self.c = canvas(["A.dc.html", "B.dc.html", "C.dc.html"])
+        self.m = manifest([[{"id": "1a", "title": "1a", "boards": ["C.dc.html"], "notes": []}],
+                           [{"id": "2a", "title": "2a", "options": True, "boards": [{"board": "A.dc.html", "copy": "Your street, your cook"},
+                                                                                     {"board": "B.dc.html", "copy": "Hot food from next door"}], "notes": []}],
+                           [{"id": "3a", "title": "3a", "boards": [], "notes": []}]])
+
+    def test_S27_an_options_row_whose_boards_name_different_copy_passes(self):
+        self.assertEqual(cs.layout(self.c, self.m)[2], [])
+
+    def test_S28_an_option_board_with_no_copy_line_is_a_problem(self):
+        self.m["sections"][1]["rows"][0]["boards"][1] = "B.dc.html"
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("B.dc.html" in p and "copy" in p for p in problems), problems)
+
+    def test_S29_two_options_with_the_same_copy_are_a_problem(self):
+        self.m["sections"][1]["rows"][0]["boards"][1]["copy"] = " your street, your cook "
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("same copy" in p for p in problems), problems)
+
+    def test_S30_a_rejected_board_with_no_reason_is_a_problem_and_with_one_passes(self):
+        self.m["sections"][2]["rows"][0].update({"prefix": "REJECTED", "boards": ["C.dc.html"]})
+        self.m["sections"][0]["rows"][0]["boards"] = []
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("C.dc.html" in p and "reason" in p for p in problems), problems)
+        self.m["sections"][2]["rows"][0]["boards"] = [{"board": "C.dc.html", "reason": "Looked like every other app"}]
+        self.assertEqual(cs.layout(self.c, self.m)[2], [])
+
+    def reject_two(self):
+        self.m["sections"][2]["rows"][0].update({"prefix": "REJECTED", "boards": ["C.dc.html", "B.dc.html"]})
+        self.m["sections"][0]["rows"][0]["boards"] = []
+        self.m["sections"][1]["rows"][0].update({"options": False, "boards": ["A.dc.html"]})
+
+    def test_S31_an_old_rejected_board_on_the_baseline_passes_a_new_one_still_stops(self):
+        self.reject_two(); self.m["rejected_baseline"] = ["C.dc.html"]
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertFalse(any("C.dc.html" in p for p in problems), problems)
+        self.assertTrue(any("B.dc.html" in p and "reason" in p for p in problems), problems)
+
+    def test_S32_write_rejected_baseline_fills_the_list_once_then_apply_passes_and_warns(self):
+        import io, contextlib
+        self.reject_two()
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "project").mkdir(); (Path(d) / "project" / "canvas.json").write_text(json.dumps(self.c)); mp = Path(d) / "m.json"; mp.write_text(json.dumps(self.m))
+            self.assertEqual(cs.main(["--manifest", str(mp), "--canvas", d, "--write-rejected-baseline"]), 0)
+            self.assertEqual(json.loads(mp.read_text())["rejected_baseline"], ["B.dc.html", "C.dc.html"])
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out): code = cs.main(["--manifest", str(mp), "--canvas", d, "--apply"])
+            self.assertEqual(code, 0, out.getvalue())
+            self.assertIn("WARN B.dc.html", out.getvalue())
+
+
+class Publish(unittest.TestCase):
+    """Story #163: the publish list comes from canvas.json, never from memory, and a listing is checked against it."""
+
+    def setUp(self):
+        self.d = tempfile.TemporaryDirectory(); root = Path(self.d.name)
+        c = canvas(["A.dc.html", "B.dc.html"])
+        c["boards"]["bg/section-3-1.dc.html"] = board(); c["boards"]["bg/section-3-2.dc.html"] = board()
+        (root / "project").mkdir(); (root / "project" / "canvas.json").write_text(json.dumps(c))
+        self.root = root
+
+    def tearDown(self): self.d.cleanup()
+
+    def run_main(self, *args):
+        import io, contextlib
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out): code = cs.main(["--canvas", str(self.root), *args])
+        return code, out.getvalue()
+
+    def test_S19_publish_list_prints_canvas_json_every_bg_tile_and_every_board(self):
+        code, out = self.run_main("--publish-list")
+        self.assertEqual(code, 0)
+        self.assertEqual(sorted(out.split()), ["project/A.dc.html", "project/B.dc.html", "project/bg/section-3-1.dc.html",
+                                               "project/bg/section-3-2.dc.html", "project/canvas.json"])
+
+    def test_S20_verify_names_each_tile_or_board_missing_from_the_listing_and_fails(self):
+        listing = self.root / "listing.txt"
+        listing.write_text("project/canvas.json\nproject/A.dc.html  1.2 KB\nproject/B.dc.html\nproject/bg/section-3-1.dc.html\n")
+        code, out = self.run_main("--verify", str(listing))
+        self.assertEqual(code, 1)
+        self.assertIn("project/bg/section-3-2.dc.html", out)
+        self.assertNotIn("MISSING project/A.dc.html", out)
+
+    def test_S21_verify_passes_when_the_listing_holds_every_named_file(self):
+        listing = self.root / "listing.txt"
+        _, full = self.run_main("--publish-list"); listing.write_text(full)
+        code, _ = self.run_main("--verify", str(listing))
+        self.assertEqual(code, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
