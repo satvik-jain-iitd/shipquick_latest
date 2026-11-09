@@ -35,9 +35,9 @@ custom_rules:
     excluded: '.*Tokens\.swift'
   no_import_outside_allowlist:
     name: "No import outside the allow-list"
-    # The allow-list is the group after (?!. It holds SwiftUI, Foundation and the kit's module. A child adds the names of its own modules.
-    regex: '^\s*(?:@\w+\s+)?import\s+(?!(?:SwiftUI|Foundation|ShipQuickUI)\b)\w'
-    message: "An import outside the allow-list (SwiftUI, Foundation, ShipQuickUI). UIKit and third-party UI kits are refused. A child adds its own modules to the list."
+    # The allow-list is the group after (?!. It holds SwiftUI, Foundation, Charts, Observation, SwiftData, Testing and the kit's module. A child adds the names of its own modules.
+    regex: '^\s*(?:@\w+\s+)?import\s+(?!(?:SwiftUI|Foundation|ShipQuickUI|Charts|Observation|SwiftData|Testing)\b)\w'
+    message: "An import outside the allow-list (SwiftUI, Foundation, Charts, Observation, SwiftData, Testing, ShipQuickUI). UIKit and third-party UI kits are refused. A child adds its own modules to the list."
     severity: warning
   no_custom_shape_or_style:
     name: "No custom Shape or ButtonStyle"
