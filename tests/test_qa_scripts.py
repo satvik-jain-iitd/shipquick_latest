@@ -1,5 +1,6 @@
 """Story #162 part 2: the QA loop's tools live in the kit (scripts/qa/), generic, with no project facts."""
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -87,3 +88,21 @@ def test_s162_no_project_facts_in_the_kit_tools():
 
 def test_s162_ci_installs_pillow_for_these_tests():
     assert "pillow" in (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+
+def test_s162_a_finding_with_a_closing_script_tag_cannot_break_out_of_the_page(tmp_path):
+    # PR #177 review: json.dumps does not escape "</", so "</script>" in a finding ended the script block.
+    home, out = tmp_path / "qa", tmp_path / "out"
+    png(home / "boards-1x" / "Welcome.png")
+    (home / "controls.json").write_text(json.dumps({"Welcome": []}))
+    (home / "design-audit.jsonl").write_text(json.dumps({"run": 1, "screen": "Welcome", "kind": "issue", "severity": "Major",
+                                                         "why": "</script><img src=x onerror=alert(1)>"}) + "\n")
+    flows = home / "flows.json"
+    flows.write_text(json.dumps({"name": "F", "start": "Welcome", "boards": ["Welcome"], "edges": []}))
+    r = py(QA / "flow_map.py", home, flows, out)
+    assert r.returncode == 0, r.stderr
+    assert "</script><img" not in (out / "index.html").read_text(encoding="utf-8")
+
+
+def test_s162_ci_pins_the_test_dependencies():
+    assert re.search(r"pip install pytest==\S+ pillow==\S+", (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))

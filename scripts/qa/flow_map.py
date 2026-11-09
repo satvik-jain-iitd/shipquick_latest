@@ -15,6 +15,11 @@ S = 0.5                      # board scale on the map
 BW, BH = int(390 * S), int(844 * S)
 GAPX, GAPY, TOP = 300, 150, 60
 
+def js(o):
+    """JSON for inside <script>: an escaped '</' can never close the block."""
+    return json.dumps(o).replace('</', '<\\/')
+
+
 def main(home, flows_path, out, audit_run=None):
     F = json.load(open(flows_path)); C = json.load(open(os.path.join(home, 'controls.json')))
     boards = F['boards']; bs = set(boards)
@@ -212,9 +217,9 @@ def main(home, flows_path, out, audit_run=None):
     total = len(progress.get('order', [])) or len(boards)
     locked = sum(1 for v in prog.values() if v.get('state') == 'locked')
     head = f"Screen {len(boards)} of {total} added · {locked} locked by the owner"
-    page = TEMPLATE.replace('%PANEL%', json.dumps(panel)).replace('%HEAD%', e(head)).replace('%TITLE%', e(F['name'])).replace('%W%', str(W)).replace('%H%', str(H)) \
+    page = TEMPLATE.replace('%PANEL%', js(panel)).replace('%HEAD%', e(head)).replace('%TITLE%', e(F['name'])).replace('%W%', str(W)).replace('%H%', str(H)) \
         .replace('%SVG%', '\n'.join(svg)).replace('%BOARDS%', '\n'.join(cards)).replace('%LABELS%', '\n'.join(labels)) \
-        .replace('%NOTES%', '\n'.join(notes)).replace('%PROTO%', json.dumps(proto)).replace('%START%', json.dumps(F['start'])) \
+        .replace('%NOTES%', '\n'.join(notes)).replace('%PROTO%', js(proto)).replace('%START%', js(F['start'])) \
         .replace('%COUNTS%', ' · '.join(f'{v} {k}' for k, v in collections.Counter(x['status'] for x in edges).items())) \
         .replace('%ABOUT%', e(F.get('about', '')))
     open(os.path.join(out, 'index.html'), 'w').write(page)
