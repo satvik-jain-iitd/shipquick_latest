@@ -7,7 +7,7 @@
 - The coder must use library components as they are: the library's own code, not a rewrite.
 - A custom component is built only after the owner says yes. The ask goes coder -> reviewer (qa) -> owner -> yes.
 - An approved custom component joins the library. It is never built twice.
-- There are two new repos (Android, iOS). Every child project carries them as submodules.
+- ~~There are two new repos (Android, iOS).~~ Changed (owner, 9 Nov 2026, "haan theek hai"): the Android and iOS libraries live inside the kit, as `ui/android/` and `ui/ios/`. The kit is already a submodule in every child, so no new submodule is needed.
 - Owner (9 Nov 2026): study Meta's Astryx. Use its components wherever possible. Wherever not, **copy its whole architecture**, the way it makes agents use a design system correctly.
 - All of this is generic for any ShipQuick child. GoServe is only the first user.
 
@@ -16,7 +16,7 @@
   - Android uses Jetpack Compose Material 3 (Google, stable 1.4.0).
   - iOS uses Apple's own SwiftUI components.
   - Both share one tokens file: colour, type, spacing, shape, motion, haptics and touch-target size.
-- **Repos:** `satvik-jain-iitd/shipquick-ui-android` and `satvik-jain-iitd/shipquick-ui-ios`, both public. They hold no brand or client data.
+- **Where it lives (changed 9 Nov 2026):** inside the kit, `ui/android/` (Gradle, `includeBuild`) and `ui/ios/` (SPM, `.package(path:)`). One repo, as Astryx does it. A contract change and both platforms land in one PR. The empty repos `shipquick-ui-android` and `shipquick-ui-ios` are not used; archiving them is the owner's call.
 - **Protected PRs:** each one gets my review, then a fresh second-reviewer agent, then the owner's one-line yes, and then I merge it. This goes into the process (S0).
 
 ## FINAL VERDICT: what we take from A, B and C (owner, 9 Nov 2026: take a thing fully, customise lightly, never hand-write)
@@ -68,13 +68,13 @@ MIT licence: every copied file keeps `Copyright (c) Meta Platforms, Inc. and aff
 
 ## Where things live
 - **ShipQuick kit** (already a submodule in every child) holds the platform-neutral layer: the doc schema, the contracts, `design/tokens.json` with the feel, the vendored Astryx CLI (`ui/cli/`), the agent block, the request flow and the checks. So the owner's two-repo shape holds and no third repo is needed.
-- **shipquick-ui-android:**
+- **`ui/android/` in the kit** (was the shipquick-ui-android repo):
   - the generated `Theme.kt`;
   - a `<Name>.doc.mjs` for each M3 component we use, so agents look it up (the component itself is Google's, never wrapped);
   - approved custom components only, each swizzled from M3 source;
   - screen templates built from M3 components;
   - generated contract classes, a catalog app and Roborazzi snapshots.
-- **shipquick-ui-ios:** an SPM package `ShipQuickUI`, with SwiftUI components, generated contract structs, docs, templates, Prefire and swift-snapshot-testing. Copy Astryx's Swift theme emitter and its Button (with its 44 pt tap area), keeping the MIT headers.
+- **`ui/ios/` in the kit** (was the shipquick-ui-ios repo): an SPM package `ShipQuickUI`, with SwiftUI components, generated contract structs, docs, templates, Prefire and swift-snapshot-testing. Copy Astryx's Swift theme emitter and its Button (with its 44 pt tap area), keeping the MIT headers.
 - **Web children (owner, 9 Nov 2026):** use `@astryxdesign/core` directly, with a pinned exact version and its own `astryx init` agent block. CI runs `astryx doctor --built` as a failing check. This closes the library pick in story #133. GoServe's PWA is not switched, because it is moving to native. A new story, **S5w**, wires this into `adopt.sh --platforms web`. Beta risk: the pin, plus a monthly check of the release notes.
 
 ## The rule (new CLAUDE.md rule 38, "Library first")
@@ -92,12 +92,13 @@ Every story runs radar first, writes the failing test first, ships one PR, and c
 - **S1. ADR-012 and rule 38.** Library first, native plus shared feel, the Astryx pattern, the MIT copy policy. Plus `docs/COMPONENT_LIBRARY.md` and `docs/templates/component-request.md`. The owner merges it, since it is a rule file.
 - **S2. The spec layer in the kit.** `ui/schema/component.schema.json` (copied from Astryx's doctypes and adapted), the dense-writing guide, the contract format, the doc-guard tests, and `design/tokens.json` with the feel added.
 - **S3. Vendor Astryx's CLI** into `ui/cli/` (MIT headers kept, the upstream commit recorded). Point it at our doc folders. Keep its `init`/`upgrade` agent block, `swizzle`, and a `doctor` that fails. A `ui/UPSTREAM.md` says how to pull upstream changes.
-- **S4. The Android repo.** Skeleton, theme, docs for the first ten M3 components we use (button, text field, list item, top app bar, navigation bar, bottom sheet, dialog, chip, card, snackbar), generated contracts with a drift test, five templates, a catalog app, Roborazzi.
-- **S5. The iOS repo.** The same set and templates on SwiftUI, with Prefire and snapshots on a macOS runner.
+- **S4. The Android library (`ui/android/` in the kit).** Skeleton, theme, docs for the first ten M3 components we use (button, text field, list item, top app bar, navigation bar, bottom sheet, dialog, chip, card, snackbar), generated contracts with a drift test, five templates, a catalog app, Roborazzi.
+- **S5. The iOS library (`ui/ios/` in the kit).** The same set and templates on SwiftUI, with Prefire and snapshots on a macOS runner.
 - **S6. Token emitters.** One `tokens.json` produces Compose `Theme.kt` and Swift `Tokens.swift`, checked by a golden-file test.
+- **CI (9 Nov 2026):** the Android and iOS jobs run only when `ui/android/**` or `ui/ios/**` change (path filters), each with a timeout. The macOS runner is free because the kit is public.
 - **S7. Enforcement in children.** detekt `ForbiddenImport` plus a Konsist template; SwiftLint `custom_rules`. Two tiers. Fixture apps with a good screen and a bad screen.
-- **S8. The request gate.** `scripts/check_component_request.py` in the library repos' CI and in `review_merge.sh`, plus a parity report.
-- **S9. `adopt.sh --platforms android,ios[,web]`.** It adds the pinned library submodules (`knowledge/ui-android`, `knowledge/ui-ios`), the `includeBuild` and SPM snippet, the lint configs and the protected paths, then runs `ui init` (web children run `astryx init` as well).
+- **S8. The request gate.** `scripts/check_component_request.py` in the kit's CI for `ui/android/` and `ui/ios/` and in `review_merge.sh`, plus a parity report.
+- **S9. `adopt.sh --platforms android,ios[,web]`.** It adds no new submodule: it writes the `includeBuild` (from `knowledge/shipquick_latest/ui/android`) and SPM `.package(path: "knowledge/shipquick_latest/ui/ios")` snippet, the lint configs and the protected paths, then runs `ui init` (web children run `astryx init` as well).
 - **S10. A "Design system" board on the canvas**, generated from both registries, next to Design learnings.
 - **S11. Vibe tests.** Ten fixed screen prompts per platform. The score is the share of screens with no raw UI. Results go in `docs/research/experiments.md`.
 - **S12 (later).** An MCP server (`search`, `get`) over the registries, and llms.txt.
