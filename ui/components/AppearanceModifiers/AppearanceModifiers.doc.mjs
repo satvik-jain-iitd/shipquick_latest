@@ -77,7 +77,9 @@ export default {
         {"name": "colorScheme", "note": "`.colorScheme(_:)`, iOS 13.0. Apple: \"Sets this view’s color scheme.\"", "status": "deprecated", "replacement": "preferredColorScheme"},
         {"name": "complicationForeground", "note": "`.complicationForeground()`, not on iOS. Apple: \"Promotes this view to the foreground in a complication.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (a watchOS complication; iOS has no complications)"},
         {"name": "foregroundColor", "note": "`.foregroundColor(_:)`, iOS 13.0. Apple: \"Sets the color of the foreground elements displayed by this view.\"", "status": "deprecated", "replacement": "foregroundStyle"},
-        {"name": "statusBar", "note": "`.statusBar(hidden:)`, iOS 13.0. Apple: \"Sets the visibility of the status bar.\"", "status": "deprecated", "replacement": "statusBarHidden"}
+        {"name": "statusBar", "note": "`.statusBar(hidden:)`, iOS 13.0. Apple: \"Sets the visibility of the status bar.\"", "status": "deprecated", "replacement": "statusBarHidden"},
+        {"name": "statusBarHidden", "note": "`.statusBarHidden(_:)`, iOS 13.0. Apple: \"Sets the visibility of the status bar.\"", "status": "deprecated", "replacement": "toolbarVisibility"},
+        {"name": "Color", "note": "iOS 13.0. Apple: \"A representation of a color that adapts to a given context.\""}
       ]
     }
   }

@@ -455,6 +455,49 @@ def test_s285_the_ios_list_has_a_doc_family_column(tmp_path):
     md = (out / ui_api_lists.IOS_MD.name).read_text()
     assert "| Apple page | Doc family |" in md and "Doc family:" in md
 
+
+# Story #285, second review of PR #294: rows mapped to the doc that owns them.
+def test_s285_review_2_rows_sit_in_the_doc_of_their_meaning():
+    fam = {n: f for f, names in ui_api_lists.IOS_DOC_FAMILY.items() for n in names}
+    want = {"confirmationDialog": "Dialog", "dismissalConfirmationDialog": "Dialog", "fullScreenCover": "Dialog",
+            "statusBar": "Appearance modifiers", "statusBarHidden": "Appearance modifiers", "Color": "Appearance modifiers",
+            "Canvas": "Canvas", "ButtonBorderShape": "Button", "buttonBorderShape": "Button",
+            "DocumentLaunchView": "DocumentLaunchView", "scrollDismissesKeyboard": "ScrollView"}
+    assert {n: fam.get(n) for n in want} == want
+
+
+def test_s285_review_2_the_docs_hold_what_the_map_says():
+    from check_ui_docs import read_doc
+    held = {}
+    for d in (ROOT / "ui" / "components").iterdir():
+        p = d / f"{d.name}.doc.mjs"
+        if p.is_file():
+            ios = read_doc(p).get("platformApi", {}).get("ios", {})
+            for i in ios.get("variants", []):
+                held.setdefault(i["name"], []).append(d.name)
+    for n, doc in {"confirmationDialog": "Dialog", "fullScreenCover": "Dialog", "statusBarHidden": "AppearanceModifiers",
+                   "Color": "AppearanceModifiers", "Canvas": "Canvas", "ButtonBorderShape": "Button",
+                   "DocumentLaunchView": "DocumentLaunchView", "scrollDismissesKeyboard": "ScrollView"}.items():
+        assert held.get(n) == [doc], (n, held.get(n))
+
+
+def test_s285_review_2_the_canvas_doc_says_do_not_use_and_names_a_replacement():
+    from check_ui_docs import read_doc
+    d = read_doc(ROOT / "ui" / "components" / "Canvas" / "Canvas.doc.mjs")
+    bad = [b["description"] for b in d["usage"].get("bestPractices", []) if not b.get("guidance")]
+    assert any(t.startswith("Do not use: Canvas. Use ") and "rule 38" in t for t in bad), bad
+
+
+def test_s285_review_2_foreach_and_refreshable_notes_say_they_work_on_stacks_and_scroll_views():
+    from check_ui_docs import read_doc
+    items = {i["name"]: i["note"] for i in read_doc(ROOT / "ui" / "components" / "List" / "List.doc.mjs")["platformApi"]["ios"]["variants"]}
+    assert "stacks and scroll views" in items["ForEach"] and "stacks and scroll views" in items["refreshable"]
+
+
+def test_s285_review_2_adr_012_writes_the_catch_all_ceiling_and_its_follow_up():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "catch-all" in adr and "split the catch-all docs" in adr
+
 def test_s288_review_2_the_saved_names_have_the_bridge_and_health_types():
     names = {n for p in json.loads(ui_api_lists.FW_SRC.read_text())["packages"] for n in p["names"]}
     assert {"SwiftUI.UIViewRepresentable", "SwiftUI.UIViewControllerRepresentable", "SwiftUI.UIHostingConfiguration",

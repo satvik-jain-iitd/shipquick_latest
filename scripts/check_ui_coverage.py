@@ -180,6 +180,7 @@ def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None, fw_names=N
             checked = ("component", "modifier")
             if any(len(r) < 11 for r in rows):
                 errs.append("ios API list: no Doc family column; run python3 scripts/ui_api_lists.py")
+            errs += [f"ios API list: row {r[0]} ({r[1].strip('`')}): Doc family is empty" for r in rows if len(r) > 10 and not r[10]]
             need_of = {r[1].strip("`"): r[10] if len(r) > 10 else r[4] for r in rows}
             fam_of = {f"SwiftUI.{r[1].strip('`')}": need_of[r[1].strip("`")] for r in rows if r[2] in checked}
             for fam, ds in sorted(ios_fams.items()):

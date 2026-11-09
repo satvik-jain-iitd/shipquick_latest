@@ -76,7 +76,10 @@ export default {
           "items": [
             "alert: `.alert(_:item:actions:)`, iOS 15.0. Apple: \"Presents an alert using the given data to produce the alert’s content and a text view as a title.\"",
             "dialogIcon: `.dialogIcon(_:)`, iOS 17.0. Apple: \"Configures the icon used by dialogs within this view.\"",
-            "dialogSuppressionToggle: `.dialogSuppressionToggle(isSuppressed:)`, iOS 17.0. Apple: \"Enables user suppression of dialogs and alerts presented within `self`, with a default suppression message on macOS. Unused on other platforms.\""
+            "dialogSuppressionToggle: `.dialogSuppressionToggle(isSuppressed:)`, iOS 17.0. Apple: \"Enables user suppression of dialogs and alerts presented within `self`, with a default suppression message on macOS. Unused on other platforms.\"",
+            "confirmationDialog: `.confirmationDialog(_:item:titleVisibility:actions:)`, iOS 15.0. Apple: \"Presents a confirmation dialog using data to produce the dialog’s content and a text view for the title.\"",
+            "dismissalConfirmationDialog: `.dismissalConfirmationDialog(_:shouldPresent:actions:)`, iOS 27.0. Apple: \"Presents a confirmation dialog upon an attempt to dismiss the window for this view.\"",
+            "fullScreenCover: `.fullScreenCover(isPresented:onDismiss:content:)`, iOS 14.0. Apple: \"Presents a modal view that covers as much of the screen as possible when binding to a Boolean value you provide is true.\""
           ]
         },
         {

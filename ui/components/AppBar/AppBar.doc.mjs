@@ -160,7 +160,6 @@ export default {
         {"name": "presentedWindowToolbarStyle", "note": "`.presentedWindowToolbarStyle(_:)`, not on iOS. Apple: \"Sets the style for the toolbar in windows created by interacting with this view.\"", "status": "unavailable-ios", "replacement": "toolbar"},
         {"name": "contentToolbar", "note": "`.contentToolbar(for:content:)`, iOS 18.4. Apple: \"Populates the toolbar of the specified content view type with the views you provide.\""},
         {"name": "ornament", "note": "`.ornament(visibility:attachmentAnchor:contentAlignment:ornament:)`, not on iOS. Apple: \"Presents an ornament.\"", "status": "unavailable-ios", "replacement": "toolbar"},
-        {"name": "statusBarHidden", "note": "`.statusBarHidden(_:)`, iOS 13.0. Apple: \"Sets the visibility of the status bar.\"", "status": "deprecated", "replacement": "toolbarVisibility"},
         {"name": "toolbar", "note": "`.toolbar(content:)`, iOS 14.0. Apple: \"Populates the toolbar or navigation bar with the specified items.\""},
         {"name": "toolbarBackground", "note": "`.toolbarBackground(_:for:)`, iOS 16.0. Apple: \"Specifies the preferred shape style of the background of a bar managed by SwiftUI.\""},
         {"name": "toolbarBackgroundVisibility", "note": "`.toolbarBackgroundVisibility(_:for:)`, iOS 18.0. Apple: \"Specifies the preferred visibility of backgrounds on a bar managed by SwiftUI.\""},
