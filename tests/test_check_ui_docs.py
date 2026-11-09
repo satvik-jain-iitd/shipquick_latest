@@ -123,6 +123,39 @@ def test_s182_a_web_only_prop_counts_as_named_by_the_contract(tmp_path):
     assert r.returncode == 0, r.stdout
 
 
+def test_s182_an_empty_or_missing_root_fails_and_names_the_path(tmp_path):
+    for root in (tmp_path, tmp_path / "nope"):
+        r = run(root)
+        assert r.returncode == 1 and str(root) in r.stdout
+
+
+def test_s182_a_web_only_prop_typed_by_a_bare_name_fails(tmp_path):
+    c = dict(CONTRACT, webOnly=[{"name": "type", "reason": "HTML form submission type"}])
+    r = run(make(tmp_path, doc_text=doc(PROPS + [{"name": "type", "type": "ButtonType", "description": "HTML type."}]), contract=c))
+    assert r.returncode == 1 and "'type'" in r.stdout
+
+
+def test_s182_a_union_of_literals_with_an_open_string_fails(tmp_path):
+    c = dict(CONTRACT, webOnly=[{"name": "rel", "reason": "HTML link relationship"}])
+    r = run(make(tmp_path, doc_text=doc(PROPS + [{"name": "rel", "type": "'noopener' | string", "description": "Link rel."}]), contract=c))
+    assert r.returncode == 1 and "rel" in r.stdout and "string" in r.stdout
+
+
+def test_s182_a_duplicate_prop_name_fails(tmp_path):
+    r = run(make(tmp_path, doc_text=doc(PROPS + [PROPS[0]])))
+    assert r.returncode == 1 and "duplicate" in r.stdout and "label" in r.stdout
+
+
+def test_s182_junk_after_the_json_in_a_doc_fails(tmp_path):
+    r = run(make(tmp_path, doc_text=doc() + "export const extra = 1;\n"))
+    assert r.returncode == 1 and "after" in r.stdout
+
+
+def test_s182_a_dense_twin_after_the_doc_is_allowed(tmp_path):
+    r = run(make(tmp_path, doc_text=doc() + 'export const docsDense = {"description": "btn; starts action"};\n'))
+    assert r.returncode == 0, r.stdout
+
+
 def test_s182_a_component_with_no_doc_fails(tmp_path):
     r = run(make(tmp_path, doc_text=False))
     assert r.returncode == 1 and "Button.doc.mjs" in r.stdout

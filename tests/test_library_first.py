@@ -73,9 +73,9 @@ def test_s181_library_doc_has_the_web_row_and_never_twice():
 
 
 def test_s181_trace_row_names_the_pr():
-    # "is last" only held until the next story appended its row (append-only log, rule 1); story #182 relaxed it.
-    rows = [l for l in (ROOT / "docs/process-trace.md").read_text(encoding="utf-8").splitlines() if l.startswith("|")]
-    assert any("Story #181" in r and "PR #195" in r for r in rows)
+    # "is last" held only until the next PR added a row (it broke PR #197), so check the row, not its place
+    rows = [l for l in (ROOT / "docs/process-trace.md").read_text(encoding="utf-8").splitlines() if "Story #181" in l]
+    assert rows and any("PR #195" in r for r in rows)
 
 
 def test_s181_adr_012_names_the_verdict_and_the_copy_policy():
