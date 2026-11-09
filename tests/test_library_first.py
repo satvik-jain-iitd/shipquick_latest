@@ -83,3 +83,21 @@ def test_s181_adr_012_names_the_verdict_and_the_copy_policy():
     for word in ("Jetpack Compose Material 3", "SwiftUI", "@astryxdesign/core", "Compose Multiplatform", "MIT",
                  "Copyright (c) Meta Platforms, Inc. and affiliates."):
         assert word in a, word
+
+
+def test_the_libraries_live_inside_the_kit_not_in_separate_repos():
+    # owner, 9 Nov 2026 ("haan theek hai"): ui/android/ and ui/ios/ in the kit, one PR for a contract and both platforms
+    adr = (ROOT / "docs/decisions/ADR-012.md").read_text(encoding="utf-8")
+    assert "## Where it lives" in adr and "ui/android/" in adr and "ui/ios/" in adr
+    for f in ("docs/COMPONENT_LIBRARY.md", "CLAUDE.md", "docs/templates/component-request.md"):
+        text = (ROOT / f).read_text(encoding="utf-8")
+        assert "shipquick-ui-android" not in text and "shipquick-ui-ios" not in text and "library repo" not in text, f
+
+
+def test_the_plan_names_no_separate_library_repo_outside_its_history_lines():
+    # PR #200 review: the plan still said "library repo" and "two-repo shape". History lines are marked "Changed" or struck.
+    for line in (ROOT / "docs/plans/2026-11-09-library-first.md").read_text(encoding="utf-8").splitlines():
+        if "Changed" in line or "~~" in line or "(was the shipquick-ui-" in line:
+            continue
+        low = line.lower()
+        assert "library repo" not in low and "two-repo" not in low, line

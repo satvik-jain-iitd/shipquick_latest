@@ -1,6 +1,6 @@
 # Component request
 
-Copy this into a new issue in the library repo. Add the label `component-request`.
+Copy this into a new issue in the ShipQuick kit repo (the libraries live in `ui/android/` and `ui/ios/`). Add the label `component-request`.
 The coder fills every line below. Then the coder stops work on that part of the screen.
 Full rule: `docs/COMPONENT_LIBRARY.md`.
 
