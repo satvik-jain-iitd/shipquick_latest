@@ -66,5 +66,12 @@ export default {
       "type": "string",
       "description": "Apple's init(decorative:) label: the asset name of an unlabeled, decorative image that VoiceOver skips. Use it instead of name."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "AsyncImage", "note": "iOS 15.0. Apple: \"A view that asynchronously loads and displays an image.\""}
+      ]
+    }
+  }
 };

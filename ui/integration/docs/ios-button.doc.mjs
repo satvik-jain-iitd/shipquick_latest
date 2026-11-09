@@ -81,6 +81,25 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "EditButton: iOS 13.0. Apple: \"A button that toggles the edit mode environment value.\"",
+            "NewDocumentButton: iOS 18.0. Apple: \"A button that creates and opens new documents.\"",
+            "PasteButton: iOS 16.0. Apple: \"A system button that reads items from the pasteboard and delivers it to a closure.\"",
+            "RenameButton: iOS 16.0. Apple: \"A button that triggers a standard rename action.\"",
+            "ButtonStyleConfiguration.Label: iOS 13.0. Apple: \"A type-erased label of a button.\"",
+            "DefaultButtonLabel: iOS 26.0. Apple: \"The default label to use for a button.\"",
+            "DefaultNewDocumentButtonLabel: iOS 27.0. Apple: \"The default label used for a new document button.\"",
+            "PrimitiveButtonStyleConfiguration.Label: iOS 13.0. Apple: \"A type-erased label of a button.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

@@ -64,5 +64,12 @@ export default {
       "description": "How thick the line is.",
       "default": "DividerDefaults.Thickness"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "Divider", "note": "iOS 13.0. Apple: \"A visual element that can be used to separate other content.\""}
+      ]
+    }
+  }
 };

@@ -61,6 +61,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "GroupBoxStyleConfiguration.Content: iOS 14.0. Apple: \"A type-erased content of a group box.\"",
+            "GroupBoxStyleConfiguration.Label: iOS 14.0. Apple: \"A type-erased label of a group box.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

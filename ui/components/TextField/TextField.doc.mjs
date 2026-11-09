@@ -174,5 +174,15 @@ export default {
       "description": "Pass .vertical to let the field grow to more lines.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "TextFieldLink", "note": "not on iOS. Apple: \"A control that requests text input from the user when pressed.\"", "status": "unavailable-ios", "replacement": "TextField"},
+        {"name": "SecureField", "note": "iOS 13.0. Apple: \"A control into which people securely enter private text.\""},
+        {"name": "TextEditor", "note": "iOS 14.0. Apple: \"A view that can display and edit long-form text.\""},
+        {"name": "TextInputBorderShape", "note": "iOS 27.0. Apple: \"A shape used to draw the border of a text input control.\""}
+      ]
+    }
+  }
 };

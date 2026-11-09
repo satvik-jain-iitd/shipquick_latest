@@ -67,5 +67,12 @@ export default {
       "description": "What scrolls.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "ScrollViewReader", "note": "iOS 14.0. Apple: \"A view that provides programmatic scrolling, by working with a proxy to scroll to known child views.\""}
+      ]
+    }
+  }
 };

@@ -69,5 +69,13 @@ export default {
       "description": "What shows when the group is open.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "supporting": [
+        {"name": "DisclosureGroupStyleConfiguration.Content", "use": "iOS 16.0. Apple: \"A type-erased content of a disclosure group.\""},
+        {"name": "DisclosureGroupStyleConfiguration.Label", "use": "iOS 16.0. Apple: \"A type-erased label of a disclosure group.\""}
+      ]
+    }
+  }
 };

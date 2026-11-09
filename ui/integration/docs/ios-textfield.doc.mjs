@@ -68,6 +68,27 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "SecureField: iOS 13.0. Apple: \"A control into which people securely enter private text.\"",
+            "TextEditor: iOS 14.0. Apple: \"A view that can display and edit long-form text.\"",
+            "TextInputBorderShape: iOS 27.0. Apple: \"A shape used to draw the border of a text input control.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: TextFieldLink. Use TextField."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
