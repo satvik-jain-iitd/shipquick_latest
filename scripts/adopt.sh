@@ -16,15 +16,19 @@
 # --check (story #124): prints the adoption verdict and exits 1 when not adopted, instead of writing anything.
 #   Adopted means: .github/workflows/shipquick-call.yml is pinned to the exact commit the
 #   knowledge/shipquick_latest submodule is at, and .pre-commit-config.yaml carries the ShipQuick hooks.
+# --kit-branch <b> (story #225, rule-24 children): writes `kit_branch: <b>` into shipquick-call.yml. The checks
+#   then read the submodule pin, .pre-commit-config.yaml and .shipquick/roles.yml from branch <b>, so `main` can
+#   carry only the caller. --check reads `kit_branch:` from the caller and prints one verdict per branch.
 # Needs git and python3. It never commits.
 set -eu
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQ="$(cd "$HERE/.." && pwd -P)"
-usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--check] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
-child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""
+usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
+child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --ref) [ -n "${2:-}" ] || usage; ref="$2"; shift 2 ;;
+    --kit-branch) [ -n "${2:-}" ] || usage; kit="$2"; shift 2 ;;
     --check) check_mode=1; shift ;;
     --coder) [ -n "${2:-}" ] || usage; coder="$2"; shift 2 ;;
     --reviewer) [ -n "${2:-}" ] || usage; reviewer="$2"; shift 2 ;;
@@ -39,29 +43,51 @@ child="$(cd "$child" && pwd -P)"
 top="$(git -C "$child" rev-parse --show-toplevel 2>/dev/null)" || { echo "adopt.sh: $child is not a git repository" >&2; exit 2; }
 [ "$(cd "$top" && pwd -P)" = "$child" ] || { echo "adopt.sh: run it on the root of the repository ($top)" >&2; exit 2; }
 
+[ -z "$kit" ] || git check-ref-format --branch "$kit" >/dev/null 2>&1 || { echo "adopt.sh: not a branch name: $kit" >&2; exit 2; }
+
 if [ -n "$check_mode" ]; then
   ok=1
   call="$child/.github/workflows/shipquick-call.yml"
-  sub_sha="$(git -C "$child" rev-parse -q --verify "HEAD:knowledge/shipquick_latest" 2>/dev/null || true)"
+  # story #225: the caller sits on this branch; the pin and the hooks sit on its kit branch (HEAD when none).
+  [ -n "$kit" ] || [ ! -f "$call" ] || kit="$(sed -n 's/^[[:space:]]*kit_branch:[[:space:]]*//p' "$call" | head -1 | tr -d "[:space:]'\"")"
+  here="$(git -C "$child" symbolic-ref -q --short HEAD || echo HEAD)"
+  kref=HEAD; at="at HEAD"
+  if [ -n "$kit" ] && [ "$kit" != "$here" ]; then
+    at="on $kit"
+    kref="$(git -C "$child" rev-parse -q --verify "refs/heads/$kit^{commit}" || git -C "$child" rev-parse -q --verify "refs/remotes/origin/$kit^{commit}" || true)"
+    if [ -z "$kref" ]; then
+      echo "not adopted: kit branch $kit not found (run: git fetch origin $kit)"
+      exit 1
+    fi
+  fi
+  sub_sha="$(git -C "$child" rev-parse -q --verify "$kref:knowledge/shipquick_latest" 2>/dev/null || true)"
+  pinned=""
   if [ ! -f "$call" ]; then
     echo "not adopted: no .github/workflows/shipquick-call.yml (run: bash $HERE/adopt.sh $child)"
     ok=0
   elif [ -z "$sub_sha" ]; then
-    echo "not adopted: no knowledge/shipquick_latest submodule found at HEAD"
+    echo "not adopted: no knowledge/shipquick_latest submodule found $at"
     ok=0
   else
     pinned="$(sed -n 's/^[[:space:]]*shipquick_ref:[[:space:]]*//p' "$call" | head -1 | tr -d "[:space:]'\"")"
     if [ "$pinned" != "$sub_sha" ]; then
-      echo "not adopted: shipquick-call.yml is pinned to $pinned, the submodule is at $sub_sha (run: bash $HERE/adopt.sh $child)"
+      echo "not adopted: shipquick-call.yml is pinned to $pinned, the submodule $at is at $sub_sha (run: bash $HERE/adopt.sh $child)"
       ok=0
     fi
   fi
-  if [ -f "$child/.pre-commit-config.yaml" ] && grep -q "check_local.sh" "$child/.pre-commit-config.yaml"; then :
-  else
-    echo "not adopted: .pre-commit-config.yaml has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
+  if [ "$kref" = HEAD ]; then hooks="$(cat "$child/.pre-commit-config.yaml" 2>/dev/null || true)"
+  else hooks="$(git -C "$child" show "$kref:.pre-commit-config.yaml" 2>/dev/null || true)"; fi
+  if ! printf '%s' "$hooks" | grep -q "check_local.sh"; then
+    echo "not adopted: .pre-commit-config.yaml$([ "$kref" = HEAD ] || echo " $at") has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
     ok=0
   fi
-  [ "$ok" = 1 ] && echo "adopted: pinned to $sub_sha, pre-commit hooks present"
+  if [ "$ok" = 1 ]; then
+    if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, pre-commit hooks present"
+    else
+      echo "$here: adopted, shipquick-call.yml pinned to $pinned, kit_branch $kit"
+      echo "$kit: adopted, submodule at $sub_sha, pre-commit hooks present"
+    fi
+  fi
   exit $((1 - ok))
 fi
 
@@ -121,9 +147,9 @@ put .github/workflows/roadmap-call.yml < "$tmp/call"
 [ -n "$ci_name" ] || echo "note: no name: found in .github/workflows/ci.yml, so the caller has no workflow_run trigger. Add one by hand if you want Review to update when the checks finish."
 
 # 2b. the ShipQuick checks caller (story #124): same pinning, triggered on every pull_request
-python3 - "$SQ/.github/workflows/shipquick-call.yml" "$sha" "$tag" > "$tmp/checkscall" <<'PYEOF'
+python3 - "$SQ/.github/workflows/shipquick-call.yml" "$sha" "$tag" "$kit" > "$tmp/checkscall" <<'PYEOF'
 import sys
-src, sha, tag = sys.argv[1:4]
+src, sha, tag, kit = sys.argv[1:5]
 lines = [l for l in open(src, encoding="utf-8").read().splitlines() if not l.startswith("#")]
 out = ["# The ShipQuick checks every pull request needs (added by ShipQuick scripts/adopt.sh): a call to the reusable workflow, pinned to one commit.",
        "# To move to a newer ShipQuick release, run adopt.sh again with --ref <tag>: it changes `uses:` and `shipquick_ref` together."]
@@ -134,6 +160,8 @@ for l in lines:
     l = l.replace("uses: ./.github/workflows/checks.yml", f"uses: satvik-jain-iitd/shipquick_latest/.github/workflows/checks.yml@{sha}" + (f" # {tag}" if tag else ""))
     l = l.replace("shipquick_ref: ${{ github.sha }}", f"shipquick_ref: {sha}")
     out.append(l)
+    if kit and l.strip().startswith("shipquick_ref:"):   # story #225: pin and hooks live on this branch
+        out.append(l[: len(l) - len(l.lstrip())] + f"kit_branch: {kit}")
 print("\n".join(out))
 PYEOF
 put .github/workflows/shipquick-call.yml < "$tmp/checkscall"

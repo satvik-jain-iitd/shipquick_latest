@@ -486,3 +486,18 @@ Scenario: a coder agent starts an Android screen from a template
   And the step flow puts the outline button before the filled one and uses imePadding()
 ```
 Tests: `tests/test_android_templates.py` (s134).
+
+**Story #225: a rule-24 child keeps the kit on a kit branch.**
+```gherkin
+Scenario: main carries only the caller; the pin, the hooks and roles.yml sit on the kit branch
+  Given a child whose main has only .github/workflows/shipquick-call.yml with kit_branch: dev
+  And dev has the knowledge/shipquick_latest submodule and .pre-commit-config.yaml with the ShipQuick hooks
+  When adopt.sh --check runs on main
+  Then it reads the pin and the hooks from dev, prints one line for main and one for dev, and exits 0
+  And a wrong pin on dev, no hooks on dev, or no dev branch at all exits 1 and names dev
+  And adoption_scan.py flags a wrong pin, no submodule or no hooks on the kit branch
+  And adopt.sh --kit-branch dev writes kit_branch: dev under shipquick_ref in the caller
+  And checks.yml takes kit_branch (default empty) and the adoption and roles jobs read from it, through env
+  And a child without kit_branch is checked exactly as before
+```
+Tests: `tests/test_adopt.py`, `tests/test_adoption_scan.py`, `tests/test_checks_workflow.py` (s225).

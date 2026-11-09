@@ -4,6 +4,10 @@ ShipQuick commit more than $days old, opens (or reuses) one `feedback` issue in 
 the child and the gap. A child session reports its own gaps with scripts/feedback.sh; this script
 is ShipQuick noticing when a child never ran it at all.
 
+A caller with `kit_branch: <b>` (story #225, a rule-24 child) is also checked on branch <b>: the
+knowledge/shipquick_latest submodule there must equal the caller's pin, and .pre-commit-config.yaml
+there must carry the ShipQuick hooks. A caller without it is scanned exactly as before.
+
 A line in docs/children.md may end with " private" (`owner/repo private`). A private child is
 read with the SHIPQUICK_CHILD_TOKEN secret (fine-grained PAT, contents+metadata read only on that
 repo — see docs/ADOPTION.md); public children keep the workflow's own github.token. A private
@@ -27,6 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REPO = "satvik-jain-iitd/shipquick_latest"
 PIN = re.compile(r"^\s*shipquick_ref:\s*([0-9a-f]{40})", re.M)
+KIT = re.compile(r"^\s*kit_branch:\s*['\"]?([\w./-]+)", re.M)
 CHILD_TOKEN_ENV = "SHIPQUICK_CHILD_TOKEN"
 
 
@@ -70,6 +75,17 @@ def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str |
     if not m:
         return f"{child}: shipquick-call.yml on {branch} has no shipquick_ref pin"
     sha = m.group(1)
+    k = KIT.search(body)
+    if k:   # story #225: a rule-24 child keeps the submodule and the hooks on its kit branch
+        kit = k.group(1)
+        sub = fetch(f"repos/{child}/contents/knowledge/shipquick_latest?ref={kit}")
+        if not sub or sub.get("type") != "submodule":
+            return f"{child}: no knowledge/shipquick_latest submodule on kit branch {kit}"
+        if sub.get("sha") != sha:
+            return f"{child}: caller on {branch} pins {sha[:7]}, the submodule on kit branch {kit} is at {str(sub.get('sha'))[:7]}"
+        hooks = fetch(f"repos/{child}/contents/.pre-commit-config.yaml?ref={kit}")
+        if not hooks or "check_local.sh" not in base64.b64decode(hooks.get("content", "")).decode("utf-8", "replace"):
+            return f"{child}: .pre-commit-config.yaml on kit branch {kit} has no ShipQuick hooks"
     commit = fetch(f"repos/{REPO}/commits/{sha}")
     if commit is None:
         return f"{child}: pinned to {sha[:7]}, which {REPO} cannot find"
