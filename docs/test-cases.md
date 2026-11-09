@@ -663,3 +663,13 @@ Scenario: an Android component row counts only for a doc of its own family
   And a supporting entry that names a variant row fails with "no such supporting row"
 ```
 Tests: `tests/test_ui_coverage.py` (s231, three new tests). Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android own docs part 2
+```gherkin
+Scenario: each Android component row has a doc of its own family
+  Given the component rows BottomSheetScaffold, DatePickerDialog, DateRangePicker, TimePickerDialog, SwipeToDismissBox, Icon, Label (folder TooltipLabel), MaterialTheme and Text (android side of the existing Text doc)
+  When check_ui_coverage.py runs
+  Then none of them prints "needs a doc of family" or "(component)" as a GAP
+  And each new doc names the row in platforms.android and is not an extra
+```
+Proof: the Android GAP drops from 18 to 9. No script changed. Local: `python3 scripts/check_ui_coverage.py`.

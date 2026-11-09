@@ -1,0 +1,37 @@
+{
+  "name": "MaterialTheme",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "colorScheme": {
+        "type": {
+          "kind": "named",
+          "name": "ColorScheme"
+        },
+        "optional": true
+      },
+      "typography": {
+        "type": {
+          "kind": "named",
+          "name": "Typography"
+        },
+        "optional": true
+      },
+      "shapes": {
+        "type": {
+          "kind": "named",
+          "name": "Shapes"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

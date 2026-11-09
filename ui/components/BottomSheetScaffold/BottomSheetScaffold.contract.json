@@ -1,0 +1,35 @@
+{
+  "name": "BottomSheetScaffold",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "sheetContent": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "scaffoldState": {
+        "type": {
+          "kind": "named",
+          "name": "BottomSheetScaffoldState"
+        },
+        "optional": true
+      },
+      "sheetPeekHeight": {
+        "type": {
+          "kind": "named",
+          "name": "Dp"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

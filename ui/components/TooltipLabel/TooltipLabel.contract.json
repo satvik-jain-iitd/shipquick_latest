@@ -1,0 +1,27 @@
+{
+  "name": "TooltipLabel",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "label": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "isPersistent": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}
