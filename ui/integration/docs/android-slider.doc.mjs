@@ -57,10 +57,16 @@ export default {
               "When false, the part is greyed out and ignores the user."
             ],
             [
+              "valueRange",
+              "ClosedFloatingPointRange<Float>",
+              "0f..1f",
+              "The lowest and highest value, like 0f..100f."
+            ],
+            [
               "steps",
               "number",
               "0",
-              "How many stops between the ends. 0 means smooth."
+              "How many stops between the two ends of valueRange. 0 means smooth."
             ],
             [
               "onValueChangeFinished",

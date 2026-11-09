@@ -87,9 +87,15 @@ export default {
       "default": "true"
     },
     {
+      "name": "valueRange",
+      "type": "ClosedFloatingPointRange<Float>",
+      "description": "The lowest and highest value, like 0f..100f.",
+      "default": "0f..1f"
+    },
+    {
       "name": "steps",
       "type": "number",
-      "description": "How many stops between the ends. 0 means smooth.",
+      "description": "How many stops between the two ends of valueRange. 0 means smooth.",
       "default": "0"
     },
     {
