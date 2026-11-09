@@ -161,3 +161,49 @@ def test_s242_a_bom_that_lists_versions_only_in_its_module_file_is_read():
              "r/g/a/1/a-1.pom": _pom(pkg="jar"), "r/g/a/1/a-1.jar": b"A"}
     got = vb.resolve_maven(("g", "bom", "1"), [("g", "a", "")], ["r"], lambda u: files.get(u))
     assert "a-1.jar" in [m["file"].rsplit("/", 1)[1] for m in got]
+
+
+WORKFLOW = (ROOT / ".github/workflows/vendor-backup.yml").read_text()
+RESTORE = (ROOT / "scripts/restore_vendor.sh").read_text()
+
+
+def _steps(text):
+    return ["      - " + s for s in text.split("\n      - ")[1:]]
+
+
+def test_s242_only_a_run_on_dev_writes_the_backup():
+    push = [s for s in _steps(WORKFLOW) if "git -c" in s and "push origin" in s]
+    assert len(push) == 1 and "if: github.ref == 'refs/heads/dev'" in push[0]
+    trigger = WORKFLOW.split("push:")[1].split("permissions:")[0]
+    assert "branches: [dev]" in trigger and "feat/" not in trigger
+
+
+def test_s242_the_write_token_is_set_on_the_push_step_only():
+    holders = [s for s in _steps(WORKFLOW) if "github.token" in s or "GH_TOKEN" in s]
+    assert len(holders) == 1 and "push origin" in holders[0]
+    assert "git config --global http" not in WORKFLOW
+    assert WORKFLOW.count("github.token") == 1  # no job-level or workflow-level env
+
+
+def test_s242_the_restore_script_passes_paths_as_argv_or_env_never_into_source_text():
+    for line in RESTORE.splitlines():
+        if "python3 -c" in line:
+            assert "$" not in line.split("python3 -c", 1)[1].split("' ")[0].split('" ')[0], line
+    assert "<<EOF" not in RESTORE and RESTORE.count("<<'EOF'") == 2  # quoted heredocs: the shell pastes nothing in
+    assert "$B" not in RESTORE.split("settings.gradle")[1].split("build.gradle")[0]
+    assert "VENDOR_REPO=" in RESTORE and "VENDOR_BOM=" in RESTORE
+
+
+def test_s242_a_file_the_manifest_does_not_name_fails_the_check(tmp_path):
+    b, lock = make_backup(tmp_path)
+    (b / "maven/old/1/old-1.pom").parent.mkdir(parents=True)
+    (b / "maven/old/1/old-1.pom").write_bytes(b"left behind")
+    assert any("file not in the MANIFEST: maven/old/1/old-1.pom" in p for p in vb.manifest_check(b, lock))
+
+
+def test_s242_npm_index_and_readme_are_not_package_files(tmp_path):
+    b, lock = make_backup(tmp_path)
+    (b / "npm-cache/_cacache/index-v5/ab").mkdir(parents=True)
+    (b / "npm-cache/_cacache/index-v5/ab/cd").write_text("index")
+    (b / "README.md").write_text("x")
+    assert vb.manifest_check(b, lock) == []

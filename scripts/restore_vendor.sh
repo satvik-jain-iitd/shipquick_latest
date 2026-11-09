@@ -23,16 +23,17 @@ test -d "$W/tool/node_modules/@astryxdesign/core"
 echo "ok   npm ci --offline restored $(ls "$W/tool/node_modules" | wc -l) top-level entries"
 
 # Gradle: the only repository is the backup folder.
-BOM=$(python3 -c "import json,sys; print(json.load(open('$HERE/vendor_pins.json'))['bom'])")
+# Paths and the BOM reach the Python and Gradle code as argv or environment variables, never pasted into source text.
+BOM=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["bom"])' "$HERE/vendor_pins.json")
 mkdir -p "$W/gradle"
-cat > "$W/gradle/settings.gradle" <<EOF
+cat > "$W/gradle/settings.gradle" <<'EOF'
 rootProject.name = 'vendor-restore-proof'
 dependencyResolutionManagement {
   repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
-  repositories { maven { url = uri('$B/maven') } }
+  repositories { maven { url = uri(System.getenv('VENDOR_REPO')) } }
 }
 EOF
-cat > "$W/gradle/build.gradle" <<EOF
+cat > "$W/gradle/build.gradle" <<'EOF'
 plugins { id 'java-library' }
 configurations {
   vendorCompile {
@@ -46,18 +47,18 @@ configurations {
   }
 }
 dependencies {
-  vendorCompile platform('$BOM')
+  vendorCompile platform(System.getenv('VENDOR_BOM'))
   vendorCompile 'androidx.compose.material3:material3'
   vendorCompile 'androidx.compose.material:material-icons-core'
 }
 tasks.register('resolveVendor') {
   doLast {
     def files = configurations.vendorCompile.incoming.files.files
-    files.each { println "resolved \${it.name}" }
+    files.each { println "resolved ${it.name}" }
     if (!files.any { it.name.endsWith('.aar') }) throw new GradleException("no .aar resolved: the Compose Android libraries are not restorable")
-    if (files.size() < 5) throw new GradleException("only \${files.size()} files resolved from the backup")
+    if (files.size() < 5) throw new GradleException("only ${files.size()} files resolved from the backup")
   }
 }
 EOF
-(cd "$W/gradle" && gradle --offline --no-daemon --console=plain resolveVendor)
+(cd "$W/gradle" && VENDOR_REPO="$B/maven" VENDOR_BOM="$BOM" gradle --offline --no-daemon --console=plain resolveVendor)
 echo "ok   Gradle --offline resolved the pinned Compose artifacts from the backup"

@@ -35,6 +35,27 @@ Only GitHub CI. Nothing is downloaded or installed on the owner's Mac. The workf
 
 Nobody pushes to `backup/vendor` by hand.
 
+## Who may write it
+
+Only a run on `dev` writes the branch. The push step has `if: github.ref == 'refs/heads/dev'`. A run on any other branch, or a
+manual run from another branch, builds and checks the backup, then stops before the push. The write token is set on the push
+step only. `tests/test_vendor_backup.py` reads the workflow and fails if this changes.
+
+The first backup (commit `0ff408a`) was written by the old trigger of the feature branch. After this PR merges, rebuild it
+from `dev`: run the workflow on `dev` once.
+
+To-do for the owner (not done by an agent): add a GitHub ruleset on `refs/heads/backup/vendor` that blocks force-push and
+blocks delete. Nobody can then rewrite or remove the backup.
+
+## How far the checks go
+
+- npm: each tarball is checked against the lockfile integrity (sha512). The lockfile is in git, so this is a real check.
+- Maven: each file is checked against the `.sha256` or `.sha1` beside it. Those come from the same server as the file.
+  So this catches a broken download. It does not catch a server that was changed on purpose. The first download is trusted.
+  We do not check the `.asc` signatures. That would need Google's and JetBrains' signing keys in a pinned file and `gpg` on the
+  runner. The files are stored with their own `sha256` in the MANIFEST, so any later change shows up.
+- The restore refuses a backup that holds a file the MANIFEST does not name, so an old version left behind cannot hide there.
+
 ## How the size checks skip it
 
 The file-size check (500 KB) and pre-commit run on `dev` and on pull requests. `ci.yml` runs on pushes to `dev` and

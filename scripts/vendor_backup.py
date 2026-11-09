@@ -297,6 +297,8 @@ def build(dest: Path, repos=None, fetch=None) -> None:
     for e in entries:
         e["date"] = old.get((e["name"], e["version"], e["file"]), today)
     entries.sort(key=lambda e: (e["kind"], e["name"], e["version"], e["file"]))
+    for stale in unlisted(dest, entries):  # a version that left the pins is removed, so the folder equals the MANIFEST
+        (dest / stale).unlink()
     if UNRESOLVED:
         print("NOT BACKED UP (no POM in any repository):", ", ".join(sorted(set(UNRESOLVED))))
     mf.write_text(json.dumps({"made": today, "unresolved": sorted(set(UNRESOLVED)), "artifacts": entries}, indent=1) + "\n")
@@ -338,7 +340,23 @@ def manifest_check(folder: Path, lock: Path = LOCK) -> list[str]:
     for g, a, v in pinned_roots():
         if (f"{g}:{a}", v) not in maven if v else not any(n == f"{g}:{a}" for n, _ in maven):
             bad.append(f"pinned Gradle artifact not in the backup: {g}:{a}:{v or '(from the BOM)'}")
+    bad += [f"file not in the MANIFEST: {x}" for x in unlisted(folder, arts)]
     return bad
+
+
+# Folders whose every file must be in the MANIFEST. npm's index and logs are not packages, so they are not checked.
+CHECKED = ("maven/", "licenses/", "npm-cache/_cacache/content-v2/")
+
+
+def unlisted(folder: Path, arts: list[dict]) -> list[str]:
+    """Files under the checked folders that the MANIFEST does not name (an old version that stayed behind)."""
+    listed = {e.get(k) for e in arts for k in ("file", "license_file")}
+    out = []
+    for p in sorted(folder.rglob("*")):
+        rel = p.relative_to(folder).as_posix()
+        if p.is_file() and rel.startswith(CHECKED) and rel not in listed:
+            out.append(rel)
+    return out
 
 
 def main(argv=None) -> int:

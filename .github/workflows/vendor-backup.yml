@@ -36,11 +36,9 @@ jobs:
         with:
           node-version: "22"
       - name: Open backup/vendor (create the orphan branch when it does not exist)
-        env:
-          GH_TOKEN: ${{ github.token }}
+        # No token here: the repository is public, so reading needs none. The token lives only on the push step.
         run: |
           URL="https://github.com/${{ github.repository }}.git"
-          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads "$URL" backup/vendor >/dev/null; then
@@ -55,13 +53,17 @@ jobs:
           python3 src/scripts/vendor_backup.py --build backup
           python3 src/scripts/vendor_backup.py --manifest-check backup
       - name: Commit and push to backup/vendor
+        # Only a push to dev writes the backup. A branch run or a manual run builds and checks it, and stops here.
+        if: github.ref == 'refs/heads/dev'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           cd backup
           printf '%s\n' "# backup/vendor" "" "Offline copy of the pinned npm and Compose dependencies (story #242). Written only by the vendor-backup workflow." "Read docs/VENDOR_BACKUP.md on dev. Do not edit by hand." > README.md
           git add -A
           if git diff --cached --quiet; then echo "backup already up to date"; exit 0; fi
           git commit -q -m "chore(vendor): refresh backup from ${GITHUB_SHA::8}"
-          git push origin HEAD:backup/vendor
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push origin HEAD:backup/vendor
           du -sh . --exclude=.git | tail -1
           python3 -c "import json; print(len(json.load(open('MANIFEST.json'))['artifacts']), 'artifacts')"
   restore:
