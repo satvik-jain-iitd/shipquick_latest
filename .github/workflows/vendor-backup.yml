@@ -86,3 +86,9 @@ jobs:
         run: |
           node --version; npm --version; gradle --version | head -5
           bash src/scripts/restore_vendor.sh backup "$RUNNER_TEMP/restore"
+      - name: Debug (only on failure)
+        if: failure()
+        run: |
+          d=backup/maven/androidx/compose/runtime/runtime-annotation-jvm/1.9.3
+          ls "$d"; grep -n -B2 -A6 "kotlin-stdlib" "$d"/*.module | head -60 || true
+          grep -n -B1 -A4 "kotlin-stdlib" "$d"/*.pom | head -30 || true
