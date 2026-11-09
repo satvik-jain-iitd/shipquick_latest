@@ -56,6 +56,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "LabelStyleConfiguration.Icon: iOS 14.0. Apple: \"A type-erased icon view of a label.\"",
+            "LabelStyleConfiguration.Title: iOS 14.0. Apple: \"A type-erased title view of a label.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

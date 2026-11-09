@@ -75,5 +75,13 @@ export default {
       "description": "The SF Symbol name for the icon.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "supporting": [
+        {"name": "LabelStyleConfiguration.Icon", "use": "iOS 14.0. Apple: \"A type-erased icon view of a label.\""},
+        {"name": "LabelStyleConfiguration.Title", "use": "iOS 14.0. Apple: \"A type-erased title view of a label.\""}
+      ]
+    }
+  }
 };
