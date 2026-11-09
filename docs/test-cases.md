@@ -273,3 +273,15 @@ Scenario: the publish list and the check come from canvas.json
   And --verify with a full listing exits 0
 ```
 Tests: `tests/test_canvas_stage.py` (S19 to S21).
+
+## Stages as columns, and the Design learnings board (#165)
+
+```gherkin
+Scenario: a column layout ends on the learnings board
+  Given a manifest with "layout": "columns" and a section with "id": "learnings"
+  When canvas_stage lays it out
+  Then every section sits fully right of the one before it, on one top line, and the same input gives the same layout
+  And the learnings board has three columns (owner taste, craft rules, what testing taught), newest on top, inside its section
+  And a column layout with no learnings section, or a learnings row with an unknown kind, stops the run
+```
+Tests: `tests/test_canvas_stage.py` (S22 to S26).

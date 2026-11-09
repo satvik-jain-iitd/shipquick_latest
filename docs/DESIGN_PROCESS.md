@@ -22,12 +22,27 @@ Never jump to making screens before the direction is final.
 
 ## 3. The canvas by stage (29 Oct 2026)
 
-One canvas per project, five sections top to bottom, each on its own background board:
-1. Production: the screen as it is live today, the latest version only.
-2. Design final, not live: the owner said yes; not coded yet, or coded behind a flag the live build does not carry.
-3. In discussion: no decision yet, or on hold.
-4. Rejected: tried and not taken, or replaced by a later pick.
-5. Mistakes, fixed: the old screen as it was when it was wrong, with a note naming the fix and the corrected board in section 1.
+One canvas per project. Each stage is a section on its own background board.
+
+Stages are columns, read left to right (9 Nov 2026, story #165). The owner reads a process left to right, like a kanban board. So the columns follow the order a design moves, and end on what the team learned:
+1. In discussion: no decision yet, or on hold. Prefix IN TALK.
+2. Approved, not built: the owner said yes; no code yet. Prefix DESIGN.
+3. On dev: coded and on the dev link, or behind a flag the live build does not carry. Prefix ON DEV (or ON STAGING).
+4. Production: the screen as it is live today, the latest version only. Prefix LIVE.
+5. Mistakes, fixed: the old screen as it was when it was wrong, with a note naming the fix and the corrected board in Production. Prefix OLD.
+6. Rejected: tried and not taken, or replaced by a later pick. It sits near the end because it is the feedback loop. Prefix REJECTED.
+7. Design learnings: one board the tool makes for you (see below). Prefix LEARNINGS.
+
+Set `"layout": "columns"` in the manifest. Each section is one column; its rows stack top to bottom inside it. A column that grows past 8000 px splits into tiles downward, as before. Every run places every column again, so a growing column never meets the next one. Without the key, sections stack top to bottom (the old layout), so an old canvas does not move until you choose.
+
+The Design learnings board (9 Nov 2026, story #165). The owner is learning design; the reviewer is the expert. The board keeps what he likes and dislikes, and teaches him back.
+- It lives in the section with `"id": "learnings"`. In column layout that section is required; the tool stops without it.
+- Its rows are in that section's `"learnings"` list: `{"date": "2026-11-09", "kind": "owner", "text": "...", "link": "..."}`. `link` is optional.
+- `kind` is one of three columns: `owner` (the owner's own taste, credited to him), `craft` (a craft rule the reviewer taught), `testing` (what testing taught both). Any other kind stops the run.
+- The tool draws one board, `design-learnings.dc.html`, three columns, newest on top. Never edit the board by hand; edit the list.
+- After every owner design decision, the reviewer adds one row the same day.
+- An `owner` row is his call. A generic rule never overwrites it. When they disagree, both rows stay, and the note says which one stands for this project.
+- Each new frame says in one line which rule it shows and why, so the owner learns while he picks.
 
 How it is kept:
 - The layout comes from a manifest (`design/canvas-stages.json`: sections, rows, the boards in each row, the purpose of each section) through `scripts/canvas_stage.py`. A board moves by editing the manifest and running the tool, never by dragging.
@@ -39,11 +54,14 @@ How it is kept:
     "ink": "#rrggbb", "paper": "#ffffff", "font": "'Project Sans', system-ui, sans-serif",
     "start_here": "How to read this canvas: ...", "start_tint": "sage",
     "remove_notes": ["an-old-title-note"],
+    "layout": "columns",
     "sections": [
-      {"id": "production", "title": "Section 1 · Production", "purpose": "What is live today.", "prefix": "LIVE", "tint": "sage",
-       "rows": [{"id": "1a", "title": "1a · First open", "boards": ["Welcome.dc.html"], "notes": ["first-open"]}]},
-      {"id": "final", "title": "Section 2 · Design final, not live", "purpose": "...", "prefix": "DESIGN", "tint": "teal",
-       "rows": [{"id": "2a", "title": "2a · Approved, being coded", "prefix": "ON STAGING", "boards": ["Map.dc.html"], "notes": []}]}
+      {"id": "talk", "title": "1 · In discussion", "purpose": "Waiting on a pick.", "prefix": "IN TALK", "tint": "yellow",
+       "rows": [{"id": "1a", "title": "1a · Sign-in options", "boards": ["SignIn-A.dc.html", "SignIn-B.dc.html"], "notes": []}]},
+      {"id": "production", "title": "4 · Production", "purpose": "What is live today.", "prefix": "LIVE", "tint": "sage",
+       "rows": [{"id": "4a", "title": "4a · First open", "boards": [{"board": "Welcome.dc.html", "pr": "#12", "approved": "2026-10-20"}], "notes": ["first-open"]}]},
+      {"id": "learnings", "title": "7 · Design learnings", "purpose": "What we learned, newest on top.", "prefix": "LEARNINGS", "tint": "gray",
+       "rows": [], "learnings": [{"date": "2026-11-09", "kind": "owner", "text": "Main button at the bottom, same place every step."}]}
     ]
   }
   ```
@@ -51,8 +69,8 @@ How it is kept:
 - A background is an artboard, listed first in the canvas order, sized around everything inside it. A drawn note never sits under a screen, so a note is never a frame.
 - Nothing ever sits outside its background board: no text, icon, image, note or screen. The tool refuses a layout where a box is outside its board or two boxes overlap.
 - Inside Production the rows follow the user's journey left to right, then the other roles (staff, admin).
-- Every board's name starts with its state: LIVE, ON STAGING, DESIGN, IN TALK, REJECTED, OLD, UNSORTED.
-- A "start here" note above section 1 says how to read the canvas. Section titles say the purpose; each section note says what it holds and when a board moves.
+- Every board's name starts with its state: LIVE, ON STAGING, ON DEV, DESIGN, IN TALK, REJECTED, OLD, LEARNINGS, UNSORTED.
+- A "start here" note above the first section says how to read the canvas. In column layout it says: one stage per column, read left to right, end on the learnings. Section titles say the purpose; each section note says what it holds and when a board moves.
 - A board the manifest forgets lands in an Unsorted row, so nothing is lost and the gap shows.
 - Chat never cites a canvas version number; the link always opens the latest.
 - Publish from the canvas, never from memory (9 Nov 2026, story #163). A tall section splits into a new tile file on its own. A typed list misses it, and its boards float with no background.
