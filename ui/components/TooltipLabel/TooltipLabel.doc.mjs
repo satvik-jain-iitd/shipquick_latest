@@ -2,7 +2,7 @@
 /** Facts from Google: current.txt of material3 1.4.0 (AOSP 5113b82a) and https://developer.android.com/reference/kotlin/androidx/compose/material3/package-summary (read 9 Nov 2026). Props are Compose parameters. The folder is not Label: ui/components/Label is the iOS Label doc, a different part. */
 export default {
   "type": "component",
-  "name": "TooltipLabel",
+  "name": "Label",
   "displayName": "Label (tooltip label)",
   "platforms": {
     "android": "androidx.compose.material3.Label",
