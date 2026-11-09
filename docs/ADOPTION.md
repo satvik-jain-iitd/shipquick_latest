@@ -92,7 +92,7 @@ A child refuses hand-drawn UI with lint. The kit ships the configs. Wiring them 
 - **Two tiers.** On a laptop every rule is a warning, so a local run reports and does not fail. In CI the same rules are errors:
   detekt reads `detekt.yml` and then `detekt-ci.yml`, and SwiftLint runs with `--strict`.
 - **CI only.** Install nothing on a Mac. The kit's jobs `ui-android-lint` and `ui-ios-lint` show the exact steps.
-- **Your own UI kits:** add them to `forbiddenPatterns` (detekt) and to `no_uikit_or_ui_kit_import` (SwiftLint).
+- **Your own UI kits and modules:** add UI kits to `forbiddenPatterns` (detekt). Add your own module names to the allow-list in `no_import_outside_allowlist` (SwiftLint).
 - Do not silence a rule with a disable comment. The lint does not stop one: `blanket_disable_command` flags only a disable that
   is never switched back on, and `superfluous_disable_command` flags only a disable that hides nothing. A single
   `swiftlint:disable:next` passes both. The kit's disable-comments check is what catches it: a disable comment on an added line
