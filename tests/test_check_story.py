@@ -112,3 +112,10 @@ def test_s155_check_local_skips_the_story_check_when_gh_is_not_logged_in(tmp_pat
 def test_s194_an_inline_value_that_crosses_a_line_break_is_read_whole():
     r = run("Who does it: the admin,\non the admin app City screen,\nabout twice a month\n\n## Scenarios\n")
     assert r.returncode == 0, r.stdout
+
+
+def test_s194_a_wrapped_value_stops_at_a_heading_or_a_list_line():
+    # PR #197 review: the wrap rule must not borrow commas from the next section.
+    for nxt in ("## Scenarios\n- a, b, c\n", "- a, b, c\n", "* a, b, c\n"):
+        r = run("Who does it: the admin\n" + nxt)
+        assert r.returncode == 1, (nxt, r.stdout)

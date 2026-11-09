@@ -27,7 +27,12 @@ def check(body: str) -> str | None:
         return f"the story has no `Who does it:` line ({SHAPE})"
     value = m.group(1).strip()
     if m.re is INLINE and value.count(",") < 2:   # a value that wraps: read on to the first blank line
-        value = " ".join([value, *body[m.end():].split("\n\n", 1)[0].split()]).strip()
+        more = []
+        for line in body[m.end():].split("\n")[1:]:
+            if not line.strip() or line.lstrip().startswith(("#", "-", "*")):   # a blank, a heading or a list line ends it
+                break
+            more.append(line.strip())
+        value = " ".join([value, *more]).strip()
     parts = [p for p in (s.strip() for s in value.split(",")) if p]
     if not value or "<" in value or value.lower() == "_no response_" or len(parts) < 3:
         return f"`Who does it:` must name the actor, the app or screen, and how often ({SHAPE}); found: {value!r}"

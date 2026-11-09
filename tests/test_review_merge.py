@@ -708,3 +708,16 @@ def test_s194_owner_yes_words_made_only_of_spaces_refuse(env):
 
 def test_s194_a_second_review_of_dots_refuses(env):
     refused(*env(pr=with_review(YES.replace("fresh reviewer agent, 0 open findings", "..........")), pr_files=PROTECTED), "Second review:")
+
+
+def test_s194_the_second_review_prefix_does_not_count_as_words(env):
+    refused(*env(pr=with_review(YES.replace("fresh reviewer agent, 0 open findings", "ok fine!!!!")), pr_files=PROTECTED), "Second review:")
+
+
+def test_s194_owner_yes_words_need_a_letter(env):
+    refused(*env(pr=with_review(YES.replace('"haan merge karo"', '".."')), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s194_an_owner_yes_in_devanagari_passes(env):
+    r, merged = env(pr=with_review(YES.replace('"haan merge karo"', '"हाँ मर्ज करो"')), pr_files=PROTECTED)
+    assert r.returncode == 0, r.stderr
