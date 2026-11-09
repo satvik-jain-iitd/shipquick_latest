@@ -325,3 +325,16 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   (we read `conformingTypes` on the `View` page and `metadata.platforms` on each type's page).
 - Decision: build from scratch, about 300 lines of stdlib Python (`scripts/ui_api_lists.py`). No package added.
 - Confidence that nothing fits better: 0.8 (both inputs are vendor formats with no maintained parser for this job).
+
+## 9 Nov 2026, story #260: make a status check required on child repos and report the ones missing it
+- Need: require a GitHub status check on a child repo's default branch and report repos missing it.
+- Run: `scout.py --need "require a GitHub status check on a child repo's default branch and report repos missing it"`: no repos found.
+  `gh search repos --topic=branch-protection --sort=stars`: conventional-branch/conventional-branch, cloudposse/github-status-updater,
+  kunwarVivek/mcp-github-project-manager, warestack/watchflow, benjefferies/branch-protection-bot.
+- Read: the top 3 that fit. github-status-updater (Go CLI) sets commit statuses and can turn on required checks with the
+  classic protection API; one call we can make with `gh api` ourselves. watchflow is a GitHub App rule engine that posts its
+  own check runs; it replaces our gate, it does not require it. branch-protection-bot toggles "include administrators"; not a fit.
+- Borrowed: the idea from github-status-updater of one call that turns on the required check. We use a ruleset instead of
+  the classic PUT, so existing protection and its other checks stay.
+- Decision: about 40 lines added to `scripts/kit_branch.py` (stdlib), reusing its `gh api` protection read. No package added.
+- Confidence that nothing fits better: 0.8 (the job is two GitHub API calls; any tool would still need our gate name).

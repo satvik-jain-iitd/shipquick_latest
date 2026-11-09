@@ -28,7 +28,7 @@ The same verdict runs locally and before a commit ever reaches GitHub: `bash kno
 
 Layer 1 only fires once a child is wired enough to have the caller running. A child that never ran `adopt.sh`, or deleted the caller, has no CI of its own to fail. `docs/children.md` is the registry (one `owner/repo` per line, optionally followed by `private`); `scripts/adoption_scan.py`, run daily by `.github/workflows/adoption-scan.yml`, reads it and opens one `feedback` issue **in this repo** for any child whose default branch has no `shipquick-call.yml`, or pins a ShipQuick commit more than 14 days old. It reuses an existing open issue (comments instead of opening a second one) for the same child.
 
-**Private children.** The workflow's own `github.token` can only ever read this repo, never someone else's private one. A line in `docs/children.md` marked `private` is read instead with the `SHIPQUICK_CHILD_TOKEN` secret — a fine-grained GitHub PAT, scoped to that repo only, with `Contents: read` and `Metadata: read` and nothing else. Set it once: `gh secret set SHIPQUICK_CHILD_TOKEN -R satvik-jain-iitd/shipquick_latest` (same build account, pasting the fine-grained PAT). With no secret set, a private child prints `<child>: private, no SHIPQUICK_CHILD_TOKEN configured — skipping (no daily issue)` and files nothing — a 404 from a missing token would otherwise look exactly like "not adopted," and a false feedback issue is worse than a quiet skip.
+**Private children.** The workflow's own `github.token` can only ever read this repo, never someone else's private one. A line in `docs/children.md` marked `private` is read instead with the `SHIPQUICK_CHILD_TOKEN` secret — a fine-grained GitHub PAT, scoped to that repo only, with `Contents: read` and `Metadata: read` and nothing else. Set it once: `gh secret set SHIPQUICK_CHILD_TOKEN -R satvik-jain-iitd/shipquick_latest` (same build account, pasting the fine-grained PAT). With no secret set, or when the token gets a 404 or 403, a private child files nothing — that answer would otherwise look exactly like "not adopted," and a false feedback issue is worse than a skip. But a skip is never silent (story #260): the run ends with `summary: <n> skipped` and one line per child, `skipped <repo>: private, no token (...)` or `skipped <repo>: private, cannot read it with SHIPQUICK_CHILD_TOKEN (404 or 403)`.
 
 ## Rule-24 children (story #225)
 
@@ -62,6 +62,39 @@ What stays the same:
 - With no `kit_branch`, everything works as before.
 - A release freeze still lives on `main` (`.shipquick/freeze`). `freeze.sh` writes it there.
 
+## The gate must be a required check (story #260)
+
+A caller that runs is not enough. If `shipquick-checks / gate` is not a required check, a red gate does not stop a merge. So the child's default branch must require it.
+
+`adopt.sh` prints the one command that does this. It never runs it. A repo admin runs it once:
+
+```bash
+echo '<ruleset JSON>' | gh api -X POST repos/<owner>/<repo>/rulesets --input -
+```
+
+The command makes a ruleset named `shipquick gate` on `~DEFAULT_BRANCH`. We use a ruleset, not `PUT .../branches/<b>/protection/required_status_checks`, for two reasons:
+- It works when branch protection already exists, and when it does not. The PUT gives 404 on a branch with no protection.
+- It adds the gate next to the checks the child already requires. The PUT replaces that whole list.
+
+A second run of the command gets an error that the name is taken. That is safe: the first ruleset stays.
+
+The ruleset pins the gate to the GitHub Actions app (`integration_id: 15368`). Without that pin, anyone who may post a commit status could post one named `shipquick-checks / gate` and pass it.
+
+`adopt.sh . --check` reads both places: `branches/<default>/protection` and `rules/branches/<default>`. The gate counts only with its exact name and the Actions app (`checks[].app_id` in branch protection, `integration_id` in a ruleset). When the gate is in neither, it prints `not adopted: gate not required on <branch>: ...` with the command, and exits 1. When the rules read gets a 403 or 404, it prints `cannot read rules (403/404) ...` and exits 1 too. Reading branch protection needs `Administration: read`. Without it, only rulesets are seen. That is one more reason to use the ruleset.
+
+A private repo on GitHub Free cannot enforce rulesets or branch protection. Such a child needs a paid plan, or it stays "gate not required".
+
+## Checklist for each child
+
+Do these in order, in the child repo. One step at a time.
+1. Bump the submodule to the release tag: `git -C knowledge/shipquick_latest fetch --tags && git -C knowledge/shipquick_latest checkout <release tag>`, then `git add knowledge/shipquick_latest`.
+2. Run `bash knowledge/shipquick_latest/scripts/adopt.sh . --ref <release tag>`. A rule-24 child adds `--kit-branch <branch>` and runs it on that branch.
+3. Commit and push the files through a PR. A rule-24 child also copies `shipquick-call.yml` to `main` in a PR.
+4. Run the command `adopt.sh` printed, to make `shipquick-checks / gate` a required check.
+5. If the caller names a kit branch, protect that branch and require pull request reviews there.
+6. A private child: add a fine-grained token that can read it to ShipQuick's `SHIPQUICK_CHILD_TOKEN`, or the daily scan names it as skipped.
+7. Wait for one PR whose `shipquick-checks / gate` is green. Then run `adopt.sh . --check`. It must print `adopted`.
+
 ## Adding a child
 
-Add its `owner/repo` to `docs/children.md` once (a one-line PR to ShipQuick, or let the owner do it). Everything else is automatic from there.
+Add its `owner/repo` to `docs/children.md` once (a one-line PR to ShipQuick, or let the owner do it). Add `private` only when `gh repo view` says it is private. Write one `# <name>: <what GitHub shows>. Next: <step>` note above its line. Then follow the checklist above.
