@@ -1,0 +1,44 @@
+name: "vendor backup"
+# Story #242 (docs/VENDOR_BACKUP.md). The only place the backup is fetched or pushed: GitHub CI, never the owner's Mac.
+on:
+  schedule:
+    - cron: "17 3 * * 1"   # every Monday
+  workflow_dispatch:
+  push:
+    branches: [dev, feat/242-vendor-backup]
+    paths:
+      - ui/tool/package-lock.json
+      - ui/android/**/gradle-wrapper.properties
+      - ui/android/**/build.gradle*
+      - docs/research/android-m3-api.md
+      - scripts/vendor_backup.py
+      - scripts/vendor_pins.json
+      - scripts/restore_vendor.sh
+      - .github/workflows/vendor-backup.yml
+permissions:
+  contents: read
+concurrency:
+  group: vendor-backup
+  cancel-in-progress: false
+jobs:
+  restore:
+    # Step 2: take only the backup/vendor branch and install from it with no network use.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: src
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: backup/vendor
+          path: backup
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Restore from backup/vendor only (npm ci --offline, Gradle --offline)
+        run: |
+          node --version; npm --version; gradle --version | head -5
+          bash src/scripts/restore_vendor.sh backup "$RUNNER_TEMP/restore"
