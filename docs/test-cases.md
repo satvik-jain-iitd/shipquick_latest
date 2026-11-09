@@ -869,3 +869,15 @@ Scenario: every API row and framework topic is covered, and the gate is strict e
   And under --strict-api each gap prints once, as a FAIL line
 ```
 Tests: `tests/test_ui_coverage.py` (s231). Local: `bash scripts/check_local.sh ui-coverage`.
+
+## Story #288: framework-doc names are checked against saved package names
+```gherkin
+Scenario: a typo in a framework doc fails
+  Given a framework doc (swift-charts) that names Chrat under platformApi.ios.supporting
+  And the saved framework names, pinned by sha256 in framework-topics.md, have Charts.Chart but no Chrat
+  When check_ui_coverage.py runs
+  Then it fails and names swift-charts and Chrat
+  And an Android name in an iOS slot fails the same way
+  And a saved names file that does not match its pin fails
+```
+Tests: `tests/test_ui_coverage.py` (s288), `tests/test_ui_api_lists.py` (s288). Local: `bash scripts/check_local.sh ui-coverage`.

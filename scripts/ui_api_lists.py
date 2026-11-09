@@ -13,8 +13,10 @@ data field it was read from, and the replacement (the vendor's own words) or the
 500 KB). The default run parses those saved extracts offline and writes docs/research/android-m3-api.md and
 docs/research/ios-swiftui-api.md. --check writes nothing: it exits 1 when a saved extract does not match the
 sha256 its list pins, or a list does not match what its extracts give.
+--fetch-frameworks (also part of --fetch) saves the public names of each framework package to
+docs/research/sources/framework-names.json and pins its sha256 in docs/research/framework-topics.md (story #288).
 
-usage: ui_api_lists.py [--fetch] [--check]
+usage: ui_api_lists.py [--fetch] [--fetch-frameworks] [--check]
 """
 import argparse
 import base64
@@ -607,6 +609,104 @@ def fetch_ios():
         path.write_text(json.dumps(body, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+# ---------------------------------------------------------------- framework names (story #288)
+# The public names of each framework package a framework doc names (framework-topics.md). Saved to
+# docs/research/sources/framework-names.json; check_ui_coverage.py checks every framework-doc name against it, and
+# the sha256 pin in framework-topics.md. Android: the api/current.txt of each package at its release commit or tag.
+# Apple: the documentation JSON of each seed page and the topic pages it links (two levels down), symbols of the
+# named module only. The list is not every name of a package: a doc that needs a new one adds a seed page here.
+GLANCE_COMMIT = "17b8d7ee6785d344a04b91207070ce350dc1080f"   # Glance 1.2.0, the latest stable (release notes, 2026-11-09)
+CORE_COMMIT = "ee9b3bd4e15861a649335dca51923b358357b151"     # Core 1.19.1, the latest stable (release notes, 2026-11-09)
+PLATFORM_TAG = "android-16.0.0_r1"                            # Android 16, API level 36, the latest on Google's platforms page
+SUPPORT = "https://android.googlesource.com/platform/frameworks/support/+/"
+ANDROID_PACKAGES = [   # (package, version, current.txt URL, regex a kept name must match)
+    ("androidx.glance:glance", "1.2.0", f"{SUPPORT}{GLANCE_COMMIT}/glance/glance/api/current.txt", r"."),
+    ("androidx.glance:glance-appwidget", "1.2.0", f"{SUPPORT}{GLANCE_COMMIT}/glance/glance-appwidget/api/current.txt", r"."),
+    ("androidx.core:core (androidx.core.app)", "1.19.1", f"{SUPPORT}{CORE_COMMIT}/core/core/api/current.txt", r"^androidx\.core\.app\.[A-Z]"),
+    ("android.app and android.Manifest", f"API level 36 ({PLATFORM_TAG})",
+     f"https://android.googlesource.com/platform/frameworks/base/+/refs/tags/{PLATFORM_TAG}/core/api/current.txt",
+     r"^android\.(app\.[A-Z]|Manifest\b)"),
+]
+APPLE_PACKAGES = [   # (module, the doc URL folder of its symbols, seed pages)
+    ("Charts", "charts", ["charts"]),
+    ("WebKit", "webkit", ["webkit/webkit-for-swiftui", "webkit/wkwebview"]),
+    ("UIKit", "uikit", ["uikit/uicollectionview", "uikit/uicollectionviewcompositionallayout", "uikit/uieditmenuinteraction",
+                        "uikit/uiapplicationshortcutitem"]),
+    ("HealthKitUI", "healthkitui", ["healthkitui"]),
+    ("WidgetKit", "widgetkit", ["widgetkit"]),
+    ("SwiftUI (widget types)", "swiftui", ["swiftui/widget", "swiftui/widgetconfiguration", "swiftui/controlwidget"]),
+    ("ActivityKit", "activitykit", ["activitykit", "activitykit/activity"]),
+    ("UserNotifications", "usernotifications", ["usernotifications"]),
+    ("AppIntents", "appintents", ["appintents"]),
+]
+FW_SRC = SOURCES / "framework-names.json"
+FW_MD = RESEARCH / "framework-topics.md"
+FW_PIN = re.compile(r"^Saved names: `docs/research/sources/framework-names\.json` sha256 `[0-9a-f]{64}`$", re.M)
+
+
+def android_names(text, keep=r"."):
+    """`package.Class`, `package.Outer.Inner`, `package.topLevelFun` (a static method of a `*Kt` class) and
+    `package.Class.FIELD` from an api/current.txt, kept when the name matches `keep`."""
+    names, pkg, cls = set(), "", ""
+    for line in text.splitlines():
+        if m := PACKAGE.match(line):
+            pkg = m.group(1)
+        elif m := CLASS.match(line):
+            cls = m.group(3)
+            if not cls.endswith("Kt"):
+                names.add(f"{pkg}.{cls}")
+        elif line.startswith("    method ") and cls.endswith("Kt") and " static " in line.split("(", 1)[0]:
+            if m := re.search(r"([\w$]+)\(", line):
+                names.add(f"{pkg}.{m.group(1)}")
+        elif m := re.match(r"^    field .*? ([\w$]+)(?: = .*)?;$", line):
+            names.add(f"{pkg}.{cls}.{m.group(1)}")
+    return sorted(n for n in names if re.search(keep, n))
+
+
+def apple_names(page, module, folder):
+    """(`Module.Type` names, topic pages) from one Apple documentation JSON page: symbols under
+    /documentation/<folder>/ whose title is a type name, and the collection pages there it links."""
+    names, groups = set(), []
+    for r in page.get("references", {}).values():
+        url = r.get("url", "")
+        if not url.startswith(f"/documentation/{folder}/"):
+            continue
+        if r.get("role") == "symbol" and re.fullmatch(r"[A-Z_][\w.]*", r.get("title", "")):
+            names.add(f"{module}.{r['title']}")
+        elif r.get("role") == "collectionGroup":
+            groups.append(url)
+    return names, groups
+
+
+def fetch_frameworks():
+    packages = []
+    for package, version, url, keep in ANDROID_PACKAGES:
+        text = base64.b64decode(get(url + "?format=TEXT")).decode("utf-8")
+        packages.append({"platform": "android", "package": package, "version": version, "sources": [f"{sha(text)} {url}"],
+                         "names": android_names(text, keep)})
+    for module, folder, seeds in APPLE_PACKAGES:
+        names, sources, queue = set(), {}, [(f"/documentation/{s}", 0) for s in seeds]
+        while queue:
+            path, depth = queue.pop(0)
+            if f"{APPLE}{path}.json" in sources:
+                continue
+            raw = get(f"{APPLE}{path}.json")
+            sources[f"{APPLE}{path}.json"] = sha(raw)
+            got, groups = apple_names(json.loads(raw), module.split(" ")[0], folder)
+            names |= got
+            queue += [(g, depth + 1) for g in groups if depth < 2]
+        # "<sha256> <url>" lines, as sha256sum prints them: a `"<url>.json": "<hex>"` pair reads as a key to gitleaks.
+        packages.append({"platform": "ios", "package": module, "version": f"Apple's documentation as served on {DATE}",
+                         "sources": [f"{h} {u}" for u, h in sources.items()], "names": sorted(names)})
+    body = json.dumps({"fetched": DATE, "packages": packages}, indent=1, ensure_ascii=False) + "\n"
+    if len(body.encode("utf-8")) > MAX_FILE:
+        raise ValueError(f"{FW_SRC.name}: {len(body)} bytes, over {MAX_FILE}; narrow a keep regex or a seed list")
+    FW_SRC.write_text(body, encoding="utf-8")
+    line = f"Saved names: `docs/research/sources/{FW_SRC.name}` sha256 `{sha(body)}`"
+    md = FW_MD.read_text(encoding="utf-8")
+    FW_MD.write_text(FW_PIN.sub(line, md) if FW_PIN.search(md) else md.replace("\n\n", f"\n\n{line}\n\n", 1), encoding="utf-8")
+
+
 def pinned(md_path):
     text = md_path.read_text(encoding="utf-8") if md_path.is_file() else ""
     return dict(re.findall(r"^Saved extract: `docs/research/sources/([^`]+)` sha256 `([0-9a-f]{64})`$", text, re.M))
@@ -615,6 +715,7 @@ def pinned(md_path):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--fetch", action="store_true", help="download the sources and save the extracts first")
+    ap.add_argument("--fetch-frameworks", action="store_true", help="download only the framework names (story #288)")
     ap.add_argument("--check", action="store_true", help="write nothing; exit 1 when a list or extract is stale")
     ap.add_argument("--sources", type=Path, default=SOURCES)
     ap.add_argument("--out", type=Path, default=RESEARCH)
@@ -623,6 +724,8 @@ def main(argv=None):
         SOURCES.mkdir(parents=True, exist_ok=True)
         fetch_android()
         fetch_ios()
+    if (a.fetch or a.fetch_frameworks) and not a.check:
+        fetch_frameworks()
     jobs = [([a.sources / ANDROID_SRC.name], a.out / ANDROID_MD.name, android_md),
             (sorted(a.sources.glob("ios-swiftui-extract*.json")) or [a.sources / IOS_SRC.name], a.out / IOS_MD.name, ios_md)]
     errs = []

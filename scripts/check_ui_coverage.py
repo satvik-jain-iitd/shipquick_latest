@@ -21,10 +21,12 @@ rows of its own kind only.
 Framework topics (story #231): each row of docs/research/framework-topics.md is one doc, ui/components/<topic-slug>/
 ("Swift Charts" -> swift-charts), that speaks to its platform (platformApi or platformUsage) and is served as the topic
 <platform>-<topic-slug>. A missing one is a GAP line like an API row. Its platformApi items name the framework's own
-types, which are not rows of the API lists, so only a framework doc may name them.
+types, which are not rows of the API lists, so only a framework doc may name them, and only names of the saved
+framework list docs/research/sources/framework-names.json (story #288), pinned by sha256 in framework-topics.md.
 usage: check_ui_coverage.py [--require-web] [--strict-api]
 """
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -88,7 +90,29 @@ def framework_topics(path):
     return out, []
 
 
-def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
+def framework_names(names_path, topics_path):
+    """({platform: set of qualified names}, errors) from the saved framework names (story #288), which must match the
+    sha256 framework-topics.md pins, so an edit by hand fails."""
+    if not names_path.is_file():
+        return {}, [f"{names_path.name}: file not found: {names_path}; run python3 scripts/ui_api_lists.py --fetch-frameworks"]
+    raw = names_path.read_bytes()
+    text = topics_path.read_text(encoding="utf-8") if topics_path.is_file() else ""
+    pin = re.search(rf"^Saved names: `docs/research/sources/{re.escape(names_path.name)}` sha256 `([0-9a-f]{{64}})`$", text, re.M)
+    if not pin or pin.group(1) != hashlib.sha256(raw).hexdigest():
+        return {}, [f"{names_path.name}: its sha256 does not match the pin in {topics_path.name}; "
+                    "run python3 scripts/ui_api_lists.py --fetch-frameworks, never edit it by hand"]
+    out = {}
+    for p in json.loads(raw)["packages"]:
+        out.setdefault(p["platform"], set()).update(p["names"])
+    return out, []
+
+
+def known(name, names):
+    """A doc name is known when a saved qualified name is it or ends with it after a dot (`Charts.BarMark`)."""
+    return name in names or any(n.endswith("." + name) for n in names)
+
+
+def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None, fw_names=None):
     """Lines naming, per platform and family, the API list rows no doc covers. A row is covered only by a structured
     field of exactly one doc: `platforms.<p>` (the doc's main API, with the doc-level `status`), an object in
     `platformApi.<p>.variants` or `.supporting`, or `platformApi.<p>.family` for a family row. A covering entry
@@ -122,7 +146,12 @@ def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
         for (slot, n), who in sorted(claims.items()):
             if n not in any_row and slot in of_kind:
                 # Review 2 of the iOS stack: only a framework doc, and only for a name that is no row at all (its
-                # framework's own type), skips this check. A real row in the wrong slot still fails.
+                # framework's own type), skips this check. A real row in the wrong slot still fails. Story #288: that
+                # name must be in the saved framework names of this platform, so a typo fails.
+                fw_bad = [w for w in who if w[0] in fw_docs and not known(n, (fw_names or {}).get(platform, set()))]
+                if fw_bad:
+                    errs.append(f"api {platform}: {', '.join(d for d, _ in fw_bad)} names {n} under platformApi.{platform}.{slot}, "
+                                f"but neither the {platform} API list nor the saved framework names (framework-names.json) have it")
                 who = [w for w in who if w[0] not in fw_docs]
                 if not who:
                     continue
@@ -178,6 +207,7 @@ def main(argv=None):
     ap.add_argument("--ios-api", type=Path, default=KIT / "docs" / "research" / "ios-swiftui-api.md")
     ap.add_argument("--strict-api", action="store_true", help="fail on every API list row no doc covers")
     ap.add_argument("--frameworks", type=Path, default=KIT / "docs" / "research" / "framework-topics.md")
+    ap.add_argument("--framework-names", type=Path, default=KIT / "docs" / "research" / "sources" / "framework-names.json")
     a = ap.parse_args(argv)
     errs = []
 
@@ -261,7 +291,9 @@ def main(argv=None):
 
     frameworks, e = framework_topics(a.frameworks)
     errs += e
-    gaps = api_gaps(a, docs, api, status, errs, frameworks, usage)
+    fw_names, e = framework_names(a.framework_names, a.frameworks)
+    errs += e
+    gaps = api_gaps(a, docs, api, status, errs, frameworks, usage, fw_names)
     if a.strict_api:
         errs += gaps   # printed once below, as FAIL lines
     else:
