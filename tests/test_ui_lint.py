@@ -110,8 +110,9 @@ def test_s185_detekt_bans_package_wildcards_and_konsist_scans_every_file():
     for pkg in ["androidx.compose.ui.draw", "androidx.compose.foundation", "androidx.compose.foundation.shape",
                 "androidx.compose.foundation.gestures", "androidx.compose.ui.graphics", "androidx.compose.ui.input.pointer",
                 "androidx.compose.ui.viewinterop"]:
-        assert rx.search(pkg + ".*"), pkg
-    assert not rx.search("androidx.compose.foundation.layout.*") and not rx.search("androidx.compose.material3.*")
+        assert rx.search(pkg), pkg   # detekt sees `import a.b.*` as the bare package a.b
+        assert not rx.search(pkg + ".drawBehind"), pkg
+    assert not rx.search("androidx.compose.foundation.layout") and not rx.search("androidx.compose.material3")
     konsist = text(ALINT / "UiRulesKonsistTest.kt")
     assert "scope.files" in konsist and "withAnnotationNamed" not in konsist, "text rules run on every Kotlin file"
 

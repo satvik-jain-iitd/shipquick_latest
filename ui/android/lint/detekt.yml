@@ -31,5 +31,6 @@ style:
       - 'androidx.compose.ui.viewinterop.AndroidView'
     # Material 2 widgets (androidx.compose.material.icons is the icon set M3 uses, so it stays),
     # Google's View widgets, and third-party UI kits. com.example.fancyui is a placeholder; a child lists its own.
-    forbiddenPatterns: '^(androidx\.compose\.material\.(?!icons\.)|com\.google\.android\.material\.|android\.widget\.|com\.example\.fancyui\.|com\.composables\.|com\.alorma\.compose\.settings\.|com\.vanpra\.compose\.material\.dialogs\.|androidx\.compose\.(foundation|foundation\.shape|foundation\.gestures|ui\.draw|ui\.graphics|ui\.input\.pointer|ui\.viewinterop)\.\*$)'
-    # The last group bans a package wildcard (import androidx.compose.ui.draw.*): it would bring in every name banned above.
+    forbiddenPatterns: '^(androidx\.compose\.material\.(?!icons\.)|com\.google\.android\.material\.|android\.widget\.|com\.example\.fancyui\.|com\.composables\.|com\.alorma\.compose\.settings\.|com\.vanpra\.compose\.material\.dialogs\.|androidx\.compose\.(foundation|foundation\.shape|foundation\.gestures|ui\.draw|ui\.graphics|ui\.input\.pointer|ui\.viewinterop)$)'
+    # The last group bans a package wildcard (import androidx.compose.ui.draw.*). detekt reads that import as the bare package, so the group ends in $.
+    # A wildcard would bring in every name banned above.
