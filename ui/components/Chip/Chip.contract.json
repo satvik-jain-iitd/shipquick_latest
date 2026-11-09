@@ -1,0 +1,45 @@
+{
+  "name": "Chip",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "selected": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onClick": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "enabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "leadingIcon": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "trailingIcon": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

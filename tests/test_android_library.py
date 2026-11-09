@@ -41,6 +41,11 @@ def test_s134_every_listed_component_with_a_folder_has_a_doc_a_contract_and_an_a
         assert (ROOT / "ui" / "integration" / "docs" / f"android-{name.lower()}.doc.mjs").exists(), component
 
 
+def test_s134_every_component_on_googles_page_has_a_doc_folder():
+    pending = [r[0] for r in rows() if not r[1].startswith("ui/components/")]
+    assert not pending, f"no doc folder yet: {pending}"
+
+
 def android_props(name):
     contract = json.loads((ROOT / "ui" / "components" / name / f"{name}.contract.json").read_text(encoding="utf-8"))
     return set(contract["core"]) | set(contract["platforms"].get("android", {}))
@@ -49,3 +54,8 @@ def android_props(name):
 def test_s134_the_navigation_bar_documents_its_items():
     # NavigationBarItem(selected, onClick, icon, label): Google's navigation-bar page and the M3 reference.
     assert {"content", "selected", "onClick", "icon", "label"} <= android_props("NavigationBar")
+
+
+def test_s134_the_slider_documents_its_value_range():
+    # Slider(value, onValueChange, enabled, valueRange = 0f..1f, steps): steps splits valueRange, so both are needed.
+    assert {"value", "onValueChange", "valueRange", "steps"} <= android_props("Slider")

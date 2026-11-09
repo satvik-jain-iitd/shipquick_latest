@@ -1,0 +1,35 @@
+{
+  "name": "DatePicker",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "DatePickerState"
+        }
+      },
+      "title": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "headline": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "showModeToggle": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}
