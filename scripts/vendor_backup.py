@@ -189,6 +189,7 @@ def resolve_maven(bom, roots, repos, fetch) -> list[dict]:
     todo = [(g, a, v or managed.get((g, a), "")) for g, a, v in roots]
     while todo:
         g, a, v = todo.pop()
+        v = re.split(r"[,)\]]", v.strip("[]()"))[0] if v[:1] in ("[", "(") else v  # a range `[1.6.0]` or `[1.0,2.0)`: its lower end
         if (g, a, v) in seen:
             continue
         seen.add((g, a, v))
@@ -213,7 +214,7 @@ def resolve_maven(bom, roots, repos, fetch) -> list[dict]:
             if data is None:
                 raise SystemExit(f"{g}:{a}:{v}: file {n} is listed but not in {repo}")
             out.append(_file((g, a, v), n, repo, data, info["licenses"]))
-        todo += [(dg, da, dv or managed.get((dg, da), "")) for dg, da, dv in deps]
+        todo += [(dg, da, dv or managed.get((dg, da), "")) for dg, da, dv in deps if dv or (dg, da) in managed]  # no version anywhere: Gradle skips it too
     return out
 
 

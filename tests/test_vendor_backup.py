@@ -135,6 +135,15 @@ def test_s242_a_pom_with_single_quoted_namespace_is_read():
     assert vb.pom_info(xml)["managed"] == [("g", "a", "1")]
 
 
+def test_s242_a_version_range_in_a_pom_means_its_lower_end():
+    dep = "<dependency><groupId>g</groupId><artifactId>b</artifactId><version>[2]</version></dependency>"
+    bom = b"<project><dependencyManagement><dependencies><dependency><groupId>g</groupId><artifactId>a</artifactId><version>1</version></dependency></dependencies></dependencyManagement></project>"
+    files = {"r/g/bom/1/bom-1.pom": bom, "r/g/a/1/a-1.pom": _pom(dep, pkg="jar"), "r/g/a/1/a-1.jar": b"A",
+             "r/g/b/2/b-2.pom": _pom(pkg="jar"), "r/g/b/2/b-2.jar": b"B"}
+    got = vb.resolve_maven(("g", "bom", "1"), [("g", "a", "")], ["r"], lambda u: files.get(u))
+    assert "b-2.jar" in [m["file"].rsplit("/", 1)[1] for m in got]
+
+
 def test_s242_a_bom_that_lists_versions_only_in_its_module_file_is_read():
     mod = json.dumps({"variants": [{"dependencyConstraints": [{"group": "g", "module": "a", "version": {"requires": "1"}}]}]}).encode()
     files = {"r/g/bom/1/bom-1.pom": b"<project/>", "r/g/bom/1/bom-1.module": mod,
