@@ -2,6 +2,7 @@
 shipquick-call.yml, or pins a ShipQuick commit older than 14 days. The gh-api calls are injected
 so the decision logic is tested without network."""
 import datetime
+import re
 import sys
 from pathlib import Path
 
@@ -81,6 +82,19 @@ def test_read_children_strips_comments_and_blanks(tmp_path):
 def test_read_children_marks_a_line_ending_in_private(tmp_path):
     f = tmp_path / "children.md"
     f.write_text("owner/a\nowner/b private\n", encoding="utf-8")
+    assert scan.read_children(f) == [("owner/a", False), ("owner/b", True)]
+
+
+def test_read_children_ignores_prose_lines_in_the_real_registry():
+    # Bugs #156-#159: prose with a "/" ("contents+metadata", "`github.token`") was read as a repo.
+    got = scan.read_children(Path(__file__).resolve().parent.parent / "docs/children.md")
+    assert got and all(re.fullmatch(r"[\w.-]+/[\w.-]+", name) for name, _ in got)
+
+
+def test_read_children_skips_a_line_that_is_not_exactly_owner_repo(tmp_path):
+    f = tmp_path / "children.md"
+    f.write_text("One `owner/repo` per line, optionally private.\nissue for any child\n"
+                 "owner/a\nowner/b private\nowner/c private extra\n", encoding="utf-8")
     assert scan.read_children(f) == [("owner/a", False), ("owner/b", True)]
 
 
