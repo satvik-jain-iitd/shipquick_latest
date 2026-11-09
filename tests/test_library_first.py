@@ -92,3 +92,12 @@ def test_the_libraries_live_inside_the_kit_not_in_separate_repos():
     for f in ("docs/COMPONENT_LIBRARY.md", "CLAUDE.md", "docs/templates/component-request.md"):
         text = (ROOT / f).read_text(encoding="utf-8")
         assert "shipquick-ui-android" not in text and "shipquick-ui-ios" not in text and "library repo" not in text, f
+
+
+def test_the_plan_names_no_separate_library_repo_outside_its_history_lines():
+    # PR #200 review: the plan still said "library repo" and "two-repo shape". History lines are marked "Changed" or struck.
+    for line in (ROOT / "docs/plans/2026-11-09-library-first.md").read_text(encoding="utf-8").splitlines():
+        if "Changed" in line or "~~" in line or "(was the shipquick-ui-" in line:
+            continue
+        low = line.lower()
+        assert "library repo" not in low and "two-repo" not in low, line

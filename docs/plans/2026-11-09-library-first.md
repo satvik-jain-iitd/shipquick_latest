@@ -31,7 +31,7 @@
 What "never hand-write" means, enforced:
 1. **A screen starts as a copied template**, through `ui template <name> <path>`. The agent replaces only the content.
 2. **A component is used as the library ships it.** Lint refuses hand-drawn UI in app code.
-3. **An approved custom component starts as a copy too.** `ui swizzle <BaseComponent>` (Astryx's command) copies the nearest library component's real source into the library repo, licence header included. Compose M3 is Apache 2.0, so its source can be copied. Then only the approved change is made.
+3. **An approved custom component starts as a copy too.** `ui swizzle <BaseComponent>` (Astryx's command) copies the nearest library component's real source into the kit's library folder (`ui/android/` or `ui/ios/`), licence header included. Compose M3 is Apache 2.0, so its source can be copied. Then only the approved change is made.
 4. **Nothing ShipQuick writes replaces a library part.** ShipQuick only adds what none of them have: the tokens bridge, the request flow, the gates, the canvas board.
 
 ## All options, side by side (research 9 Nov 2026; Tier A = the vendor's own repo or docs)
@@ -67,7 +67,7 @@ MIT licence: every copied file keeps `Copyright (c) Meta Platforms, Inc. and aff
 - **Skipped:** Astryx's knowledge-record governance, arms B to E of its native experiment, release machinery, translations, integrations, and committing generated code by hand.
 
 ## Where things live
-- **ShipQuick kit** (already a submodule in every child) holds the platform-neutral layer: the doc schema, the contracts, `design/tokens.json` with the feel, the vendored Astryx CLI (`ui/cli/`), the agent block, the request flow and the checks. So the owner's two-repo shape holds and no third repo is needed.
+- **ShipQuick kit** (already a submodule in every child) holds the platform-neutral layer: the doc schema, the contracts, `design/tokens.json` with the feel, the vendored Astryx CLI (`ui/cli/`), the agent block, the request flow and the checks. The Android and iOS libraries sit beside it, in `ui/android/` and `ui/ios/` (changed 9 Nov 2026), so no other repo is needed.
 - **`ui/android/` in the kit** (was the shipquick-ui-android repo):
   - the generated `Theme.kt`;
   - a `<Name>.doc.mjs` for each M3 component we use, so agents look it up (the component itself is Google's, never wrapped);
@@ -84,7 +84,7 @@ MIT licence: every copied file keeps `Copyright (c) Meta Platforms, Inc. and aff
 4. The reviewer checks whether existing components can do the job. If they can, the reviewer rejects the request and says how.
 5. If they cannot, the reviewer asks the owner in one line: the screen, what is missing, why, and a picture.
 6. Owner yes: the reviewer records `Owner yes: <date> "<his words>"` and the label `component-approved`.
-7. The coder builds it in the library repo, with a doc, a contract, a preview, a snapshot, a registry row and a board on the canvas. Its twin on the other platform is requested at the same time.
+7. The coder builds it in the kit's library folder (`ui/android/` or `ui/ios/`), with a doc, a contract, a preview, a snapshot, a registry row and a board on the canvas. Its twin on the other platform is requested at the same time.
 
 ## Stories (shipquick-dev builds; shipquick-qa reviews and merges; auto mode)
 Every story runs radar first, writes the failing test first, ships one PR, and carries a milestone and an assignee. All of them sit under epic #130. Stories #133, #134 and #135 are widened, not duplicated.
