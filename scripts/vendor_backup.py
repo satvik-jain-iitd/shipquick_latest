@@ -218,7 +218,8 @@ def resolve_maven(bom, roots, repos, fetch) -> list[dict]:
             if data is None:
                 raise SystemExit(f"{g}:{a}:{v}: file {n} is listed but not in {repo}")
             out.append(_file((g, a, v), n, repo, data, info["licenses"]))
-        todo += [(dg, da, dv or managed.get((dg, da), "")) for dg, da, dv in deps if dv or (dg, da) in managed]  # no version anywhere: Gradle skips it too
+        # Gradle takes the higher of the declared version and the BOM's, so keep both; no version anywhere: Gradle skips it too
+        todo += [(dg, da, ver) for dg, da, dv in deps for ver in {dv, managed.get((dg, da), "")} if ver and ver != "unspecified"]
     return out
 
 
@@ -262,11 +263,25 @@ def build(dest: Path, repos=None, fetch=None) -> None:
             lname = _write_license(dest / ldir, lic.read_bytes() if lic else None, f"package.json declares: {e['license']}")
             entries.append({**{k: e[k] for k in ("kind", "name", "version", "url", "license")}, "file": rel,
                             "sha256": file_sha(dest / rel), "license_file": f"{ldir}/{lname}"})
-    for m in resolve_maven(pinned_roots()[0], pinned_roots()[1:], repos or pins()["repos"], fetch):
+    repos = repos or pins()["repos"]
+    net = set()
+
+    def fetch_or_keep(url):  # a file already in the backup is not fetched again (it was checked when it was stored)
+        for r in repos:
+            kept = dest / "maven" / url[len(r) + 1:]
+            if url.startswith(r + "/") and kept.is_file():
+                return kept.read_bytes()
+        data = fetch(url)
+        if data is not None:
+            net.add(url)
+        return data
+
+    for m in resolve_maven(pinned_roots()[0], pinned_roots()[1:], repos, fetch_or_keep):
         data, p = m.pop("data"), dest / m["file"]
         if len(data) > MAX_BYTES:
             raise SystemExit(f"{m['file']} is over {MAX_BYTES} bytes; GitHub would refuse it")
-        verified(m["url"], data, fetch)
+        if m["url"] in net:
+            verified(m["url"], data, fetch)
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_bytes(data)
         lic = "; ".join(m["licenses"]) or "unknown"
