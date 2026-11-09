@@ -123,3 +123,10 @@ Add its `owner/repo` to `docs/children.md` once (a one-line PR to ShipQuick, or 
 - `ui/platforms/KIT_PIN`: the kit commit the lint and the snippets were written for.
 - `ui init` is not run by `adopt.sh`. It needs npm and the Astryx CLI, so it runs in CI: `bash knowledge/shipquick_latest/scripts/ui.sh init`. The script prints this line.
 - `--check --platforms ...` prints `platforms: OK <list>`, or `platforms: not ready` with what is missing or stale.
+
+## The offline vendor backup
+
+A child never fetches the vendor backup. It is a private repo, read only by the kit's own CI with a token. It fetches the ShipQuick submodule commit and nothing else. ShipQuick keeps
+a copy of its pinned npm and Compose packages in another repo, `satvik-jain-iitd/shipquick-vendor-backup`, in case a source
+goes closed. A clone or a submodule update never fetches it, so nobody downloads its 286 MB.
+Read `docs/VENDOR_BACKUP.md`.
