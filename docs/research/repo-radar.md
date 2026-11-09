@@ -388,3 +388,12 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: nothing. We reuse our own Android rule in `scripts/check_ui_coverage.py` (PR #255) and the generated list.
 - Decision: a `Doc family` column from `scripts/ui_api_lists.py` (one map, `IOS_DOC_FAMILY`) and about 20 lines in the gate. No package added.
 - Confidence that nothing fits better: 0.85 (the rule is about our own docs and our own list).
+
+## 10 Nov 2026, story #186: the component-request gate
+- Need: check that a GitHub issue has an owner-yes comment and an approval label, both by a reviewer account, before a custom component merges.
+- Run: `scout.py --need "check a GitHub issue has an approval label and an approval comment by an allowed account before merge"`: one repo, score 0, ignore (a list, no licence, dead 2004 days).
+  `gh search repos --topic=approval-gate`: agentveil-sdk, renezander030/agent-approval-gate, herdr-telegram-gate. All are runtime approval for AI agents, not a GitHub issue check.
+- Read: the top 3 READMEs. agent-approval-gate is a draft-validate-approve pattern with n8n and email. agentveil-sdk guards agent actions at run time. herdr-telegram-gate sends Telegram approve cards. None reads issue comments and label events.
+- Borrowed: nothing; the idea of a recorded approval step is already our rule 38.
+- Decision: build from scratch, about 100 lines of stdlib Python (`scripts/check_component_request.py`), calling `gh api` for issue events and comments.
+- Confidence that nothing fits better: 0.8.
