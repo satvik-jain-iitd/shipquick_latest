@@ -23,7 +23,7 @@ Never jump to making screens before the direction is final.
   1. Before code, render the board and read its measurements from its markup: x, y, width, height, padding, gap, font, colour. Write them in a short table.
   2. Port the board's markup and styles. Do not rebuild the screen from the story's words.
   3. After each change, render the app screen in the same state. Put it beside the board: same scale, full height, all four edges.
-  4. The PR body carries `Board image:`, `Render:` and the `Measurements:` table (`.github/pull_request_template.md`). The reviewer rejects a frontend PR without them.
+  4. The PR body carries `Board image:`, `Render:` and the `Measurements:` table (`.github/PULL_REQUEST_TEMPLATE.md`). The reviewer rejects a frontend PR without them.
   5. The reviewer compares the two pictures, then writes `Render: <board> -- matches` in the approval. `scripts/review_merge.sh` refuses the merge without it (story #153, `docs/SCREENS.md`).
   - Applies when: the screen has an approved board. Does not apply to: backend-only stories, a screen with no approved board yet (design first), a copy change with no layout change.
 

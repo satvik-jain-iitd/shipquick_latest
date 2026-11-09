@@ -43,7 +43,7 @@ def test_s153_a_pr_with_no_design_board_needs_no_compared_line(pr_body, tmp_path
 
 
 def test_s161_the_pr_template_asks_for_board_image_render_and_measurements():
-    t = (ROOT / ".github" / "pull_request_template.md").read_text(encoding="utf-8")
+    t = (ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md").read_text(encoding="utf-8")
     for line in ("Design board:", "Approved:", "Render:", "Board image:", "Measurements"):
         assert line in t, line
 
