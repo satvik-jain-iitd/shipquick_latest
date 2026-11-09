@@ -37,6 +37,8 @@ case "$1" in
          *contents/.shipquick/roles.yml*)
            [ -f "$STUB_DIR/roles_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
            cat "$STUB_DIR/roles_yml_b64"; exit 0 ;;
+         *contents/docs/screens.txt*)
+           [ -f "$STUB_DIR/screens_b64" ] && { cat "$STUB_DIR/screens_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
          *pulls/*/files*)
            [ -f "$STUB_DIR/pr_files.json" ] && { cat "$STUB_DIR/pr_files.json"; exit 0; }; echo '[]'; exit 0 ;;
        esac
@@ -70,8 +72,12 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False, screens=None):
         (stub / "merge.log").unlink(missing_ok=True)
+        if screens is not None:   # story #153: the PR's own repo's docs/screens.txt on its base branch; None = not configured (404)
+            (stub / "screens_b64").write_text(base64.b64encode(screens.encode()).decode(), encoding="utf-8")
+        else:
+            (stub / "screens_b64").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
         (stub / "protection.json").unlink(missing_ok=True)
         default_roles_yml = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n"
@@ -513,3 +519,113 @@ def test_s140_dependabot_is_exempt_from_the_coder_check_but_still_needs_a_real_r
 
 def test_s140_cannot_read_roles_yml_refuses_it_is_never_treated_as_exempt(env):
     refused(*env(roles_unreadable=True), "cannot read")
+
+
+# Story #180 (S0): a protected PR merges only when the approving review records a second review and
+# the owner's own yes. `.shipquick/*` (mode, roles, freeze) stays owner-merge only, whatever the review says.
+PROTECTED = [{"filename": ".github/workflows/ci.yml", "status": "modified"}]
+TODAY = __import__("datetime").date.today().isoformat()   # the gate checks the yes is at most 14 days old
+YES = f'Approved.\nSecond review: fresh reviewer agent, 0 open findings\nOwner yes: {TODAY} "haan merge karo"\n'
+
+
+def with_review(body):
+    pr = good()
+    pr["reviews"][0]["body"] = body
+    return pr
+
+
+def test_s180_a_protected_pr_with_a_second_review_and_the_owner_yes_merges(env):
+    r, merged = env(pr=with_review(YES), pr_files=PROTECTED)
+    assert r.returncode == 0, r.stderr
+    assert "pr merge 12" in merged
+
+
+def test_s180_a_protected_pr_without_the_owner_yes_refuses(env):
+    body = YES.replace(f'Owner yes: {TODAY} "haan merge karo"\n', "")
+    refused(*env(pr=with_review(body), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s180_a_protected_pr_without_a_second_review_refuses(env):
+    body = YES.replace("Second review: fresh reviewer agent, 0 open findings\n", "")
+    refused(*env(pr=with_review(body), pr_files=PROTECTED), "Second review:")
+
+
+def test_s180_an_owner_yes_with_no_date_or_no_quoted_words_refuses(env):
+    refused(*env(pr=with_review(YES.replace(f"{TODAY} ", "")), pr_files=PROTECTED), "Owner yes:")
+    refused(*env(pr=with_review(YES.replace('"haan merge karo"', "yes")), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s180_the_lines_in_the_pr_body_do_not_count_only_the_approving_review(env):
+    pr = good()
+    pr["body"] += "\n" + YES
+    refused(*env(pr=pr, pr_files=PROTECTED), "owner merges")
+
+
+def test_s180_a_shipquick_mode_or_roles_change_stays_owner_merge_even_with_the_yes(env):
+    files = [{"filename": ".shipquick/mode", "status": "modified"}]
+    refused(*env(pr=with_review(YES), pr_files=files), "owner merges")
+
+
+# PR #196 second review: the two lines must carry real content, and a rename cannot dodge the protected list.
+def test_s180_an_impossible_or_future_owner_yes_date_refuses(env):
+    for bad in ("9999-99-99", "2999-01-01"):
+        refused(*env(pr=with_review(YES.replace(TODAY, bad)), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s180_an_owner_yes_older_than_14_days_refuses(env):
+    refused(*env(pr=with_review(YES.replace(TODAY, "2020-01-01")), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s180_placeholder_lines_refuse(env):
+    refused(*env(pr=with_review(YES.replace('"haan merge karo"', '"<his words>"')), pr_files=PROTECTED), "Owner yes:")
+    refused(*env(pr=with_review(YES.replace("fresh reviewer agent, 0 open findings", "<who, findings>")), pr_files=PROTECTED), "Second review:")
+    refused(*env(pr=with_review(YES.replace("fresh reviewer agent, 0 open findings", "ok")), pr_files=PROTECTED), "Second review:")
+
+
+def test_s180_renaming_a_protected_file_away_is_still_protected(env):
+    files = [{"filename": "docs/old-list.txt", "previous_filename": "scripts/protected_paths.txt", "status": "renamed"}]
+    refused(*env(pr_files=files), "owner merges")
+
+
+def test_s180_renaming_shipquick_roles_away_stays_owner_only(env):
+    files = [{"filename": "docs/roles.yml", "previous_filename": ".shipquick/roles.yml", "status": "renamed"}]
+    refused(*env(pr=with_review(YES), pr_files=files), "mode, roles and freeze")
+
+
+def test_s180_claude_md_is_a_protected_path(env):
+    refused(*env(pr_files=[{"filename": "CLAUDE.md", "status": "modified"}]), "owner merges")
+
+
+# ---- story #153: the approving review must say the render was compared with the named board ----
+SCREENS = "welcome | / | 412x915 | welcome\n"
+
+
+def design_pr(review_body):
+    pr = good()
+    pr["body"] = "Design board: Production / C1 Welcome\nApproved: 2026-11-08\nRender: https://github.com/o/r/actions/runs/1\n\nCloses #67\n"
+    pr["reviews"] = [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": review_body}]
+    return pr
+
+
+def test_s153_an_approval_on_the_diff_alone_refuses_a_frontend_pr_with_screens_configured(env):
+    refused(*env(pr=design_pr("LGTM"), screens=SCREENS), "Render: Production / C1 Welcome -- matches")
+
+
+def test_s153_an_approval_that_says_the_render_matches_the_board_merges(env):
+    r, merged = env(pr=design_pr("Compared side by side.\nRender: Production / C1 Welcome -- matches"), screens=SCREENS)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s153_a_project_with_no_screens_txt_is_unaffected(env):
+    r, merged = env(pr=design_pr("LGTM"))
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_s153_a_second_reviewers_matches_line_counts_when_the_first_approval_lacks_it(env):
+    roles = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\n  - second-reviewer\nowner: satvik-jain-iitd\n"
+    pr = design_pr("LGTM")
+    pr["reviews"].append({"author": {"login": "second-reviewer"}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": "Render: Production / C1 Welcome -- matches"})
+    r, merged = env(pr=pr, roles=roles, screens=SCREENS)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""

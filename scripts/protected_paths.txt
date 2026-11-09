@@ -27,3 +27,5 @@ scripts/has_dev_link.sh
 scripts/check_*.py
 scripts/check_*.sh
 .shipquick/*
+# story #180 review: a rule file is always owner-yes (rule 38 and every other rule live here)
+CLAUDE.md

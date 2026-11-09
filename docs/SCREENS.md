@@ -115,6 +115,28 @@ line in the PR body (alongside `Design board:` and `Approved:`, story #121) poin
 artifact — the same refusal shape as a missing board. A project with no `docs/screens.txt`, or one with only
 comments, is unaffected.
 
+## The approval: `Render: <board> -- matches`
+
+A `Render:` link proves a picture exists. It does not prove anyone looked at it (story #153). So the
+reviewer opens the render beside the board, at the same scale and full height, and writes this line in the
+approving review's body:
+
+```
+Render: <the PR's Design board name> -- matches
+```
+
+`scripts/review_merge.sh` reads the approving review and refuses the merge without that line
+(`scripts/check_design_reviewed.py`; "match", "matches" or "matching", any dash, any case). The board name
+must be the one in the PR's `Design board:` line. It applies to the same PRs as the `Render:` line: a
+`Design board:` line in the body and a configured `docs/screens.txt`.
+
+## Baselines are never from the first build alone
+
+A screenshot test compares the app with its own baseline, not with the board (story #161). If the first
+baseline is taken from a wrong build, every later run passes on the wrong screen. So a new or changed
+baseline is accepted only in a PR whose approval carries the `-- matches` line above: the render was compared
+with the board first. A baseline is never made from the first build alone, and never from a laptop.
+
 ## Applies when / does not apply to
 
 **Applies when**: a project has a design board a screen is supposed to match, and a way to run itself

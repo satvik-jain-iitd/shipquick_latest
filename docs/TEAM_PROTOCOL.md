@@ -91,6 +91,7 @@ With a PR:
 
 - The coder's block to the reviewer goes in the PR body under `## For the reviewer`. CI checks it.
 - The reviewer's block to the coder is the review body (the approve or comment review).
+  On a frontend PR with `docs/screens.txt` configured, the approval also says `Render: <board> -- matches` (story #153).
 - Any other block is a PR or issue comment.
 - The owner relays by link when the block is already on GitHub, and by paste when it is not.
 
