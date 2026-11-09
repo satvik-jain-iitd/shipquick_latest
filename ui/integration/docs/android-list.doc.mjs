@@ -80,14 +80,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "PullToRefreshBox: Wraps a scrolling list so the user can pull it down to reload. Pass isRefreshing and onRefresh. This is Google's pull to refresh for Compose: https://developer.android.com/develop/ui/compose/components/pull-to-refresh",
-            "PullToRefreshDefaults.Indicator: The default spinner that comes down as the user pulls.",
-            "PullToRefreshDefaults.IndicatorBox: The container that moves and clips the indicator. Use it to put your own indicator in place of the spinner.",
             "ListItemDefaults: Default colours, elevation and shape for ListItem.",
-            "ListItemColors: The container, headline, supporting text, overline and icon colours of a ListItem. Make one with ListItemDefaults.colors().",
-            "PullToRefreshState: How far the user has pulled (distanceFraction). Call animateToThreshold() and animateToHidden() from a coroutine.",
-            "rememberPullToRefreshState: Creates and keeps a PullToRefreshState across recompositions.",
-            "PullToRefreshDefaults: Default colours, shape, elevation, threshold and the Indicator and IndicatorBox for pull to refresh."
+            "ListItemColors: The container, headline, supporting text, overline and icon colours of a ListItem. Make one with ListItemDefaults.colors()."
           ]
         }
       ]

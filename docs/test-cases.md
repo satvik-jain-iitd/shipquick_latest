@@ -858,3 +858,14 @@ Scenario: each Android component row has a doc of its own family, and no two doc
   Then it fails and names both folders
 ```
 Tests: `tests/test_ui_topics.py::test_s231_two_docs_with_one_topic_name_fail`. Local: `python3 scripts/ui_topics.py --check`.
+
+## Story #231, last part: Android framework topics and the strict gate (issue #286)
+```gherkin
+Scenario: every API row and framework topic is covered, and the gate is strict everywhere
+  Given the Android rows Pull to refresh, Widgets and Notifications of framework-topics.md
+  When check_ui_coverage.py --strict-api runs on the repo
+  Then it passes with no GAP line on either platform
+  And CI (ui-cli) and check_local.sh pass --strict-api
+  And under --strict-api each gap prints once, as a FAIL line
+```
+Tests: `tests/test_ui_coverage.py` (s231). Local: `bash scripts/check_local.sh ui-coverage`.
