@@ -30,14 +30,16 @@ PIN = re.compile(r"^\s*shipquick_ref:\s*([0-9a-f]{40})", re.M)
 CHILD_TOKEN_ENV = "SHIPQUICK_CHILD_TOKEN"
 
 
+CHILD_LINE = re.compile(r"([\w.-]+/[\w.-]+)( private)?")
+
+
 def read_children(path) -> list[tuple[str, bool]]:
+    """Only a line that is exactly `owner/repo` or `owner/repo private` is a child; prose is skipped."""
     out = []
     for line in Path(path).read_text(encoding="utf-8").splitlines():
-        line = line.split("#", 1)[0].strip()
-        if not line or "/" not in line:
-            continue
-        parts = line.split()
-        out.append((parts[0], len(parts) > 1 and parts[1] == "private"))
+        m = CHILD_LINE.fullmatch(line.split("#", 1)[0].strip())
+        if m:
+            out.append((m[1], bool(m[2])))
     return out
 
 
