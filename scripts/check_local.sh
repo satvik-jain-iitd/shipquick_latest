@@ -22,6 +22,8 @@ changed() { git diff --name-status -M "$(git merge-base "origin/$BASE" HEAD)" | 
 report() { if [ "$2" -eq 0 ]; then echo "ok   $1"; else echo "FAIL $1"; failed=1; fi; }
 
 check_sizes() {
+  # Story #242: backup/vendor holds vendored packages by design; only the vendor-backup workflow commits there.
+  [ "$(git rev-parse --abbrev-ref HEAD)" = "backup/vendor" ] && { echo "skip sizes: backup/vendor holds vendored files"; return 0; }
   have_base sizes || return 0
   local f large=""
   while IFS= read -r f; do

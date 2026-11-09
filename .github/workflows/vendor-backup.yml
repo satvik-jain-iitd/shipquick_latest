@@ -21,8 +21,52 @@ concurrency:
   group: vendor-backup
   cancel-in-progress: false
 jobs:
+  backup:
+    # Step 1: the one job that fetches and the one that pushes backup/vendor (so the one with contents: write).
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: src
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Open backup/vendor (create the orphan branch when it does not exist)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          URL="https://github.com/${{ github.repository }}.git"
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads "$URL" backup/vendor >/dev/null; then
+            git clone --depth 1 --branch backup/vendor "$URL" backup
+          else
+            git init -q backup
+            git -C backup checkout -q --orphan backup/vendor
+            git -C backup remote add origin "$URL"
+          fi
+      - name: Fetch and check (lockfile integrity, POM checksums), write MANIFEST and licenses
+        run: |
+          python3 src/scripts/vendor_backup.py --build backup
+          python3 src/scripts/vendor_backup.py --manifest-check backup
+      - name: Commit and push to backup/vendor
+        run: |
+          cd backup
+          printf '%s\n' "# backup/vendor" "" "Offline copy of the pinned npm and Compose dependencies (story #242). Written only by the vendor-backup workflow." "Read docs/VENDOR_BACKUP.md on dev. Do not edit by hand." > README.md
+          git add -A
+          if git diff --cached --quiet; then echo "backup already up to date"; exit 0; fi
+          git commit -q -m "chore(vendor): refresh backup from ${GITHUB_SHA::8}"
+          git push origin HEAD:backup/vendor
+          du -sh . --exclude=.git | tail -1
+          python3 -c "import json; print(len(json.load(open('MANIFEST.json'))['artifacts']), 'artifacts')"
   restore:
     # Step 2: take only the backup/vendor branch and install from it with no network use.
+    needs: backup
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
