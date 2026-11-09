@@ -81,6 +81,24 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "FilledTonalButton: Less strong than Button, stronger than OutlinedButton. Use it for a second action that still matters, like Next in a set-up flow.",
+            "ElevatedButton: A tonal button with a shadow. Use it only when the button must stand apart from a busy background.",
+            "OutlinedButton: A border and no fill. Use it for an important action that is not the main one.",
+            "TextButton: Text only, the weakest look. Use it in dialogs, in cards, and for minor actions.",
+            "ButtonDefaults: The default colours, elevation, shape, padding and sizes for each button type. Take values from it, never type your own.",
+            "ButtonColors: The colours of a button when it is on or off. Make one with ButtonDefaults.buttonColors() or the colour function of its type.",
+            "ButtonElevation: The shadow of a button in each state. Make one with ButtonDefaults.buttonElevation() or the elevation function of its type."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
