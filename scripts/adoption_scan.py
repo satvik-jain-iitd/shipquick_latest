@@ -14,7 +14,9 @@ A line in docs/children.md may end with " private" (`owner/repo private`). A pri
 read with the SHIPQUICK_CHILD_TOKEN secret (fine-grained PAT, contents+metadata read only on that
 repo — see docs/ADOPTION.md); public children keep the workflow's own github.token. A private
 child with no SHIPQUICK_CHILD_TOKEN configured prints one line and is skipped: no daily issue,
-since the scan has no way to tell "not adopted" from "can't see it".
+since the scan has no way to tell "not adopted" from "can't see it". The same holds for a private
+child the token cannot read (a 404 or 403). Story #260: every such skip is named in the run summary
+(`skipped <repo>: private, ...`) with a count, so a skip is never silent.
 
 Usage: python3 scripts/adoption_scan.py [--children docs/children.md] [--days 14] [--dry-run]
 Needs: gh (authenticated as the build account), network. A scan problem (a child unreachable) is
@@ -137,9 +139,16 @@ def main() -> int:
 
     today = datetime.datetime.now(datetime.timezone.utc)
     child_token = os.environ.get(CHILD_TOKEN_ENV)
+    skipped = []   # story #260: a skip is never silent; each one is named again in the summary
     for child, is_private in read_children(args.children):
         token = child_token if is_private else None
         fetch = (lambda path, t=token: gh_api(path, token=t))
+        if is_private and not token:
+            skipped.append(f"skipped {child}: private, no token ({CHILD_TOKEN_ENV} not set)")
+            continue
+        if is_private and fetch(f"repos/{child}") is None:   # a 404 or 403 with a token looks like "not adopted" too
+            skipped.append(f"skipped {child}: private, cannot read it with {CHILD_TOKEN_ENV} (404 or 403)")
+            continue
         why, should_file = scan_child(child, is_private, fetch, args.days, today, bool(token))
         if why:
             print(why)
@@ -147,6 +156,9 @@ def main() -> int:
                 open_or_comment(child, why, args.dry_run)
         else:
             print(f"{child}: adopted and fresh")
+    print(f"summary: {len(skipped)} skipped")
+    for line in skipped:
+        print(line)
     return 0
 
 

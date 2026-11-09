@@ -10,6 +10,11 @@ Usage:
       prints the branch (nothing when unset); exit 1 and the reason when the value is bad
   python3 scripts/kit_branch.py protection <owner/repo> <branch>
       exit 0 "protected", or exit 1 and the reason (needs gh; reading protection needs Administration: read)
+  python3 scripts/kit_branch.py gate <owner/repo>
+      story #260: exit 0 when `shipquick-checks / gate` is a required check on the default branch
+      (branch protection or a ruleset), or exit 1, "gate not required ..." and the command that fixes it
+  python3 scripts/kit_branch.py gate-command <owner/repo>
+      prints that one command (a ruleset POST); nothing here ever runs it
 """
 import json
 import re
@@ -44,14 +49,46 @@ def protection_gap(branch: str, data) -> str | None:
     return None
 
 
-def _gh_protection(repo: str, branch: str):
-    r = subprocess.run(["gh", "api", f"repos/{repo}/branches/{branch}/protection"], capture_output=True, text=True)
+GATE = "shipquick-checks / gate"
+# Story #260: a ruleset on the default branch. It works whether or not branch protection already exists,
+# and it never replaces checks the child already requires (the classic PUT .../required_status_checks does).
+RULESET = json.dumps({
+    "name": "shipquick gate", "target": "branch", "enforcement": "active",
+    "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+    "rules": [{"type": "required_status_checks", "parameters": {
+        "strict_required_status_checks_policy": False, "required_status_checks": [{"context": GATE}]}}],
+}, separators=(",", ":"))
+
+
+def gate_command(repo: str) -> str:
+    return f"echo '{RULESET}' | gh api -X POST repos/{repo}/rulesets --input -"
+
+
+def gate_gap(repo: str, branch: str, protection, rules) -> str | None:
+    """protection: branches/<b>/protection (None = none or unreadable); rules: rules/branches/<b> (rulesets)."""
+    rsc = (protection or {}).get("required_status_checks") or {}
+    got = set(rsc.get("contexts") or []) | {c.get("context") for c in rsc.get("checks") or []}
+    for rule in rules or []:
+        if rule.get("type") == "required_status_checks":
+            got |= {c.get("context") for c in rule.get("parameters", {}).get("required_status_checks", [])}
+    if GATE in got:
+        return None
+    return (f"gate not required on {branch}: {GATE} is not a required status check in its branch protection "
+            f"(or that cannot be read: needs Administration: read) or its rulesets. Run: {gate_command(repo)}")
+
+
+def _gh(path: str):
+    r = subprocess.run(["gh", "api", path], capture_output=True, text=True)
     if r.returncode != 0:
         return None
     try:
         return json.loads(r.stdout)
     except json.JSONDecodeError:
         return None
+
+
+def _gh_protection(repo: str, branch: str):
+    return _gh(f"repos/{repo}/branches/{branch}/protection")
 
 
 def main(argv: list[str]) -> int:
@@ -67,6 +104,18 @@ def main(argv: list[str]) -> int:
         why = protection_gap(argv[2], _gh_protection(argv[1], argv[2]))
         print(why or "protected")
         return 1 if why else 0
+    if argv[:1] == ["gate"] and len(argv) == 2:
+        info = _gh(f"repos/{argv[1]}")
+        if not info:
+            print(f"gate not required: cannot read {argv[1]} (gh api failed). Run: {gate_command(argv[1])}")
+            return 1
+        b = info["default_branch"]
+        why = gate_gap(argv[1], b, _gh_protection(argv[1], b), _gh(f"repos/{argv[1]}/rules/branches/{b}"))
+        print(why or f"gate required on {b}")
+        return 1 if why else 0
+    if argv[:1] == ["gate-command"] and len(argv) == 2:
+        print(gate_command(argv[1]))
+        return 0
     print(__doc__.split("Usage:", 1)[1].strip(), file=sys.stderr)
     return 2
 

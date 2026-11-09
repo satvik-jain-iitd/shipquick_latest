@@ -209,3 +209,41 @@ def test_s225_a_child_without_kit_branch_is_scanned_as_before():
     seen = []
     assert scan.check_child("owner/child", kit_api(kit=None, seen=seen), days=14, today=TODAY) is None
     assert not any("knowledge/shipquick_latest" in p or "pre-commit" in p or "protection" in p for p in seen)
+
+
+# ---- story #260: a skipped child is always named in the run summary, with a count ----
+def run_main(monkeypatch, capsys, tmp_path, lines, token=None):
+    f = tmp_path / "children.md"
+    f.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    filed = []
+    monkeypatch.setattr(scan, "gh_api", lambda path, token=None: None)  # every read fails: a 404 or a 403
+    monkeypatch.setattr(scan, "open_or_comment", lambda child, why, dry: filed.append(child))
+    monkeypatch.setattr(sys, "argv", ["adoption_scan.py", "--children", str(f)])
+    if token:
+        monkeypatch.setenv(scan.CHILD_TOKEN_ENV, token)
+    else:
+        monkeypatch.delenv(scan.CHILD_TOKEN_ENV, raising=False)
+    assert scan.main() == 0
+    return capsys.readouterr().out, filed
+
+
+def test_s260_a_private_child_with_no_token_is_named_as_skipped_in_the_summary(monkeypatch, capsys, tmp_path):
+    out, filed = run_main(monkeypatch, capsys, tmp_path, ["owner/a private", "owner/b private"])
+    assert "skipped owner/a: private, no token" in out and "skipped owner/b: private, no token" in out
+    assert "2 skipped" in out and filed == []
+
+
+def test_s260_a_private_child_that_answers_404_or_403_is_skipped_not_filed(monkeypatch, capsys, tmp_path):
+    out, filed = run_main(monkeypatch, capsys, tmp_path, ["owner/a private"], token="t")
+    assert "skipped owner/a: private, cannot read" in out and "1 skipped" in out and filed == []
+
+
+def test_s260_a_public_child_that_cannot_be_read_is_still_filed(monkeypatch, capsys, tmp_path):
+    out, filed = run_main(monkeypatch, capsys, tmp_path, ["owner/a"])
+    assert filed == ["owner/a"] and "0 skipped" in out
+
+
+def test_s260_the_registry_names_every_known_child_and_marks_the_private_ones():
+    got = dict(scan.read_children(ROOT / "docs" / "children.md"))
+    assert got == {"satvik-jain-iitd/GoServe": False, "klickbae8yt-star/job-search": True,
+                   "satvik-jain-iitd/Miraya": True}
