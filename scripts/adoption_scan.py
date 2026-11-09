@@ -107,14 +107,6 @@ def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str |
     return None
 
 
-def scan_child(child: str, is_private: bool, fetch, days: int, today, has_token: bool) -> tuple[str | None, bool]:
-    """Returns (message_or_None, should_file_issue). A private child with no secret is reported
-    but never filed, since a 404 from a missing token looks identical to "not adopted"."""
-    if is_private and not has_token:
-        return (f"{child}: private, no {CHILD_TOKEN_ENV} configured — skipping (no daily issue)", False)
-    return (check_child(child, fetch, days, today), True)
-
-
 def open_or_comment(child: str, why: str, dry_run: bool) -> None:
     low_child = child.lower()
     existing = gh_api(f"repos/{REPO}/issues?labels=feedback&state=open") or []
@@ -149,11 +141,10 @@ def main() -> int:
         if is_private and fetch(f"repos/{child}") is None:   # a 404 or 403 with a token looks like "not adopted" too
             skipped.append(f"skipped {child}: private, cannot read it with {CHILD_TOKEN_ENV} (404 or 403)")
             continue
-        why, should_file = scan_child(child, is_private, fetch, args.days, today, bool(token))
+        why = check_child(child, fetch, args.days, today)
         if why:
             print(why)
-            if should_file:
-                open_or_comment(child, why, args.dry_run)
+            open_or_comment(child, why, args.dry_run)
         else:
             print(f"{child}: adopted and fresh")
     print(f"summary: {len(skipped)} skipped")

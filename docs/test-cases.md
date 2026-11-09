@@ -574,6 +574,10 @@ Scenario: the gate is a required check on the child's default branch
   When adopt.sh --check runs and neither branch protection nor a ruleset requires the gate
   Then it prints "gate not required" with the command and exits 1
   And a ruleset that requires the gate passes, and no GitHub origin fails
+  And the printed ruleset pins the gate to the GitHub Actions app (integration_id 15368)
+  And a gate with no app, another app, a name that differs only in case, or another context does not count
+  And a 403 or 404 on the rules read prints "cannot read rules (403/404)" and exits 1
+  And docs/ADOPTION.md holds no per-child facts; each child's note and next step sit in docs/children.md
 
 Scenario: the daily scan never skips a child in silence
   Given a private child with no SHIPQUICK_CHILD_TOKEN, or one the token gets a 404 or 403 on

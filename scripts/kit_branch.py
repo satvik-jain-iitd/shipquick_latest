@@ -50,13 +50,15 @@ def protection_gap(branch: str, data) -> str | None:
 
 
 GATE = "shipquick-checks / gate"
+ACTIONS_APP = 15368   # the GitHub Actions app: only its check run may satisfy the gate, not any status poster
 # Story #260: a ruleset on the default branch. It works whether or not branch protection already exists,
 # and it never replaces checks the child already requires (the classic PUT .../required_status_checks does).
 RULESET = json.dumps({
     "name": "shipquick gate", "target": "branch", "enforcement": "active",
     "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
     "rules": [{"type": "required_status_checks", "parameters": {
-        "strict_required_status_checks_policy": False, "required_status_checks": [{"context": GATE}]}}],
+        "strict_required_status_checks_policy": False,
+        "required_status_checks": [{"context": GATE, "integration_id": ACTIONS_APP}]}}],
 }, separators=(",", ":"))
 
 
@@ -65,16 +67,21 @@ def gate_command(repo: str) -> str:
 
 
 def gate_gap(repo: str, branch: str, protection, rules) -> str | None:
-    """protection: branches/<b>/protection (None = none or unreadable); rules: rules/branches/<b> (rulesets)."""
+    """protection: branches/<b>/protection (None = none or unreadable); rules: rules/branches/<b> (rulesets,
+    None = the read failed). The gate counts only with its exact name, pinned to the GitHub Actions app."""
+    if rules is None:
+        return f"cannot read rules (403/404) of {repo} branch {branch}, so the gate cannot be checked. Run: {gate_command(repo)}"
     rsc = (protection or {}).get("required_status_checks") or {}
-    got = set(rsc.get("contexts") or []) | {c.get("context") for c in rsc.get("checks") or []}
-    for rule in rules or []:
+    pinned = [c.get("app_id") for c in rsc.get("checks") or [] if c.get("context") == GATE]
+    for rule in rules:
         if rule.get("type") == "required_status_checks":
-            got |= {c.get("context") for c in rule.get("parameters", {}).get("required_status_checks", [])}
-    if GATE in got:
+            pinned += [c.get("integration_id") for c in rule.get("parameters", {}).get("required_status_checks", [])
+                       if c.get("context") == GATE]
+    if ACTIONS_APP in pinned:
         return None
-    return (f"gate not required on {branch}: {GATE} is not a required status check in its branch protection "
-            f"(or that cannot be read: needs Administration: read) or its rulesets. Run: {gate_command(repo)}")
+    return (f"gate not required on {branch}: {GATE} from the GitHub Actions app ({ACTIONS_APP}) is not a required "
+            f"check in its branch protection (or that cannot be read: needs Administration: read) or its rulesets. "
+            f"Run: {gate_command(repo)}")
 
 
 def _gh(path: str):
@@ -107,7 +114,7 @@ def main(argv: list[str]) -> int:
     if argv[:1] == ["gate"] and len(argv) == 2:
         info = _gh(f"repos/{argv[1]}")
         if not info:
-            print(f"gate not required: cannot read {argv[1]} (gh api failed). Run: {gate_command(argv[1])}")
+            print(f"cannot read {argv[1]} (403/404), so the gate cannot be checked. Run: {gate_command(argv[1])}")
             return 1
         b = info["default_branch"]
         why = gate_gap(argv[1], b, _gh_protection(argv[1], b), _gh(f"repos/{argv[1]}/rules/branches/{b}"))

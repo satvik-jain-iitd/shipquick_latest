@@ -78,30 +78,23 @@ The command makes a ruleset named `shipquick gate` on `~DEFAULT_BRANCH`. We use 
 
 A second run of the command gets an error that the name is taken. That is safe: the first ruleset stays.
 
-`adopt.sh . --check` reads both places: `branches/<default>/protection` and `rules/branches/<default>`. When the gate is in neither, it prints `not adopted: gate not required on <branch>: ...` with the command, and exits 1. Reading branch protection needs `Administration: read`. Without it, only rulesets are seen. That is one more reason to use the ruleset.
+The ruleset pins the gate to the GitHub Actions app (`integration_id: 15368`). Without that pin, anyone who may post a commit status could post one named `shipquick-checks / gate` and pass it.
+
+`adopt.sh . --check` reads both places: `branches/<default>/protection` and `rules/branches/<default>`. The gate counts only with its exact name and the Actions app (`checks[].app_id` in branch protection, `integration_id` in a ruleset). When the gate is in neither, it prints `not adopted: gate not required on <branch>: ...` with the command, and exits 1. When the rules read gets a 403 or 404, it prints `cannot read rules (403/404) ...` and exits 1 too. Reading branch protection needs `Administration: read`. Without it, only rulesets are seen. That is one more reason to use the ruleset.
 
 A private repo on GitHub Free cannot enforce rulesets or branch protection. Such a child needs a paid plan, or it stays "gate not required".
 
 ## Checklist for each child
 
 Do these in order, in the child repo. One step at a time.
-1. Bump the submodule to the release tag: `git -C knowledge/shipquick_latest fetch --tags && git -C knowledge/shipquick_latest checkout v0.9.0`, then `git add knowledge/shipquick_latest`.
-2. Run `bash knowledge/shipquick_latest/scripts/adopt.sh . --ref v0.9.0`. A rule-24 child adds `--kit-branch <branch>` and runs it on that branch.
+1. Bump the submodule to the release tag: `git -C knowledge/shipquick_latest fetch --tags && git -C knowledge/shipquick_latest checkout <release tag>`, then `git add knowledge/shipquick_latest`.
+2. Run `bash knowledge/shipquick_latest/scripts/adopt.sh . --ref <release tag>`. A rule-24 child adds `--kit-branch <branch>` and runs it on that branch.
 3. Commit and push the files through a PR. A rule-24 child also copies `shipquick-call.yml` to `main` in a PR.
 4. Run the command `adopt.sh` printed, to make `shipquick-checks / gate` a required check.
 5. If the caller names a kit branch, protect that branch and require pull request reviews there.
 6. A private child: add a fine-grained token that can read it to ShipQuick's `SHIPQUICK_CHILD_TOKEN`, or the daily scan names it as skipped.
 7. Wait for one PR whose `shipquick-checks / gate` is green. Then run `adopt.sh . --check`. It must print `adopted`.
 
-## Children today (9 Nov 2026)
-
-| Child | Seen on GitHub | Next step |
-|---|---|---|
-| `satvik-jain-iitd/GoServe` | public, rule 24, kit branch `documents`, pins `edd3c26` there, no caller on `main` | Step 1 on `documents`, then step 2 with `--kit-branch documents` |
-| `klickbae8yt-star/job-search` | private, pins `edd3c26` on `main`, has `roadmap-call.yml`, no `shipquick-call.yml` | Step 1 on `main`, then step 2 |
-| a fourth child (its name is on the forbidden-names list in `tests/test_repo_hygiene.py`, so it is not in `docs/children.md` yet) | public, pins `e0bee8a`, no caller | The owner decides how to list it. In the child: step 1, then step 2 |
-| `satvik-jain-iitd/Miraya` | private and empty: the local repo has a caller, but nothing was pushed | Push the local repo first, then step 1 |
-
 ## Adding a child
 
-Add its `owner/repo` to `docs/children.md` once (a one-line PR to ShipQuick, or let the owner do it). Add `private` only when `gh repo view` says it is private. Then follow the checklist above.
+Add its `owner/repo` to `docs/children.md` once (a one-line PR to ShipQuick, or let the owner do it). Add `private` only when `gh repo view` says it is private. Write one `# <name>: <what GitHub shows>. Next: <step>` note above its line. Then follow the checklist above.

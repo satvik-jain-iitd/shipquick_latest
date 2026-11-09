@@ -277,14 +277,23 @@ echo "$*" >> "$STUB_DIR/calls.log"
 case "$*" in
   *repos/owner/child/branches/*/protection*) [ -f "$STUB_DIR/protection.json" ] && { cat "$STUB_DIR/protection.json"; exit 0; }
     echo "gh: Branch not protected (HTTP 404)" >&2; exit 1 ;;
-  *repos/owner/child/rules/branches/*) cat "$STUB_DIR/rules.json" 2>/dev/null || echo "[]"; exit 0 ;;
+  *repos/owner/child/rules/branches/*) [ -f "$STUB_DIR/rules.403" ] && { echo "gh: Resource not accessible (HTTP 403)" >&2; exit 1; }
+    cat "$STUB_DIR/rules.json" 2>/dev/null || echo "[]"; exit 0 ;;
   "api repos/owner/child") echo '{"default_branch": "main"}'; exit 0 ;;
 esac
 exit 9
 """
 GATE = "shipquick-checks / gate"
 PROTECTED = {"required_pull_request_reviews": {"required_approving_review_count": 1}, "enforce_admins": {"enabled": True},
-             "required_status_checks": {"contexts": [GATE], "checks": [{"context": GATE}]}}
+             "required_status_checks": {"contexts": [GATE], "checks": [{"context": GATE, "app_id": 15368}]}}
+ACTIONS = 15368  # the GitHub Actions app: only its check runs may satisfy the gate (review 2 of PR #268)
+
+
+def ruleset(context=GATE, integration_id=ACTIONS):
+    entry = {"context": context}
+    if integration_id is not None:
+        entry["integration_id"] = integration_id
+    return [{"type": "required_status_checks", "parameters": {"required_status_checks": [entry]}}]
 
 
 class Gh(dict):
@@ -448,8 +457,7 @@ def test_s260_check_says_gate_not_required_with_no_protection_and_no_rules(child
 
 def test_s260_check_passes_when_a_ruleset_requires_the_gate(child, gh):
     gh.protect(None)
-    (gh.stub / "rules.json").write_text(json.dumps([{"type": "required_status_checks", "parameters": {
-        "required_status_checks": [{"context": GATE}]}}]), encoding="utf-8")
+    (gh.stub / "rules.json").write_text(json.dumps(ruleset()), encoding="utf-8")
     r = adopt(adopted(child), "--check", env=gh)
     assert r.returncode == 0, (r.stdout, r.stderr)
 
@@ -459,3 +467,50 @@ def test_s260_check_fails_with_no_github_origin_since_the_gate_cannot_be_read(ch
     add_fake_submodule(child, HEAD)
     r = adopt(child, "--check")
     assert r.returncode == 1 and "gate" in r.stdout and "origin" in r.stdout
+
+
+# ---- review 2 of PR #268: only the GitHub Actions app may satisfy the gate; unreadable rules fail as unreadable ----
+def test_s260_the_printed_ruleset_pins_the_gate_to_the_github_actions_app(child, gh):
+    r = adopt(with_origin(child), env=gh)
+    assert '"integration_id":15368' in r.stdout
+
+
+def gate_run(child, gh, protection=None, rules=None):
+    gh.protect(protection)
+    if rules is not None:
+        (gh.stub / "rules.json").write_text(json.dumps(rules), encoding="utf-8")
+    return adopt(adopted(child), "--check", env=gh)
+
+
+def test_s260_a_ruleset_gate_with_no_integration_id_does_not_count(child, gh):
+    r = gate_run(child, gh, rules=ruleset(integration_id=None))
+    assert r.returncode == 1 and "gate not required" in r.stdout and "15368" in r.stdout
+
+
+def test_s260_a_ruleset_gate_from_another_app_does_not_count(child, gh):
+    r = gate_run(child, gh, rules=ruleset(integration_id=999))
+    assert r.returncode == 1 and "gate not required" in r.stdout
+
+
+def test_s260_a_protection_gate_with_only_a_context_or_another_app_does_not_count(child, gh):
+    adopted(child)
+    for checks in ([], [{"context": GATE, "app_id": None}], [{"context": GATE, "app_id": 999}]):
+        gh.protect({"required_status_checks": {"contexts": [GATE], "checks": checks}})
+        r = adopt(child, "--check", env=gh)
+        assert r.returncode == 1 and "gate not required" in r.stdout, checks
+
+
+def test_s260_a_gate_name_that_differs_only_in_case_does_not_count(child, gh):
+    r = gate_run(child, gh, rules=ruleset(context="ShipQuick-checks / Gate"))
+    assert r.returncode == 1 and "gate not required" in r.stdout
+
+
+def test_s260_a_ruleset_with_a_different_context_does_not_count(child, gh):
+    r = gate_run(child, gh, rules=ruleset(context="ci / test"))
+    assert r.returncode == 1 and "gate not required" in r.stdout
+
+
+def test_s260_a_403_on_the_rules_read_fails_as_cannot_read_not_as_gate_not_required(child, gh):
+    (gh.stub / "rules.403").write_text("", encoding="utf-8")
+    r = gate_run(child, gh, protection=PROTECTED)
+    assert r.returncode == 1 and "cannot read rules (403/404)" in r.stdout and "gate not required" not in r.stdout

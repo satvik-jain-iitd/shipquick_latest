@@ -104,25 +104,7 @@ def test_read_children_accepts_any_whitespace_before_private(tmp_path):
     assert scan.read_children(f) == [("owner/a", True), ("owner/b", True)]
 
 
-def test_a_private_child_with_no_token_is_skipped_with_no_issue_filed():
-    fetch = api(call_content=None)
-    why, should_file = scan.scan_child("owner/child", True, fetch, 14, TODAY, has_token=False)
-    assert why and "no" in why and "SHIPQUICK_CHILD_TOKEN" in why
-    assert should_file is False
 
-
-def test_a_private_child_with_a_token_is_checked_normally():
-    fetch = api(call_content={"content": _b64(f"  shipquick_ref: {FRESH_SHA}\n")}, fresh=True)
-    why, should_file = scan.scan_child("owner/child", True, fetch, 14, TODAY, has_token=True)
-    assert why is None
-    assert should_file is True
-
-
-def test_a_public_child_ignores_has_token():
-    fetch = api(call_content=None)
-    why, should_file = scan.scan_child("owner/child", False, fetch, 14, TODAY, has_token=False)
-    assert why and "shipquick-call.yml" in why
-    assert should_file is True
 
 
 def _b64(text):
@@ -247,3 +229,17 @@ def test_s260_the_registry_names_every_known_child_and_marks_the_private_ones():
     got = dict(scan.read_children(ROOT / "docs" / "children.md"))
     assert got == {"satvik-jain-iitd/GoServe": False, "klickbae8yt-star/job-search": True,
                    "satvik-jain-iitd/Miraya": True}
+
+
+def test_s260_scan_child_is_gone_since_main_skips_private_children_itself():
+    assert not hasattr(scan, "scan_child")
+
+
+def test_s260_adoption_md_is_generic_and_the_per_child_facts_live_in_the_registry():
+    doc = (ROOT / "docs" / "ADOPTION.md").read_text(encoding="utf-8")
+    for fact in ("edd3c26", "e0bee8a", "v0.9.0", "forbidden-names", "Children today"):
+        assert fact not in doc, fact
+    assert "<release tag>" in doc
+    reg = (ROOT / "docs" / "children.md").read_text(encoding="utf-8")
+    for child in ("GoServe", "job-search", "Miraya"):
+        assert re.search(rf"^# {child}: .*Next:", reg, re.M), child
