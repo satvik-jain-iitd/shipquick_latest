@@ -19,6 +19,23 @@ Children can now pin a tag that holds today's gates (rule 37 needs a merged or t
   That branch must be protected, or adoption fails.
 - **Protected PRs need two yeses.** A second review, and an owner yes line in the approval.
 
+## What breaks for children on the bump
+
+Each item has its one-line fix.
+
+1. **The adoption job fails any workflow job with no `timeout-minutes`** (`check_timeouts.py` in checks.yml, #154).
+   Fix: add `timeout-minutes: <n>` to every job in `.github/workflows/`.
+2. **A child with `docs/screens.txt` needs a `Render:` line** in a frontend approval (#153, #146).
+   Fix: the reviewer writes `Render: <board> -- matches` after putting the render beside the board.
+3. **A protected-path PR needs two more lines in the approval** before `review_merge.sh` merges it (#180).
+   `CLAUDE.md` is now a protected path. Fix: the approval carries `Second review: ...` and `Owner yes: <date> "<words>"`.
+4. **A private child's scan token needs `Administration: read`** to see branch protection (#225).
+   Fix: give `SHIPQUICK_CHILD_TOKEN` that permission.
+5. **A rule-24 child needs a protected kit branch** (#225).
+   Fix: run `scripts/adopt.sh . --kit-branch <b>` and protect `<b>` with required PR reviews.
+6. **Maker and checker sessions are opt-in** (#139). Nothing breaks if `roles.yml` has no session lists.
+   Fix, to turn it on: add `coder_sessions:` and `reviewer_sessions:` to `.shipquick/roles.yml`.
+
 ## Not yet
 
 - The API gaps: the family PRs under #231 are open now. `--strict-api` turns on with the last one.
