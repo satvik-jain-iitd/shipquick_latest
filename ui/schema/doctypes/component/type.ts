@@ -25,13 +25,41 @@ import type {
 /** ShipQuick addition (story #228): one platform's own usage text. */
 export type PlatformUsageDoc = Partial<Pick<UsageDoc, 'description' | 'bestPractices' | 'accessibility'>>;
 
+/** ShipQuick addition (story #231): the status of an API entry that is not a
+ *  plain recommendation. Every such entry also names its `replacement`. */
+export type ApiStatus = 'deprecated' | 'unavailable-ios';
+
+/** ShipQuick addition (story #231): one variant, scope composable or modifier row. */
+export interface ApiVariantDoc {
+  /** The entry exactly as the API list spells it, e.g. `'FilledTonalButton'`, `'sheet'`. */
+  name: string;
+  /** One line on how it differs from the doc's main API. Needed unless `props` is set. */
+  note?: string;
+  /** Its own props, when it has props the main API does not. */
+  props?: {name: string; type: string; description: string; default?: string}[];
+  status?: ApiStatus;
+  /** What to use instead. Required when `status` is set. */
+  replacement?: string;
+}
+
+/** ShipQuick addition (story #231): one supporting row (rememberX, *Defaults, *Colors, a state holder). */
+export interface ApiSupportingDoc {
+  name: string;
+  /** One line on when to use it. */
+  use: string;
+  status?: ApiStatus;
+  /** What to use instead. Required when `status` is set. */
+  replacement?: string;
+}
+
 /** ShipQuick addition (story #231): the rows of a generated API list
- *  (docs/research/android-m3-api.md, ios-swiftui-api.md) that this doc covers. */
+ *  (docs/research/android-m3-api.md, ios-swiftui-api.md) that this doc covers.
+ *  Plain strings are not allowed; a row has one owner doc. */
 export interface PlatformApiDoc {
-  /** Component, variant or modifier names, e.g. `'FilledTonalButton'`, `'sheet'`. */
-  variants?: string[];
-  /** Supporting names, e.g. `'ButtonDefaults'`, `'rememberModalBottomSheetState'`. */
-  supporting?: string[];
+  /** The `family` row this doc covers, e.g. `'AppBar'`. */
+  family?: string;
+  variants?: ApiVariantDoc[];
+  supporting?: ApiSupportingDoc[];
 }
 
 /** What replaces a deprecated component (`ComponentBaseDoc.deprecated`). */
@@ -96,6 +124,11 @@ export interface ComponentBaseDoc extends AuthoredDocGraphFields {
     ios?: PlatformApiDoc;
     web?: PlatformApiDoc;
   };
+  /** ShipQuick addition (story #231): the status of the doc's main API
+   *  (`platforms`). Topics then say "Do not use: <name>. Use <replacement>." */
+  status?: ApiStatus;
+  /** What to use instead of the main API. Required when `status` is set. */
+  replacement?: string;
   /** Exact consumer import specifier for integration-owned components. */
   import?: string;
   /** Integration components only: the exact `name` of the Core ComponentDoc

@@ -3,709 +3,717 @@
 // shipquick: fetched: 2026-11-09
 // shipquick: upstream_sha256: defd3f18ff5f0ac34e5dfb77703121ddb7449377adb09588920bfeeba36db52c
 // shipquick: upstream_lines: 3375
-package androidx.compose.material3 {
-  public final class AlertDialogDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-  public final class AlertDialogKt {
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void AlertDialog(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void BasicAlertDialog(
-  public final class AndroidAlertDialog_androidKt {
-    method @androidx.compose.runtime.Composable public static void AlertDialog(
-  public final class AndroidMenu_androidKt {
-    method @androidx.compose.runtime.Composable public static void DropdownMenu(
-    method @Deprecated @androidx.compose.runtime.Composable public static void DropdownMenu(
-    method @Deprecated @androidx.compose.runtime.Composable public static void DropdownMenu(
-    method @androidx.compose.runtime.Composable public static void DropdownMenuItem(
-  public final class AppBarColumnKt {
-    method @androidx.compose.runtime.Composable public static void AppBarColumn(
-  public interface AppBarColumnScope extends androidx.compose.material3.AppBarScope {
-  public final class AppBarKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void BottomAppBar(
-    method @androidx.compose.runtime.Composable public static void BottomAppBar(
-    method @androidx.compose.runtime.Composable public static void BottomAppBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void BottomAppBar(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void CenterAlignedTopAppBar(
-    method @androidx.compose.runtime.Composable public static void CenterAlignedTopAppBar(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void LargeTopAppBar(
-    method @androidx.compose.runtime.Composable public static void LargeTopAppBar(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void MediumTopAppBar(
-    method @androidx.compose.runtime.Composable public static void MediumTopAppBar(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TopAppBar(
-    method @androidx.compose.runtime.Composable public static void TopAppBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.BottomAppBarState rememberBottomAppBarState(
-    method @androidx.compose.runtime.Composable public static androidx.compose.material3.TopAppBarState rememberTopAppBarState(
-  public final class AppBarMenuState {
-  public final class AppBarRowKt {
-    method @androidx.compose.runtime.Composable public static void AppBarRow(
-  public interface AppBarRowScope extends androidx.compose.material3.AppBarScope {
-  public sealed interface AppBarScope {
-  public final class AssistChipDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke assistChipBorder(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.ChipBorder assistChipBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors assistChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors assistChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipElevation assistChipElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors elevatedAssistChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors elevatedAssistChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipElevation elevatedAssistChipElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-  public final class BadgeDefaults {
-  public final class BadgeKt {
-    method @androidx.compose.runtime.Composable public static void Badge(
-    method @androidx.compose.runtime.Composable public static void BadgedBox(
-  public final class BottomAppBarDefaults {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.BottomAppBarScrollBehavior exitAlwaysScrollBehavior(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public interface BottomAppBarScrollBehavior {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public interface BottomAppBarState {
-  public static final class BottomAppBarState.Companion {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class BottomSheetDefaults {
-    method @androidx.compose.runtime.Composable public void DragHandle(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getExpandedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getHiddenShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-  public final class BottomSheetScaffoldKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void BottomSheetScaffold(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.BottomSheetScaffoldState rememberBottomSheetScaffoldState(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.SheetState rememberStandardBottomSheetState(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class BottomSheetScaffoldState {
-  @androidx.compose.runtime.Immutable public final class ButtonColors {
-  public final class ButtonDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors buttonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors buttonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonElevation buttonElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors elevatedButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors elevatedButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonElevation elevatedButtonElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors filledTonalButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors filledTonalButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonElevation filledTonalButtonElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getElevatedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getFilledTonalShape(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke getOutlinedButtonBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getOutlinedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getTextShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke outlinedButtonBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors outlinedButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors outlinedButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors textButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors textButtonColors(
-  @androidx.compose.runtime.Stable public final class ButtonElevation {
-  public final class ButtonKt {
-    method @androidx.compose.runtime.Composable public static void Button(
-    method @androidx.compose.runtime.Composable public static void ElevatedButton(
-    method @androidx.compose.runtime.Composable public static void FilledTonalButton(
-    method @androidx.compose.runtime.Composable public static void OutlinedButton(
-    method @androidx.compose.runtime.Composable public static void TextButton(
-  @androidx.compose.runtime.Immutable public final class CardColors {
-  public final class CardDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors cardColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors cardColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardElevation cardElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors elevatedCardColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors elevatedCardColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardElevation elevatedCardElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getElevatedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getOutlinedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke outlinedCardBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors outlinedCardColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors outlinedCardColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardElevation outlinedCardElevation(
-  @androidx.compose.runtime.Immutable public final class CardElevation {
-  public final class CardKt {
-    method @androidx.compose.runtime.Composable public static void Card(
-    method @androidx.compose.runtime.Composable public static void Card(
-    method @androidx.compose.runtime.Composable public static void ElevatedCard(
-    method @androidx.compose.runtime.Composable public static void ElevatedCard(
-    method @androidx.compose.runtime.Composable public static void OutlinedCard(
-    method @androidx.compose.runtime.Composable public static void OutlinedCard(
-  @androidx.compose.runtime.Immutable public final class CheckboxColors {
-  public final class CheckboxDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CheckboxColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.CheckboxColors colors(
-  public final class CheckboxKt {
-    method @androidx.compose.runtime.Composable public static void Checkbox(
-    method @androidx.compose.runtime.Composable public static void Checkbox(
-    method @androidx.compose.runtime.Composable public static void TriStateCheckbox(
-    method @androidx.compose.runtime.Composable public static void TriStateCheckbox(
-  @Deprecated @androidx.compose.runtime.Immutable public final class ChipBorder {
-  @androidx.compose.runtime.Immutable public final class ChipColors {
-  @androidx.compose.runtime.Immutable public final class ChipElevation {
-  public final class ChipKt {
-    method @androidx.compose.runtime.Composable public static void AssistChip(
-    method @Deprecated @androidx.compose.runtime.Composable public static void AssistChip(
-    method @androidx.compose.runtime.Composable public static void ElevatedAssistChip(
-    method @Deprecated @androidx.compose.runtime.Composable public static void ElevatedAssistChip(
-    method @androidx.compose.runtime.Composable public static void ElevatedFilterChip(
-    method @androidx.compose.runtime.Composable public static void ElevatedSuggestionChip(
-    method @Deprecated @androidx.compose.runtime.Composable public static void ElevatedSuggestionChip(
-    method @androidx.compose.runtime.Composable public static void FilterChip(
-    method @androidx.compose.runtime.Composable public static void InputChip(
-    method @androidx.compose.runtime.Composable public static void SuggestionChip(
-    method @Deprecated @androidx.compose.runtime.Composable public static void SuggestionChip(
-  @androidx.compose.runtime.Immutable public final class ColorScheme {
-  public final class ColorSchemeKt {
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static long contentColorFor(
-  public final class ContentColorKt {
-  @androidx.compose.runtime.Immutable public final class DatePickerColors {
-  @androidx.compose.runtime.Stable public final class DatePickerDefaults {
-    method @androidx.compose.runtime.Composable public void DatePickerHeadline(
-    method @androidx.compose.runtime.Composable public void DatePickerTitle(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.DatePickerColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.DatePickerColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-  public final class DatePickerDialog_androidKt {
-    method @androidx.compose.runtime.Composable public static void DatePickerDialog(
-  public interface DatePickerFormatter {
-  public final class DatePickerKt {
-    method @androidx.compose.runtime.Composable public static void DatePicker(
-    method @androidx.compose.runtime.Composable public static androidx.compose.material3.DatePickerState rememberDatePickerState(
-  @androidx.compose.runtime.Stable public interface DatePickerState {
-  public final class DatePicker_jvmKt {
-    method @SuppressCompatibility @RequiresApi(
-    method @SuppressCompatibility @RequiresApi(
-  @androidx.compose.runtime.Stable public final class DateRangePickerDefaults {
-    method @androidx.compose.runtime.Composable public void DateRangePickerHeadline(
-    method @androidx.compose.runtime.Composable public void DateRangePickerTitle(
-  public final class DateRangePickerKt {
-    method @androidx.compose.runtime.Composable public static void DateRangePicker(
-    method @androidx.compose.runtime.Composable public static androidx.compose.material3.DateRangePickerState rememberDateRangePickerState(
-  @androidx.compose.runtime.Stable public interface DateRangePickerState {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class DefaultTooltipCaretShape implements androidx.compose.ui.graphics.Shape {
-  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class DisplayMode {
-  public static final class DisplayMode.Companion {
-  public final class DividerDefaults {
-  public final class DividerKt {
-    method @Deprecated @androidx.compose.runtime.Composable public static void Divider(
-    method @androidx.compose.runtime.Composable public static void HorizontalDivider(
-    method @androidx.compose.runtime.Composable public static void VerticalDivider(
-  @androidx.compose.runtime.Immutable public final class DragHandleColors {
-  public final class DragHandleKt {
-    method @androidx.compose.runtime.Composable public static void VerticalDragHandle(
-  @androidx.compose.runtime.Immutable public final class DragHandleShapes {
-  @androidx.compose.runtime.Immutable public final class DragHandleSizes {
-  public final class DrawerDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-  @androidx.compose.runtime.Stable public final class DrawerState {
-  public static final class DrawerState.Companion {
-  public enum DrawerValue {
-  public final class DynamicTonalPaletteKt {
-  @SuppressCompatibility @kotlin.RequiresOptIn(message="This material API is experimental and is likely to change or to be removed in the future.") @kotlin.annotation.Retention(kotlin.annotation.AnnotationRetention.BINARY) public @interface ExperimentalMaterial3Api {
-  @kotlin.jvm.JvmInline public final value class ExposedDropdownMenuAnchorType {
-  public static final class ExposedDropdownMenuAnchorType.Companion {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public abstract sealed class ExposedDropdownMenuBoxScope {
-    method @androidx.compose.runtime.Composable public final void ExposedDropdownMenu(
-    method @Deprecated @androidx.compose.runtime.Composable public final void ExposedDropdownMenu(
-    method @Deprecated @androidx.compose.runtime.Composable public final void ExposedDropdownMenu(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class ExposedDropdownMenuDefaults {
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void TrailingIcon(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void TrailingIcon(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors outlinedTextFieldColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors outlinedTextFieldColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors outlinedTextFieldColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors textFieldColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors textFieldColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors textFieldColors(
-  public final class ExposedDropdownMenuKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ExposedDropdownMenuBox(
-  @kotlin.jvm.JvmInline public final value class FabPosition {
-  public static final class FabPosition.Companion {
-  public final class FilterChipDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors elevatedFilterChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors elevatedFilterChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipElevation elevatedFilterChipElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke filterChipBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors filterChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors filterChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipElevation filterChipElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-  public final class FloatingActionButtonDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.FloatingActionButtonElevation elevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getExtendedFabShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getLargeShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getSmallShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.FloatingActionButtonElevation loweredElevation(
-  @androidx.compose.runtime.Stable public class FloatingActionButtonElevation {
-  public final class FloatingActionButtonKt {
-    method @androidx.compose.runtime.Composable public static void ExtendedFloatingActionButton(
-    method @androidx.compose.runtime.Composable public static void ExtendedFloatingActionButton(
-    method @androidx.compose.runtime.Composable public static void FloatingActionButton(
-    method @androidx.compose.runtime.Composable public static void LargeFloatingActionButton(
-    method @androidx.compose.runtime.Composable public static void SmallFloatingActionButton(
-  @androidx.compose.runtime.Immutable public final class IconButtonColors {
-  public final class IconButtonDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors filledIconButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors filledIconButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors filledIconToggleButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors filledIconToggleButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors filledTonalIconButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors filledTonalIconButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors filledTonalIconToggleButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors filledTonalIconToggleButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getFilledShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getOutlinedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getStandardShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors iconButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors iconButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors iconButtonVibrantColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors iconButtonVibrantColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors iconToggleButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors iconToggleButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors iconToggleButtonVibrantColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors iconToggleButtonVibrantColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke outlinedIconButtonBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors outlinedIconButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors outlinedIconButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke outlinedIconButtonVibrantBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors outlinedIconButtonVibrantColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors outlinedIconButtonVibrantColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke? outlinedIconToggleButtonBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors outlinedIconToggleButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors outlinedIconToggleButtonColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke? outlinedIconToggleButtonVibrantBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors outlinedIconToggleButtonVibrantColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors outlinedIconToggleButtonVibrantColors(
-  @kotlin.jvm.JvmInline public static final value class IconButtonDefaults.IconButtonWidthOption {
-  public static final class IconButtonDefaults.IconButtonWidthOption.Companion {
-  public final class IconButtonKt {
-    method @androidx.compose.runtime.Composable public static void FilledIconButton(
-    method @androidx.compose.runtime.Composable public static void FilledIconToggleButton(
-    method @androidx.compose.runtime.Composable public static void FilledTonalIconButton(
-    method @androidx.compose.runtime.Composable public static void FilledTonalIconToggleButton(
-    method @androidx.compose.runtime.Composable public static void IconButton(
-    method @Deprecated @androidx.compose.runtime.Composable public static void IconButton(
-    method @androidx.compose.runtime.Composable public static void IconToggleButton(
-    method @Deprecated @androidx.compose.runtime.Composable public static void IconToggleButton(
-    method @androidx.compose.runtime.Composable public static void OutlinedIconButton(
-    method @androidx.compose.runtime.Composable public static void OutlinedIconToggleButton(
-  public final class IconKt {
-    method @androidx.compose.runtime.Composable public static void Icon(
-    method @androidx.compose.runtime.Composable public static void Icon(
-    method @androidx.compose.runtime.Composable public static void Icon(
-    method @androidx.compose.runtime.Composable public static void Icon(
-  @androidx.compose.runtime.Immutable public final class IconToggleButtonColors {
-  public final class InputChipDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke inputChipBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors inputChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors inputChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipElevation inputChipElevation(
-  public final class InteractiveComponentSizeKt {
-  public final class LabelKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void Label(
-  @androidx.compose.runtime.Immutable public final class ListItemColors {
-  public final class ListItemDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ListItemColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ListItemColors colors(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.graphics.Shape getShape(
-  public final class ListItemKt {
-    method @androidx.compose.runtime.Composable public static void ListItem(
-  public final class MaterialTheme {
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.material3.ColorScheme getColorScheme(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.material3.Shapes getShapes(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.material3.Typography getTypography(
-  public final class MaterialThemeKt {
-    method @androidx.compose.runtime.Composable public static void MaterialTheme(
-  public final class MenuDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.MenuItemColors itemColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.MenuItemColors itemColors(
-  @androidx.compose.runtime.Immutable public final class MenuItemColors {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable public final class ModalBottomSheetDefaults {
-  public final class ModalBottomSheetKt {
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ModalBottomSheet(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ModalBottomSheet(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.SheetState rememberModalBottomSheetState(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable public final class ModalBottomSheetProperties {
-  public final class ModalBottomSheet_androidKt {
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ModalBottomSheet(
-  @androidx.compose.runtime.Immutable public final class ModalWideNavigationRailProperties {
-  public interface MultiChoiceSegmentedButtonRowScope extends androidx.compose.foundation.layout.RowScope {
-  public final class NavigationBarDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-  @androidx.compose.runtime.Immutable public final class NavigationBarItemColors {
-  public final class NavigationBarItemDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationBarItemColors colors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationBarItemColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationBarItemColors colors(
-  public final class NavigationBarKt {
-    method @androidx.compose.runtime.Composable public static void NavigationBar(
-    method @androidx.compose.runtime.Composable public static void NavigationBarItem(
-  @androidx.compose.runtime.Stable public interface NavigationDrawerItemColors {
-    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> badgeColor(
-    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> containerColor(
-    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> iconColor(
-    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> textColor(
-  public final class NavigationDrawerItemDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationDrawerItemColors colors(
-  public final class NavigationDrawerKt {
-    method @androidx.compose.runtime.Composable public static void DismissibleDrawerSheet(
-    method @androidx.compose.runtime.Composable public static void DismissibleDrawerSheet(
-    method @androidx.compose.runtime.Composable public static void DismissibleNavigationDrawer(
-    method @androidx.compose.runtime.Composable public static void ModalDrawerSheet(
-    method @androidx.compose.runtime.Composable public static void ModalDrawerSheet(
-    method @androidx.compose.runtime.Composable public static void ModalNavigationDrawer(
-    method @androidx.compose.runtime.Composable public static void NavigationDrawerItem(
-    method @androidx.compose.runtime.Composable public static void PermanentDrawerSheet(
-    method @androidx.compose.runtime.Composable public static void PermanentNavigationDrawer(
-    method @androidx.compose.runtime.Composable public static androidx.compose.material3.DrawerState rememberDrawerState(
-  @androidx.compose.runtime.Immutable public final class NavigationItemColors {
-  @kotlin.jvm.JvmInline public final value class NavigationItemIconPosition {
-  public static final class NavigationItemIconPosition.Companion {
-  public final class NavigationRailDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-  @androidx.compose.runtime.Immutable public final class NavigationRailItemColors {
-  public final class NavigationRailItemDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationRailItemColors colors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationRailItemColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationRailItemColors colors(
-  public final class NavigationRailKt {
-    method @androidx.compose.runtime.Composable public static void NavigationRail(
-    method @androidx.compose.runtime.Composable public static void NavigationRailItem(
-  @androidx.compose.runtime.Immutable public final class OutlinedTextFieldDefaults {
-    method @androidx.compose.runtime.Composable public void Container(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void ContainerBox(
-    method @androidx.compose.runtime.Composable public void DecorationBox(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.text.input.TextFieldDecorator decorator(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-  public final class OutlinedTextFieldKt {
-    method @androidx.compose.runtime.Composable public static void OutlinedTextField(
-    method @androidx.compose.runtime.Composable public static void OutlinedTextField(
-    method @androidx.compose.runtime.Composable public static void OutlinedTextField(
-  public final class ProgressIndicatorDefaults {
-  public final class ProgressIndicatorKt {
-    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
-    method @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
-    method @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
-    method @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
-    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
-    method @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
-  @androidx.compose.runtime.Immutable public final class RadioButtonColors {
-  public final class RadioButtonDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.RadioButtonColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.RadioButtonColors colors(
-  public final class RadioButtonKt {
-    method @androidx.compose.runtime.Composable public static void RadioButton(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class RangeSliderState {
-  public static final class RangeSliderState.Companion {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable @androidx.compose.runtime.Stable public final class RichTooltipColors {
-  @androidx.compose.runtime.Immutable public final class RippleConfiguration {
-  public final class RippleDefaults {
-  public final class RippleKt {
-  public final class ScaffoldDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getContentWindowInsets(
-  public final class ScaffoldKt {
-    method @androidx.compose.runtime.Composable public static void Scaffold(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable public final class SearchBarColors {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class SearchBarDefaults {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void InputField(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void InputField(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void InputField(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.SearchBarColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SearchBarColors colors(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.SearchBarScrollBehavior enterAlwaysSearchBarScrollBehavior(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getDockedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getFullScreenShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getFullScreenWindowInsets(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getInputFieldShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors inputFieldColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors inputFieldColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors inputFieldColors(
-  public final class SearchBarKt {
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void DockedSearchBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void DockedSearchBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ExpandedDockedSearchBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ExpandedFullScreenSearchBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void SearchBar(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void SearchBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void SearchBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TopSearchBar(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.SearchBarState rememberSearchBarState(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public interface SearchBarScrollBehavior {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class SearchBarState {
-  public static final class SearchBarState.Companion {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public enum SearchBarValue {
-  public final class SecureTextFieldKt {
-    method @androidx.compose.runtime.Composable public static void OutlinedSecureTextField(
-    method @androidx.compose.runtime.Composable public static void SecureTextField(
-  @androidx.compose.runtime.Immutable public final class SegmentedButtonColors {
-  @androidx.compose.runtime.Stable public final class SegmentedButtonDefaults {
-    method @androidx.compose.runtime.Composable public void ActiveIcon(
-    method @androidx.compose.runtime.Composable public void Icon(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SegmentedButtonColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SegmentedButtonColors colors(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.foundation.shape.CornerBasedShape getBaseShape(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.graphics.Shape itemShape(
-  public final class SegmentedButtonKt {
-    method @androidx.compose.runtime.Composable public static void MultiChoiceSegmentedButtonRow(
-    method @Deprecated @androidx.compose.runtime.Composable public static void SegmentedButton(
-    method @androidx.compose.runtime.Composable public static void SegmentedButton(
-    method @Deprecated @androidx.compose.runtime.Composable public static void SegmentedButton(
-    method @androidx.compose.runtime.Composable public static void SegmentedButton(
-    method @androidx.compose.runtime.Composable public static void SingleChoiceSegmentedButtonRow(
-  @androidx.compose.runtime.Immutable public final class SelectableChipColors {
-  @androidx.compose.runtime.Immutable public final class SelectableChipElevation {
-  @androidx.compose.runtime.Stable public interface SelectableDates {
-  public final class ShapeDefaults {
-  @androidx.compose.runtime.Immutable public final class Shapes {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class SheetState {
-  public static final class SheetState.Companion {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public enum SheetValue {
-  @kotlin.jvm.JvmInline public final value class ShortNavigationBarArrangement {
-  public static final class ShortNavigationBarArrangement.Companion {
-  public final class ShortNavigationBarDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-  public final class ShortNavigationBarItemDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationItemColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationItemColors colors(
-  public final class ShortNavigationBarKt {
-    method @androidx.compose.runtime.Composable public static void ShortNavigationBar(
-    method @androidx.compose.runtime.Composable public static void ShortNavigationBarItem(
-  public interface SingleChoiceSegmentedButtonRowScope extends androidx.compose.foundation.layout.RowScope {
-  @androidx.compose.runtime.Immutable public final class SliderColors {
-  @androidx.compose.runtime.Stable public final class SliderDefaults {
-    method @androidx.compose.runtime.Composable public void Thumb(
-    method @Deprecated @androidx.compose.runtime.Composable public void Track(
-    method @androidx.compose.runtime.Composable public void Track(
-    method @Deprecated @androidx.compose.runtime.Composable public void Track(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void Track(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void Track(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SliderColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SliderColors colors(
-  public final class SliderKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RangeSlider(
-    method @androidx.compose.runtime.Composable public static void RangeSlider(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RangeSlider(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void Slider(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void Slider(
-    method @androidx.compose.runtime.Composable public static void Slider(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.RangeSliderState rememberRangeSliderState(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.SliderState rememberSliderState(
-  @Deprecated @androidx.compose.runtime.Stable public final class SliderPositions {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class SliderState implements androidx.compose.foundation.gestures.DraggableState {
-  public static final class SliderState.Companion {
-  @androidx.compose.runtime.Stable public interface SnackbarData {
-  public final class SnackbarDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-  public enum SnackbarDuration {
-  public final class SnackbarHostKt {
-    method @androidx.compose.runtime.Composable public static void SnackbarHost(
-  @androidx.compose.runtime.Stable public final class SnackbarHostState {
-  public final class SnackbarKt {
-    method @androidx.compose.runtime.Composable public static void Snackbar(
-    method @androidx.compose.runtime.Composable public static void Snackbar(
-  public enum SnackbarResult {
-  @androidx.compose.runtime.Stable public interface SnackbarVisuals {
-  public final class SuggestionChipDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors elevatedSuggestionChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors elevatedSuggestionChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipElevation elevatedSuggestionChipElevation(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke suggestionChipBorder(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.ChipBorder suggestionChipBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors suggestionChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors suggestionChipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipElevation suggestionChipElevation(
-  public final class SurfaceKt {
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.NonRestartableComposable public static void Surface(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.NonRestartableComposable public static void Surface(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.NonRestartableComposable public static void Surface(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.NonRestartableComposable public static void Surface(
-  public final class SwipeToDismissBoxDefaults {
-    method @androidx.compose.runtime.Composable public kotlin.jvm.functions.Function1<java.lang.Float,java.lang.Float> getPositionalThreshold(
-  public final class SwipeToDismissBoxKt {
-    method @Deprecated @androidx.compose.runtime.Composable public static void SwipeToDismissBox(
-    method @androidx.compose.runtime.Composable public static void SwipeToDismissBox(
-    method @Deprecated @androidx.compose.runtime.Composable public static androidx.compose.material3.SwipeToDismissBoxState rememberSwipeToDismissBoxState(
-    method @androidx.compose.runtime.Composable public static androidx.compose.material3.SwipeToDismissBoxState rememberSwipeToDismissBoxState(
-  public final class SwipeToDismissBoxState {
-  public static final class SwipeToDismissBoxState.Companion {
-  public enum SwipeToDismissBoxValue {
-  @androidx.compose.runtime.Immutable public final class SwitchColors {
-  public final class SwitchDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SwitchColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.SwitchColors colors(
-  public final class SwitchKt {
-    method @androidx.compose.runtime.Composable public static void Switch(
-  public interface TabIndicatorScope {
-  public final class TabKt {
-    method @androidx.compose.runtime.Composable public static void LeadingIconTab(
-    method @androidx.compose.runtime.Composable public static void Tab(
-    method @androidx.compose.runtime.Composable public static void Tab(
-  @androidx.compose.runtime.Immutable public final class TabPosition {
-  public final class TabRowDefaults {
-    method @Deprecated @androidx.compose.runtime.Composable public void Indicator(
-    method @androidx.compose.runtime.Composable public void PrimaryIndicator(
-    method @androidx.compose.runtime.Composable public void SecondaryIndicator(
-  public final class TabRowKt {
-    method @androidx.compose.runtime.Composable public static void PrimaryScrollableTabRow(
-    method @Deprecated @androidx.compose.runtime.Composable public static void PrimaryScrollableTabRow(
-    method @androidx.compose.runtime.Composable public static void PrimaryTabRow(
-    method @Deprecated @androidx.compose.runtime.Composable public static void ScrollableTabRow(
-    method @androidx.compose.runtime.Composable public static void SecondaryScrollableTabRow(
-    method @Deprecated @androidx.compose.runtime.Composable public static void SecondaryScrollableTabRow(
-    method @androidx.compose.runtime.Composable public static void SecondaryTabRow(
-    method @Deprecated @androidx.compose.runtime.Composable public static void TabRow(
-  @androidx.compose.runtime.Immutable public final class TextFieldColors {
-  @androidx.compose.runtime.Immutable public final class TextFieldDefaults {
-    method @androidx.compose.runtime.Composable public void Container(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void ContainerBox(
-    method @androidx.compose.runtime.Composable public void DecorationBox(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.text.input.TextFieldDecorator decorator(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getFilledShape(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getOutlinedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-  public final class TextFieldKt {
-    method @androidx.compose.runtime.Composable public static void TextField(
-    method @androidx.compose.runtime.Composable public static void TextField(
-    method @androidx.compose.runtime.Composable public static void TextField(
-  public abstract class TextFieldLabelPosition {
-  public static final class TextFieldLabelPosition.Above extends androidx.compose.material3.TextFieldLabelPosition {
-  public static final class TextFieldLabelPosition.Attached extends androidx.compose.material3.TextFieldLabelPosition {
-  @androidx.compose.runtime.Stable public interface TextFieldLabelScope {
-  public final class TextKt {
-    method @androidx.compose.runtime.Composable public static void ProvideTextStyle(
-    method @androidx.compose.runtime.Composable public static void Text(
-    method @Deprecated @androidx.compose.runtime.Composable public static void Text(
-    method @Deprecated @androidx.compose.runtime.Composable public static void Text(
-    method @androidx.compose.runtime.Composable public static void Text(
-    method @Deprecated @androidx.compose.runtime.Composable public static void Text(
-    method @Deprecated @androidx.compose.runtime.Composable public static void Text(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable public final class TimePickerColors {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class TimePickerDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TimePickerColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TimePickerColors colors(
-    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public int layoutType(
-  public final class TimePickerDialogDefaults {
-    method @androidx.compose.runtime.Composable public void DisplayModeToggle(
-    method @androidx.compose.runtime.Composable public void Title(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-  public final class TimePickerDialogKt {
-    method @androidx.compose.runtime.Composable public static void TimePickerDialog(
-  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class TimePickerDisplayMode {
-  public static final class TimePickerDisplayMode.Companion {
-  public final class TimePickerKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TimeInput(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TimePicker(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.TimePickerState rememberTimePickerState(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class TimePickerLayoutType {
-  public static final class TimePickerLayoutType.Companion {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @kotlin.jvm.JvmInline public final value class TimePickerSelectionMode {
-  public static final class TimePickerSelectionMode.Companion {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public interface TimePickerState {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @kotlin.jvm.JvmInline public final value class TooltipAnchorPosition {
-  public static final class TooltipAnchorPosition.Companion {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class TooltipDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getPlainTooltipContainerShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getRichTooltipContainerShape(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.window.PopupPositionProvider rememberPlainTooltipPositionProvider(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.window.PopupPositionProvider rememberRichTooltipPositionProvider(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.window.PopupPositionProvider rememberTooltipPositionProvider(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.window.PopupPositionProvider rememberTooltipPositionProvider(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.RichTooltipColors richTooltipColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.RichTooltipColors richTooltipColors(
-  public final class TooltipKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void PlainTooltip(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void PlainTooltip(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RichTooltip(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RichTooltip(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TooltipBox(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TooltipBox(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TooltipBox(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.TooltipState rememberTooltipState(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public sealed interface TooltipScope {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public interface TooltipState {
-  public final class Tooltip_androidKt {
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void PlainTooltip(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void PlainTooltip(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RichTooltip(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RichTooltip(
-  @androidx.compose.runtime.Stable public final class TopAppBarColors {
-  public final class TopAppBarDefaults {
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors centerAlignedTopAppBarColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors centerAlignedTopAppBarColors(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarScrollBehavior enterAlwaysScrollBehavior(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarScrollBehavior enterAlwaysScrollBehavior(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarScrollBehavior exitUntilCollapsedScrollBehavior(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors largeTopAppBarColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors largeTopAppBarColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors mediumTopAppBarColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors mediumTopAppBarColors(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarScrollBehavior pinnedScrollBehavior(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors topAppBarColors(
-    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors topAppBarColors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors topAppBarColors(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public interface TopAppBarScrollBehavior {
-  @androidx.compose.runtime.Stable public final class TopAppBarState {
-  public static final class TopAppBarState.Companion {
-  @androidx.compose.runtime.Immutable public final class Typography {
-  public final class VerticalDragHandleDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.DragHandleColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.DragHandleColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.DragHandleShapes shapes(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.DragHandleShapes shapes(
-  @androidx.compose.runtime.Immutable public final class WideNavigationRailColors {
-  public final class WideNavigationRailDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.WideNavigationRailColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.WideNavigationRailColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getModalCollapsedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getModalExpandedShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
-  public final class WideNavigationRailItemDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationItemColors colors(
-    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationItemColors colors(
-  public final class WideNavigationRailKt {
-    method @androidx.compose.runtime.Composable public static void ModalWideNavigationRail(
-    method @androidx.compose.runtime.Composable public static void WideNavigationRail(
-    method @androidx.compose.runtime.Composable public static void WideNavigationRailItem(
-  public interface WideNavigationRailState {
-  public final class WideNavigationRailStateKt {
-    method @androidx.compose.runtime.Composable public static androidx.compose.material3.WideNavigationRailState rememberWideNavigationRailState(
-  public enum WideNavigationRailValue {
-package androidx.compose.material3.carousel {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class CarouselDefaults {
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.gestures.TargetedFlingBehavior multiBrowseFlingBehavior(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.gestures.TargetedFlingBehavior noSnapFlingBehavior(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.gestures.TargetedFlingBehavior singleAdvanceFlingBehavior(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public sealed interface CarouselItemDrawInfo {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public sealed interface CarouselItemScope {
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.Modifier maskBorder(
-    method @androidx.compose.runtime.Composable public androidx.compose.ui.Modifier maskClip(
-    method @androidx.compose.runtime.Composable public androidx.compose.foundation.shape.GenericShape rememberMaskShape(
-  public final class CarouselKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalCenteredHeroCarousel(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalMultiBrowseCarousel(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalMultiBrowseCarousel(
-    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalUncontainedCarousel(
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalUncontainedCarousel(
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class CarouselState implements androidx.compose.foundation.gestures.ScrollableState {
-  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public static final class CarouselState.Companion {
-  public final class CarouselStateKt {
-    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.carousel.CarouselState rememberCarouselState(
-package androidx.compose.material3.pulltorefresh {
-  public final class PullToRefreshDefaults {
-    method @androidx.compose.runtime.Composable public void Indicator(
-    method @androidx.compose.runtime.Composable public void IndicatorBox(
-  public final class PullToRefreshKt {
-    method @androidx.compose.runtime.Composable public static void PullToRefreshBox(
-    method @androidx.compose.runtime.Composable public static androidx.compose.material3.pulltorefresh.PullToRefreshState rememberPullToRefreshState(
-  @androidx.compose.runtime.Stable public interface PullToRefreshState {
+// shipquick: deprecation: ChipBorder {"message": "Maintained for binary compatibility. Use the chipBorder functions instead", "replaceWith": "", "source": "https://android.googlesource.com/platform/frameworks/support/+/5113b82a4ed6416d6344efa50e41db8cb65928ff/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Chip.kt"}
+// shipquick: deprecation: Divider {"message": "Renamed to HorizontalDivider", "replaceWith": "HorizontalDivider(modifier, thickness, color)", "source": "https://android.googlesource.com/platform/frameworks/support/+/5113b82a4ed6416d6344efa50e41db8cb65928ff/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Divider.kt"}
+// shipquick: deprecation: OutlinedTextFieldDefaults.ContainerBox {"message": "Renamed to TextFieldDefaults.Container", "replaceWith": "Container(\\n", "source": "https://android.googlesource.com/platform/frameworks/support/+/5113b82a4ed6416d6344efa50e41db8cb65928ff/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TextFieldDefaults.kt"}
+// shipquick: deprecation: ScrollableTabRow {"message": "Replaced with PrimaryScrollableTabRow and SecondaryScrollableTabRow tab variants.", "replaceWith": "SecondaryScrollableTabRow(selectedTabIndex, modifier, containerColor, contentColor, edgePadding, indicator, divider, tabs)", "source": "https://android.googlesource.com/platform/frameworks/support/+/5113b82a4ed6416d6344efa50e41db8cb65928ff/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TabRow.kt"}
+// shipquick: deprecation: SliderPositions {"message": "Not necessary with the introduction of Slider state", "replaceWith": "", "source": "https://android.googlesource.com/platform/frameworks/support/+/5113b82a4ed6416d6344efa50e41db8cb65928ff/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/Slider.kt"}
+// shipquick: deprecation: TabRow {"message": "Replaced with PrimaryTabRow and SecondaryTabRow.", "replaceWith": "SecondaryTabRow(selectedTabIndex, modifier, containerColor, contentColor, indicator, divider, tabs)", "source": "https://android.googlesource.com/platform/frameworks/support/+/5113b82a4ed6416d6344efa50e41db8cb65928ff/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TabRow.kt"}
+// shipquick: deprecation: TabRowDefaults.Indicator {"message": "Use SecondaryIndicator instead.", "replaceWith": "SecondaryIndicator(modifier, height, color)", "source": "https://android.googlesource.com/platform/frameworks/support/+/5113b82a4ed6416d6344efa50e41db8cb65928ff/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TabRow.kt"}
+// shipquick: deprecation: TextFieldDefaults.ContainerBox {"message": "Renamed to TextFieldDefaults.Container", "replaceWith": "Container(\\n", "source": "https://android.googlesource.com/platform/frameworks/support/+/5113b82a4ed6416d6344efa50e41db8cb65928ff/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/TextFieldDefaults.kt"}
+2	package androidx.compose.material3 {
+4	  public final class AlertDialogDefaults {
+7	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+21	  public final class AlertDialogKt {
+22	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void AlertDialog(
+24	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void BasicAlertDialog(
+28	  public final class AndroidAlertDialog_androidKt {
+29	    method @androidx.compose.runtime.Composable public static void AlertDialog(
+33	  public final class AndroidMenu_androidKt {
+34	    method @androidx.compose.runtime.Composable public static void DropdownMenu(
+35	    method @Deprecated @androidx.compose.runtime.Composable public static void DropdownMenu(
+36	    method @Deprecated @androidx.compose.runtime.Composable public static void DropdownMenu(
+40	    method @androidx.compose.runtime.Composable public static void DropdownMenuItem(
+44	  public final class AppBarColumnKt {
+45	    method @androidx.compose.runtime.Composable public static void AppBarColumn(
+49	  public interface AppBarColumnScope extends androidx.compose.material3.AppBarScope {
+52	  public final class AppBarKt {
+53	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void BottomAppBar(
+54	    method @androidx.compose.runtime.Composable public static void BottomAppBar(
+55	    method @androidx.compose.runtime.Composable public static void BottomAppBar(
+56	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void BottomAppBar(
+62	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void CenterAlignedTopAppBar(
+63	    method @androidx.compose.runtime.Composable public static void CenterAlignedTopAppBar(
+66	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void LargeTopAppBar(
+67	    method @androidx.compose.runtime.Composable public static void LargeTopAppBar(
+70	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void MediumTopAppBar(
+71	    method @androidx.compose.runtime.Composable public static void MediumTopAppBar(
+74	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TopAppBar(
+75	    method @androidx.compose.runtime.Composable public static void TopAppBar(
+78	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.BottomAppBarState rememberBottomAppBarState(
+80	    method @androidx.compose.runtime.Composable public static androidx.compose.material3.TopAppBarState rememberTopAppBarState(
+84	  public final class AppBarMenuState {
+92	  public final class AppBarRowKt {
+93	    method @androidx.compose.runtime.Composable public static void AppBarRow(
+97	  public interface AppBarRowScope extends androidx.compose.material3.AppBarScope {
+100	  public sealed interface AppBarScope {
+109	  public final class AssistChipDefaults {
+110	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke assistChipBorder(
+111	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.ChipBorder assistChipBorder(
+114	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors assistChipColors(
+116	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors assistChipColors(
+118	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipElevation assistChipElevation(
+120	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors elevatedAssistChipColors(
+122	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors elevatedAssistChipColors(
+124	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipElevation elevatedAssistChipElevation(
+128	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+136	  public final class BadgeDefaults {
+142	  public final class BadgeKt {
+143	    method @androidx.compose.runtime.Composable public static void Badge(
+145	    method @androidx.compose.runtime.Composable public static void BadgedBox(
+149	  public final class BottomAppBarDefaults {
+150	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.BottomAppBarScrollBehavior exitAlwaysScrollBehavior(
+156	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+166	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public interface BottomAppBarScrollBehavior {
+179	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public interface BottomAppBarState {
+194	  public static final class BottomAppBarState.Companion {
+199	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class BottomSheetDefaults {
+200	    method @androidx.compose.runtime.Composable public void DragHandle(
+204	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getExpandedShape(
+206	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getHiddenShape(
+211	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+224	  public final class BottomSheetScaffoldKt {
+225	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void BottomSheetScaffold(
+227	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.BottomSheetScaffoldState rememberBottomSheetScaffoldState(
+229	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.SheetState rememberStandardBottomSheetState(
+233	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class BottomSheetScaffoldState {
+241	  @androidx.compose.runtime.Immutable public final class ButtonColors {
+256	  public final class ButtonDefaults {
+257	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors buttonColors(
+259	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors buttonColors(
+261	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonElevation buttonElevation(
+263	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors elevatedButtonColors(
+265	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors elevatedButtonColors(
+267	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonElevation elevatedButtonElevation(
+269	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors filledTonalButtonColors(
+271	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors filledTonalButtonColors(
+273	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonElevation filledTonalButtonElevation(
+277	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getElevatedShape(
+279	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getFilledTonalShape(
+285	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke getOutlinedButtonBorder(
+287	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getOutlinedShape(
+289	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+293	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getTextShape(
+295	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke outlinedButtonBorder(
+297	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors outlinedButtonColors(
+299	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors outlinedButtonColors(
+301	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors textButtonColors(
+303	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ButtonColors textButtonColors(
+322	  @androidx.compose.runtime.Stable public final class ButtonElevation {
+325	  public final class ButtonKt {
+326	    method @androidx.compose.runtime.Composable public static void Button(
+328	    method @androidx.compose.runtime.Composable public static void ElevatedButton(
+330	    method @androidx.compose.runtime.Composable public static void FilledTonalButton(
+332	    method @androidx.compose.runtime.Composable public static void OutlinedButton(
+334	    method @androidx.compose.runtime.Composable public static void TextButton(
+338	  @androidx.compose.runtime.Immutable public final class CardColors {
+353	  public final class CardDefaults {
+354	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors cardColors(
+356	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors cardColors(
+358	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardElevation cardElevation(
+360	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors elevatedCardColors(
+362	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors elevatedCardColors(
+364	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardElevation elevatedCardElevation(
+366	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getElevatedShape(
+368	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getOutlinedShape(
+370	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+372	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke outlinedCardBorder(
+374	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors outlinedCardColors(
+376	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardColors outlinedCardColors(
+378	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CardElevation outlinedCardElevation(
+386	  @androidx.compose.runtime.Immutable public final class CardElevation {
+389	  public final class CardKt {
+390	    method @androidx.compose.runtime.Composable public static void Card(
+392	    method @androidx.compose.runtime.Composable public static void Card(
+394	    method @androidx.compose.runtime.Composable public static void ElevatedCard(
+396	    method @androidx.compose.runtime.Composable public static void ElevatedCard(
+398	    method @androidx.compose.runtime.Composable public static void OutlinedCard(
+400	    method @androidx.compose.runtime.Composable public static void OutlinedCard(
+404	  @androidx.compose.runtime.Immutable public final class CheckboxColors {
+435	  public final class CheckboxDefaults {
+436	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CheckboxColors colors(
+438	    method @androidx.compose.runtime.Composable public androidx.compose.material3.CheckboxColors colors(
+445	  public final class CheckboxKt {
+446	    method @androidx.compose.runtime.Composable public static void Checkbox(
+448	    method @androidx.compose.runtime.Composable public static void Checkbox(
+450	    method @androidx.compose.runtime.Composable public static void TriStateCheckbox(
+452	    method @androidx.compose.runtime.Composable public static void TriStateCheckbox(
+456	  @Deprecated @androidx.compose.runtime.Immutable public final class ChipBorder {
+459	  @androidx.compose.runtime.Immutable public final class ChipColors {
+482	  @androidx.compose.runtime.Immutable public final class ChipElevation {
+499	  public final class ChipKt {
+501	    method @androidx.compose.runtime.Composable public static void AssistChip(
+502	    method @Deprecated @androidx.compose.runtime.Composable public static void AssistChip(
+505	    method @androidx.compose.runtime.Composable public static void ElevatedAssistChip(
+506	    method @Deprecated @androidx.compose.runtime.Composable public static void ElevatedAssistChip(
+508	    method @androidx.compose.runtime.Composable public static void ElevatedFilterChip(
+511	    method @androidx.compose.runtime.Composable public static void ElevatedSuggestionChip(
+512	    method @Deprecated @androidx.compose.runtime.Composable public static void ElevatedSuggestionChip(
+514	    method @androidx.compose.runtime.Composable public static void FilterChip(
+516	    method @androidx.compose.runtime.Composable public static void InputChip(
+519	    method @androidx.compose.runtime.Composable public static void SuggestionChip(
+520	    method @Deprecated @androidx.compose.runtime.Composable public static void SuggestionChip(
+524	  @androidx.compose.runtime.Immutable public final class ColorScheme {
+635	  public final class ColorSchemeKt {
+637	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public static long contentColorFor(
+658	  public final class ContentColorKt {
+663	  @androidx.compose.runtime.Immutable public final class DatePickerColors {
+720	  @androidx.compose.runtime.Stable public final class DatePickerDefaults {
+721	    method @androidx.compose.runtime.Composable public void DatePickerHeadline(
+723	    method @androidx.compose.runtime.Composable public void DatePickerTitle(
+725	    method @androidx.compose.runtime.Composable public androidx.compose.material3.DatePickerColors colors(
+727	    method @androidx.compose.runtime.Composable public androidx.compose.material3.DatePickerColors colors(
+731	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+748	  public final class DatePickerDialog_androidKt {
+749	    method @androidx.compose.runtime.Composable public static void DatePickerDialog(
+753	  public interface DatePickerFormatter {
+758	  public final class DatePickerKt {
+759	    method @androidx.compose.runtime.Composable public static void DatePicker(
+763	    method @androidx.compose.runtime.Composable public static androidx.compose.material3.DatePickerState rememberDatePickerState(
+767	  @androidx.compose.runtime.Stable public interface DatePickerState {
+785	  public final class DatePicker_jvmKt {
+795	    method @SuppressCompatibility @RequiresApi(
+797	    method @SuppressCompatibility @RequiresApi(
+805	  @androidx.compose.runtime.Stable public final class DateRangePickerDefaults {
+806	    method @androidx.compose.runtime.Composable public void DateRangePickerHeadline(
+808	    method @androidx.compose.runtime.Composable public void DateRangePickerTitle(
+813	  public final class DateRangePickerKt {
+814	    method @androidx.compose.runtime.Composable public static void DateRangePicker(
+818	    method @androidx.compose.runtime.Composable public static androidx.compose.material3.DateRangePickerState rememberDateRangePickerState(
+822	  @androidx.compose.runtime.Stable public interface DateRangePickerState {
+842	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class DefaultTooltipCaretShape implements androidx.compose.ui.graphics.Shape {
+852	  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class DisplayMode {
+858	  public static final class DisplayMode.Companion {
+865	  public final class DividerDefaults {
+873	  public final class DividerKt {
+874	    method @Deprecated @androidx.compose.runtime.Composable public static void Divider(
+876	    method @androidx.compose.runtime.Composable public static void HorizontalDivider(
+878	    method @androidx.compose.runtime.Composable public static void VerticalDivider(
+882	  @androidx.compose.runtime.Immutable public final class DragHandleColors {
+893	  public final class DragHandleKt {
+894	    method @androidx.compose.runtime.Composable public static void VerticalDragHandle(
+898	  @androidx.compose.runtime.Immutable public final class DragHandleShapes {
+908	  @androidx.compose.runtime.Immutable public final class DragHandleSizes {
+919	  public final class DrawerDefaults {
+927	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+930	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+945	  @androidx.compose.runtime.Stable public final class DrawerState {
+968	  public static final class DrawerState.Companion {
+972	  public enum DrawerValue {
+977	  public final class DynamicTonalPaletteKt {
+982	  @SuppressCompatibility @kotlin.RequiresOptIn(message="This material API is experimental and is likely to change or to be removed in the future.") @kotlin.annotation.Retention(kotlin.annotation.AnnotationRetention.BINARY) public @interface ExperimentalMaterial3Api {
+985	  @kotlin.jvm.JvmInline public final value class ExposedDropdownMenuAnchorType {
+991	  public static final class ExposedDropdownMenuAnchorType.Companion {
+1000	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public abstract sealed class ExposedDropdownMenuBoxScope {
+1002	    method @androidx.compose.runtime.Composable public final void ExposedDropdownMenu(
+1003	    method @Deprecated @androidx.compose.runtime.Composable public final void ExposedDropdownMenu(
+1004	    method @Deprecated @androidx.compose.runtime.Composable public final void ExposedDropdownMenu(
+1013	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class ExposedDropdownMenuDefaults {
+1014	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void TrailingIcon(
+1016	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void TrailingIcon(
+1019	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors outlinedTextFieldColors(
+1020	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors outlinedTextFieldColors(
+1021	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors outlinedTextFieldColors(
+1025	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors textFieldColors(
+1026	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors textFieldColors(
+1027	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors textFieldColors(
+1035	  public final class ExposedDropdownMenuKt {
+1036	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ExposedDropdownMenuBox(
+1040	  @kotlin.jvm.JvmInline public final value class FabPosition {
+1046	  public static final class FabPosition.Companion {
+1057	  public final class FilterChipDefaults {
+1058	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors elevatedFilterChipColors(
+1060	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors elevatedFilterChipColors(
+1062	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipElevation elevatedFilterChipElevation(
+1064	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke filterChipBorder(
+1066	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors filterChipColors(
+1068	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors filterChipColors(
+1070	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipElevation filterChipElevation(
+1074	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+1082	  public final class FloatingActionButtonDefaults {
+1085	    method @androidx.compose.runtime.Composable public androidx.compose.material3.FloatingActionButtonElevation elevation(
+1088	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getExtendedFabShape(
+1091	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getLargeShape(
+1093	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+1095	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getSmallShape(
+1097	    method @androidx.compose.runtime.Composable public androidx.compose.material3.FloatingActionButtonElevation loweredElevation(
+1108	  @androidx.compose.runtime.Stable public class FloatingActionButtonElevation {
+1111	  public final class FloatingActionButtonKt {
+1112	    method @androidx.compose.runtime.Composable public static void ExtendedFloatingActionButton(
+1113	    method @androidx.compose.runtime.Composable public static void ExtendedFloatingActionButton(
+1116	    method @androidx.compose.runtime.Composable public static void FloatingActionButton(
+1118	    method @androidx.compose.runtime.Composable public static void LargeFloatingActionButton(
+1120	    method @androidx.compose.runtime.Composable public static void SmallFloatingActionButton(
+1124	  @androidx.compose.runtime.Immutable public final class IconButtonColors {
+1139	  public final class IconButtonDefaults {
+1140	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors filledIconButtonColors(
+1142	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors filledIconButtonColors(
+1144	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors filledIconToggleButtonColors(
+1146	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors filledIconToggleButtonColors(
+1148	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors filledTonalIconButtonColors(
+1150	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors filledTonalIconButtonColors(
+1152	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors filledTonalIconToggleButtonColors(
+1154	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors filledTonalIconToggleButtonColors(
+1156	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getFilledShape(
+1158	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getOutlinedShape(
+1160	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getStandardShape(
+1162	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors iconButtonColors(
+1164	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors iconButtonColors(
+1166	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors iconButtonVibrantColors(
+1168	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors iconButtonVibrantColors(
+1170	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors iconToggleButtonColors(
+1172	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors iconToggleButtonColors(
+1174	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors iconToggleButtonVibrantColors(
+1176	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors iconToggleButtonVibrantColors(
+1178	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke outlinedIconButtonBorder(
+1180	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors outlinedIconButtonColors(
+1182	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors outlinedIconButtonColors(
+1184	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke outlinedIconButtonVibrantBorder(
+1186	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors outlinedIconButtonVibrantColors(
+1188	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconButtonColors outlinedIconButtonVibrantColors(
+1190	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke? outlinedIconToggleButtonBorder(
+1192	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors outlinedIconToggleButtonColors(
+1194	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors outlinedIconToggleButtonColors(
+1196	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke? outlinedIconToggleButtonVibrantBorder(
+1198	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors outlinedIconToggleButtonVibrantColors(
+1200	    method @androidx.compose.runtime.Composable public androidx.compose.material3.IconToggleButtonColors outlinedIconToggleButtonVibrantColors(
+1208	  @kotlin.jvm.JvmInline public static final value class IconButtonDefaults.IconButtonWidthOption {
+1214	  public static final class IconButtonDefaults.IconButtonWidthOption.Companion {
+1223	  public final class IconButtonKt {
+1224	    method @androidx.compose.runtime.Composable public static void FilledIconButton(
+1226	    method @androidx.compose.runtime.Composable public static void FilledIconToggleButton(
+1228	    method @androidx.compose.runtime.Composable public static void FilledTonalIconButton(
+1230	    method @androidx.compose.runtime.Composable public static void FilledTonalIconToggleButton(
+1233	    method @androidx.compose.runtime.Composable public static void IconButton(
+1235	    method @Deprecated @androidx.compose.runtime.Composable public static void IconButton(
+1237	    method @androidx.compose.runtime.Composable public static void IconToggleButton(
+1239	    method @Deprecated @androidx.compose.runtime.Composable public static void IconToggleButton(
+1240	    method @androidx.compose.runtime.Composable public static void OutlinedIconButton(
+1242	    method @androidx.compose.runtime.Composable public static void OutlinedIconToggleButton(
+1246	  public final class IconKt {
+1247	    method @androidx.compose.runtime.Composable public static void Icon(
+1248	    method @androidx.compose.runtime.Composable public static void Icon(
+1250	    method @androidx.compose.runtime.Composable public static void Icon(
+1251	    method @androidx.compose.runtime.Composable public static void Icon(
+1257	  @androidx.compose.runtime.Immutable public final class IconToggleButtonColors {
+1276	  public final class InputChipDefaults {
+1280	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+1282	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke inputChipBorder(
+1284	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors inputChipColors(
+1286	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipColors inputChipColors(
+1288	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SelectableChipElevation inputChipElevation(
+1297	  public final class InteractiveComponentSizeKt {
+1305	  public final class LabelKt {
+1306	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void Label(
+1310	  @androidx.compose.runtime.Immutable public final class ListItemColors {
+1335	  public final class ListItemDefaults {
+1336	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ListItemColors colors(
+1338	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ListItemColors colors(
+1343	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.graphics.Shape getShape(
+1352	  public final class ListItemKt {
+1353	    method @androidx.compose.runtime.Composable public static void ListItem(
+1357	  public final class MaterialTheme {
+1358	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.material3.ColorScheme getColorScheme(
+1360	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.material3.Shapes getShapes(
+1362	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.material3.Typography getTypography(
+1370	  public final class MaterialThemeKt {
+1371	    method @androidx.compose.runtime.Composable public static void MaterialTheme(
+1375	  public final class MenuDefaults {
+1379	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+1382	    method @androidx.compose.runtime.Composable public androidx.compose.material3.MenuItemColors itemColors(
+1384	    method @androidx.compose.runtime.Composable public androidx.compose.material3.MenuItemColors itemColors(
+1394	  @androidx.compose.runtime.Immutable public final class MenuItemColors {
+1413	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable public final class ModalBottomSheetDefaults {
+1420	  public final class ModalBottomSheetKt {
+1421	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ModalBottomSheet(
+1422	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ModalBottomSheet(
+1425	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.SheetState rememberModalBottomSheetState(
+1429	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable public final class ModalBottomSheetProperties {
+1445	  public final class ModalBottomSheet_androidKt {
+1446	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ModalBottomSheet(
+1450	  @androidx.compose.runtime.Immutable public final class ModalWideNavigationRailProperties {
+1460	  public interface MultiChoiceSegmentedButtonRowScope extends androidx.compose.foundation.layout.RowScope {
+1463	  public final class NavigationBarDefaults {
+1466	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+1474	  @androidx.compose.runtime.Immutable public final class NavigationBarItemColors {
+1495	  public final class NavigationBarItemDefaults {
+1496	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationBarItemColors colors(
+1498	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationBarItemColors colors(
+1499	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationBarItemColors colors(
+1505	  public final class NavigationBarKt {
+1506	    method @androidx.compose.runtime.Composable public static void NavigationBar(
+1508	    method @androidx.compose.runtime.Composable public static void NavigationBarItem(
+1512	  @androidx.compose.runtime.Stable public interface NavigationDrawerItemColors {
+1513	    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> badgeColor(
+1515	    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> containerColor(
+1517	    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> iconColor(
+1519	    method @androidx.compose.runtime.Composable public androidx.compose.runtime.State<androidx.compose.ui.graphics.Color> textColor(
+1523	  public final class NavigationDrawerItemDefaults {
+1524	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationDrawerItemColors colors(
+1531	  public final class NavigationDrawerKt {
+1532	    method @androidx.compose.runtime.Composable public static void DismissibleDrawerSheet(
+1533	    method @androidx.compose.runtime.Composable public static void DismissibleDrawerSheet(
+1536	    method @androidx.compose.runtime.Composable public static void DismissibleNavigationDrawer(
+1538	    method @androidx.compose.runtime.Composable public static void ModalDrawerSheet(
+1539	    method @androidx.compose.runtime.Composable public static void ModalDrawerSheet(
+1542	    method @androidx.compose.runtime.Composable public static void ModalNavigationDrawer(
+1544	    method @androidx.compose.runtime.Composable public static void NavigationDrawerItem(
+1546	    method @androidx.compose.runtime.Composable public static void PermanentDrawerSheet(
+1548	    method @androidx.compose.runtime.Composable public static void PermanentNavigationDrawer(
+1550	    method @androidx.compose.runtime.Composable public static androidx.compose.material3.DrawerState rememberDrawerState(
+1554	  @androidx.compose.runtime.Immutable public final class NavigationItemColors {
+1579	  @kotlin.jvm.JvmInline public final value class NavigationItemIconPosition {
+1585	  public static final class NavigationItemIconPosition.Companion {
+1592	  public final class NavigationRailDefaults {
+1594	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+1601	  @androidx.compose.runtime.Immutable public final class NavigationRailItemColors {
+1622	  public final class NavigationRailItemDefaults {
+1623	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationRailItemColors colors(
+1625	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationRailItemColors colors(
+1626	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationRailItemColors colors(
+1632	  public final class NavigationRailKt {
+1633	    method @androidx.compose.runtime.Composable public static void NavigationRail(
+1635	    method @androidx.compose.runtime.Composable public static void NavigationRailItem(
+1639	  @androidx.compose.runtime.Immutable public final class OutlinedTextFieldDefaults {
+1640	    method @androidx.compose.runtime.Composable public void Container(
+1642	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void ContainerBox(
+1644	    method @androidx.compose.runtime.Composable public void DecorationBox(
+1646	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors colors(
+1648	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors colors(
+1652	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.text.input.TextFieldDecorator decorator(
+1657	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+1668	  public final class OutlinedTextFieldKt {
+1669	    method @androidx.compose.runtime.Composable public static void OutlinedTextField(
+1671	    method @androidx.compose.runtime.Composable public static void OutlinedTextField(
+1673	    method @androidx.compose.runtime.Composable public static void OutlinedTextField(
+1677	  public final class ProgressIndicatorDefaults {
+1711	  public final class ProgressIndicatorKt {
+1712	    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
+1713	    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
+1714	    method @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
+1715	    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
+1716	    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
+1717	    method @Deprecated @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
+1718	    method @androidx.compose.runtime.Composable public static void CircularProgressIndicator(
+1726	    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
+1727	    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
+1728	    method @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
+1729	    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
+1730	    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
+1731	    method @Deprecated @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
+1732	    method @androidx.compose.runtime.Composable public static void LinearProgressIndicator(
+1742	  @androidx.compose.runtime.Immutable public final class RadioButtonColors {
+1757	  public final class RadioButtonDefaults {
+1758	    method @androidx.compose.runtime.Composable public androidx.compose.material3.RadioButtonColors colors(
+1760	    method @androidx.compose.runtime.Composable public androidx.compose.material3.RadioButtonColors colors(
+1765	  public final class RadioButtonKt {
+1766	    method @androidx.compose.runtime.Composable public static void RadioButton(
+1770	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class RangeSliderState {
+1789	  public static final class RangeSliderState.Companion {
+1793	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable @androidx.compose.runtime.Stable public final class RichTooltipColors {
+1808	  @androidx.compose.runtime.Immutable public final class RippleConfiguration {
+1818	  public final class RippleDefaults {
+1824	  public final class RippleKt {
+1833	  public final class ScaffoldDefaults {
+1834	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getContentWindowInsets(
+1840	  public final class ScaffoldKt {
+1841	    method @androidx.compose.runtime.Composable public static void Scaffold(
+1845	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable public final class SearchBarColors {
+1858	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class SearchBarDefaults {
+1859	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void InputField(
+1861	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void InputField(
+1863	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void InputField(
+1865	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.SearchBarColors colors(
+1866	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SearchBarColors colors(
+1869	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.SearchBarScrollBehavior enterAlwaysSearchBarScrollBehavior(
+1871	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getDockedShape(
+1874	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getFullScreenShape(
+1876	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getFullScreenWindowInsets(
+1879	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getInputFieldShape(
+1883	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+1885	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors inputFieldColors(
+1886	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors inputFieldColors(
+1887	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors inputFieldColors(
+1903	  public final class SearchBarKt {
+1904	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void DockedSearchBar(
+1905	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void DockedSearchBar(
+1908	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ExpandedDockedSearchBar(
+1910	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void ExpandedFullScreenSearchBar(
+1912	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void SearchBar(
+1913	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void SearchBar(
+1914	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void SearchBar(
+1918	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TopSearchBar(
+1920	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.SearchBarState rememberSearchBarState(
+1924	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public interface SearchBarScrollBehavior {
+1936	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class SearchBarState {
+1955	  public static final class SearchBarState.Companion {
+1959	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public enum SearchBarValue {
+1964	  public final class SecureTextFieldKt {
+1965	    method @androidx.compose.runtime.Composable public static void OutlinedSecureTextField(
+1967	    method @androidx.compose.runtime.Composable public static void SecureTextField(
+1971	  @androidx.compose.runtime.Immutable public final class SegmentedButtonColors {
+2002	  @androidx.compose.runtime.Stable public final class SegmentedButtonDefaults {
+2003	    method @androidx.compose.runtime.Composable public void ActiveIcon(
+2005	    method @androidx.compose.runtime.Composable public void Icon(
+2009	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SegmentedButtonColors colors(
+2011	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SegmentedButtonColors colors(
+2013	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.foundation.shape.CornerBasedShape getBaseShape(
+2018	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public androidx.compose.ui.graphics.Shape itemShape(
+2027	  public final class SegmentedButtonKt {
+2028	    method @androidx.compose.runtime.Composable public static void MultiChoiceSegmentedButtonRow(
+2031	    method @Deprecated @androidx.compose.runtime.Composable public static void SegmentedButton(
+2032	    method @androidx.compose.runtime.Composable public static void SegmentedButton(
+2035	    method @Deprecated @androidx.compose.runtime.Composable public static void SegmentedButton(
+2036	    method @androidx.compose.runtime.Composable public static void SegmentedButton(
+2038	    method @androidx.compose.runtime.Composable public static void SingleChoiceSegmentedButtonRow(
+2042	  @androidx.compose.runtime.Immutable public final class SelectableChipColors {
+2049	  @androidx.compose.runtime.Immutable public final class SelectableChipElevation {
+2066	  @androidx.compose.runtime.Stable public interface SelectableDates {
+2071	  public final class ShapeDefaults {
+2085	  @androidx.compose.runtime.Immutable public final class Shapes {
+2100	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class SheetState {
+2123	  public static final class SheetState.Companion {
+2128	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public enum SheetValue {
+2134	  @kotlin.jvm.JvmInline public final value class ShortNavigationBarArrangement {
+2140	  public static final class ShortNavigationBarArrangement.Companion {
+2147	  public final class ShortNavigationBarDefaults {
+2151	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+2160	  public final class ShortNavigationBarItemDefaults {
+2161	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationItemColors colors(
+2163	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationItemColors colors(
+2168	  public final class ShortNavigationBarKt {
+2169	    method @androidx.compose.runtime.Composable public static void ShortNavigationBar(
+2171	    method @androidx.compose.runtime.Composable public static void ShortNavigationBarItem(
+2175	  public interface SingleChoiceSegmentedButtonRowScope extends androidx.compose.foundation.layout.RowScope {
+2178	  @androidx.compose.runtime.Immutable public final class SliderColors {
+2205	  @androidx.compose.runtime.Stable public final class SliderDefaults {
+2206	    method @androidx.compose.runtime.Composable public void Thumb(
+2208	    method @Deprecated @androidx.compose.runtime.Composable public void Track(
+2210	    method @androidx.compose.runtime.Composable public void Track(
+2211	    method @Deprecated @androidx.compose.runtime.Composable public void Track(
+2213	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void Track(
+2215	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void Track(
+2218	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SliderColors colors(
+2220	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SliderColors colors(
+2231	  public final class SliderKt {
+2232	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RangeSlider(
+2234	    method @androidx.compose.runtime.Composable public static void RangeSlider(
+2236	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RangeSlider(
+2238	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void Slider(
+2240	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void Slider(
+2242	    method @androidx.compose.runtime.Composable public static void Slider(
+2244	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.RangeSliderState rememberRangeSliderState(
+2246	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.SliderState rememberSliderState(
+2250	  @Deprecated @androidx.compose.runtime.Stable public final class SliderPositions {
+2259	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class SliderState implements androidx.compose.foundation.gestures.DraggableState {
+2287	  public static final class SliderState.Companion {
+2291	  @androidx.compose.runtime.Stable public interface SnackbarData {
+2298	  public final class SnackbarDefaults {
+2304	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+2315	  public enum SnackbarDuration {
+2321	  public final class SnackbarHostKt {
+2322	    method @androidx.compose.runtime.Composable public static void SnackbarHost(
+2326	  @androidx.compose.runtime.Stable public final class SnackbarHostState {
+2334	  public final class SnackbarKt {
+2335	    method @androidx.compose.runtime.Composable public static void Snackbar(
+2336	    method @androidx.compose.runtime.Composable public static void Snackbar(
+2341	  public enum SnackbarResult {
+2346	  @androidx.compose.runtime.Stable public interface SnackbarVisuals {
+2357	  public final class SuggestionChipDefaults {
+2358	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors elevatedSuggestionChipColors(
+2360	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors elevatedSuggestionChipColors(
+2362	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipElevation elevatedSuggestionChipElevation(
+2366	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+2368	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.BorderStroke suggestionChipBorder(
+2369	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.ChipBorder suggestionChipBorder(
+2372	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors suggestionChipColors(
+2374	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipColors suggestionChipColors(
+2376	    method @androidx.compose.runtime.Composable public androidx.compose.material3.ChipElevation suggestionChipElevation(
+2384	  public final class SurfaceKt {
+2385	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.NonRestartableComposable public static void Surface(
+2386	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.NonRestartableComposable public static void Surface(
+2387	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.NonRestartableComposable public static void Surface(
+2388	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.NonRestartableComposable public static void Surface(
+2397	  public final class SwipeToDismissBoxDefaults {
+2398	    method @androidx.compose.runtime.Composable public kotlin.jvm.functions.Function1<java.lang.Float,java.lang.Float> getPositionalThreshold(
+2404	  public final class SwipeToDismissBoxKt {
+2405	    method @Deprecated @androidx.compose.runtime.Composable public static void SwipeToDismissBox(
+2406	    method @androidx.compose.runtime.Composable public static void SwipeToDismissBox(
+2409	    method @Deprecated @androidx.compose.runtime.Composable public static androidx.compose.material3.SwipeToDismissBoxState rememberSwipeToDismissBoxState(
+2411	    method @androidx.compose.runtime.Composable public static androidx.compose.material3.SwipeToDismissBoxState rememberSwipeToDismissBoxState(
+2415	  public final class SwipeToDismissBoxState {
+2435	  public static final class SwipeToDismissBoxState.Companion {
+2440	  public enum SwipeToDismissBoxValue {
+2446	  @androidx.compose.runtime.Immutable public final class SwitchColors {
+2485	  public final class SwitchDefaults {
+2486	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SwitchColors colors(
+2488	    method @androidx.compose.runtime.Composable public androidx.compose.material3.SwitchColors colors(
+2495	  public final class SwitchKt {
+2496	    method @androidx.compose.runtime.Composable public static void Switch(
+2500	  public interface TabIndicatorScope {
+2505	  public final class TabKt {
+2506	    method @androidx.compose.runtime.Composable public static void LeadingIconTab(
+2508	    method @androidx.compose.runtime.Composable public static void Tab(
+2509	    method @androidx.compose.runtime.Composable public static void Tab(
+2514	  @androidx.compose.runtime.Immutable public final class TabPosition {
+2525	  public final class TabRowDefaults {
+2526	    method @Deprecated @androidx.compose.runtime.Composable public void Indicator(
+2528	    method @androidx.compose.runtime.Composable public void PrimaryIndicator(
+2530	    method @androidx.compose.runtime.Composable public void SecondaryIndicator(
+2552	  public final class TabRowKt {
+2553	    method @androidx.compose.runtime.Composable public static void PrimaryScrollableTabRow(
+2554	    method @Deprecated @androidx.compose.runtime.Composable public static void PrimaryScrollableTabRow(
+2557	    method @androidx.compose.runtime.Composable public static void PrimaryTabRow(
+2559	    method @Deprecated @androidx.compose.runtime.Composable public static void ScrollableTabRow(
+2561	    method @androidx.compose.runtime.Composable public static void SecondaryScrollableTabRow(
+2562	    method @Deprecated @androidx.compose.runtime.Composable public static void SecondaryScrollableTabRow(
+2565	    method @androidx.compose.runtime.Composable public static void SecondaryTabRow(
+2567	    method @Deprecated @androidx.compose.runtime.Composable public static void TabRow(
+2571	  @androidx.compose.runtime.Immutable public final class TextFieldColors {
+2664	  @androidx.compose.runtime.Immutable public final class TextFieldDefaults {
+2665	    method @androidx.compose.runtime.Composable public void Container(
+2667	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public void ContainerBox(
+2669	    method @androidx.compose.runtime.Composable public void DecorationBox(
+2671	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors colors(
+2673	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TextFieldColors colors(
+2679	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.text.input.TextFieldDecorator decorator(
+2681	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getFilledShape(
+2687	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getOutlinedShape(
+2689	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+2715	  public final class TextFieldKt {
+2716	    method @androidx.compose.runtime.Composable public static void TextField(
+2718	    method @androidx.compose.runtime.Composable public static void TextField(
+2720	    method @androidx.compose.runtime.Composable public static void TextField(
+2724	  public abstract class TextFieldLabelPosition {
+2727	  public static final class TextFieldLabelPosition.Above extends androidx.compose.material3.TextFieldLabelPosition {
+2734	  public static final class TextFieldLabelPosition.Attached extends androidx.compose.material3.TextFieldLabelPosition {
+2745	  @androidx.compose.runtime.Stable public interface TextFieldLabelScope {
+2750	  public final class TextKt {
+2751	    method @androidx.compose.runtime.Composable public static void ProvideTextStyle(
+2753	    method @androidx.compose.runtime.Composable public static void Text(
+2754	    method @Deprecated @androidx.compose.runtime.Composable public static void Text(
+2755	    method @Deprecated @androidx.compose.runtime.Composable public static void Text(
+2756	    method @androidx.compose.runtime.Composable public static void Text(
+2757	    method @Deprecated @androidx.compose.runtime.Composable public static void Text(
+2758	    method @Deprecated @androidx.compose.runtime.Composable public static void Text(
+2769	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable public final class TimePickerColors {
+2804	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public final class TimePickerDefaults {
+2805	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TimePickerColors colors(
+2807	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TimePickerColors colors(
+2809	    method @androidx.compose.runtime.Composable @androidx.compose.runtime.ReadOnlyComposable public int layoutType(
+2814	  public final class TimePickerDialogDefaults {
+2815	    method @androidx.compose.runtime.Composable public void DisplayModeToggle(
+2817	    method @androidx.compose.runtime.Composable public void Title(
+2821	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+2829	  public final class TimePickerDialogKt {
+2830	    method @androidx.compose.runtime.Composable public static void TimePickerDialog(
+2834	  @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class TimePickerDisplayMode {
+2840	  public static final class TimePickerDisplayMode.Companion {
+2847	  public final class TimePickerKt {
+2848	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TimeInput(
+2850	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TimePicker(
+2854	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.TimePickerState rememberTimePickerState(
+2859	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Immutable @kotlin.jvm.JvmInline public final value class TimePickerLayoutType {
+2865	  public static final class TimePickerLayoutType.Companion {
+2872	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @kotlin.jvm.JvmInline public final value class TimePickerSelectionMode {
+2880	  public static final class TimePickerSelectionMode.Companion {
+2887	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public interface TimePickerState {
+2902	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @kotlin.jvm.JvmInline public final value class TooltipAnchorPosition {
+2908	  public static final class TooltipAnchorPosition.Companion {
+2923	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class TooltipDefaults {
+2929	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getPlainTooltipContainerShape(
+2933	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getRichTooltipContainerShape(
+2936	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.window.PopupPositionProvider rememberPlainTooltipPositionProvider(
+2938	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.window.PopupPositionProvider rememberRichTooltipPositionProvider(
+2940	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.ui.window.PopupPositionProvider rememberTooltipPositionProvider(
+2941	    method @androidx.compose.runtime.Composable public androidx.compose.ui.window.PopupPositionProvider rememberTooltipPositionProvider(
+2944	    method @androidx.compose.runtime.Composable public androidx.compose.material3.RichTooltipColors richTooltipColors(
+2946	    method @androidx.compose.runtime.Composable public androidx.compose.material3.RichTooltipColors richTooltipColors(
+2958	  public final class TooltipKt {
+2959	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void PlainTooltip(
+2960	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void PlainTooltip(
+2963	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RichTooltip(
+2964	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RichTooltip(
+2967	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TooltipBox(
+2968	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TooltipBox(
+2969	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void TooltipBox(
+2974	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.TooltipState rememberTooltipState(
+2978	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public sealed interface TooltipScope {
+2984	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public interface TooltipState {
+2996	  public final class Tooltip_androidKt {
+2997	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void PlainTooltip(
+2999	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void PlainTooltip(
+3001	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RichTooltip(
+3002	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void RichTooltip(
+3007	  @androidx.compose.runtime.Stable public final class TopAppBarColors {
+3028	  public final class TopAppBarDefaults {
+3029	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors centerAlignedTopAppBarColors(
+3031	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors centerAlignedTopAppBarColors(
+3034	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarScrollBehavior enterAlwaysScrollBehavior(
+3035	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarScrollBehavior enterAlwaysScrollBehavior(
+3037	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarScrollBehavior exitUntilCollapsedScrollBehavior(
+3048	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+3050	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors largeTopAppBarColors(
+3052	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors largeTopAppBarColors(
+3054	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors mediumTopAppBarColors(
+3056	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors mediumTopAppBarColors(
+3058	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarScrollBehavior pinnedScrollBehavior(
+3060	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors topAppBarColors(
+3062	    method @Deprecated @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors topAppBarColors(
+3063	    method @androidx.compose.runtime.Composable public androidx.compose.material3.TopAppBarColors topAppBarColors(
+3079	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Stable public interface TopAppBarScrollBehavior {
+3092	  @androidx.compose.runtime.Stable public final class TopAppBarState {
+3110	  public static final class TopAppBarState.Companion {
+3115	  @androidx.compose.runtime.Immutable public final class Typography {
+3150	  public final class VerticalDragHandleDefaults {
+3151	    method @androidx.compose.runtime.Composable public androidx.compose.material3.DragHandleColors colors(
+3153	    method @androidx.compose.runtime.Composable public androidx.compose.material3.DragHandleColors colors(
+3155	    method @androidx.compose.runtime.Composable public androidx.compose.material3.DragHandleShapes shapes(
+3157	    method @androidx.compose.runtime.Composable public androidx.compose.material3.DragHandleShapes shapes(
+3165	  @androidx.compose.runtime.Immutable public final class WideNavigationRailColors {
+3182	  public final class WideNavigationRailDefaults {
+3183	    method @androidx.compose.runtime.Composable public androidx.compose.material3.WideNavigationRailColors colors(
+3185	    method @androidx.compose.runtime.Composable public androidx.compose.material3.WideNavigationRailColors colors(
+3188	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getModalCollapsedShape(
+3191	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getModalExpandedShape(
+3193	    method @androidx.compose.runtime.Composable public androidx.compose.ui.graphics.Shape getShape(
+3195	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.layout.WindowInsets getWindowInsets(
+3206	  public final class WideNavigationRailItemDefaults {
+3207	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationItemColors colors(
+3209	    method @androidx.compose.runtime.Composable public androidx.compose.material3.NavigationItemColors colors(
+3216	  public final class WideNavigationRailKt {
+3217	    method @androidx.compose.runtime.Composable public static void ModalWideNavigationRail(
+3219	    method @androidx.compose.runtime.Composable public static void WideNavigationRail(
+3221	    method @androidx.compose.runtime.Composable public static void WideNavigationRailItem(
+3225	  public interface WideNavigationRailState {
+3238	  public final class WideNavigationRailStateKt {
+3239	    method @androidx.compose.runtime.Composable public static androidx.compose.material3.WideNavigationRailState rememberWideNavigationRailState(
+3243	  public enum WideNavigationRailValue {
+3250	package androidx.compose.material3.carousel {
+3252	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class CarouselDefaults {
+3255	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.gestures.TargetedFlingBehavior multiBrowseFlingBehavior(
+3257	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.gestures.TargetedFlingBehavior noSnapFlingBehavior(
+3259	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.gestures.TargetedFlingBehavior singleAdvanceFlingBehavior(
+3266	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public sealed interface CarouselItemDrawInfo {
+3277	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public sealed interface CarouselItemScope {
+3279	    method @androidx.compose.runtime.Composable public androidx.compose.ui.Modifier maskBorder(
+3281	    method @androidx.compose.runtime.Composable public androidx.compose.ui.Modifier maskClip(
+3283	    method @androidx.compose.runtime.Composable public androidx.compose.foundation.shape.GenericShape rememberMaskShape(
+3288	  public final class CarouselKt {
+3289	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalCenteredHeroCarousel(
+3291	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalMultiBrowseCarousel(
+3292	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalMultiBrowseCarousel(
+3295	    method @Deprecated @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalUncontainedCarousel(
+3296	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static void HorizontalUncontainedCarousel(
+3301	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public final class CarouselState implements androidx.compose.foundation.gestures.ScrollableState {
+3314	  @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api public static final class CarouselState.Companion {
+3319	  public final class CarouselStateKt {
+3320	    method @SuppressCompatibility @androidx.compose.material3.ExperimentalMaterial3Api @androidx.compose.runtime.Composable public static androidx.compose.material3.carousel.CarouselState rememberCarouselState(
+3326	package androidx.compose.material3.pulltorefresh {
+3328	  public final class PullToRefreshDefaults {
+3329	    method @androidx.compose.runtime.Composable public void Indicator(
+3331	    method @androidx.compose.runtime.Composable public void IndicatorBox(
+3354	  public final class PullToRefreshKt {
+3355	    method @androidx.compose.runtime.Composable public static void PullToRefreshBox(
+3360	    method @androidx.compose.runtime.Composable public static androidx.compose.material3.pulltorefresh.PullToRefreshState rememberPullToRefreshState(
+3364	  @androidx.compose.runtime.Stable public interface PullToRefreshState {

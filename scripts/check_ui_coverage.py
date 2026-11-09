@@ -61,21 +61,49 @@ def table(path, label):
 LITERAL_LIST = re.compile(r"""\bcomponents\s*:\s*\[\s*(?:(['"])[^'"]*\1\s*,?\s*)*\]""")
 
 
-def api_gaps(a, docs, api, errs):
-    """Lines naming, per platform and family, the API list rows no doc covers. Unreadable lists go to errs."""
+def api_gaps(a, docs, api, status, errs):
+    """Lines naming, per platform and family, the API list rows no doc covers. A row is covered only by a structured
+    field of exactly one doc: `platforms.<p>` (the doc's main API, with the doc-level `status`), an object in
+    `platformApi.<p>.variants` or `.supporting`, or `platformApi.<p>.family` for a family row. A covering entry
+    carries the row's status. Errors (always fail): an unreadable list, a string item, a name the list does not
+    have, and a row two docs claim."""
     gaps = []
     for platform, path in (("android", a.android_api), ("ios", a.ios_api)):
         rows, e = table(path, f"{platform} API")
         errs += e
-        named = {v for plats in docs.values() for v in [plats.get(platform)] if v}
-        listed = {k: {n for d in api.values() for n in d.get(platform, {}).get(k, [])} for k in ("variants", "supporting")}
+        claims = {}   # (slot, name) -> [(doc, status)]; slot is main, variants, supporting or family
+        for doc, plats in docs.items():
+            if plats.get(platform):
+                claims.setdefault(("main", plats[platform]), []).append((doc, status.get(doc) or "-"))
+            mine = api[doc].get(platform, {})
+            if mine.get("family"):
+                claims.setdefault(("family", mine["family"]), []).append((doc, "-"))
+            for slot in ("variants", "supporting"):
+                for item in mine.get(slot, []):
+                    if not isinstance(item, dict):
+                        errs.append(f"api {platform} {doc}: platformApi.{platform}.{slot} item {item!r} must be an object")
+                        continue
+                    claims.setdefault((slot, item["name"]), []).append((doc, item.get("status") or "-"))
+        names = {r[1].strip("`") for r in rows}
+        families = {r[1].strip("`") for r in rows if r[2] == "family"}
+        for (slot, n), who in sorted(claims.items()):
+            if slot in ("variants", "supporting") and n not in names or slot == "family" and n not in families:
+                errs.append(f"api {platform}: {', '.join(d for d, _ in who)} names {n} under platformApi.{platform}.{slot}, "
+                            f"but the {platform} API list has no such {'family ' if slot == 'family' else ''}row")
         by_family = {}
         for r in rows:
             name, kind, family = r[1].strip("`"), r[2], r[4]
+            want = r[7] if len(r) > 7 else "-"
             full = f"{r[5].strip('`')}.{name}" if platform == "android" else f"SwiftUI.{name}"
-            ok = name in listed["supporting"] if kind == "supporting" else (full in named or name in listed["variants"])
-            if not ok:
+            slots = {"family": [("family", name)], "supporting": [("supporting", name)]}.get(kind, [("main", full), ("variants", name)])
+            owners = [o for s in slots for o in claims.get(s, [])]
+            if len(owners) > 1:
+                errs.append(f"api {platform} {name}: {len(owners)} docs claim this row ({', '.join(d for d, _ in owners)}); "
+                            "a row has one owner")
+            elif not owners:
                 by_family.setdefault(family, []).append(f"{name} ({kind})")
+            elif owners[0][1] != want:
+                by_family.setdefault(family, []).append(f"{name} ({kind}, needs status {want})")
         gaps += [f"api {platform} {fam}: " + ", ".join(names) for fam, names in sorted(by_family.items())]
     return gaps
 
@@ -101,12 +129,12 @@ def main(argv=None):
     a = ap.parse_args(argv)
     errs = []
 
-    docs, api = {}, {}
+    docs, api, status = {}, {}, {}
     for folder in sorted(p for p in a.components.iterdir() if p.is_dir()) if a.components.is_dir() else []:
         d, c = folder / f"{folder.name}.doc.mjs", folder / f"{folder.name}.contract.json"
         if d.exists() and c.exists():
             doc = read_doc(d)
-            docs[folder.name], api[folder.name] = doc.get("platforms", {}), doc.get("platformApi", {})
+            docs[folder.name], api[folder.name], status[folder.name] = doc.get("platforms", {}), doc.get("platformApi", {}), doc.get("status")
 
     android_rows, e1 = table(a.android_list, "Android")
     ios_rows, e2 = table(a.ios_list, "iOS")
@@ -173,7 +201,7 @@ def main(argv=None):
     else:
         print("skip web: run npm ci --ignore-scripts in ui/tool")
 
-    gaps = api_gaps(a, docs, api, errs)
+    gaps = api_gaps(a, docs, api, status, errs)
     for g in gaps:
         print("FAIL" if a.strict_api else "GAP", g)
     if gaps and not a.strict_api:

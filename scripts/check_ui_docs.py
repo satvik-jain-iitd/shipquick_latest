@@ -90,6 +90,33 @@ def literals(spec_type):
     return " | ".join(f"'{v}'" if spec_type["kind"] == "enum" else str(v) for v in vals)
 
 
+def api_shape_errors(doc):
+    """Story #231: what the schema subset cannot say about `platformApi` and `status`. A variant has a one-line
+    note or its own props; a supporting item has a one-line use; a deprecated or unavailable entry names its
+    replacement; a name sits only once in one platform's lists."""
+    name, errs = doc.get("name", "?"), []
+    if doc.get("status") and not str(doc.get("replacement", "")).strip():
+        errs.append(f"{name}: status '{doc['status']}' needs a replacement (the doc-level `replacement`)")
+    for plat, api in doc.get("platformApi", {}).items():
+        names = []
+        for key, need in (("variants", "note"), ("supporting", "use")):
+            for item in api.get(key, []):
+                where = f"{name}: platformApi.{plat}.{key}"
+                if not isinstance(item, dict):
+                    errs.append(f"{where}: item {item!r} must be an object with name and {need}, not a string")
+                    continue
+                n = item.get("name", "")
+                names.append(n)
+                if key == "variants" and not (str(item.get("note", "")).strip() or item.get("props")):
+                    errs.append(f"{where} {n}: needs a one-line note on how it differs, or its own props")
+                if key == "supporting" and not str(item.get("use", "")).strip():
+                    errs.append(f"{where} {n}: needs a one-line use (when to use it)")
+                if item.get("status") and not str(item.get("replacement", "")).strip():
+                    errs.append(f"{where} {n}: status '{item['status']}' needs a replacement")
+        errs += [f"{name}: platformApi.{plat} lists {n} twice" for n in sorted({n for n in names if names.count(n) > 1})]
+    return errs
+
+
 def check_component(folder, doc_schema, contract_schema):
     name = folder.name
     doc_path, contract_path = folder / f"{name}.doc.mjs", folder / f"{name}.contract.json"
@@ -105,6 +132,7 @@ def check_component(folder, doc_schema, contract_schema):
     errs += [f"{contract_path.name} {e}" for e in validate(contract, contract_schema, contract_schema)]
     if errs:
         return errs
+    errs += api_shape_errors(doc)
     core, plats = contract["core"], contract["platforms"]
     specs = dict(core)
     for platform_props in plats.values():
