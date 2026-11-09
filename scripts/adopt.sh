@@ -15,7 +15,9 @@
 #   fill it by hand -- CI's `roles` job and `scripts/review_merge.sh` both refuse until it exists.
 # --check (story #124): prints the adoption verdict and exits 1 when not adopted, instead of writing anything.
 #   Adopted means: .github/workflows/shipquick-call.yml is pinned to the exact commit the
-#   knowledge/shipquick_latest submodule is at, and .pre-commit-config.yaml carries the ShipQuick hooks.
+#   knowledge/shipquick_latest submodule is at, and .pre-commit-config.yaml carries the ShipQuick hooks,
+#   and (story #260) `shipquick-checks / gate` is a required check on the default branch (read with gh).
+#   A normal run prints the one command that makes it required; adopt.sh never runs it.
 # --kit-branch <b> (story #225, rule-24 children): writes `kit_branch: <b>` into shipquick-call.yml. The checks
 #   then read the submodule pin, .pre-commit-config.yaml and .shipquick/roles.yml from branch <b>, so `main` can
 #   carry only the caller. --check reads `kit_branch:` from the caller and prints one verdict per branch.
@@ -55,11 +57,20 @@ if [ -z "$kit" ] && [ -f "$call" ]; then
   fi
 fi
 
+gh_repo="$(git -C "$child" remote get-url origin 2>/dev/null | sed -n 's#.*github\.com[:/]\([^/]*/[^/]*\)$#\1#p' | sed 's#\.git$##')"
+
 if [ -n "$check_mode" ]; then
   ok=1
+  # story #260: the gate must be a required check on the default branch, or a red gate can still be merged
+  if [ -z "$gh_repo" ]; then
+    echo "not adopted: gate not required, or unknown: no GitHub origin remote, so the default branch's required checks cannot be read"
+    ok=0
+  elif ! why="$(python3 "$HERE/kit_branch.py" gate "$gh_repo")"; then
+    echo "not adopted: $why"
+    ok=0
+  fi
   # story #225: the caller sits on this branch; the pin and the hooks sit on its kit branch (HEAD when none).
   if [ -n "$kit" ]; then
-    gh_repo="$(git -C "$child" remote get-url origin 2>/dev/null | sed -n 's#.*github\.com[:/]\([^/]*/[^/]*\)$#\1#p' | sed 's#\.git$##')"
     if [ -z "$gh_repo" ]; then
       echo "not adopted: no GitHub origin remote, so the protection of kit branch $kit cannot be checked"
       ok=0
@@ -271,4 +282,6 @@ fi
 
 echo "Next: look at git status, commit these files, and merge them into the default branch (scheduled and issue runs start only from there)."
 echo "The ShipQuick checks compare with origin/dev. If your default branch is main, run them as: BASE=main bash $rel/scripts/check_local.sh (the base checks are skipped otherwise)."
+echo "Then make the gate a required check on your default branch. adopt.sh never runs this; a repo admin runs it once:"
+echo "  $(python3 "$HERE/kit_branch.py" gate-command "${gh_repo:-<owner>/<repo>}")"
 echo "If a branch of yours was made before .gitattributes existed, its first merge of the default branch needs the .git/info/attributes step in pm/agile/templates/sprint-lanes.md."
