@@ -9,6 +9,29 @@ export default {
     "ios": null,
     "web": "@astryxdesign/core/Tooltip"
   },
+  "platformUsage": {
+    "android": {
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Use PlainTooltip to name an icon button's action."
+        },
+        {
+          "guidance": true,
+          "description": "Use TooltipDefaults' position providers to place it."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Not the only name",
+          "category": "Semantics",
+          "criterion": "1.4.13 Content on Hover or Focus",
+          "requirement": "dismissible, stays",
+          "description": "The tooltip can be closed and stays while the user looks at it. The icon still has its own contentDescription."
+        }
+      ]
+    }
+  },
   "group": "Tooltip",
   "category": "Overlay",
   "keywords": [
@@ -21,26 +44,11 @@ export default {
     "description": "A tooltip adds a short note to a button or other part. A plain tooltip says what an icon button does. A rich tooltip says more and can have a title, a link and buttons.",
     "bestPractices": [
       {
-        "guidance": true,
-        "description": "Use PlainTooltip to name an icon button's action."
-      },
-      {
-        "guidance": true,
-        "description": "Use TooltipDefaults' position providers to place it."
-      },
-      {
         "guidance": false,
         "description": "Hide the only copy of needed words in a tooltip."
       }
     ],
     "accessibility": [
-      {
-        "name": "Not the only name",
-        "category": "Semantics",
-        "criterion": "1.4.13 Content on Hover or Focus",
-        "requirement": "dismissible, stays",
-        "description": "The tooltip can be closed and stays while the user looks at it. The icon still has its own contentDescription."
-      },
       {
         "name": "Text contrast",
         "category": "Color contrast",

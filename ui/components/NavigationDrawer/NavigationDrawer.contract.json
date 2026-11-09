@@ -28,6 +28,25 @@
           "kind": "content"
         }
       }
+    },
+    "ios": {
+      "sidebar": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "detail": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "selection": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<SelectionValue?>"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

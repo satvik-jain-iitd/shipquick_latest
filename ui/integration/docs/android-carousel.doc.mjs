@@ -73,8 +73,8 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Use multi-browse to browse many items at once.",
-            "Keep the text on each item short."
+            "Keep the text on each item short.",
+            "Use multi-browse to browse many items at once."
           ]
         },
         {

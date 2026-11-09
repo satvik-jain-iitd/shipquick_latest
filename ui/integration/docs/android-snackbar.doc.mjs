@@ -100,8 +100,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Time to act (2.2.1 Timing Adjustable, Indefinite with an action): With an action, showSnackbar stays until the user acts (Google's default duration is Indefinite then). Keep that default.",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "Time to act (2.2.1 Timing Adjustable, Indefinite with an action): With an action, showSnackbar stays until the user acts (Google's default duration is Indefinite then). Keep that default."
           ]
         }
       ]

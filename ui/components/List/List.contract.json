@@ -34,6 +34,33 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "data": {
+        "type": {
+          "kind": "named",
+          "name": "RandomAccessCollection"
+        }
+      },
+      "id": {
+        "type": {
+          "kind": "named",
+          "name": "KeyPath<Data.Element, ID>"
+        },
+        "optional": true
+      },
+      "rowContent": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "selection": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<SelectionValue?>?"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

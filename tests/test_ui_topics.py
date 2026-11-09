@@ -48,23 +48,19 @@ def test_s228_an_ios_word_in_an_android_topic_fails_too():
     assert any("@State" in m for m in ui_topics.leaks(t, "android"))
 
 
-# Story #228 lands in two stacked PRs (50-file cap). These docs get their iOS props in the second PR, which empties this set.
-PENDING = {"List", "NavigationBar", "NavigationDrawer", "ProgressIndicator", "SearchBar", "SegmentedButton", "Switch"}
-
-
 def test_s228_every_ios_topic_of_a_shared_doc_lists_props():
     shared = 0
     for folder in sorted(p for p in (ROOT / "ui/components").iterdir() if p.is_dir()):
         doc = read_doc(folder / f"{folder.name}.doc.mjs")
         on = [p for p, v in doc["platforms"].items() if v]
-        if "ios" not in on or len(on) < 2 or folder.name in PENDING:
+        if "ios" not in on or len(on) < 2:
             continue
         shared += 1
         contract = json.loads((folder / f"{folder.name}.contract.json").read_text(encoding="utf-8"))
         t = ui_topics.topic(doc, contract, "ios")
         props = [s for s in t["sections"] if s["title"] == "Props"]
         assert props and props[0]["content"][0]["rows"], f"ios-{folder.name.lower()} lists no props"
-    assert shared + len(PENDING) >= 15
+    assert shared >= 15
 
 
 def test_s228_platform_usage_is_read_for_its_own_platform_only():
