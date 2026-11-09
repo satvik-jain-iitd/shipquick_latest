@@ -5,7 +5,7 @@ on:
     - cron: "17 3 * * 1"   # every Monday
   workflow_dispatch:
   push:
-    branches: [dev, feat/242-vendor-backup]
+    branches: [dev]
     paths:
       - ui/tool/package-lock.json
       - ui/android/**/gradle-wrapper.properties
@@ -65,7 +65,7 @@ jobs:
           du -sh . --exclude=.git | tail -1
           python3 -c "import json; print(len(json.load(open('MANIFEST.json'))['artifacts']), 'artifacts')"
   restore:
-    # Step 2: take only the backup/vendor branch and install from it with no network use.
+    # Step 2: take only the backup/vendor branch and install from it with npm --offline and Gradle --offline.
     needs: backup
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -86,9 +86,3 @@ jobs:
         run: |
           node --version; npm --version; gradle --version | head -5
           bash src/scripts/restore_vendor.sh backup "$RUNNER_TEMP/restore"
-      - name: Debug (only on failure)
-        if: failure()
-        run: |
-          d=backup/maven/androidx/compose/runtime/runtime-annotation-jvm/1.9.3
-          ls "$d"; grep -n -B2 -A6 "kotlin-stdlib" "$d"/*.module | head -60 || true
-          grep -n -B1 -A4 "kotlin-stdlib" "$d"/*.pom | head -30 || true

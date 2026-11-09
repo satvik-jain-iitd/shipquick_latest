@@ -17,8 +17,10 @@ The pins are listed in `scripts/vendor_pins.json`. The M3 version must match `do
 
 ## Size
 
-The workflow prints the size and the file count after each push. Read them in the run log. No single file may pass 90 MB,
-because GitHub refuses 100 MB. The build stops with a clear message if one does.
+First build, 9 Nov 2026: about 290 MB of files and 1,423 entries in the MANIFEST. The workflow prints the size and the
+count after each push; read them in the run log. No single file may pass 90 MB, because GitHub refuses 100 MB.
+The build stops with a clear message if one does. The backup holds more than the Android build needs, on purpose:
+it also keeps the desktop and stub variants Google publishes, so any variant can be restored.
 
 ## Who builds it
 
@@ -66,6 +68,8 @@ If Apple changes it, the Xcode and iOS version we build with is the pin. We keep
 
 ## What not backed up
 
+- `org.jetbrains.skiko:skiko-android:0.7.7`: a desktop and iOS drawing library that a Compose POM names. No repository we use has its
+  POM. The Android restore does not need it. The MANIFEST lists it under `unresolved`.
 - The Gradle distribution and the Android Gradle plugin. The kit has no Gradle build yet (stories S6 and S7).
   When it has, add its wrapper and plugins to the pins.
 - The Astryx source on GitHub. We use the npm package, which is in the backup.
