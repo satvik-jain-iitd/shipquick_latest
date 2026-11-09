@@ -60,6 +60,13 @@ def valid_pr(pr, approved, provenance_since):
     return bool(PR_RE.match(pr or ""))
 
 
+def rejected_without_reason(manifest):
+    """Story #148: every (board, row id) in a REJECTED row that carries no "reason"."""
+    return [(board_name(e), r["id"]) for s in manifest.get("sections") or [] for r in s["rows"]
+            if r.get("prefix", s.get("prefix")) == "REJECTED"
+            for e in r["boards"] if not str((e if isinstance(e, dict) else {}).get("reason") or "").strip()]
+
+
 def overlaps(a, b):
     return a["x"] < b["x"] + b["w"] and b["x"] < a["x"] + a["w"] and a["y"] < b["y"] + b["h"] and b["y"] < a["y"] + a["h"]
 
@@ -185,16 +192,23 @@ def layout(canvas: dict, manifest: dict):
         html, w, h, bad = learnings_board(s.get("learnings", []), s["title"], tint_of(s.get("tint", "")), th); problems += bad
         boards[LEARN_BOARD] = {**boards.get(LEARN_BOARD, {"x": 0, "y": 0, "title": "Design learnings"}), "w": w, "h": h}
         bg_files["project/" + LEARN_BOARD] = html
-        s["rows"].insert(0, {"id": "learnings", "title": "Newest on top · the owner's taste, craft rules, what testing taught", "boards": [LEARN_BOARD], "notes": []})
+        s["rows"] = [{"id": "learnings", "title": "Newest on top · the owner's taste, craft rules, what testing taught", "boards": [LEARN_BOARD], "notes": []}] + s["rows"]   # a new list: the manifest is never changed
     # 1. every board exactly once; unknown boards go to an Unsorted row
     named = {}
     for s in sections:
         for r in s["rows"]:
+            copies = {}   # story #148: options put to the owner differ in their words, not only in layout
             for entry in r["boards"]:
                 b = board_name(entry)
                 if b in named: problems.append(f"{b} is in two rows: {named[b]} and {r['id']}")
                 named[b] = r["id"]
                 if b not in boards: problems.append(f"{b} is in the manifest but not on the canvas (row {r['id']})")
+                meta = entry if isinstance(entry, dict) else {}
+                if r.get("options"):
+                    cp = " ".join(str(meta.get("copy") or "").lower().split())
+                    if not cp: problems.append(f"{b} (options row {r['id']}) has no copy line: write {{\"board\": ..., \"copy\": \"<the sentence that makes it different>\"}}")
+                    elif cp in copies: problems.append(f"{b} and {copies[cp]} (options row {r['id']}) have the same copy: options must differ in their words")
+                    else: copies[cp] = b
                 if s.get("id") == "production":
                     prov = entry if isinstance(entry, dict) else {}
                     pr, approved = prov.get("pr"), prov.get("approved")
@@ -209,6 +223,9 @@ def layout(canvas: dict, manifest: dict):
                                              f"({approved}) on or before it (provenance_since: {since or 'not set'}) — otherwise cite the real PR")
                         else:
                             problems.append(f"{b} (row {r['id']}): pr {pr!r} is not \"baseline\", \"#<n>\" or a PR URL")
+    for b, rid in rejected_without_reason(manifest):
+        if b not in manifest.get("rejected_baseline", []):   # an old board on the baseline only warns (main prints it)
+            problems.append(f"{b} (row {rid}) is rejected with no reason: write {{\"board\": ..., \"reason\": \"<the owner's own words>\"}}")
     for k in [k for k in boards if k.startswith("bg/")]: boards.pop(k)
     unsorted = [k for k in boards if k not in named]
     if unsorted:
@@ -312,6 +329,7 @@ def main(argv=None):
     g = ap.add_mutually_exclusive_group(required=True); g.add_argument("--check", action="store_true"); g.add_argument("--apply", action="store_true")
     g.add_argument("--publish-list", action="store_true", help="print every file to publish, from canvas.json")
     g.add_argument("--verify", metavar="LISTING", help="a text file of the artifact's published paths; fails naming each one canvas.json needs and it lacks")
+    g.add_argument("--write-rejected-baseline", action="store_true", help="once: list today's rejected boards with no reason in the manifest, so they only warn")
     a = ap.parse_args(argv)
     root = Path(a.canvas); cj = root / "project" / "canvas.json"
     canvas = json.loads(cj.read_text())
@@ -323,10 +341,17 @@ def main(argv=None):
         for p in missing: print("MISSING " + p)
         print(f"{len(missing)} file(s) named in canvas.json are not published" if missing else "ok, every file canvas.json names is published")
         return 1 if missing else 0
-    if not a.manifest: ap.error("--check and --apply need --manifest")
+    if not a.manifest: ap.error("--check, --apply and --write-rejected-baseline need --manifest")
     manifest = json.loads(Path(a.manifest).read_text())
+    if a.write_rejected_baseline:   # once, when a canvas first meets story #148: today's reasonless rejected boards only warn from now on
+        old = sorted({b for b, _ in rejected_without_reason(manifest)} | set(manifest.get("rejected_baseline", [])))
+        manifest["rejected_baseline"] = old
+        Path(a.manifest).write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
+        print(f"wrote rejected_baseline ({len(old)} boards) into {a.manifest}"); return 0
     if a.check:
         for p in check_existing(canvas): print("NOW " + p)   # what overlaps on the canvas as it is, before any relayout
+    for b, rid in rejected_without_reason(manifest):
+        if b in manifest.get("rejected_baseline", []): print(f"WARN {b} (row {rid}) is rejected with no reason (on rejected_baseline): add the owner's words when you can")
     new, bg_files, problems = layout(canvas, manifest)
     if problems:
         print("\n".join("PROBLEM " + p for p in problems)); return 1

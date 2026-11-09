@@ -285,3 +285,25 @@ Scenario: a column layout ends on the learnings board
   And a column layout with no learnings section, or a learnings row with an unknown kind, stops the run
 ```
 Tests: `tests/test_canvas_stage.py` (S22 to S26).
+
+## Options differ in copy, rejections carry a reason (#148)
+
+```gherkin
+Scenario: an options row and a rejected row carry their words
+  Given a manifest row with "options": true and a row whose prefix is REJECTED
+  When canvas_stage lays it out
+  Then options with different copy lines pass
+  And an option with no copy line, or two options with the same copy, stop the run
+  And a rejected board with no reason stops the run, and one with a reason passes
+```
+Tests: `tests/test_canvas_stage.py` (S27 to S30).
+
+```gherkin
+Scenario: old rejected boards do not break an old canvas (#148 review)
+  Given rejected boards with no reason from before the rule
+  When canvas_stage runs --write-rejected-baseline once
+  Then they go into the manifest's rejected_baseline and --apply passes with a WARN for each
+  And a new rejected board with no reason still stops the run
+  And layout run twice on one manifest object leaves the manifest unchanged
+```
+Tests: `tests/test_canvas_stage.py` (S31 to S33).
