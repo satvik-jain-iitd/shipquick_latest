@@ -68,6 +68,29 @@ export default {
       "type": "@Composable RowScope.() -> Unit",
       "description": "The NavigationBarItems.",
       "required": true
+    },
+    {
+      "name": "selected",
+      "type": "boolean",
+      "description": "NavigationBarItem: true for the place on screen now.",
+      "required": true
+    },
+    {
+      "name": "onClick",
+      "type": "() => void",
+      "description": "NavigationBarItem: runs when the user taps the place. Go there here.",
+      "required": true
+    },
+    {
+      "name": "icon",
+      "type": "@Composable () -> Unit",
+      "description": "NavigationBarItem: the icon for the place.",
+      "required": true
+    },
+    {
+      "name": "label",
+      "type": "@Composable () -> Unit",
+      "description": "NavigationBarItem: the words under the icon."
     }
   ]
 };

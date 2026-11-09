@@ -9,6 +9,28 @@
         "type": {
           "kind": "content"
         }
+      },
+      "selected": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onClick": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "icon": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
       }
     }
   },
