@@ -125,7 +125,7 @@ def find(repos, fetch, path):
 
 
 def pom_info(xml: bytes) -> dict:
-    root = ET.fromstring(re.sub(rb' xmlns="[^"]+"', b"", xml, count=1))
+    root = ET.fromstring(re.sub(rb"""\sxmlns=(?:"[^"]*"|'[^']*')""", b"", xml, count=1))
     ver = (root.findtext("version") or root.findtext("parent/version") or "").strip()
     grp = (root.findtext("groupId") or root.findtext("parent/groupId") or "").strip()
     props = {c.tag: (c.text or "").strip() for c in (root.find("properties") or [])}

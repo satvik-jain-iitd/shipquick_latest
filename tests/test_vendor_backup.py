@@ -127,3 +127,17 @@ def test_s242_an_unchecked_download_is_refused():
         assert "unchecked" in str(e)
     else:
         raise AssertionError("passed with no checksum")
+
+
+def test_s242_a_pom_with_single_quoted_namespace_is_read():
+    xml = b"<?xml version='1.0'?><project xmlns:xsi='i' xmlns='http://maven.apache.org/POM/4.0.0'><dependencyManagement><dependencies>" \
+          b"<dependency><groupId>g</groupId><artifactId>a</artifactId><version>1</version></dependency></dependencies></dependencyManagement></project>"
+    assert vb.pom_info(xml)["managed"] == [("g", "a", "1")]
+
+
+def test_s242_a_bom_that_lists_versions_only_in_its_module_file_is_read():
+    mod = json.dumps({"variants": [{"dependencyConstraints": [{"group": "g", "module": "a", "version": {"requires": "1"}}]}]}).encode()
+    files = {"r/g/bom/1/bom-1.pom": b"<project/>", "r/g/bom/1/bom-1.module": mod,
+             "r/g/a/1/a-1.pom": _pom(pkg="jar"), "r/g/a/1/a-1.jar": b"A"}
+    got = vb.resolve_maven(("g", "bom", "1"), [("g", "a", "")], ["r"], lambda u: files.get(u))
+    assert "a-1.jar" in [m["file"].rsplit("/", 1)[1] for m in got]
