@@ -454,3 +454,13 @@ Scenario: every Material 3 component on Google's page has a ShipQuick doc
   And the doc's platforms.android is the row's Compose API
 ```
 Tests: `tests/test_android_library.py` (s134).
+
+## Story #134 (S4), part D: five Android screen templates
+```gherkin
+Scenario: a coder agent starts an Android screen from a template
+  Given ui/android/templates holds SignIn, List, Detail, Settings and StepFlow templates
+  Then no template has Canvas(, drawBehind, Color(0x, a custom Shape class or a Material 2 import
+  And the scan catches each of those patterns, and allows the M3 icon set and androidx.compose.material3
+  And the step flow puts the outline button before the filled one and uses imePadding()
+```
+Tests: `tests/test_android_templates.py` (s134).
