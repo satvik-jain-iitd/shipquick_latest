@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "JSON twin of doctypes/component/type.ts (SingleComponentDoc), so Python checks run without Node. Field names and meanings are Meta's (MIT, ui/LICENSE.meta-astryx.txt); only `platforms` and `platformUsage` are ShipQuick's. Multi and sub-component docs are not in this twin yet.",
+  "$comment": "JSON twin of doctypes/component/type.ts (SingleComponentDoc), so Python checks run without Node. Field names and meanings are Meta's (MIT, ui/LICENSE.meta-astryx.txt); only `platforms`, `platformUsage`, `platformApi`, `status` and `replacement` are ShipQuick's. Multi and sub-component docs are not in this twin yet.",
   "title": "ComponentDoc",
   "type": "object",
   "required": ["name", "displayName", "platforms", "usage", "props"],
@@ -27,6 +27,17 @@
         "web": {"$ref": "#/$defs/platformUsage"}
       }
     },
+    "platformApi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "android": {"$ref": "#/$defs/platformApi"},
+        "ios": {"$ref": "#/$defs/platformApi"},
+        "web": {"$ref": "#/$defs/platformApi"}
+      }
+    },
+    "status": {"$ref": "#/$defs/apiStatus"},
+    "replacement": {"type": "string"},
     "keywords": {"type": "array", "items": {"type": "string"}},
     "group": {"type": "string"},
     "category": {"enum": ["Action", "Chat", "Container", "Content", "Form Controls", "Data Input", "Data Visualization", "Feedback & Status", "Layout", "Navigation", "Overlay", "Table & List", "Utility"]},
@@ -65,6 +76,39 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {"description": {"type": "string"}, "bestPractices": {"$ref": "#/$defs/bestPractices"}, "accessibility": {"$ref": "#/$defs/accessibility"}}
-    }
+    },
+    "platformApi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "family": {"type": "string"},
+        "variants": {"type": "array", "items": {"$ref": "#/$defs/apiVariant"}},
+        "supporting": {"type": "array", "items": {"$ref": "#/$defs/apiSupporting"}}
+      }
+    },
+    "apiVariant": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "note": {"type": "string"},
+        "props": {"type": "array", "items": {"type": "object", "required": ["name", "type", "description"], "properties": {"name": {"type": "string"}, "type": {"type": "string"}, "description": {"type": "string"}, "default": {"type": "string"}}}},
+        "status": {"$ref": "#/$defs/apiStatus"},
+        "replacement": {"type": "string"}
+      }
+    },
+    "apiSupporting": {
+      "type": "object",
+      "required": ["name", "use"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "use": {"type": "string"},
+        "status": {"$ref": "#/$defs/apiStatus"},
+        "replacement": {"type": "string"}
+      }
+    },
+    "apiStatus": {"enum": ["deprecated", "unavailable-ios"]}
   }
 }

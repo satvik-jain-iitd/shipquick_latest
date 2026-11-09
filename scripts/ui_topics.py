@@ -47,13 +47,25 @@ def topic(doc, contract, platform):
     usage = {"description": " ".join(t for t in (shared.get("description", ""), mine.get("description", "")) if t),
              **{k: shared.get(k, []) + mine.get(k, []) for k in ("bestPractices", "accessibility")}}
     practices = usage["bestPractices"]
+    # Story #231: this platform's variants and supporting API. A deprecated or unavailable one is only ever a
+    # "Do not use" line, never a recommendation.
+    api = doc.get("platformApi", {}).get(platform, {})
+    items = api.get("variants", []) + api.get("supporting", [])
+    ok = [f"{i['name']}: {i.get('note') or i.get('use') or 'own props: ' + ', '.join(p['name'] for p in i.get('props', []))}"
+          for i in items if not i.get("status")]
+    avoid = [f"Do not use: {i['name']}. Use {i['replacement']}." for i in items if i.get("status")]
+    lead = (f"Do not use: {target}. Use {doc['replacement']}." if doc.get("status") else
+            f"Use `{target}` as {vendor} ships it. Never wrap or redraw it. Brand comes from the tokens in design/tokens.json.")
     sections = [
         {"title": "Use", "content": [
-            {"type": "prose", "text": f"Use `{target}` as {vendor} ships it. Never wrap or redraw it. "
-                                      "Brand comes from the tokens in design/tokens.json."},
+            {"type": "prose", "text": lead},
             {"type": "prose", "text": usage["description"]},
         ]},
         {"title": "Props", "content": [{"type": "table", "headers": ["Prop", "Type", "Default", "Description"], "rows": rows}]},
+        {"title": "Variants and supporting API", "content": [
+            {"type": "list", "style": "unordered", "items": ok},
+            {"type": "list", "style": "dont", "items": avoid},
+        ]},
         {"title": "Do and do not", "content": [
             {"type": "list", "style": "do", "items": [b["description"] for b in practices if b.get("guidance")]},
             {"type": "list", "style": "dont", "items": [b["description"] for b in practices if not b.get("guidance")]},
