@@ -154,11 +154,11 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
-        {"name": "WindowVisibilityToggle", "note": "not on iOS. Apple: \"A specialized button for toggling the visibility of a window.\"", "status": "unavailable-ios", "replacement": "nothing on iOS ()"}
+        {"name": "WindowVisibilityToggle", "note": "not on iOS. Apple: \"A specialized button for toggling the visibility of a window.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (it shapes a Mac app window; an iOS app has no such window control)"}
       ],
       "supporting": [
         {"name": "ToggleStyleConfiguration.Label", "use": "iOS 13.0. Apple: \"A type-erased label of a toggle.\""},
-        {"name": "DefaultWindowVisibilityToggleLabel", "use": "not on iOS. Apple: \"The default label of a window visibility toggle.\"", "status": "unavailable-ios", "replacement": "nothing on iOS ()"}
+        {"name": "DefaultWindowVisibilityToggleLabel", "use": "not on iOS. Apple: \"The default label of a window visibility toggle.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (it shapes a Mac app window; an iOS app has no such window control)"}
       ]
     }
   }

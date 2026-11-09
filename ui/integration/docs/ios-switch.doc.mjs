@@ -74,8 +74,8 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Do not use: WindowVisibilityToggle. Use nothing on iOS ().",
-            "Do not use: DefaultWindowVisibilityToggleLabel. Use nothing on iOS ()."
+            "Do not use: WindowVisibilityToggle. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control).",
+            "Do not use: DefaultWindowVisibilityToggleLabel. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control)."
           ]
         }
       ]
