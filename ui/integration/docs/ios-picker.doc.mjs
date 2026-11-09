@@ -35,6 +35,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "Picker: iOS 13.0. Apple: \"A control for selecting from a set of mutually exclusive values.\"",
+            "pickerStyle: `.pickerStyle(_:)`, iOS 13.0. Apple: \"Sets the style for pickers within this view.\"",
             "paletteSelectionEffect: `.paletteSelectionEffect(_:)`, iOS 17.0. Apple: \"Specifies the selection effect to apply to a palette item.\""
           ]
         },

@@ -30,6 +30,8 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "Table", "note": "iOS 16.0. Apple: \"A container that presents rows of data arranged in one or more columns, optionally providing the ability to select one or more members.\""},
+        {"name": "tableStyle", "note": "`.tableStyle(_:)`, iOS 16.0. Apple: \"Sets the style for tables within this view.\""},
         {"name": "tableColumnHeaders", "note": "`.tableColumnHeaders(_:)`, iOS 17.0. Apple: \"Controls the visibility of a `Table`’s column header views.\""}
       ]
     }

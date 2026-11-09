@@ -68,20 +68,20 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Do not use: accessoryWidgetGroupStyle. Use nothing on iOS ().",
-            "Do not use: breakthroughEffect. Use nothing on iOS ().",
-            "Do not use: contentCaptureProtected. Use nothing on iOS ().",
-            "Do not use: preferredSurroundingsEffect. Use nothing on iOS ().",
-            "Do not use: preferredWindowClippingMargins. Use nothing on iOS ().",
-            "Do not use: spatialOverlay. Use nothing on iOS ().",
-            "Do not use: spatialOverlayPreferenceValue. Use nothing on iOS ().",
-            "Do not use: upperLimbVisibility. Use nothing on iOS ().",
-            "Do not use: volumeBaseplateVisibility. Use nothing on iOS ().",
-            "Do not use: windowDismissBehavior. Use nothing on iOS ().",
-            "Do not use: windowFullScreenBehavior. Use nothing on iOS ().",
-            "Do not use: windowMinimizeBehavior. Use nothing on iOS ().",
-            "Do not use: windowResizeAnchor. Use nothing on iOS ().",
-            "Do not use: windowResizeBehavior. Use nothing on iOS ()."
+            "Do not use: accessoryWidgetGroupStyle. Use nothing on iOS (a watchOS accessory widget group; build iOS widgets with WidgetKit).",
+            "Do not use: breakthroughEffect. Use nothing on iOS (visionOS content seen through 3D models; iOS has no 3D occlusion).",
+            "Do not use: contentCaptureProtected. Use nothing on iOS (visionOS 26 only, Apple's page names no iOS twin).",
+            "Do not use: preferredSurroundingsEffect. Use nothing on iOS (it tints visionOS passthrough video; iOS has no passthrough).",
+            "Do not use: preferredWindowClippingMargins. Use nothing on iOS (drawing past a visionOS window's bounds).",
+            "Do not use: spatialOverlay. Use nothing on iOS (a visionOS volume or immersive space; iOS has no 3D space around the app).",
+            "Do not use: spatialOverlayPreferenceValue. Use nothing on iOS (a visionOS volume or immersive space; iOS has no 3D space around the app).",
+            "Do not use: upperLimbVisibility. Use nothing on iOS (the person's arms in a visionOS immersive space).",
+            "Do not use: volumeBaseplateVisibility. Use nothing on iOS (a visionOS volume or immersive space; iOS has no 3D space around the app).",
+            "Do not use: windowDismissBehavior. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control).",
+            "Do not use: windowFullScreenBehavior. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control).",
+            "Do not use: windowMinimizeBehavior. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control).",
+            "Do not use: windowResizeAnchor. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control).",
+            "Do not use: windowResizeBehavior. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control)."
           ]
         }
       ]

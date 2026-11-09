@@ -74,6 +74,16 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "ForEach: iOS 13.0. Apple: \"A structure that computes views on demand from an underlying collection of identified data.\"",
+            "OutlineGroup: iOS 14.0. Apple: \"A structure that computes views and disclosure groups on demand from an underlying collection of tree-structured, identified data.\"",
+            "Section: iOS 13.0. Apple: \"A container view that you can use to add hierarchy within certain views.\"",
+            "deleteDisabled: `.deleteDisabled(_:)`, iOS 13.0. Apple: \"Adds a condition for whether the view’s view hierarchy is deletable.\"",
+            "moveDisabled: `.moveDisabled(_:)`, iOS 13.0. Apple: \"Adds a condition for whether the view’s view hierarchy is movable.\"",
+            "refreshable: `.refreshable(action:)`, iOS 15.0. Apple: \"Adds an asynchronous handler that can update the data the view displays when a person initiates a request, such as by pulling to refresh.\"",
+            "selectionDisabled: `.selectionDisabled(_:)`, iOS 17.0. Apple: \"Adds a condition that controls whether users can select this view.\"",
+            "swipeActions: `.swipeActions(edge:allowsFullSwipe:content:)`, iOS 15.0. Apple: \"Adds custom swipe actions to a row in a list.\"",
+            "swipeActionsContainer: `.swipeActionsContainer()`, iOS 27.0. Apple: \"Coordinates swipe action dismissal and mutual exclusion across rows in a container.\"",
+            "listStyle: `.listStyle(_:)`, iOS 13.0. Apple: \"Sets the style for lists within this view.\"",
             "headerProminence: `.headerProminence(_:)`, iOS 15.0. Apple: \"Sets the header prominence for this view.\"",
             "listItemTint: `.listItemTint(_:)`, iOS 14.0. Apple: \"Sets a fixed tint color for content in a list.\"",
             "listRowBackground: `.listRowBackground(_:)`, iOS 13.0. Apple: \"Places a custom background view behind a list row item.\"",
@@ -82,13 +92,16 @@ export default {
             "listSectionIndexVisibility: `.listSectionIndexVisibility(_:)`, iOS 26.0. Apple: \"Changes the visibility of the list section index.\"",
             "listSectionSeparator: `.listSectionSeparator(_:edges:)`, iOS 15.0. Apple: \"Sets whether to hide the separator associated with a list section.\"",
             "listSectionSeparatorTint: `.listSectionSeparatorTint(_:edges:)`, iOS 15.0. Apple: \"Sets the tint color associated with a section.\"",
-            "typeSelectEquivalent: `.typeSelectEquivalent(_:)`, iOS 16.0. Apple: \"Sets an explicit type select equivalent text in a collection, such as a list or table.\""
+            "typeSelectEquivalent: `.typeSelectEquivalent(_:)`, iOS 16.0. Apple: \"Sets an explicit type select equivalent text in a collection, such as a list or table.\"",
+            "SectionConfiguration.Actions: iOS 18.0. Apple: \"The type-erased actions of a section.\""
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
+            "Do not use: listRowHoverEffect. Use hoverEffect.",
+            "Do not use: listRowHoverEffectDisabled. Use hoverEffectDisabled.",
             "Do not use: alternatingRowBackgrounds. Use listRowBackground."
           ]
         }
