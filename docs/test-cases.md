@@ -540,3 +540,14 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
   And a topic prints a status item only as "Do not use: <name>. Use <replacement>."
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
+
+## Story #231, sub-issue #235: every iOS alternative is reviewed, and every "none" says why
+```gherkin
+Scenario: an agent reading a row Apple does not offer on iOS always learns what to use, or why there is nothing
+  Given IOS_ALTERNATIVES in scripts/ui_api_lists.py, reviewed against each entry's Apple page
+  When the generator meets an unavailable-ios row whose alternative is "none" with no reason after "none: "
+  Then it fails, naming the row and asking for a one-line reason
+  And a "none: <reason>" row keeps the reason, and its detail ends with "`none`, because <reason>"
+  And every real "none" in the table has a reason
+```
+Tests: `tests/test_ui_api_lists.py` (s231). Local: `python3 scripts/ui_api_lists.py --check`.
