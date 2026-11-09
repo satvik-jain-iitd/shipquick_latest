@@ -26,7 +26,7 @@ export default {
         {"name": "GlassEffectContainer", "note": "iOS 26.0. Apple: \"A view that combines multiple Liquid Glass shapes into a single shape that can morph individual shapes into one another.\""}
       ],
       "supporting": [
-        {"name": "GlassBackgroundEffectConfiguration.Content", "use": "not on iOS. Apple: \"A type-erased content of a glass background.\"", "status": "unavailable-ios", "replacement": "GlassEffectContainer"},
+        {"name": "GlassBackgroundEffectConfiguration.Content", "use": "not on iOS. Apple: \"A type-erased content of a glass background.\"", "status": "unavailable-ios", "replacement": "glassEffect"},
         {"name": "DefaultGlassEffectShape", "use": "iOS 26.0. Apple: \"The default shape applied by glass effects, a capsule.\""}
       ]
     }

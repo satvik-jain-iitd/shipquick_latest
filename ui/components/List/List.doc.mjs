@@ -162,5 +162,17 @@ export default {
       "platform": "ios",
       "default": "nil"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "ForEach", "note": "iOS 13.0. Apple: \"A structure that computes views on demand from an underlying collection of identified data.\""},
+        {"name": "OutlineGroup", "note": "iOS 14.0. Apple: \"A structure that computes views and disclosure groups on demand from an underlying collection of tree-structured, identified data.\""},
+        {"name": "Section", "note": "iOS 13.0. Apple: \"A container view that you can use to add hierarchy within certain views.\""}
+      ],
+      "supporting": [
+        {"name": "SectionConfiguration.Actions", "use": "iOS 18.0. Apple: \"The type-erased actions of a section.\""}
+      ]
+    }
+  }
 };

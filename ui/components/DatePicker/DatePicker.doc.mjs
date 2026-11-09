@@ -152,5 +152,15 @@ export default {
       "platform": "ios",
       "default": "[.hourAndMinute, .date]"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "MultiDatePicker", "note": "iOS 16.0. Apple: \"A control for picking multiple dates.\""}
+      ],
+      "supporting": [
+        {"name": "DatePickerStyleConfiguration.Label", "use": "iOS 16.0. Apple: \"A type-erased label of a `DatePicker`.\""}
+      ]
+    }
+  }
 };

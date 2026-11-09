@@ -78,6 +78,13 @@ export default {
             "TextEditor: iOS 14.0. Apple: \"A view that can display and edit long-form text.\"",
             "TextInputBorderShape: iOS 27.0. Apple: \"A shape used to draw the border of a text input control.\""
           ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: TextFieldLink. Use TextField."
+          ]
         }
       ]
     },

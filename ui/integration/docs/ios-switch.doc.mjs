@@ -61,6 +61,26 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "ToggleStyleConfiguration.Label: iOS 13.0. Apple: \"A type-erased label of a toggle.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: WindowVisibilityToggle. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control).",
+            "Do not use: DefaultWindowVisibilityToggleLabel. Use nothing on iOS (it shapes a Mac app window; an iOS app has no such window control)."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

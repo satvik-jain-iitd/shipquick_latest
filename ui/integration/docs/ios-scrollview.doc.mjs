@@ -55,6 +55,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "ScrollViewReader: iOS 14.0. Apple: \"A view that provides programmatic scrolling, by working with a proxy to scroll to known child views.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

@@ -73,6 +73,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "DefaultTabLabel: iOS 18.0. Apple: \"The default label to use for a tab or tab section.\"",
+            "TabContentBuilder.Content: iOS 18.0. Apple: \"A view representation of the content of a builder-based tab view with selection.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

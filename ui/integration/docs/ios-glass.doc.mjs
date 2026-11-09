@@ -41,7 +41,7 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Do not use: GlassBackgroundEffectConfiguration.Content. Use GlassEffectContainer."
+            "Do not use: GlassBackgroundEffectConfiguration.Content. Use glassEffect."
           ]
         }
       ]
