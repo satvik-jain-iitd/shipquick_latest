@@ -114,3 +114,107 @@ def test_s184_haptic_names_are_checked(tmp_path, capsys):
 def test_s184_the_wiring_compiles_the_generated_files():
     assert '"theme"' in (ROOT / "ui/android/build.gradle.kts").read_text(encoding="utf-8")
     assert "Sources/ShipQuickUI" in (ROOT / "ui/ios/Package.swift").read_text(encoding="utf-8")
+
+
+# ---- review 2 of PR #298: strict input, every colour in a ColorScheme, contrast ----
+import re  # noqa: E402
+
+import pytest  # noqa: E402
+
+DELETE = object()
+
+
+def run_with(tmp_path, edit):
+    """Run the emitter on an edited copy of tokens.json; return the exit code, or 'crash: ...' on a traceback."""
+    t = json.loads(TOKENS.read_text(encoding="utf-8"))
+    edit(t)
+    p = tmp_path / "tokens.json"
+    p.write_text(json.dumps(t), encoding="utf-8")
+    try:
+        return emit_tokens.main(["--tokens", str(p), "--out", str(tmp_path / "out")])
+    except Exception as e:  # a traceback is a failed assertion here, not an error
+        return f"crash: {type(e).__name__}: {e}"
+
+
+def put(path, value):
+    def edit(t):
+        node = t
+        for k in path[:-1]:
+            node = node[k]
+        if value is DELETE:
+            del node[path[-1]]
+        else:
+            node[path[-1]] = value
+    return edit
+
+
+STRICT = [
+    (("color", "accent"), {"$value": "#0055CC"}, "color.accent"),
+    (("typography", "lineHeight"), {"$value": "1.5"}, "typography.lineHeight"),
+    (("typography", "size", "huge"), {"$value": "40sp"}, "typography.size.huge"),
+    (("typography", "weight", "black"), {"$value": 900}, "typography.weight.black"),
+    (("feel", "motion", "spring"), {"$value": 1}, "feel.motion.spring"),
+    (("feel", "touchTarget", "web"), {"$value": "40px"}, "feel.touchTarget.web"),
+    (("typography", "weight", "bold", "$value"), "bold", "typography.weight.bold"),
+    (("typography", "weight", "bold", "$value"), 700.9, "typography.weight.bold"),
+    (("typography", "weight", "bold", "$value"), True, "typography.weight.bold"),
+    (("shape",), DELETE, "shape"),
+    (("feel", "motion", "easing"), DELETE, "feel.motion.easing"),
+    (("typography", "fontFamily"), DELETE, "typography.fontFamily"),
+    (("feel", "haptics", "press", "$value", "android"), "BOGUS_NAME", "feel.haptics.press.android"),
+]
+
+
+@pytest.mark.parametrize("path,value,named", STRICT, ids=[f"{s[2]}:{i}" for i, s in enumerate(STRICT)])
+def test_s184_every_bad_or_unknown_token_fails_by_name(tmp_path, capsys, path, value, named):
+    rc = run_with(tmp_path, put(path, value))
+    assert rc == 2, rc
+    assert named in capsys.readouterr().err
+
+
+def scheme_blocks(kt):
+    return {n: re.search(rf"private val {n}: ColorScheme = \w+\((.*?)\n\)", kt, re.S).group(1) for n in ("LightColors", "DarkColors")}
+
+
+def fields(block):
+    return {m.group(1): int(m.group(2), 16) for m in re.finditer(r"(\w+) = Color\(0xFF([0-9A-F]{6})\)", block)}
+
+
+def test_s184_every_colour_token_lands_in_a_color_scheme_field():
+    kt = emit_tokens.render(TOKENS)["kt"]
+    blocks = scheme_blocks(kt)
+    d = emit_tokens.load(TOKENS)
+    dark = emit_tokens.dark_of(d["color"])
+    want = {"background": "background", "surface": "surface", "onSurface": "onSurface", "onSurfaceMuted": "onSurfaceVariant",
+            "outline": "outline", "primary": "primary", "onPrimary": "onPrimary", "error": "error", "onError": "onError"}
+    assert set(want) == set(d["color"])
+    light_f, dark_f = fields(blocks["LightColors"]), fields(blocks["DarkColors"])
+    for token, role in want.items():
+        assert light_f[role] == d["color"][token], token
+        assert dark_f[role] == dark[token], token
+
+
+def lum(v):
+    def ch(x):
+        x /= 255
+        return x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4
+    return 0.2126 * ch(v >> 16) + 0.7152 * ch((v >> 8) & 255) + 0.0722 * ch(v & 255)
+
+
+def ratio(a, b):
+    hi, lo = sorted((lum(a), lum(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+PAIRS = [("onPrimary", "primary"), ("onPrimaryContainer", "primaryContainer"), ("onSecondary", "secondary"),
+         ("onSecondaryContainer", "secondaryContainer"), ("onTertiary", "tertiary"), ("onTertiaryContainer", "tertiaryContainer"),
+         ("onBackground", "background"), ("onSurface", "surface"), ("onSurfaceVariant", "surfaceVariant"),
+         ("onError", "error"), ("onErrorContainer", "errorContainer"), ("inverseOnSurface", "inverseSurface"),
+         ("inversePrimary", "inverseSurface")]
+
+
+@pytest.mark.parametrize("scheme", ["LightColors", "DarkColors"])
+def test_s184_every_on_x_pair_has_at_least_4_5_to_1_contrast(scheme):
+    f = fields(scheme_blocks(emit_tokens.render(TOKENS)["kt"])[scheme])
+    low = {f"{a} on {b}": round(ratio(f[a], f[b]), 2) for a, b in PAIRS if ratio(f[a], f[b]) < 4.5}
+    assert not low, low
