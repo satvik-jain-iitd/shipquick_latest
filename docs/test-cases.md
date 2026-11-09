@@ -497,5 +497,9 @@ Scenario: no counted component is left out
   And a doc that sets a platform no row names fails as extra
   And when core is installed, a topic or registered component whose name equals a core doc name fails
   And without core it prints "skip web: run npm ci --ignore-scripts in ui/tool" and passes, unless --require-web
+  And core with no docs, or fewer than 100, fails
+  And row numbers run 1 to N, and a missing list file is a clear FAIL line
+  And a doc that several iOS rows share must match the row map row for row, so a deleted row fails
+  And components in the integration must be a literal list of names
 ```
 Tests: `tests/test_ui_coverage.py` (s216). CI: step in job `ui-cli` with `--require-web`. Local: `check_local.sh ui-coverage`.
