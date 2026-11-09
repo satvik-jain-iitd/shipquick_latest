@@ -247,3 +247,12 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   so `scripts/check_ui_docs.py` re-applies their two ideas against our JSON contracts (stdlib). Tokens use the
   W3C Design Tokens format (`$value`, `$type`), the one the emitters in S6 already read.
 - Confidence that nothing fits better: 0.8.
+
+## 9 Nov 2026, story #183 (S3): run Meta's Astryx CLI for the kit's components
+- Need: one lookup CLI agents run before UI work (`component`, `docs`, `--dense`, `--json`, `init` agent block, `doctor`), for web, Android and iOS.
+- Run: the plan already names the source, Meta's Astryx (`meta/astryx`, MIT, read in S2). No other tool has a managed agent block
+  plus dense docs. Read at tag `v0.7.11`: `packages/cli/README.md` and `authoring/integration/type.ts` (Tier A, the vendor's own code, 0.9).
+- Finding: the CLI is built to be extended. An `astryx.integration.*` manifest adds `docs`, `templates`, `agentDocs.append`.
+  So we use it, not copy it. Three spikes on the owner's Mac: needs core installed; `component` needs a React source file; reference topics work.
+- Decision: pin `@astryxdesign/cli` and `core` `0.7.11` in `ui/tool/`; native parts as generated topics; a fail-closed wrapper.
+- Confidence that nothing fits better: 0.85.

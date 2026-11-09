@@ -212,6 +212,26 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Check every component doc matches its contract (story #182)
         run: python3 scripts/check_ui_docs.py --root ui/components
+  ui-cli:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Native topics are current with the component docs (story #183)
+        run: python3 scripts/ui_topics.py --check
+      - name: Set up Node (the pinned Astryx CLI needs 22.13 or newer)
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+      - name: Install the pinned CLI, no install scripts (ADR-012)
+        timeout-minutes: 5
+        working-directory: ui/tool
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: The CLI serves the kit's integration as shipped
+        run: |
+          bash scripts/ui.sh doctor integration validate shipquick-ui
+          bash scripts/ui.sh docs android-button --dense | grep -q "androidx.compose.material3.Button"
+          bash scripts/ui.sh docs ios-button --json | grep -q '"type": "docs.detail"'
   secret-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -303,7 +323,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -318,6 +338,7 @@ jobs:
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"
           echo "freeze: ${{ needs.freeze.result }}"
           echo "ui-docs: ${{ needs.ui-docs.result }}"
+          echo "ui-cli: ${{ needs.ui-cli.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "test: ${{ needs.test.result }}"
