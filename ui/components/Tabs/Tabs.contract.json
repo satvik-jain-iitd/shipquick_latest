@@ -1,0 +1,21 @@
+{
+  "name": "Tabs",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "selectedTabIndex": {
+        "type": {
+          "kind": "number"
+        }
+      },
+      "tabs": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

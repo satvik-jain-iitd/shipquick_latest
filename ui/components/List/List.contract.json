@@ -1,0 +1,40 @@
+{
+  "name": "List",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "headlineContent": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "overlineContent": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "supportingContent": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "leadingContent": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "trailingContent": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}
