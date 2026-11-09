@@ -43,6 +43,40 @@ export default {
         {"name": "buttonSizing", "note": "`.buttonSizing(_:)`, iOS 26.0. Apple: \"The preferred sizing behavior of buttons in the view hierarchy.\""},
         {"name": "buttonStyle", "note": "`.buttonStyle(_:)`, iOS 13.0. Apple: \"Sets the style for buttons within this view to a button style with a custom appearance and standard interaction behavior.\""}
       ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "FilledTonalButton",
+          "note": "Less strong than Button, stronger than OutlinedButton. Use it for a second action that still matters, like Next in a set-up flow."
+        },
+        {
+          "name": "ElevatedButton",
+          "note": "A tonal button with a shadow. Use it only when the button must stand apart from a busy background."
+        },
+        {
+          "name": "OutlinedButton",
+          "note": "A border and no fill. Use it for an important action that is not the main one."
+        },
+        {
+          "name": "TextButton",
+          "note": "Text only, the weakest look. Use it in dialogs, in cards, and for minor actions."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "ButtonDefaults",
+          "use": "The default colours, elevation, shape, padding and sizes for each button type. Take values from it, never type your own."
+        },
+        {
+          "name": "ButtonColors",
+          "use": "The colours of a button when it is on or off. Make one with ButtonDefaults.buttonColors() or the colour function of its type."
+        },
+        {
+          "name": "ButtonElevation",
+          "use": "The shadow of a button in each state. Make one with ButtonDefaults.buttonElevation() or the elevation function of its type."
+        }
+      ]
     }
   }
 };
