@@ -180,18 +180,6 @@ export default {
       "family": "ExposedDropdownMenu",
       "variants": [
         {
-          "name": "OutlinedTextField",
-          "note": "A text field with a border and no fill. Use it when filled fields look too heavy, for example in a long form. Use one style on a screen."
-        },
-        {
-          "name": "SecureTextField",
-          "note": "A filled field for a password. It hides what the user types; set textObfuscationMode and textObfuscationCharacter to change how."
-        },
-        {
-          "name": "OutlinedSecureTextField",
-          "note": "The outlined form of SecureTextField."
-        },
-        {
           "name": "TextFieldDefaults.Container",
           "note": "The default container (fill and indicator line) of a filled field. Use it inside DecorationBox only when you build on BasicTextField."
         },
@@ -200,24 +188,10 @@ export default {
           "note": "The label, icons and container of a filled field around a BasicTextField. Use it only when TextField cannot do the job."
         },
         {
-          "name": "OutlinedTextFieldDefaults.Container",
-          "note": "The default container (border) of an outlined field, for use inside its DecorationBox."
-        },
-        {
-          "name": "OutlinedTextFieldDefaults.DecorationBox",
-          "note": "The label, icons and border of an outlined field around a BasicTextField. Use it only when OutlinedTextField cannot do the job."
-        },
-        {
           "name": "TextFieldDefaults.ContainerBox",
           "note": "The old name of the filled container.",
           "status": "deprecated",
           "replacement": "TextFieldDefaults.Container (Google: \"Renamed to TextFieldDefaults.Container\")"
-        },
-        {
-          "name": "OutlinedTextFieldDefaults.ContainerBox",
-          "note": "The old name of the outlined container.",
-          "status": "deprecated",
-          "replacement": "OutlinedTextFieldDefaults.Container (Google: ReplaceWith names Container in the same object; the message says \"Renamed to TextFieldDefaults.Container\")"
         },
         {
           "name": "ExposedDropdownMenuBox",
@@ -236,10 +210,6 @@ export default {
         {
           "name": "TextFieldDefaults",
           "use": "Default colours, shapes, sizes, padding and the decorator for filled fields. Make colours with TextFieldDefaults.colors()."
-        },
-        {
-          "name": "OutlinedTextFieldDefaults",
-          "use": "Default colours, shape, sizes, padding and the decorator for outlined fields. Make colours with OutlinedTextFieldDefaults.colors()."
         },
         {
           "name": "TextFieldColors",

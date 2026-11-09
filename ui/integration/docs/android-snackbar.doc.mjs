@@ -80,13 +80,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Snackbar: The snackbar itself: a short message with an optional action and close button. SnackbarHost shows it for you; call it directly only to change how the host draws each one.",
-            "SnackbarHostState: Shows snackbars one at a time. Call showSnackbar(message, actionLabel, withDismissAction, duration) from a coroutine; it returns a SnackbarResult.",
-            "SnackbarData: The snackbar on show: its visuals, and performAction() and dismiss().",
-            "SnackbarVisuals: What a snackbar says: message, actionLabel, withDismissAction and duration.",
-            "SnackbarDuration: How long a snackbar stays: Short, Long or Indefinite (until the user acts or it is dismissed).",
-            "SnackbarResult: What the user did: ActionPerformed or Dismissed.",
-            "SnackbarDefaults: Default colours and shape for snackbars."
+            "SnackbarHostState: Shows snackbars one at a time. Call showSnackbar(message, actionLabel, withDismissAction, duration) from a coroutine; it returns a SnackbarResult."
           ]
         }
       ]
