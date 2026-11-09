@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desk frame A</title>
+<style>
+/* Tokens from design/tokens.json (light). Dark values swap the same tokens; the token file has no dark set. */
+:root {
+  --backdrop: #F5F5F5;   /* surface token; no text sits here */
+  --bg: #FFFFFF;         /* background token */
+  --card: #F5F5F5;       /* surface token, text on it: ink 15.96:1, muted 6.42:1 */
+  --ink: #1A1A1A;        /* onSurface: 17.4:1 on bg, 15.96:1 on card */
+  --muted: #595959;      /* onSurfaceMuted: 7.0:1 on bg, 6.42:1 on card */
+  --line: #8C8C8C;       /* outline: 3.36:1 on bg, borders only, never text */
+  --primary: #1A1A1A;    /* primary token: the main button fill */
+  --on-primary: #FFFFFF; /* onPrimary: 17.4:1 on primary */
+  --error: #B3261E;      /* error token: a fill only, with onError text (6.54:1) */
+  --on-error: #FFFFFF;   /* onError: 6.54:1 on error */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --backdrop: #1A1A1A; --bg: #1A1A1A;
+    --card: #1A1A1A;     /* cards are the bg with a line border */
+    --ink: #FFFFFF;      /* 17.4:1 on bg */
+    --muted: #8C8C8C;    /* 5.18:1 on bg */
+    --line: #8C8C8C;     /* 5.18:1 on bg, borders only */
+    --primary: #FFFFFF; --on-primary: #1A1A1A; /* 17.4:1 */
+  }
+}
+:root[data-theme="dark"] {
+  --backdrop: #1A1A1A; --bg: #1A1A1A; --card: #1A1A1A;
+  --ink: #FFFFFF; --muted: #8C8C8C; --line: #8C8C8C;
+  --primary: #FFFFFF; --on-primary: #1A1A1A;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--backdrop); font-family: system-ui, sans-serif; color: var(--ink); }
+.board {
+  width: 100%; max-width: 390px; min-height: 844px; margin: 0 auto;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px; display: flex; flex-direction: column; gap: 16px;
+}
+.rule { font-size: 12px; color: var(--muted); margin: 0; }          /* rule line sits on the board bg: 7.0:1 */
+h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 700; }
+.sub { font-size: 14px; color: var(--muted); margin: 0; }
+.chip { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 9999px; border: 1px solid var(--line); color: var(--ink); }
+.chip.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.chip.error { background: var(--error); color: var(--on-error); border-color: var(--error); } /* never red text: #B3261E on dark is 2.66:1 */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.card h2 { font-size: 16px; margin: 0; font-weight: 700; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 16px; }
+.time { font-size: 12px; color: var(--muted); }                       /* 6.42:1 on card */
+.item { font-size: 16px; line-height: 22px; margin: 0; }
+.foot { margin-top: auto; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.btn { display: block; width: 100%; height: 48px; border: 0; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 16px; font-weight: 700; }
+</style>
+</head>
+<body>
+<main class="board">
+  <p class="rule">Frame A (Option A). Shows owner design feedback rule 1 (contrast per pair) and rule 2 (nothing outside its board). Sample text only, no real data.</p>
+  <header>
+    <h1>ShipQuick Desk</h1>
+    <p class="sub">Sample project · main</p>
+  </header>
+  <div><span class="chip">Data file read 2 min ago</span></div>
+
+  <section class="card" aria-labelledby="w">
+    <h2 id="w">Waiting for you</h2>
+    <div class="row"><p class="item">PR 101 is ready. Your merge.</p><span class="chip primary">Your call</span></div>
+    <div class="row"><p class="item">gh is logged out. Run gh auth login.</p><span class="chip error">Error</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="d">
+    <h2 id="d">Agents decided for you</h2>
+    <div class="row"><p class="item">Reviewer approved PR 100</p><span class="time">09:14</span></div>
+    <div class="row"><p class="item">Check moved to Review</p><span class="time">08:52</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="f">
+    <h2 id="f">Switches read from files</h2>
+    <div class="row"><span>Mode</span><span>Manual</span></div>
+    <div class="row"><span>Freeze</span><span>Off</span></div>
+    <div class="row"><span>Dev link</span><span>On</span></div>
+  </section>
+
+  <section class="card" aria-labelledby="r">
+    <h2 id="r">Roadmap</h2>
+    <p class="item"><b>Now</b> · Sample story one</p>
+    <p class="item"><b>Next</b> · Sample story two</p>
+    <p class="item"><b>Next</b> · Sample story three</p>
+  </section>
+
+  <div class="foot"><button class="btn" type="button">Reload data file</button></div>
+</main>
+</body>
+</html>
