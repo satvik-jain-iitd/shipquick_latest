@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "JSON twin of doctypes/component/type.ts (SingleComponentDoc), so Python checks run without Node. Field names and meanings are Meta's (MIT, ui/LICENSE.meta-astryx.txt); only `platforms` is ShipQuick's. Multi and sub-component docs are not in this twin yet.",
+  "title": "ComponentDoc",
+  "type": "object",
+  "required": ["name", "displayName", "platforms", "usage", "props"],
+  "properties": {
+    "type": {"enum": ["component"]},
+    "name": {"type": "string"},
+    "displayName": {"type": "string"},
+    "platforms": {
+      "type": "object",
+      "required": ["android", "ios", "web"],
+      "additionalProperties": false,
+      "properties": {
+        "android": {"type": ["string", "null"]},
+        "ios": {"type": ["string", "null"]},
+        "web": {"type": ["string", "null"]}
+      }
+    },
+    "keywords": {"type": "array", "items": {"type": "string"}},
+    "group": {"type": "string"},
+    "category": {"enum": ["Action", "Chat", "Container", "Content", "Form Controls", "Data Input", "Data Visualization", "Feedback & Status", "Layout", "Navigation", "Overlay", "Table & List", "Utility"]},
+    "usage": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": {"type": "string"},
+        "bestPractices": {"type": "array", "items": {"type": "object", "required": ["guidance", "description"], "properties": {"guidance": {"type": "boolean"}, "description": {"type": "string"}}}},
+        "accessibility": {"type": "array", "items": {"type": "object", "required": ["name", "description"], "properties": {"name": {"type": "string"}, "description": {"type": "string"}, "category": {"enum": ["Color contrast", "Keyboard", "Semantics", "Content"]}, "criterion": {"type": "string"}, "requirement": {"type": "string"}, "states": {"type": "array", "items": {"type": "string"}}}}},
+        "anatomy": {"type": "array", "items": {"type": "object", "required": ["name", "required", "description"], "properties": {"name": {"type": "string"}, "required": {"type": "boolean"}, "description": {"type": "string"}}}}
+      }
+    },
+    "props": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "description"],
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string"},
+          "description": {"type": "string"},
+          "default": {"type": "string"},
+          "required": {"type": "boolean"},
+          "stability": {"enum": ["experimental"]}
+        }
+      }
+    },
+    "examples": {"type": "array", "items": {"type": "object", "required": ["code"], "properties": {"label": {"type": "string"}, "code": {"type": "string"}}}}
+  }
+}

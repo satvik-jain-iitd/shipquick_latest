@@ -231,3 +231,19 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: a `Built-by:` commit trailer written by `git interpret-trailers` (git's own tool, no new dependency),
   checked by the existing `check_roles.py` and `review_merge.sh`.
 - Confidence that nothing fits better: 0.8.
+
+## 9 Nov 2026, story #182 (S2): the spec layer (component doc schema, contracts, doc guards, tokens)
+- Need: one doc schema and one cross-platform contract per component, plus a check that fails when a doc
+  names a prop the contract lacks or hides an enum's literal values.
+- Run: `scout.py --need "component documentation schema and doc guard: fail when a component doc names a prop
+  the cross-platform contract lacks or hides literal union values"` and `scout.py --need "design system
+  component docs schema for AI agents"`: no repos found. `gh search repos "topic:design-tokens topic:schema"`:
+  VoltAgent/awesome-design-md (a list), chakra-ui/panda, system-ui/theme-ui, Manavarya09/design-extract
+  (DTCG token extraction); none has a per-component doc schema with a native contract.
+- Top READMEs read: `meta/astryx` (MIT, pushed 9 Nov 2026, commit `86a32152f4ed`), its `packages/native`
+  README (contracts: core, per-platform, web-only with reason), and design-extract (DTCG tokens, multi-platform emitters).
+- Decision: copy Astryx's doc types, contract types and dense guide (ADR-012, rule 38; files and commit in
+  `ui/UPSTREAM.md`). Its guards (`docPropReferences`, `docPropLiterals`) read TypeScript sources we do not have,
+  so `scripts/check_ui_docs.py` re-applies their two ideas against our JSON contracts (stdlib). Tokens use the
+  W3C Design Tokens format (`$value`, `$type`), the one the emitters in S6 already read.
+- Confidence that nothing fits better: 0.8.

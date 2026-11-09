@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "JSON twin of contract/types.ts (ComponentContract, Meta, MIT, ui/LICENSE.meta-astryx.txt). `sameMeaning` takes upstream's NativeAdditions map shape (ui/UPSTREAM.md).",
+  "title": "ComponentContract",
+  "type": "object",
+  "required": ["name", "baseTarget", "core", "platforms", "webOnly"],
+  "properties": {
+    "name": {"type": "string"},
+    "baseTarget": {"enum": ["root", "trigger", "control", "container"]},
+    "types": {"type": "object", "additionalProperties": {"$ref": "#/$defs/propMap"}},
+    "core": {"$ref": "#/$defs/propMap"},
+    "platforms": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ios": {"$ref": "#/$defs/propMap"},
+        "android": {"$ref": "#/$defs/propMap"},
+        "macos": {"$ref": "#/$defs/propMap"},
+        "windows": {"$ref": "#/$defs/propMap"}
+      }
+    },
+    "webOnly": {
+      "type": "array",
+      "items": {"type": "object", "required": ["name", "reason"], "properties": {"name": {"type": "string"}, "reason": {"type": "string"}}}
+    },
+    "projections": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"type": "string"}}},
+    "sameMeaning": {"type": "object", "additionalProperties": {"type": "string"}}
+  },
+  "$defs": {
+    "propMap": {"type": "object", "additionalProperties": {"$ref": "#/$defs/propSpec"}},
+    "propSpec": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"$ref": "#/$defs/propType"}, "optional": {"type": "boolean"}, "doc": {"type": "string"}}
+    },
+    "propType": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {"enum": ["string", "number", "boolean", "enum", "numberEnum", "array", "record", "fn", "content", "icon", "textOrBoolean", "named"]},
+        "values": {"type": "array"},
+        "of": {"$ref": "#/$defs/propType"},
+        "fields": {"$ref": "#/$defs/propMap"},
+        "args": {"type": "array", "items": {"$ref": "#/$defs/propType"}},
+        "name": {"type": "string"}
+      }
+    }
+  }
+}
