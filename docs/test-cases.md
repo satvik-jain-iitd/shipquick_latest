@@ -888,3 +888,23 @@ Scenario: every template and every contract prop compiles against the real libra
 ```
 Tests: `tests/test_ui_proof.py` (s217). CI jobs: `ui-android-compile`, `ui-ios-compile`. Local: `bash scripts/check_local.sh ui-proof`.
 CI compiles the Kotlin and Swift only. Nothing is run.
+
+## Story #185: UI lint in a child
+```gherkin
+Scenario: the lint configs carry every ban the template tests carry
+  Given tests/test_android_templates.py and tests/test_ios_templates.py ban patterns in the kit's templates
+  When tests/test_ui_lint.py runs
+  Then each Android ban has a detekt import or a Konsist test, and each iOS ban has a SwiftLint custom rule
+  And a ban added to a template test with no lint twin fails the test
+Scenario: the bad screen fails with the rule named, the good screen passes
+  Given tests/fixtures/android and tests/fixtures/ios each hold GoodScreen and BadScreen
+  When CI job ui-android-lint runs detekt and Konsist in the CI tier
+  Then the good screen passes and the bad screen fails with ForbiddenImport and each Konsist rule named
+  When CI job ui-ios-lint runs SwiftLint with --strict
+  Then the good screen passes and the bad screen fails with every custom rule id named
+  When the local tier runs on the bad screen
+  Then it reports warnings and exits 0
+  When a PR does not change ui/** or tests/fixtures/**
+  Then both jobs are skipped and the gate still passes
+```
+Tests: `tests/test_ui_lint.py` (s185). CI jobs: `ui-android-lint`, `ui-ios-lint`.

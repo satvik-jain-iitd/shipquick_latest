@@ -352,3 +352,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: build from scratch, about 300 lines of stdlib Python (`scripts/ui_proof.py`) that writes the two proof files.
   No package added to the repo.
 - Confidence that nothing fits better: 0.8 (the contracts are our own format; any tool would still need this glue).
+
+## 9 Nov 2026, story #185: lint that refuses hand-drawn UI in a child
+- Need: detekt SwiftLint forbid hand-drawn UI.
+- Run: `scout.py --need "detekt SwiftLint forbid hand-drawn UI"`: no repos found.
+  Read instead: detekt (`ForbiddenImport`), Konsist (`LemonAppDev/konsist`) and SwiftLint (`realm/SwiftLint`, `custom_rules`).
+  The owner said yes to all three on #185 ("Haan, teeno", 9 Nov 2026).
+- Borrowed: all three are used as they are, pinned exactly (detekt 1.23.8, Konsist 0.17.3, SwiftLint 0.65.1) and run on GitHub CI only.
+  No custom detekt rule module. The rules are config and one Kotlin test file.
+- Decision: no new tool. We write two configs, one Konsist test, two fixture apps and a drift test (stdlib Python).
+- Confidence that nothing fits better: 0.8 (the three tools are the usual choice for Compose and SwiftUI; no repo does both).
