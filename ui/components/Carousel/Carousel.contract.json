@@ -1,0 +1,35 @@
+{
+  "name": "Carousel",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "CarouselState"
+        }
+      },
+      "preferredItemWidth": {
+        "type": {
+          "kind": "named",
+          "name": "Dp"
+        }
+      },
+      "itemSpacing": {
+        "type": {
+          "kind": "named",
+          "name": "Dp"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

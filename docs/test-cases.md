@@ -444,3 +444,13 @@ Scenario: an agent looks a native component up
   And a JSON doc that only mentions "Error:" in its text passes
 ```
 Tests: `tests/test_ui_cli.py`; CI job `ui-cli` runs the real CLI.
+
+## Story #134 (S4): the Android library, counted from Google's own page
+```gherkin
+Scenario: every Material 3 component on Google's page has a ShipQuick doc
+  Given docs/research/android-m3-components.md names Google's components page, the date 2026-11-09 and "Count: N"
+  Then the table has exactly N numbered rows
+  And every row with a doc folder has a doc, a contract and an android topic
+  And the doc's platforms.android is the row's Compose API
+```
+Tests: `tests/test_android_library.py` (s134).

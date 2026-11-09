@@ -1,0 +1,29 @@
+{
+  "name": "BottomSheet",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "onDismissRequest": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "sheetState": {
+        "type": {
+          "kind": "named",
+          "name": "SheetState"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}
