@@ -50,7 +50,10 @@ def fixture(tmp_path, android_n=1, ios_n=2, core=("Button",)):
 
 
 def run(tmp_path, *extra):
+    if not (tmp_path / "rows.json").exists():
+        (tmp_path / "rows.json").write_text('{"ios": {}}')
     return check_ui_coverage.main([
+        "--core-floor", "1", "--row-map", str(tmp_path / "rows.json"),
         "--android-list", str(tmp_path / "android.md"), "--ios-list", str(tmp_path / "ios.md"),
         "--components", str(tmp_path / "components"), "--topics", str(tmp_path / "topics"),
         "--core", str(tmp_path / "core"), "--integration", str(tmp_path / "integration.mjs"), *extra])
@@ -111,3 +114,57 @@ def test_s216_web_is_skipped_without_core_and_fails_when_required(tmp_path, caps
 
 def test_s216_the_real_repo_passes():
     assert check_ui_coverage.main([]) == 0
+
+
+def test_s216_an_empty_core_fails_with_require_web(tmp_path, capsys):
+    f = fixture(tmp_path, core=())
+    (f / "core").mkdir()
+    assert run(f, "--require-web") == 1
+    assert "core docs" in capsys.readouterr().out
+
+
+def test_s216_a_core_below_the_floor_fails(tmp_path, capsys):
+    f = fixture(tmp_path, core=("Button", "Stepper"))
+    assert run(f, "--core-floor", "100") == 1
+    assert "floor" in capsys.readouterr().out
+
+
+SHARED_3 = "| 3 | Pull-down buttons | `SwiftUI.Link` | 13.0 | https://y | Buttons | - |\n"
+
+
+def test_s216_every_row_of_a_shared_doc_counts(tmp_path, capsys):
+    f = fixture(tmp_path, ios_n=3)
+    (f / "ios.md").write_text((f / "ios.md").read_text() + SHARED_3)
+    (f / "rows.json").write_text('{"ios": {"Button": ["Buttons", "Pull-down buttons"]}}')
+    assert run(f) == 0
+    (f / "ios.md").write_text(IOS.format(n=2))   # row 3 deleted, Count lowered
+    assert run(f) == 1
+    assert "Pull-down buttons" in capsys.readouterr().out
+
+
+def test_s216_a_doc_with_many_rows_must_be_in_the_row_map(tmp_path, capsys):
+    f = fixture(tmp_path, ios_n=3)
+    (f / "ios.md").write_text((f / "ios.md").read_text() + SHARED_3)
+    assert run(f) == 1
+    assert "row map" in capsys.readouterr().out
+
+
+def test_s216_row_numbers_run_one_to_n(tmp_path, capsys):
+    f = fixture(tmp_path)
+    (f / "ios.md").write_text((f / "ios.md").read_text().replace("| 2 | Steppers", "| 3 | Steppers"))
+    assert run(f) == 1
+    assert "1 to 2" in capsys.readouterr().out
+
+
+def test_s216_a_missing_list_file_fails_clearly(tmp_path, capsys):
+    f = fixture(tmp_path)
+    (f / "android.md").unlink()
+    assert run(f) == 1
+    assert "android.md" in capsys.readouterr().out
+
+
+def test_s216_components_that_are_not_a_literal_list_fail(tmp_path, capsys):
+    f = fixture(tmp_path)
+    (f / "integration.mjs").write_text("const names = ['Stepper'];\nexport default { docs: './docs', components: names };\n")
+    assert run(f) == 1
+    assert "literal list" in capsys.readouterr().out
