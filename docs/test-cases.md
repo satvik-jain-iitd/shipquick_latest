@@ -870,7 +870,7 @@ Scenario: every API row and framework topic is covered, and the gate is strict e
 ```
 Tests: `tests/test_ui_coverage.py` (s231). Local: `bash scripts/check_local.sh ui-coverage`.
 
-## Story #242: the offline vendor backup (`backup/vendor`)
+## Story #242: the offline vendor backup (separate repo `shipquick-vendor-backup`)
 
 ```gherkin
 Scenario: s242 a complete backup passes the manifest check
@@ -893,7 +893,7 @@ Scenario: s242 downloads happen on CI only
   Then it exits with a message and downloads nothing; an unchecked download (no checksum) is refused too
 
 Scenario: s242 the workflow proves the restore
-  Given the vendor-backup workflow runs on a branch with no backup/vendor
+  Given the vendor-backup workflow runs and the backup repo has no backup yet
   Then the restore job fails; after the backup job builds the branch, restore passes (npm ci --offline, Gradle --offline)
 ```
 Tests: `tests/test_vendor_backup.py` (s242). CI: pytest and the `vendor backup` workflow. Local: `python3 -m pytest tests/test_vendor_backup.py`.

@@ -1,14 +1,24 @@
 # Vendor backup
 
 Story #242. ADR-012 makes the kit depend on outside packages. Those packages can vanish or turn closed.
-So we keep a copy of them. The copy lives in one git branch: `backup/vendor`.
+So we keep a copy of them. The copy lives in a separate repo: `satvik-jain-iitd/shipquick-vendor-backup`, branch `main`.
+(Owner's decision, 10 Nov 2026: "Alag repo mein, Maven Central ki bhi haan (Recommended)".)
 
-## What is in the branch
+## Where it lives, and why it is a separate repo
+
+The backup is about 286 MB. It is not in this repo, on purpose. A clone of the kit, or a `git submodule update` in a
+child project, never fetches it. It is another repo, so nobody downloads 286 MB by surprise.
+
+The repo and the branch are named once, in the `env` block at the top of `.github/workflows/vendor-backup.yml`
+(`BACKUP_REPO`, `BACKUP_REF`). The restore job reads them from there too.
+
+## What is in it
 
 - `npm-cache/`: every npm package from `ui/tool/package-lock.json`, as npm itself stores them. There are about 130.
 - `maven/`: the Compose BOM `2025.10.00`, `material3` 1.4.0, `material-icons-core`, and everything they need.
   Each has its `.pom`, its `.module` file and its `.aar` or `.jar`, in the normal Maven folder layout.
   Most come from Google Maven. A few Kotlin parts come from Maven Central, because Google's POMs point there.
+  The owner said yes to Maven Central, for these parts, on CI only.
 - `licenses/`: one license file for each package. If a package ships none, the file says what the package declares.
 - `MANIFEST.json`: for each file, the name, version, `sha256`, source URL, license file and the date.
 
@@ -17,35 +27,43 @@ The pins are listed in `scripts/vendor_pins.json`. The M3 version must match `do
 
 ## Size
 
-First build, 9 Nov 2026: about 290 MB of files and 1,423 entries in the MANIFEST. The workflow prints the size and the
-count after each push; read them in the run log. No single file may pass 90 MB, because GitHub refuses 100 MB.
-The build stops with a clear message if one does. The backup holds more than the Android build needs, on purpose:
-it also keeps the desktop and stub variants Google publishes, so any variant can be restored.
+First build, 9 Nov 2026: about 286 MB of files and 1,423 entries in the MANIFEST. No single file may pass 90 MB, because
+GitHub refuses 100 MB. The build stops with a clear message if one does. The backup holds more than the Android build needs,
+on purpose: it also keeps the desktop and stub variants Google publishes, so any variant can be restored.
 
 ## Who builds it
 
 Only GitHub CI. Nothing is downloaded or installed on the owner's Mac. The workflow is `.github/workflows/vendor-backup.yml`.
+It never writes this kit repo.
 
 1. It runs every Monday, by hand (`workflow_dispatch`), and when a pin changes on `dev`.
 2. Step 1, job `backup`: it fetches. npm checks each tarball against the lockfile integrity. Each Maven file is checked
    against the `.sha256` (or `.sha1`) that sits beside it. A file with no checksum is refused.
-   It writes `MANIFEST.json` and the licenses. It pushes to `backup/vendor`. If the branch is missing, it creates it.
-3. Step 2, job `restore`: it checks out `backup/vendor` only. It runs `scripts/restore_vendor.sh`.
+   It writes `MANIFEST.json` and the licenses. On `dev` only, it pushes to the backup repo.
+3. Step 2, job `restore`: it checks out the backup repo only. It runs `scripts/restore_vendor.sh`.
    That runs `npm ci --offline` and then a Gradle `--offline` resolve. If a file is missing, the job fails.
 
-Nobody pushes to `backup/vendor` by hand.
+Nobody pushes to the backup repo by hand.
 
 ## Who may write it
 
-Only a run on `dev` writes the branch. The push step has `if: github.ref == 'refs/heads/dev'`. A run on any other branch, or a
-manual run from another branch, builds and checks the backup, then stops before the push. The write token is set on the push
-step only. `tests/test_vendor_backup.py` reads the workflow and fails if this changes.
+Only a run on `dev` writes the backup. The push step has `if: github.ref == 'refs/heads/dev'`. A run on any other branch, or a
+manual run from another branch, builds and checks the backup, then stops before the push.
 
-The first backup (commit `0ff408a`) was written by the old trigger of the feature branch. After this PR merges, rebuild it
-from `dev`: run the workflow on `dev` once.
+The push uses the secret `VENDOR_BACKUP_TOKEN`: a fine-grained token with write access to the backup repo only.
+It is set on the push step and nowhere else. The clone, the fetch and the restore proof read the backup repo with no token,
+because it is public. If the owner makes it private, give the restore job a read token. `tests/test_vendor_backup.py` reads
+the workflow and fails if any of this changes, or if a step pushes to the kit repo.
 
-To-do for the owner (not done by an agent): add a GitHub ruleset on `refs/heads/backup/vendor` that blocks force-push and
-blocks delete. Nobody can then rewrite or remove the backup.
+## One-time setup (owner)
+
+1. Create the repo `satvik-jain-iitd/shipquick-vendor-backup`, public, with the build account as a collaborator.
+2. Create a fine-grained token with write access to that repo only. Add it to this repo as the secret `VENDOR_BACKUP_TOKEN`.
+3. Add a ruleset on the backup repo that blocks force-push and blocks delete on `main`. Nobody can then rewrite or remove the backup.
+4. After this PR is on `dev`, run the workflow on `dev` once. That builds the backup from `dev`.
+5. When the run is green, the old branch `backup/vendor` in this repo may be deleted. Only the owner decides when.
+
+Nothing in the kit reads or writes `backup/vendor` any more. Until step 4 is done, the workflow has never run against the new repo.
 
 ## How far the checks go
 
@@ -56,18 +74,12 @@ blocks delete. Nobody can then rewrite or remove the backup.
   runner. The files are stored with their own `sha256` in the MANIFEST, so any later change shows up.
 - The restore refuses a backup that holds a file the MANIFEST does not name, so an old version left behind cannot hide there.
 
-## How the size checks skip it
-
-The file-size check (500 KB) and pre-commit run on `dev` and on pull requests. `ci.yml` runs on pushes to `dev` and
-`main` only, so a push to `backup/vendor` never starts it. No pull request ever targets that branch.
-`scripts/check_local.sh sizes` skips itself when the branch is `backup/vendor`.
-
 ## How to restore
 
 Use a CI job. On the Mac the script refuses.
 
 ```bash
-git clone --branch backup/vendor --depth 1 <repo url> backup
+git clone --depth 1 https://github.com/satvik-jain-iitd/shipquick-vendor-backup.git backup
 bash scripts/restore_vendor.sh backup
 ```
 
@@ -79,7 +91,7 @@ repository is the `backup/maven` folder. To use the backup in your own build, po
 
 ## How it is used
 
-The normal path uses the live sources. The branch is only a backup. A child project never fetches it.
+The normal path uses the live sources. The backup is only a backup. A child project never fetches it.
 A child fetches the ShipQuick submodule commit and nothing else.
 
 ## Why SwiftUI is not in it
@@ -97,7 +109,7 @@ If Apple changes it, the Xcode and iOS version we build with is the pin. We keep
 
 ## If a source goes closed
 
-1. Do not panic. The last good copy is in `backup/vendor`.
+1. Do not panic. The last good copy is in the backup repo.
 2. Run the `restore` job, or `restore_vendor.sh` on CI, to prove it still works.
 3. Point the build at the backup folder. The files are the same, byte for byte (see `sha256` in the MANIFEST).
 4. Read the license file of the package. Most are MIT or Apache-2.0, so a fork is allowed.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Story #242: prove the vendor backup restores with no network (docs/VENDOR_BACKUP.md).
 # Usage: restore_vendor.sh <backup-dir> [work-dir]
-#   <backup-dir> is a checkout of the backup/vendor branch. Nothing else is read.
+#   <backup-dir> is a checkout of the backup repo (satvik-jain-iitd/shipquick-vendor-backup). Nothing else is read.
 # Installs ui/tool with `npm ci --offline` from the backup's npm cache, then resolves the pinned Compose
 # artifacts with Gradle --offline from the backup's local Maven folder. Runs on CI only (RESTORE_ALLOW_LOCAL=1 overrides).
 set -euo pipefail

@@ -171,18 +171,29 @@ def _steps(text):
     return ["      - " + s for s in text.split("\n      - ")[1:]]
 
 
-def test_s242_only_a_run_on_dev_writes_the_backup():
-    push = [s for s in _steps(WORKFLOW) if "git -c" in s and "push origin" in s]
-    assert len(push) == 1 and "if: github.ref == 'refs/heads/dev'" in push[0]
+def test_s242_the_backup_lives_in_one_separate_repo_named_in_one_place():
+    assert WORKFLOW.count("BACKUP_REPO: satvik-jain-iitd/shipquick-vendor-backup") == 1
+    assert WORKFLOW.count("BACKUP_REF: main") == 1
+    assert "github.repository" not in WORKFLOW and "backup/vendor" not in WORKFLOW
+    restore = [s for s in _steps(WORKFLOW) if "path: backup" in s and "ref:" in s]
+    assert len(restore) == 1 and "repository: ${{ env.BACKUP_REPO }}" in restore[0] and "ref: ${{ env.BACKUP_REF }}" in restore[0]
+
+
+def test_s242_only_a_run_on_dev_writes_and_only_to_the_backup_repo_with_its_own_token():
+    holders = [s for s in _steps(WORKFLOW) if "VENDOR_BACKUP_TOKEN" in s]
+    assert len(holders) == 1 and "if: github.ref == 'refs/heads/dev'" in holders[0]
+    assert "github.token" not in WORKFLOW
+    pushes = [l for l in WORKFLOW.splitlines() if "git " in l and " push " in l and not l.lstrip().startswith("#")]
+    assert len(pushes) == 1 and "BACKUP_REPO" in pushes[0]  # no step pushes to the kit repo
+    assert "contents: write" not in WORKFLOW  # the kit repo is never written
     trigger = WORKFLOW.split("push:")[1].split("permissions:")[0]
     assert "branches: [dev]" in trigger and "feat/" not in trigger
-
-
-def test_s242_the_write_token_is_set_on_the_push_step_only():
-    holders = [s for s in _steps(WORKFLOW) if "github.token" in s or "GH_TOKEN" in s]
-    assert len(holders) == 1 and "push origin" in holders[0]
     assert "git config --global http" not in WORKFLOW
-    assert WORKFLOW.count("github.token") == 1  # no job-level or workflow-level env
+
+
+def test_s242_the_size_check_has_no_special_case_for_the_old_branch():
+    assert "backup/vendor" not in (ROOT / "scripts/check_local.sh").read_text()
+    assert "backup/vendor" not in (ROOT / ".github/workflows/ci.yml").read_text()
 
 
 def test_s242_the_restore_script_passes_paths_as_argv_or_env_never_into_source_text():
