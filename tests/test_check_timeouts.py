@@ -55,3 +55,18 @@ def test_a_step_timeout_alone_does_not_count_for_the_job():
 
 def test_jobs_with_nothing_parsed_fails_instead_of_passing():
     assert ct.missing("jobs: {build: {runs-on: ubuntu-latest}}\n") == [ct.NO_JOBS]
+
+
+# Story #194: quoted keys and a space before the colon still count.
+def test_s194_a_quoted_runs_on_and_timeout_key_count():
+    assert ct.missing('jobs:\n  a:\n    "runs-on": ubuntu-latest\n') == ["a"]
+    assert ct.missing('jobs:\n  a:\n    "runs-on": ubuntu-latest\n    "timeout-minutes": 5\n') == []
+
+
+def test_s194_a_space_before_the_colon_still_counts():
+    assert ct.missing("jobs:\n  a :\n    runs-on : ubuntu-latest\n") == ["a"]
+    assert ct.missing("jobs:\n  a:\n    runs-on: x\n    timeout-minutes : 5\n") == []
+
+
+def test_s194_the_no_jobs_line_names_the_fix():
+    assert "block style" in ct.NO_JOBS

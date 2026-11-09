@@ -52,7 +52,7 @@ def test_s181_compose_multiplatform_appears_only_as_dropped():
 def test_s181_third_party_kit_ban_is_native_only():
     for path in ("CLAUDE.md", "docs/COMPONENT_LIBRARY.md"):
         for line in DOCS[path].splitlines():
-            if "third-party" in line:
+            if "third-party" in line.lower():
                 assert re.search(r"native|Android or iOS", line), f"{path}: ban must name native only: {line}"
 
 

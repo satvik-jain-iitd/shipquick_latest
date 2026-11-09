@@ -20,8 +20,11 @@ def check(pr_body: str, review_body: str) -> str | None:
     board = m.group(1).strip() if m else ""   # strip: a GitHub web-edited body ends lines with \r\n
     if not board or board.startswith("<"):
         return None
-    if any(b.strip().lower() == board.lower() for b in COMPARED.findall(review_body)):
+    named = [b.strip().strip("`").strip() for b in COMPARED.findall(review_body)]
+    if any(b.lower() == board.strip("`").lower() for b in named):
         return None
+    if named:
+        return f"match failed: the PR names board `{board}`, the approval says `{named[0]}`; write `Render: {board} -- matches`"
     return f"the approving review does not say the render was compared with the board: write `Render: {board} -- matches` in the approval body"
 
 

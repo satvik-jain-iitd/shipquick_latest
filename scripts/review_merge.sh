@@ -178,9 +178,10 @@ if [ -n "$bad_path" ]; then
     '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" | tr -d '\r')
   # a placeholder (<...>) or a few letters is not a second review; the yes is a real date, today or up to 14 days back
   grep -E '^Second review: ' <<<"$approval" | grep -vE '<[^>]*>' | grep -qE '^Second review: .{10,}' \
+    && grep -E '^Second review: ' <<<"$approval" | sed 's/^Second review: //' | grep -qE '[[:alnum:]]{2,}([^[:alnum:]]+[[:alnum:]]{2,}){2,}' \
     || refuse "protected path, owner merges ($bad_path) -- or the approving review records 'Second review: <who, findings>'"
   python3 -c 'import datetime as d, re, sys
-m = [re.fullmatch(r"Owner yes: (\d{4}-\d{2}-\d{2}) \"([^\"<>]{2,})\"\s*", l) for l in sys.stdin.read().splitlines()]
+m = [re.fullmatch(r"Owner yes: (\d{4}-\d{2}-\d{2}) \"(?=[^\"]*[^\W\d_])([^\"<>]{2,})\"\s*", l) for l in sys.stdin.read().splitlines()]
 m = next((x for x in m if x), None)
 try: age = (d.date.today() - d.date.fromisoformat(m[1])).days if m else -1
 except ValueError: age = -1

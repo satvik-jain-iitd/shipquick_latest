@@ -39,7 +39,7 @@ def missing(text: str) -> list[str]:
             i += 1
         for name, body in jobs:
             key_indent = min((indent(l) for l in body), default=0)
-            keys = {l.strip().split(":", 1)[0] for l in body if indent(l) == key_indent}
+            keys = {l.strip().split(":", 1)[0].strip().strip("\"'") for l in body if indent(l) == key_indent}
             if "runs-on" in keys and "timeout-minutes" not in keys:
                 out.append(name)
         if not jobs:
