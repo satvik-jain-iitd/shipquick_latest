@@ -2,32 +2,37 @@
 // It reads source text only; nothing is compiled or run from the app. Pinned: Konsist 0.17.3, JUnit 5.
 // Each test name is a rule name. CI reads the JUnit report and checks that the bad fixture fails each one by name.
 // The scope is set by -Dshipquick.ui.dir=<path from the repository root>. A child's default is app/src/main.
-// The files in a theme folder may name a colour. Konsist refuses an empty list, so the scope needs a composable, a class and an object.
+// The files in a theme folder may name a colour. Konsist refuses an empty list, so the scope needs a file, a class and an object.
 import com.lemonappdev.konsist.api.Konsist
-import com.lemonappdev.konsist.api.ext.list.withAnnotationNamed
 import com.lemonappdev.konsist.api.verify.assertFalse
 import org.junit.jupiter.api.Test
 
 class UiRulesKonsistTest {
     private val scope = Konsist.scopeFromDirectory(System.getProperty("shipquick.ui.dir") ?: "app/src/main")
-    private val composables = scope.functions().withAnnotationNamed("Composable")
 
     private fun inTheme(path: String) = "/theme/" in path || path.endsWith("/Theme.kt") || path.endsWith("/Color.kt")
-    private fun composableHas(rx: String) = composables.assertFalse { Regex(rx).containsMatchIn(it.text) }
+    // Every Kotlin file, not only composables: a Modifier extension or a top-level val can draw by hand too.
+    private fun filesHave(rx: String) = scope.files.assertFalse { Regex(rx).containsMatchIn(it.text) }
 
     @Test
-    fun no_canvas() = composableHas("""\bCanvas\s*\(""")
+    fun no_canvas() = filesHave("""\bCanvas\s*\(""")
 
     @Test
-    fun no_draw_modifiers() = composableHas("""\b(drawBehind|drawWithContent|drawWithCache)\b""")
+    fun no_draw_modifiers() = filesHave("""\b(drawBehind|drawWithContent|drawWithCache)\b""")
 
     @Test
-    fun no_raw_color() = composables.assertFalse {
-        !inTheme(it.containingFile.path) && Regex("""\bColor\s*\(|\.background\(\s*Color\.""").containsMatchIn(it.text)
+    fun no_raw_color() = scope.files.assertFalse {
+        !inTheme(it.path) && Regex("""\bColor\s*\(|\bColor\.[A-Z]""").containsMatchIn(it.text)
     }
 
     @Test
-    fun no_hand_made_shape() = composableHas("""\b(GenericShape|RoundedCornerShape)\b""")
+    fun no_gesture_input() = filesHave("""\b(pointerInput|detectTapGestures|detectDragGestures|draggable|transformable)\b""")
+
+    @Test
+    fun no_android_view() = filesHave("""\bAndroidView\b""")
+
+    @Test
+    fun no_hand_made_shape() = filesHave("""\b(GenericShape|RoundedCornerShape)\b""")
 
     @Test
     fun no_custom_shape_class() = scope.classes().assertFalse { it.hasParentWithName("Shape") }

@@ -17,7 +17,7 @@ superfluous_disable_command:
 custom_rules:
   no_raw_color:
     name: "No raw colour"
-    regex: '\b(?:UI|NS)?Color\s*\([^)]*\b(?:red|hue|white)\s*:'
+    regex: '\b(?:UI|NS)?Color(?:\.init)?\s*\([^)]*\b(?:red|hue|white)\s*:|\.init\(\s*(?:\.\w+\s*,\s*)?(?:red|hue|white)\s*:'
     message: "A raw colour. Use a colour from Tokens or a system colour."
     severity: warning
     excluded: '.*Tokens\.swift'
@@ -33,15 +33,16 @@ custom_rules:
     message: "Font.custom outside Tokens. Put the font in Tokens.swift."
     severity: warning
     excluded: '.*Tokens\.swift'
-  no_uikit_or_ui_kit_import:
-    name: "No UIKit and no third-party UI kit"
-    regex: '^\s*(?:@\w+\s+)?import\s+(?:UIKit|SnapKit|Texture|AsyncDisplayKit|MaterialComponents|SwiftUIX|SwiftUIIntrospect|Introspect|PopupView)\b'
-    message: "A UIKit or third-party UI kit import. Use SwiftUI only. A child adds its own kit names to this list."
+  no_import_outside_allowlist:
+    name: "No import outside the allow-list"
+    # The allow-list is the group after (?!. It holds SwiftUI, Foundation and the kit's module. A child adds the names of its own modules.
+    regex: '^\s*(?:@\w+\s+)?import\s+(?!(?:SwiftUI|Foundation|ShipQuickUI)\b)\w'
+    message: "An import outside the allow-list (SwiftUI, Foundation, ShipQuickUI). UIKit and third-party UI kits are refused. A child adds its own modules to the list."
     severity: warning
   no_custom_shape_or_style:
     name: "No custom Shape or ButtonStyle"
-    regex: '\b(?:struct|class|extension)\s+[\w.]+\s*:\s*(?:[\w.]+\s*,\s*)*(?:Shape|InsettableShape|ButtonStyle|PrimitiveButtonStyle)\b'
-    message: "A custom Shape or ButtonStyle. Use a standard shape and .buttonStyle(.bordered) or .borderedProminent."
+    regex: '\b(?:struct|class|enum|extension)\s+[\w.]+(?:<[^>{]*>)?\s*:\s*(?:[\w.]+(?:<[^>{]*>)?\s*[,&]\s*)*(?:Shape|InsettableShape|ButtonStyle|PrimitiveButtonStyle|ToggleStyle|LabelStyle)\b'
+    message: "A custom Shape or style (ButtonStyle, ToggleStyle, LabelStyle). Use a standard shape and a built-in style such as .buttonStyle(.bordered)."
     severity: warning
   no_path:
     name: "No hand-drawn Path"
@@ -50,8 +51,13 @@ custom_rules:
     severity: warning
   no_canvas:
     name: "No Canvas"
-    regex: '\bCanvas\s*\{'
+    regex: '\bCanvas\s*[({]'
     message: "A Canvas draws pixels by hand. Use a standard SwiftUI view."
+    severity: warning
+  no_gesture:
+    name: "No raw gesture"
+    regex: '\.(?:gesture|simultaneousGesture|highPriorityGesture|onTapGesture|onLongPressGesture)\s*[({]|\b(?:DragGesture|TapGesture|LongPressGesture|MagnificationGesture|RotationGesture|SpatialTapGesture)\b'
+    message: "A gesture-built control. Use Button, Toggle or another standard control."
     severity: warning
   no_uikit_view:
     name: "No UIKit view"

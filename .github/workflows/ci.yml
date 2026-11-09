@@ -336,6 +336,13 @@ jobs:
           unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/gradle-$ver/bin" >> "$GITHUB_PATH"
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+      - name: TEMPORARY write the dependency checksums
+        run: gradle --no-daemon -p "$FIX" --write-verification-metadata sha256 detekt test -Ptier=ci -PuiDir=src/good
+      - name: TEMPORARY upload the checksums
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-metadata
+          path: tests/fixtures/android/gradle/verification-metadata.xml
       - name: The good screen passes detekt and Konsist (CI tier)
         run: gradle --no-daemon --stacktrace -p "$FIX" detekt test -Ptier=ci -PuiDir=src/good
       - name: The bad screen fails detekt, and the report names every forbidden import
@@ -346,7 +353,7 @@ jobs:
           cat "$RUNNER_TEMP/detekt-bad.txt"
           missing=0
           grep -q ForbiddenImport "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::rule ForbiddenImport is not named"; missing=1; }
-          for imp in $(sed -nE "s/^      - '(.*)'$/\1/p" ui/android/lint/detekt.yml) androidx.compose.material.Button com.google.android.material.button.MaterialButton android.widget.Button com.example.fancyui.FancyChip; do
+          for imp in $(sed -nE "s/^      - '(.*)'$/\1/p" ui/android/lint/detekt.yml) androidx.compose.material.Button com.google.android.material.button.MaterialButton android.widget.Button com.example.fancyui.FancyChip 'androidx.compose.ui.draw.*'; do
             grep -qF "$imp" "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::import not reported: $imp"; missing=1; }
           done
           exit $missing
