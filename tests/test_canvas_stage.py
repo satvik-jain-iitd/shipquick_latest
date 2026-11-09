@@ -231,10 +231,72 @@ class Columns(unittest.TestCase):
         _, _, problems = cs.layout(self.c, self.m)
         self.assertTrue(any("vibes" in p for p in problems), problems)
 
+    def test_S33_layout_twice_on_one_manifest_object_leaves_the_manifest_as_it_was(self):
+        before = json.dumps(self.m, sort_keys=True)
+        cs.layout(self.c, self.m); new, _, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+        self.assertEqual(json.dumps(self.m, sort_keys=True), before)   # the learnings row goes into a copy, never the manifest's own rows
+        self.assertEqual(self.m["sections"][3]["rows"], [])
+
     def test_S26_columns_mode_gives_the_same_layout_twice(self):
         a, _, _ = cs.layout(self.c, self.m); b, _, problems = cs.layout(a, self.m)
         self.assertEqual(problems, [])
         self.assertEqual({k: (v["x"], v["y"]) for k, v in a["boards"].items()}, {k: (v["x"], v["y"]) for k, v in b["boards"].items()})
+
+
+class Options(unittest.TestCase):
+    """Story #148: options put to the owner differ in their words; a rejected board carries the owner's reason."""
+
+    def setUp(self):
+        self.c = canvas(["A.dc.html", "B.dc.html", "C.dc.html"])
+        self.m = manifest([[{"id": "1a", "title": "1a", "boards": ["C.dc.html"], "notes": []}],
+                           [{"id": "2a", "title": "2a", "options": True, "boards": [{"board": "A.dc.html", "copy": "Your street, your cook"},
+                                                                                     {"board": "B.dc.html", "copy": "Hot food from next door"}], "notes": []}],
+                           [{"id": "3a", "title": "3a", "boards": [], "notes": []}]])
+
+    def test_S27_an_options_row_whose_boards_name_different_copy_passes(self):
+        self.assertEqual(cs.layout(self.c, self.m)[2], [])
+
+    def test_S28_an_option_board_with_no_copy_line_is_a_problem(self):
+        self.m["sections"][1]["rows"][0]["boards"][1] = "B.dc.html"
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("B.dc.html" in p and "copy" in p for p in problems), problems)
+
+    def test_S29_two_options_with_the_same_copy_are_a_problem(self):
+        self.m["sections"][1]["rows"][0]["boards"][1]["copy"] = " your street, your cook "
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("same copy" in p for p in problems), problems)
+
+    def test_S30_a_rejected_board_with_no_reason_is_a_problem_and_with_one_passes(self):
+        self.m["sections"][2]["rows"][0].update({"prefix": "REJECTED", "boards": ["C.dc.html"]})
+        self.m["sections"][0]["rows"][0]["boards"] = []
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("C.dc.html" in p and "reason" in p for p in problems), problems)
+        self.m["sections"][2]["rows"][0]["boards"] = [{"board": "C.dc.html", "reason": "Looked like every other app"}]
+        self.assertEqual(cs.layout(self.c, self.m)[2], [])
+
+    def reject_two(self):
+        self.m["sections"][2]["rows"][0].update({"prefix": "REJECTED", "boards": ["C.dc.html", "B.dc.html"]})
+        self.m["sections"][0]["rows"][0]["boards"] = []
+        self.m["sections"][1]["rows"][0].update({"options": False, "boards": ["A.dc.html"]})
+
+    def test_S31_an_old_rejected_board_on_the_baseline_passes_a_new_one_still_stops(self):
+        self.reject_two(); self.m["rejected_baseline"] = ["C.dc.html"]
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertFalse(any("C.dc.html" in p for p in problems), problems)
+        self.assertTrue(any("B.dc.html" in p and "reason" in p for p in problems), problems)
+
+    def test_S32_write_rejected_baseline_fills_the_list_once_then_apply_passes_and_warns(self):
+        import io, contextlib
+        self.reject_two()
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "project").mkdir(); (Path(d) / "project" / "canvas.json").write_text(json.dumps(self.c)); mp = Path(d) / "m.json"; mp.write_text(json.dumps(self.m))
+            self.assertEqual(cs.main(["--manifest", str(mp), "--canvas", d, "--write-rejected-baseline"]), 0)
+            self.assertEqual(json.loads(mp.read_text())["rejected_baseline"], ["B.dc.html", "C.dc.html"])
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out): code = cs.main(["--manifest", str(mp), "--canvas", d, "--apply"])
+            self.assertEqual(code, 0, out.getvalue())
+            self.assertIn("WARN B.dc.html", out.getvalue())
 
 
 class Publish(unittest.TestCase):
