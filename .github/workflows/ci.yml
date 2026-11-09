@@ -337,7 +337,7 @@ jobs:
           echo "$RUNNER_TEMP/gradle-$ver/bin" >> "$GITHUB_PATH"
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
       - name: The good screen passes detekt and Konsist (CI tier)
-        run: gradle --no-daemon --stacktrace -p "$FIX" detekt test -Ptier=ci -PuiDir=src/good
+        run: gradle --no-daemon --stacktrace -p "$FIX" detekt test -Ptier=ci -PuiDir=src/bad
       - name: The bad screen fails detekt, and the report names every forbidden import
         run: |
           if gradle --no-daemon -p "$FIX" detekt -Ptier=ci -PuiDir=src/bad > "$RUNNER_TEMP/detekt-bad.txt" 2>&1; then
@@ -385,7 +385,7 @@ jobs:
           unzip -q "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/swiftlint"
           echo "$RUNNER_TEMP/swiftlint" >> "$GITHUB_PATH"
       - name: The good screen passes in strict mode (CI tier)
-        run: swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Good
+        run: swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad
       - name: The bad screen fails in strict mode, and the report names every rule
         run: |
           if swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad > "$RUNNER_TEMP/bad.txt" 2>&1; then
