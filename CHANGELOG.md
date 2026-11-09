@@ -12,6 +12,25 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-09
+Tag `v0.9.0`, "library first, and children can pin today's gates". Notes: `docs/RELEASE_NOTES_v0.9.0.md`.
+
+### Added
+- Rule 38, "Library first": `docs/COMPONENT_LIBRARY.md`, ADR-012, `docs/templates/component-request.md` (#181, PRs #193, #195, #200).
+- Protected PRs need a second review and an owner yes line (#180, PR #196).
+- The UI spec layer: `ui/schema/`, `ui/components/`, `scripts/check_ui_docs.py` (#182, PR #198).
+- The `ui` lookup CLI: Astryx CLI pinned in `ui/tool/`, `scripts/ui.sh`, `scripts/ui_topics.py` (#183, PR #202).
+- Android library: the 30 M3 components, docs and contracts in `ui/components/`, topics in `ui/integration/docs/`, 5 templates in `ui/android/` (#134, PRs #210, #212-#214).
+- iOS library: the counted SwiftUI list, iOS-only docs in `ui/components/`, 5 templates and `Package.swift` in `ui/ios/` (#135, PRs #209, #211).
+- Coverage gate `scripts/check_ui_coverage.py` (#216, PR #226).
+- Platform-matched topics with a cross-platform leak check (#228, PRs #229, #230).
+- API lists generated from M3 1.4.0 and Apple's SwiftUI data, with zero exclusions (#231, PR #233).
+- `kit_branch` for rule-24 children, with kit-branch protection checks (#225, PR #227).
+- Screen-render gate (#146, PR #152), story actor line (#155), CI timeouts (#154), session checker (#139), qa-loop (#162), canvas columns and publish list (#163, #165), step-flow rule (#164), options differ in copy (#148), review names board (#153).
+
+### Fixed
+- Parser hardening (#194, PR #197). Children list parse (#156, PR #166).
+
 ## [0.8.0] - 2026-11-05
 Tag `v0.8.0` (cd.yml tag-check greps for this exact text, so keep it), "the kit enforces itself" (epic #130's first stories, plus the feedback inbox and environments work that led into it). Notes: `docs/RELEASE_NOTES_v0.8.0.md`.
 
