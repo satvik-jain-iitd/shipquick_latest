@@ -338,3 +338,17 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   the classic PUT, so existing protection and its other checks stay.
 - Decision: about 40 lines added to `scripts/kit_branch.py` (stdlib), reusing its `gh api` protection read. No package added.
 - Confidence that nothing fits better: 0.8 (the job is two GitHub API calls; any tool would still need our gate name).
+
+## 9 Nov 2026, story #217: prove every contract prop compiles against Compose Material 3 and SwiftUI
+- Need: generate a compile-only proof that every UI component contract prop exists in Jetpack Compose Material 3 and SwiftUI, checked in CI.
+- Run: `scout.py --need "generate a compile-only proof that every UI component contract prop exists in Jetpack Compose Material 3 and SwiftUI, checked in CI"`: no repos found.
+  `scout.py --need "compose api compatibility check"`: no repos found.
+  `gh search repos "compose material3 api check"`: none. `gh search repos "swiftui api compile test"`: none.
+  `gh search repos "topic:binary-compatibility kotlin"`: JetBrains/kotlin and unrelated apps, not a fit.
+- Read: no repo fits, so no README fits the job. The tools that do exist (Kotlin's binary-compatibility-validator, metalava)
+  check that a library keeps its own API; they do not check that our docs name a real API.
+- Borrowed: the compiler itself is the checker. Gradle, the Android Gradle Plugin, Kotlin and Xcode are the vendors' own tools
+  (owner yes on #217, 9 Nov 2026), pinned exactly and run on GitHub CI only.
+- Decision: build from scratch, about 300 lines of stdlib Python (`scripts/ui_proof.py`) that writes the two proof files.
+  No package added to the repo.
+- Confidence that nothing fits better: 0.8 (the contracts are our own format; any tool would still need this glue).

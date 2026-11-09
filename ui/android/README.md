@@ -26,7 +26,10 @@ The full list of 30 parts, counted from Google's page, is `docs/research/android
 4. Colours and type come from `MaterialTheme`. Your theme fills it from `design/tokens.json`.
 
 The templates name the spacing tokens in a comment (16dp is `spacing.md`, 24dp is `spacing.lg`).
-They are not compiled yet. A Gradle build comes with stories S6 and S7, when the owner installs the tools.
+CI compiles them (story #217, job `ui-android-compile`, only when `ui/**` changes). The build files here pin
+Gradle 8.14.3, AGP 8.13.2, Kotlin 2.2.21 and Compose BOM 2025.10.00 (material3 1.4.0). It compiles `templates/`
+and `proof/ApiProof.kt`, which `scripts/ui_proof.py` writes from the contracts: it calls every component with every
+prop its contract names. CI compiles only; it runs nothing. Nothing is built on the owner's Mac.
 Using this folder as a Gradle build with `includeBuild("knowledge/shipquick_latest/ui/android")` is story S9.
 
 ## What is checked now

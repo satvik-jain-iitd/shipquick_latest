@@ -20,8 +20,8 @@ def copy_components(tmp_path):
 
 
 def function(text, name):
-    """The body of `fun Proof<name>()` or `struct Proof<name>` in a proof file."""
-    m = re.search(rf"(?:fun|struct) Proof{name}\b.*?\n}}\n", text, re.S)
+    """`fun Proof<name>()` or `struct Proof<name>` in a proof file, with its annotations."""
+    m = re.search(rf"(?:^@.*\n)*(?:fun|struct) Proof{name}\b.*?\n}}\n", text, re.S | re.M)
     assert m, f"no proof for {name}"
     return m.group(0)
 

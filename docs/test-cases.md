@@ -869,3 +869,22 @@ Scenario: every API row and framework topic is covered, and the gate is strict e
   And under --strict-api each gap prints once, as a FAIL line
 ```
 Tests: `tests/test_ui_coverage.py` (s231). Local: `bash scripts/check_local.sh ui-coverage`.
+
+## Story #217: UI compile proof
+```gherkin
+Scenario: every template and every contract prop compiles against the real libraries
+  Given the contracts in ui/components
+  When scripts/ui_proof.py runs
+  Then ui/android/proof/ApiProof.kt calls each component with every platforms.android prop by name
+  And ui/ios/proof/ApiProof.swift does the same for platforms.ios
+  And a component whose doc names a platform API but has no spec fails the script by name
+  And --check fails when a contract changed and the proofs were not written again
+  When a PR changes ui/**
+  Then CI job ui-android-compile compiles the templates and ApiProof.kt with Gradle (Compose BOM 2025.10.00, material3 1.4.0)
+  And CI job ui-ios-compile compiles the templates and ApiProof.swift with xcodebuild for generic iOS (Xcode 16.4)
+  And an invented prop in one contract fails each job
+  When a PR does not change ui/**
+  Then both jobs are skipped and the gate still passes
+```
+Tests: `tests/test_ui_proof.py` (s217). CI jobs: `ui-android-compile`, `ui-ios-compile`. Local: `bash scripts/check_local.sh ui-proof`.
+CI compiles the Kotlin and Swift only. Nothing is run.
