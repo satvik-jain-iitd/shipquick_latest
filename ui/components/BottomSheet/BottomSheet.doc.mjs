@@ -154,10 +154,6 @@ export default {
       "family": "BottomSheet",
       "variants": [
         {
-          "name": "BottomSheetScaffold",
-          "note": "A screen layout with a standard bottom sheet that stays on screen beside the content, partly or fully open. Use it when the sheet is part of the screen, like a map with a list."
-        },
-        {
           "name": "BottomSheetDefaults.DragHandle",
           "note": "The default handle at the top of a sheet. The user drags it to move the sheet."
         }
@@ -190,14 +186,6 @@ export default {
         {
           "name": "ModalBottomSheetProperties",
           "use": "Window settings for ModalBottomSheet: shouldDismissOnBackPress, shouldDismissOnClickOutside and securePolicy."
-        },
-        {
-          "name": "BottomSheetScaffoldState",
-          "use": "Holds the sheet state and the snackbar host state of a BottomSheetScaffold."
-        },
-        {
-          "name": "rememberBottomSheetScaffoldState",
-          "use": "Creates and keeps a BottomSheetScaffoldState across recompositions."
         }
       ]
     }

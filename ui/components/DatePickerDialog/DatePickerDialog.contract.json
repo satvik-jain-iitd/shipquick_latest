@@ -1,0 +1,33 @@
+{
+  "name": "DatePickerDialog",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "onDismissRequest": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "confirmButton": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "dismissButton": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}
