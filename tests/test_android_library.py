@@ -54,3 +54,8 @@ def android_props(name):
 def test_s134_the_navigation_bar_documents_its_items():
     # NavigationBarItem(selected, onClick, icon, label): Google's navigation-bar page and the M3 reference.
     assert {"content", "selected", "onClick", "icon", "label"} <= android_props("NavigationBar")
+
+
+def test_s134_the_slider_documents_its_value_range():
+    # Slider(value, onValueChange, enabled, valueRange = 0f..1f, steps): steps splits valueRange, so both are needed.
+    assert {"value", "onValueChange", "valueRange", "steps"} <= android_props("Slider")
