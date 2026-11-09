@@ -41,6 +41,7 @@ configurations {
     attributes {
       attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_API))
       attribute(Attribute.of('org.jetbrains.kotlin.platform.type', String), 'jvm')  // Google publishes its Android variants as platform type jvm
+      attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment, TargetJvmEnvironment.ANDROID))  // so the AARs, not the desktop stubs
     }
   }
 }
@@ -53,6 +54,7 @@ tasks.register('resolveVendor') {
   doLast {
     def files = configurations.vendorCompile.incoming.files.files
     files.each { println "resolved \${it.name}" }
+    if (!files.any { it.name.endsWith('.aar') }) throw new GradleException("no .aar resolved: the Compose Android libraries are not restorable")
     if (files.size() < 5) throw new GradleException("only \${files.size()} files resolved from the backup")
   }
 }
