@@ -68,7 +68,7 @@ fun ProofCarousel() {
 
 @Composable
 fun ProofCheckbox() {
-    Checkbox(checked = true, onCheckedChange = {}, enabled = true, inventedProp = true)
+    Checkbox(checked = true, onCheckedChange = {}, enabled = true)
 }
 
 @Composable

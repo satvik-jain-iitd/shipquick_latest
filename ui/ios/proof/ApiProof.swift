@@ -193,7 +193,7 @@ struct ProofShareLink: View {
 struct ProofSlider: View {
     var body: some View {
         VStack {
-        Slider(value: .constant(0.5), in: 0...1, step: 1.0, onEditingChanged: { _ in }, inventedProp: true)
+        Slider(value: .constant(0.5), in: 0...1, step: 1.0, onEditingChanged: { _ in })
         }
     }
 }

@@ -70,12 +70,6 @@
           "args": []
         },
         "optional": true
-      },
-      "inventedProp": {
-        "type": {
-          "kind": "boolean"
-        },
-        "optional": true
       }
     }
   },
