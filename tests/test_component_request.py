@@ -1,66 +1,110 @@
-"""Story #186: scripts/check_component_request.py. A custom component needs a component-approved label and an
-`Owner yes:` comment, both by a reviewer account. The issue reads are injected, so no network."""
+"""Story #186: scripts/check_component_request.py. A custom component needs its request issue to carry, live:
+the label `component-approved` (last label event by a reviewer, label still on the issue), and a reviewer comment
+`Owner yes: <YYYY-MM-DD> "<3+ words>"` dated at most 14 days ago and never edited. Reviewers come from roles.py;
+the repo from `gh repo view`. Issue reads are injected: no network."""
+import datetime
 import json
+import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import check_component_request as c  # noqa: E402
 
-REV = {"satvik-jain-iitd"}
-YES = 'Owner yes: 10 Nov 2026 "haan, bana do"'
-
-
-def issue(label_by="satvik-jain-iitd", comment_by="satvik-jain-iitd", comment=YES, label="component-approved"):
-    events = [{"event": "labeled", "label": {"name": label}, "actor": {"login": label_by}}] if label_by else []
-    comments = [{"user": {"login": comment_by}, "body": comment}] if comment_by else []
-    return lambda n: {"events": events, "comments": comments}
-
-
+TODAY = datetime.date(2026, 11, 10)
+YES = 'Owner yes: 2026-11-10 "haan, bana do ab"'
+REV = {"alice"}
 ROW = {"name": "Stepper", "platform": "android", "base": "Slider", "request": 12, "twin": 13}
 
 
+def issue(labeled_by="alice", label_live=True, comment_by="alice", comment=YES, edited=False, unlabel=False):
+    events = []
+    if labeled_by is not None:
+        events.append({"event": "labeled", "label": {"name": "component-approved"}, "actor": {"login": labeled_by}})
+    if unlabel:
+        events.append({"event": "unlabeled", "label": {"name": "component-approved"}, "actor": {"login": "alice"}})
+    labels = [{"name": "component-approved"}] if label_live else []
+    comments = []
+    if comment_by is not None:
+        created = "2026-11-10T09:00:00Z"
+        updated = "2026-11-10T10:00:00Z" if edited else created
+        comments.append({"user": {"login": comment_by}, "body": comment, "created_at": created, "updated_at": updated})
+    data = {"labels": labels, "events": events, "comments": comments}
+    return lambda n: data
+
+
 def test_s1_a_custom_row_with_no_approval_fails():
-    why = c.check_row(ROW, issue(label_by=None, comment_by=None), REV)
+    why = c.check_row(ROW, issue(labeled_by=None, label_live=False, comment_by=None), REV, TODAY)
     assert why and "component-approved" in why and "12" in why
 
 
-def test_s2_label_and_owner_yes_comment_by_a_reviewer_pass():
-    assert c.check_row(ROW, issue(), REV) is None
+def test_s2_label_and_owner_yes_by_a_reviewer_pass():
+    assert c.check_row(ROW, issue(), REV, TODAY) is None
 
 
 def test_label_only_fails_and_names_the_missing_comment():
-    why = c.check_row(ROW, issue(comment_by=None), REV)
+    why = c.check_row(ROW, issue(comment_by=None), REV, TODAY)
     assert why and "Owner yes" in why
 
 
 def test_comment_only_fails_and_names_the_missing_label():
-    why = c.check_row(ROW, issue(label_by=None), REV)
+    why = c.check_row(ROW, issue(labeled_by=None, label_live=False), REV, TODAY)
     assert why and "label" in why
 
 
 def test_a_label_added_by_the_coder_does_not_count():
-    why = c.check_row(ROW, issue(label_by="klickbae8yt-star"), REV)
-    assert why and "label" in why
+    assert c.check_row(ROW, issue(labeled_by="coder"), REV, TODAY)
 
 
 def test_an_owner_yes_comment_by_the_coder_does_not_count():
-    why = c.check_row(ROW, issue(comment_by="klickbae8yt-star"), REV)
-    assert why and "Owner yes" in why
+    assert c.check_row(ROW, issue(comment_by="coder"), REV, TODAY)
 
 
-def test_a_comment_that_is_not_the_exact_shape_does_not_count():
-    assert c.check_row(ROW, issue(comment="Owner yes"), REV)
-    assert c.check_row(ROW, issue(comment="looks good, Owner yes: 10 Nov 2026 \"x\""), REV)
+def test_a_label_removed_after_approval_does_not_count():
+    why = c.check_row(ROW, issue(label_live=False, unlabel=True), REV, TODAY)
+    assert why and "label" in why
 
 
-def test_a_different_label_does_not_count():
-    assert c.check_row(ROW, issue(label="component-request"), REV)
+def test_a_label_still_live_but_last_event_unlabeled_does_not_count():
+    assert c.check_row(ROW, issue(label_live=True, unlabel=True), REV, TODAY)
+
+
+@pytest.mark.parametrize("body", [
+    "Owner yes",
+    'Owner yes: 10 Nov 2026 "haan bana do ab"',
+    'Owner yes: 2026-11-10 "two words"',
+    'Owner yes: 2026-11-10 "haan, bana do" and more text',
+    'looks good. Owner yes: 2026-11-10 "haan bana do ab"',
+    'Owner yes: 2026-13-45 "haan bana do ab"',
+])
+def test_a_comment_outside_the_exact_shape_does_not_count(body):
+    assert c.check_row(ROW, issue(comment=body), REV, TODAY)
+
+
+def test_a_yes_older_than_14_days_does_not_count_and_14_days_does():
+    old = "2026-10-26"   # 15 days before TODAY
+    assert c.check_row(ROW, issue(comment=f'Owner yes: {old} "haan bana do ab"'), REV, TODAY)
+    edge = "2026-10-27"  # 14 days
+    assert c.check_row(ROW, issue(comment=f'Owner yes: {edge} "haan bana do ab"'), REV, TODAY) is None
+
+
+def test_an_edited_yes_comment_does_not_count():
+    assert c.check_row(ROW, issue(edited=True), REV, TODAY)
+
+
+def test_null_users_and_actors_fail_cleanly_and_do_not_raise():
+    fetch = lambda n: {"labels": [{"name": "component-approved"}],
+                       "events": [{"event": "labeled", "label": {"name": "component-approved"}, "actor": None}],
+                       "comments": [{"user": None, "body": YES, "created_at": "x", "updated_at": "x"}]}
+    why = c.check_row(ROW, fetch, REV, TODAY)
+    assert why and "label" in why and "Owner yes" in why
 
 
 def test_a_row_with_no_request_issue_fails():
-    why = c.check_row({"name": "X", "platform": "ios", "base": "Y"}, issue(), REV)
+    why = c.check_row({"name": "X", "platform": "ios", "base": "Y"}, issue(), REV, TODAY)
     assert why and "request" in why
 
 
@@ -73,17 +117,35 @@ def test_parity_is_empty_when_every_component_has_a_twin():
     assert c.parity([ROW, {**ROW, "platform": "ios"}]) == {}
 
 
-def test_main_exits_1_on_a_missing_approval_and_0_on_an_empty_registry(tmp_path):
+def test_run_exits_0_for_an_empty_registry_and_1_for_an_unapproved_row(tmp_path):
     reg = tmp_path / "r.json"
     reg.write_text(json.dumps({"components": []}))
-    assert c.run(reg, REV, issue()) == 0
+    assert c.run(reg, REV, issue(), TODAY) == 0
     reg.write_text(json.dumps({"components": [ROW]}))
-    assert c.run(reg, REV, issue(label_by=None, comment_by=None)) == 1
-    assert c.run(reg, REV, issue()) == 0
+    assert c.run(reg, REV, issue(labeled_by=None, label_live=False, comment_by=None), TODAY) == 1
+    assert c.run(reg, REV, issue(), TODAY) == 0
 
 
-def test_main_with_no_registry_file_passes_since_a_child_may_have_no_custom_components(tmp_path):
-    assert c.run(tmp_path / "none.json", REV, issue()) == 0
+def test_no_registry_file_passes_since_a_child_may_have_no_custom_components(tmp_path):
+    assert c.run(tmp_path / "none.json", REV, issue(), TODAY) == 0
+
+
+def test_reviewers_come_from_the_roles_file_not_from_a_name_in_the_script(tmp_path):
+    roles = tmp_path / "roles.yml"
+    roles.write_text("coder:\n  - bob\nreviewer:\n  - alice\nowner: alice\n", encoding="utf-8")
+    assert c.reviewers_from(roles) == {"alice"}
+
+
+def test_repo_comes_from_gh_repo_view():
+    def runner(cmd, **kw):
+        assert cmd[:3] == ["gh", "repo", "view"]
+        return subprocess.CompletedProcess(cmd, 0, stdout="someone/child\n", stderr="")
+    assert c.repo_name(runner) == "someone/child"
+
+
+def test_the_script_names_no_account_and_no_repo():
+    src = (ROOT / "scripts" / "check_component_request.py").read_text(encoding="utf-8")
+    assert "satvik-jain-iitd" not in src and "shipquick_latest" not in src
 
 
 def test_the_kit_registry_is_valid_json_with_a_components_list():
@@ -91,6 +153,9 @@ def test_the_kit_registry_is_valid_json_with_a_components_list():
     assert isinstance(data["components"], list)
 
 
-def test_the_gate_is_wired_into_ci_and_the_docs_name_it():
-    assert "check_component_request.py" in (ROOT / ".github/workflows/ci.yml").read_text()
-    assert "check_component_request.py" in (ROOT / "docs/COMPONENT_LIBRARY.md").read_text()
+def test_the_gate_is_wired_into_both_ci_files_and_the_docs_name_it():
+    for f in [".github/workflows/ci.yml", ".github/workflows/checks.yml"]:
+        assert "check_component_request.py" in (ROOT / f).read_text(encoding="utf-8"), f
+    assert "ui-registry" in (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    assert "component-registry" in (ROOT / ".github/workflows/checks.yml").read_text(encoding="utf-8")
+    assert "check_component_request.py" in (ROOT / "docs/COMPONENT_LIBRARY.md").read_text(encoding="utf-8")
