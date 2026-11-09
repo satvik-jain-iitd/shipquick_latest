@@ -144,3 +144,22 @@ When a Production board and the live app disagree, the question is never "which 
 ## 11. Feedback becomes a rule the same day (29 Oct 2026)
 
 - Every generic design feedback from the owner (anything that would apply to another project) is written into this page the same day, with its date, by the session that received it, and into that session's own instruction file. Project-specific feedback goes to the project's docs. Nothing stays only in chat.
+
+## 12. Step-by-step flows: the main action is last, in the same place on every step (9 Nov 2026, story #164)
+
+A flow of two or more steps (onboarding, sign-up, checkout steps) is read as one thing, not as separate screens. A person taps "next, next, next" with one thumb. The main action must never move.
+The rule is the same on web, Android and iOS. Each platform's own words are in brackets.
+
+1. The main action is one full-width button, anchored to the bottom of the content area. It sits above the safe area (iOS home indicator, Android gesture bar, a web page's bottom edge). The last element ends 24 px above that edge plus the safe area.
+2. With two actions, the main one (filled) is LAST, at the very bottom. The other one (outline or text) sits above it. So the main button is in the same place on every step, whether a step has one button or two.
+3. The hero visual of a step (an icon, an image, an illustration) is centred on one line shared by every step of the flow. Measure the centre on the visual's own shape (its circle), not its box, since boxes carry uneven padding.
+4. On a step with typing, the button rides on top of the keyboard (iOS keyboard layout guide, Android `imePadding`, the web `visualViewport` or `interactive-widget=resizes-content`). It never hides under the keyboard and never jumps to the top.
+5. The steps fill the space. A big empty area under a button that sits high is a bug, not air.
+
+Exceptions:
+- A danger or cancel pair (delete, sign out) keeps its own pattern: the danger action is never the easy default.
+- A long list or a form that scrolls keeps a sticky bottom bar with the same button; the rule still holds.
+- One dialog alone, or a wide desktop layout, is not a step flow.
+
+How it is checked: the reviewer looks at the steps side by side, not one screen at a time. Measure the main button's top edge and the hero's centre on every step. They match within 2 px, or the flow goes back.
+Why: the bottom of a phone is where the thumb rests (Steven Hoober, 2013, observed one-thumb use). Apple and Google's own guides put main actions within easy reach.
