@@ -15,6 +15,9 @@ API lists (story #231): docs/research/android-m3-api.md and ios-swiftui-api.md, 
 A component, variant or modifier row is covered by a doc whose `platforms` names it, or that lists it under
 `platformApi.<platform>.variants`; a supporting row by `platformApi.<platform>.supporting`. Gaps print as GAP lines,
 one per family, and fail only with --strict-api (off in CI until the family docs land).
+On Android a component row counts only for a doc of its own family (its main row's family or platformApi family), and
+a doc whose platforms.android is a component row of the API list is not an extra (PR #255 review 2). Each slot names
+rows of its own kind only.
 usage: check_ui_coverage.py [--require-web] [--strict-api]
 """
 import argparse
@@ -84,12 +87,19 @@ def api_gaps(a, docs, api, status, errs):
                         errs.append(f"api {platform} {doc}: platformApi.{platform}.{slot} item {item!r} must be an object")
                         continue
                     claims.setdefault((slot, item["name"]), []).append((doc, item.get("status") or "-"))
-        names = {r[1].strip("`") for r in rows}
-        families = {r[1].strip("`") for r in rows if r[2] == "family"}
+        # PR #255 review 2: each slot names rows of its own kind only, so a supporting entry cannot name a variant row.
+        of_kind = {"variants": {r[1].strip("`") for r in rows if r[2] not in ("supporting", "family")},
+                   "supporting": {r[1].strip("`") for r in rows if r[2] == "supporting"},
+                   "family": {r[1].strip("`") for r in rows if r[2] == "family"}}
+        word = {"variants": "variant", "supporting": "supporting", "family": "family"}
         for (slot, n), who in sorted(claims.items()):
-            if slot in ("variants", "supporting") and n not in names or slot == "family" and n not in families:
+            if slot in of_kind and n not in of_kind[slot]:
                 errs.append(f"api {platform}: {', '.join(d for d, _ in who)} names {n} under platformApi.{platform}.{slot}, "
-                            f"but the {platform} API list has no such {'family ' if slot == 'family' else ''}row")
+                            f"but the {platform} API list has no such {word[slot]} row")
+        # Android (PR #255 review 2): a component row is covered only by a doc of its own family, through its main API
+        # or its variants. A doc's families are the family of the row its platforms name points to, and its platformApi family.
+        fam_of = {f"{r[5].strip('`')}.{r[1].strip('`')}": r[4] for r in rows if r[2] in ("component", "variant")} if platform == "android" else {}
+        doc_fams = {d: {fam_of.get(p.get(platform)), api[d].get(platform, {}).get("family")} for d, p in docs.items()}
         by_family = {}
         for r in rows:
             name, kind, family = r[1].strip("`"), r[2], r[4]
@@ -97,7 +107,9 @@ def api_gaps(a, docs, api, status, errs):
             full = f"{r[5].strip('`')}.{name}" if platform == "android" else f"SwiftUI.{name}"
             slots = {"family": [("family", name)], "supporting": [("supporting", name)]}.get(kind, [("main", full), ("variants", name)])
             owners = [o for s in slots for o in claims.get(s, [])]
-            if len(owners) > 1:
+            if platform == "android" and kind == "component" and len(owners) == 1 and family not in doc_fams[owners[0][0]]:
+                by_family.setdefault(family, []).append(f"{name} ({kind}, needs a doc of family {family})")
+            elif len(owners) > 1:
                 errs.append(f"api {platform} {name}: {len(owners)} docs claim this row ({', '.join(d for d, _ in owners)}); "
                             "a row has one owner")
             elif not owners:
@@ -166,6 +178,9 @@ def main(argv=None):
             errs.append(f"ios {name}: the row map lists {sorted(need - have)} missing from the list"
                         + (f", and the list has {sorted(have - need)} not in the row map" if have - need else ""))
 
+    # Android only: the iOS card list keeps its cap until the iOS lane decides the same.
+    api_main = {"ios": set(), "android": {f"{r[5].strip('`')}.{r[1].strip('`')}"
+                                          for r in table(a.android_api, "android")[0] if r[2] == "component"}}
     for platform, names in want.items():
         for name, types in names.items():
             if name not in docs:
@@ -178,8 +193,10 @@ def main(argv=None):
                 errs.append(f"{platform} {name}: platforms.{platform} is {got}, but its rows name {', '.join(sorted(types))}")
             if not (a.topics / f"{platform}-{name.lower()}.doc.mjs").exists():
                 errs.append(f"{platform} {name}: missing topic {platform}-{name.lower()}; run python3 scripts/ui_topics.py")
-        errs += [f"{platform} {name}: extra, platforms.{platform} is set but no row of the list names it"
-                 for name, plat in docs.items() if plat.get(platform) and name not in names]
+        # PR #255 review 2: the generated API list is the source of truth. A doc whose name is a component row there is
+        # not an extra; the counted card list stays a check that every card is covered, never a cap.
+        errs += [f"{platform} {name}: extra, platforms.{platform} is set but no card row and no component row of the API list names it"
+                 for name, plat in docs.items() if plat.get(platform) and name not in names and plat[platform] not in api_main[platform]]
 
     text = a.integration.read_text(encoding="utf-8") if a.integration.exists() else ""
     served = [p.name[:-len(".doc.mjs")] for p in a.topics.glob("*.doc.mjs")] if a.topics.is_dir() else []

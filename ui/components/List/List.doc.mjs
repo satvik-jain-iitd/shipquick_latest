@@ -162,5 +162,66 @@ export default {
       "platform": "ios",
       "default": "nil"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "PullToRefresh",
+      "variants": [
+        {
+          "name": "PullToRefreshBox",
+          "note": "Wraps a scrolling list so the user can pull it down to reload. Pass isRefreshing and onRefresh. This is Google's pull to refresh for Compose: https://developer.android.com/develop/ui/compose/components/pull-to-refresh"
+        },
+        {
+          "name": "PullToRefreshDefaults.Indicator",
+          "note": "The default spinner that comes down as the user pulls."
+        },
+        {
+          "name": "PullToRefreshDefaults.IndicatorBox",
+          "note": "The container that moves and clips the indicator. Use it to put your own indicator in place of the spinner."
+        },
+        {
+          "name": "SwipeToDismissBox",
+          "note": "Lets the user swipe a list item to the side to act on it, like delete. backgroundContent shows behind the item while it moves."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "ListItemDefaults",
+          "use": "Default colours, elevation and shape for ListItem."
+        },
+        {
+          "name": "ListItemColors",
+          "use": "The container, headline, supporting text, overline and icon colours of a ListItem. Make one with ListItemDefaults.colors()."
+        },
+        {
+          "name": "PullToRefreshState",
+          "use": "How far the user has pulled (distanceFraction). Call animateToThreshold() and animateToHidden() from a coroutine."
+        },
+        {
+          "name": "rememberPullToRefreshState",
+          "use": "Creates and keeps a PullToRefreshState across recompositions."
+        },
+        {
+          "name": "PullToRefreshDefaults",
+          "use": "Default colours, shape, elevation, threshold and the Indicator and IndicatorBox for pull to refresh."
+        },
+        {
+          "name": "SwipeToDismissBoxState",
+          "use": "Says where a swiped item rests and is going: currentValue, targetValue and dismissDirection. Call reset() or snapTo() from a coroutine."
+        },
+        {
+          "name": "rememberSwipeToDismissBoxState",
+          "use": "Creates and keeps a SwipeToDismissBoxState, with the first value and the swipe threshold."
+        },
+        {
+          "name": "SwipeToDismissBoxValue",
+          "use": "Where a swiped item rests: Settled, StartToEnd or EndToStart."
+        },
+        {
+          "name": "SwipeToDismissBoxDefaults",
+          "use": "The default positionalThreshold for how far the user must swipe."
+        }
+      ]
+    }
+  }
 };
