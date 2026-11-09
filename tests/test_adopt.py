@@ -261,3 +261,66 @@ def test_s146_a_second_run_changes_screens_sh_and_screens_txt_nothing(child):
     before = snapshot(child)
     r = adopt(child)
     assert r.returncode == 0 and snapshot(child) == before
+
+
+# ---- story #225: a rule-24 child keeps the submodule and the hooks on a kit branch, main has only the caller ----
+def add_kit_line(child, kit):
+    call = child / ".github" / "workflows" / "shipquick-call.yml"
+    text = call.read_text(encoding="utf-8")
+    call.write_text(text.replace(f"shipquick_ref: {HEAD}", f"shipquick_ref: {HEAD}\n      kit_branch: {kit}"), encoding="utf-8")
+
+
+def rule24_child(child, kit_sha=HEAD, hooks=True):
+    """dev carries everything (submodule pin, hooks, caller); main carries only the caller."""
+    adopt(child)
+    add_kit_line(child, "dev")
+    if not hooks:
+        (child / ".pre-commit-config.yaml").write_text("repos: []\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=child, check=True)
+    add_fake_submodule(child, kit_sha)
+    caller = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    subprocess.run(["git", "switch", "-q", "--orphan", "main"], cwd=child, check=True)
+    (child / ".github" / "workflows").mkdir(parents=True, exist_ok=True)
+    (child / ".github" / "workflows" / "shipquick-call.yml").write_text(caller, encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=child, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "chore: only the caller on main"], cwd=child, check=True)
+    assert not (child / ".pre-commit-config.yaml").exists()
+    return child
+
+
+def test_s225_check_passes_on_main_of_a_rule24_child_reading_the_pin_and_hooks_from_the_kit_branch(child):
+    r = adopt(rule24_child(child), "--check")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "main" in r.stdout and "dev" in r.stdout and "not adopted" not in r.stdout
+
+
+def test_s225_check_fails_when_the_kit_branch_pin_does_not_match_the_caller(child):
+    r = adopt(rule24_child(child, kit_sha="1234567890abcdef1234567890abcdef12345678"), "--check")
+    assert r.returncode == 1 and "not adopted" in r.stdout and "dev" in r.stdout
+
+
+def test_s225_check_fails_when_the_kit_branch_has_no_hooks(child):
+    r = adopt(rule24_child(child, hooks=False), "--check")
+    assert r.returncode == 1 and "pre-commit" in r.stdout and "dev" in r.stdout
+
+
+def test_s225_check_fails_when_the_kit_branch_does_not_exist(child):
+    rule24_child(child)
+    subprocess.run(["git", "branch", "-q", "-D", "dev"], cwd=child, check=True)
+    r = adopt(child, "--check")
+    assert r.returncode == 1 and "dev" in r.stdout
+
+
+def test_s225_kit_branch_flag_writes_the_input_into_the_caller(child):
+    r = adopt(child, "--kit-branch", "dev")
+    assert r.returncode == 0, r.stderr
+    call = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    assert f"shipquick_ref: {HEAD}\n      kit_branch: dev\n" in call
+
+
+def test_s225_without_kit_branch_the_caller_has_no_kit_line_and_check_reads_head_as_before(child):
+    adopt(child)
+    assert "kit_branch" not in (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    add_fake_submodule(child, HEAD)
+    r = adopt(child, "--check")
+    assert r.returncode == 0 and r.stdout.strip() == f"adopted: pinned to {HEAD}, pre-commit hooks present"

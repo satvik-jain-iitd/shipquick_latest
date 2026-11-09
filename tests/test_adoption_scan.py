@@ -128,3 +128,50 @@ def test_a_public_child_ignores_has_token():
 def _b64(text):
     import base64
     return base64.b64encode(text.encode()).decode()
+
+
+# ---- story #225: a rule-24 child names a kit branch; the scan reads the pin and the hooks from it ----
+def kit_api(kit_sha=FRESH_SHA, hooks=True, kit="dev", seen=None):
+    def fetch(path):
+        if seen is not None:
+            seen.append(path)
+        if path == "repos/owner/child":
+            return {"default_branch": "main"}
+        if path == "repos/owner/child/contents/.github/workflows/shipquick-call.yml?ref=main":
+            line = f"\n      kit_branch: {kit}" if kit else ""
+            return {"content": _b64(f"    with:\n      shipquick_ref: {FRESH_SHA}{line}\n")}
+        if path == "repos/owner/child/contents/knowledge/shipquick_latest?ref=dev":
+            return {"type": "submodule", "sha": kit_sha}
+        if path == "repos/owner/child/contents/.pre-commit-config.yaml?ref=dev":
+            return {"content": _b64("entry: bash x/scripts/check_local.sh\n" if hooks else "repos: []\n")}
+        if path.startswith(f"repos/{scan.REPO}/commits/"):
+            return {"commit": {"committer": {"date": (TODAY - datetime.timedelta(days=1)).isoformat()}}}
+        return None
+    return fetch
+
+
+def test_s225_a_rule24_child_with_a_matching_pin_and_hooks_on_the_kit_branch_is_adopted():
+    assert scan.check_child("owner/child", kit_api(), days=14, today=TODAY) is None
+
+
+def test_s225_a_rule24_child_whose_kit_branch_pin_differs_is_flagged():
+    why = scan.check_child("owner/child", kit_api(kit_sha=STALE_SHA), days=14, today=TODAY)
+    assert why and "dev" in why and STALE_SHA[:7] in why
+
+
+def test_s225_a_rule24_child_whose_kit_branch_has_no_submodule_is_flagged():
+    def fetch(path):
+        return None if "knowledge/shipquick_latest" in path else kit_api()(path)
+    why = scan.check_child("owner/child", fetch, days=14, today=TODAY)
+    assert why and "dev" in why and "submodule" in why
+
+
+def test_s225_a_rule24_child_with_no_hooks_on_the_kit_branch_is_flagged():
+    why = scan.check_child("owner/child", kit_api(hooks=False), days=14, today=TODAY)
+    assert why and "dev" in why and "pre-commit" in why
+
+
+def test_s225_a_child_without_kit_branch_is_scanned_as_before():
+    seen = []
+    assert scan.check_child("owner/child", kit_api(kit=None, seen=seen), days=14, today=TODAY) is None
+    assert not any("knowledge/shipquick_latest" in p or "pre-commit" in p for p in seen)

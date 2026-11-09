@@ -82,3 +82,24 @@ def test_s124_shipquick_call_template_is_inert_here_and_points_at_checks_yml():
     assert "pull_request" not in on_block
     assert "uses: ./.github/workflows/checks.yml" in CALL_TEMPLATE
     assert "shipquick_ref: ${{ github.sha }}" in CALL_TEMPLATE
+
+
+# ---- story #225: kit_branch, so a rule-24 child keeps only the caller on main ----
+def test_s225_checks_yml_takes_an_optional_kit_branch_input():
+    on_block = CHECKS.split("\npermissions:", 1)[0]
+    section = on_block.split("kit_branch:", 1)[1]
+    assert "type: string" in section and "default: ''" in section and "required: true" not in section
+
+
+def test_s225_the_adoption_job_reads_the_pin_and_hooks_from_the_kit_branch_not_the_checkout():
+    section = CHECKS.split("\n  adoption:\n", 1)[1].split("\n  disable-comments:", 1)[0]
+    assert "KIT_BRANCH: ${{ inputs.kit_branch }}" in section   # via env, never pasted into the script
+    assert "git -C project fetch" in section
+    assert 'rev-parse -q --verify "$ref:knowledge/shipquick_latest"' in section
+    assert 'show "$ref:.pre-commit-config.yaml"' in section
+
+
+def test_s225_the_roles_job_reads_roles_yml_from_the_kit_branch_too():
+    section = CHECKS.split("\n  roles:\n", 1)[1].split("\n  team-block:", 1)[0]
+    assert "KIT_BRANCH: ${{ inputs.kit_branch }}" in section
+    assert 'show "$ref:.shipquick/roles.yml"' in section
