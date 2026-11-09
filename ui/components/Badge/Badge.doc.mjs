@@ -81,5 +81,27 @@ export default {
       "description": "The part the badge sits on.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "badge", "note": "`.badge(_:)`, iOS 16.0. Apple: \"Generates a badge for the view from a localized string resource.\""},
+        {"name": "badgeProminence", "note": "`.badgeProminence(_:)`, iOS 17.0. Apple: \"Specifies the prominence of badges created by this view.\""}
+      ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "Badge",
+          "note": "The small dot or count itself. Put it in the badge slot of BadgedBox. Leave content out for a dot."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "BadgeDefaults",
+          "use": "The default container colour of a badge."
+        }
+      ]
+    }
+  }
 };

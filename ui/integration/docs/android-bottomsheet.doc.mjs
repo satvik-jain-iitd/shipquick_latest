@@ -61,6 +61,25 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "BottomSheetDefaults.DragHandle: The default handle at the top of a sheet. The user drags it to move the sheet.",
+            "SheetState: Says if a sheet is Hidden, PartiallyExpanded or Expanded. Call show(), hide(), expand() or partialExpand() from a coroutine.",
+            "rememberModalBottomSheetState: Creates and keeps a SheetState for ModalBottomSheet. Set skipPartiallyExpanded to open it fully.",
+            "rememberStandardBottomSheetState: Creates and keeps a SheetState for the standard sheet of BottomSheetScaffold.",
+            "SheetValue: The three states of a sheet: Hidden, PartiallyExpanded and Expanded.",
+            "BottomSheetDefaults: Default container colour, elevation, shapes, scrim colour, maximum width, peek height, the drag handle and window insets for sheets.",
+            "ModalBottomSheetDefaults: The default ModalBottomSheetProperties.",
+            "ModalBottomSheetProperties: Window settings for ModalBottomSheet: shouldDismissOnBackPress, shouldDismissOnClickOutside and securePolicy."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

@@ -168,5 +168,49 @@ export default {
       "platform": "ios",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "tabViewStyle", "note": "`.tabViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the tab view within the current environment.\""},
+        {"name": "defaultAdaptableTabBarPlacement", "note": "`.defaultAdaptableTabBarPlacement(_:)`, iOS 18.0. Apple: \"Specifies the default placement for the tabs in a tab view using the adaptable sidebar style.\""},
+        {"name": "defaultTabBarPlacement", "note": "`.defaultTabBarPlacement(_:)`, iOS 27.0. Apple: \"Specifies the preferred placement for the tabs of a `TabView` in the `sidebarAdaptable` style on platforms where the tab bar cannot adapt between different representations, and only one representation can be shown.\""},
+        {"name": "sceneAccessory", "note": "`.sceneAccessory(content:)`, iOS 27.0. Apple: \"Defines any scene accessories associated with `self`.\""},
+        {"name": "tabBarMinimizeBehavior", "note": "`.tabBarMinimizeBehavior(_:)`, iOS 26.0. Apple: \"Sets the behavior for tab bar minimization.\""},
+        {"name": "tabViewBottomAccessory", "note": "`.tabViewBottomAccessory(content:)`, iOS 26.0. Apple: \"Places a view as the bottom accessory of the tab view.\""},
+        {"name": "tabViewCustomization", "note": "`.tabViewCustomization(_:)`, iOS 18.0. Apple: \"Specifies the customizations to apply to the sidebar representation of the tab view.\""},
+        {"name": "tabViewSearchActivation", "note": "`.tabViewSearchActivation(_:)`, iOS 26.0. Apple: \"Configures the activation and deactivation behavior of search in the search tab.\""},
+        {"name": "tabViewSidebarBottomBar", "note": "`.tabViewSidebarBottomBar(content:)`, iOS 18.0. Apple: \"Adds a custom bottom bar to the sidebar of a tab view.\""},
+        {"name": "tabViewSidebarFooter", "note": "`.tabViewSidebarFooter(content:)`, iOS 18.0. Apple: \"Adds a custom footer to the sidebar of a tab view.\""},
+        {"name": "tabViewSidebarHeader", "note": "`.tabViewSidebarHeader(content:)`, iOS 18.0. Apple: \"Adds a custom header to the sidebar of a tab view.\""},
+        {"name": "tabItem", "note": "`.tabItem(_:)`, iOS 13.0. Apple: \"Sets the tab bar item associated with this view.\"", "status": "deprecated", "replacement": "Tab"}
+      ],
+      "supporting": [
+        {"name": "DefaultTabLabel", "use": "iOS 18.0. Apple: \"The default label to use for a tab or tab section.\""},
+        {"name": "TabContentBuilder.Content", "use": "iOS 18.0. Apple: \"A view representation of the content of a builder-based tab view with selection.\""}
+      ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "NavigationBarItem",
+          "note": "One destination in a NavigationBar: an icon, an optional label, and selected and onClick."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "NavigationBarDefaults",
+          "use": "Default container colour, elevation and window insets for NavigationBar."
+        },
+        {
+          "name": "NavigationBarItemDefaults",
+          "use": "Default colours for NavigationBarItem. Make them with NavigationBarItemDefaults.colors()."
+        },
+        {
+          "name": "NavigationBarItemColors",
+          "use": "The icon, text and indicator colours of a NavigationBarItem, selected and not."
+        }
+      ]
+    }
+  }
 };

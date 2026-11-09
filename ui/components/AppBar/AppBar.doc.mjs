@@ -152,5 +152,96 @@ export default {
       "description": "The screen name, set on the view inside the navigation container.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "presentedWindowToolbarStyle", "note": "`.presentedWindowToolbarStyle(_:)`, not on iOS. Apple: \"Sets the style for the toolbar in windows created by interacting with this view.\"", "status": "unavailable-ios", "replacement": "toolbar"},
+        {"name": "contentToolbar", "note": "`.contentToolbar(for:content:)`, iOS 18.4. Apple: \"Populates the toolbar of the specified content view type with the views you provide.\""},
+        {"name": "ornament", "note": "`.ornament(visibility:attachmentAnchor:contentAlignment:ornament:)`, not on iOS. Apple: \"Presents an ornament.\"", "status": "unavailable-ios", "replacement": "toolbar"},
+        {"name": "statusBarHidden", "note": "`.statusBarHidden(_:)`, iOS 13.0. Apple: \"Sets the visibility of the status bar.\"", "status": "deprecated", "replacement": "toolbarVisibility"},
+        {"name": "toolbar", "note": "`.toolbar(content:)`, iOS 14.0. Apple: \"Populates the toolbar or navigation bar with the specified items.\""},
+        {"name": "toolbarBackground", "note": "`.toolbarBackground(_:for:)`, iOS 16.0. Apple: \"Specifies the preferred shape style of the background of a bar managed by SwiftUI.\""},
+        {"name": "toolbarBackgroundVisibility", "note": "`.toolbarBackgroundVisibility(_:for:)`, iOS 18.0. Apple: \"Specifies the preferred visibility of backgrounds on a bar managed by SwiftUI.\""},
+        {"name": "toolbarColorScheme", "note": "`.toolbarColorScheme(_:for:)`, iOS 16.0. Apple: \"Specifies the preferred color scheme of a bar managed by SwiftUI.\""},
+        {"name": "toolbarForegroundStyle", "note": "`.toolbarForegroundStyle(_:for:)`, not on iOS. Apple: \"Specifies the preferred foreground style of bars managed by SwiftUI.\"", "status": "unavailable-ios", "replacement": "toolbarColorScheme"},
+        {"name": "toolbarItemHidden", "note": "`.toolbarItemHidden(_:)`, not on iOS. Apple: \"Hides an individual view within a control group toolbar item.\"", "status": "unavailable-ios", "replacement": "toolbar"},
+        {"name": "toolbarMinimizationBehavior", "note": "`.toolbarMinimizationBehavior(_:for:)`, iOS 27.0. Apple: \"Sets the minimize behavior for the specified bars.\""},
+        {"name": "toolbarMinimizationRestoration", "note": "`.toolbarMinimizationRestoration(_:for:)`, iOS 27.0. Apple: \"Sets the restoration behavior for the specified bars during minimization.\""},
+        {"name": "toolbarMinimizationSafeAreaAdjustment", "note": "`.toolbarMinimizationSafeAreaAdjustment(_:for:)`, iOS 27.0. Apple: \"Sets the safe area adjustment for the specified bars during minimization.\""},
+        {"name": "toolbarOverflowMenu", "note": "`.toolbarOverflowMenu(content:)`, iOS 27.0. Apple: \"Configures the overflow menu of a toolbar.\""},
+        {"name": "toolbarRole", "note": "`.toolbarRole(_:)`, iOS 16.0. Apple: \"Configures the semantic role for the content populating the toolbar.\""},
+        {"name": "toolbarTitleAlignment", "note": "`.toolbarTitleAlignment(_:)`, iOS 27.2. Apple: \"Sets the preferred alignment of the navigation bar’s title.\""},
+        {"name": "toolbarTitleDisplayMode", "note": "`.toolbarTitleDisplayMode(_:)`, iOS 17.0. Apple: \"Configures the toolbar title display mode for this view.\""},
+        {"name": "toolbarTitleMenu", "note": "`.toolbarTitleMenu(content:)`, iOS 16.0. Apple: \"Configure the title menu of a toolbar.\""},
+        {"name": "toolbarVerticalBehavior", "note": "`.toolbarVerticalBehavior(_:)`, iOS 27.1. Apple: \"Sets the behavior for the vertical bar.\""},
+        {"name": "toolbarVerticalCompressionBehavior", "note": "`.toolbarVerticalCompressionBehavior(_:)`, iOS 27.1. Apple: \"Sets how bars should compress when different types of toolbars are hosted together and space is constrained.\""},
+        {"name": "toolbarVisibility", "note": "`.toolbarVisibility(_:for:)`, iOS 18.0. Apple: \"Specifies the visibility of a bar managed by SwiftUI.\""},
+        {"name": "touchBar", "note": "`.touchBar(content:)`, not on iOS. Apple: \"Sets the content that the Touch Bar displays.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)"},
+        {"name": "touchBarCustomizationLabel", "note": "`.touchBarCustomizationLabel(_:)`, not on iOS. Apple: \"Sets a user-visible string that identifies the view’s functionality.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)"},
+        {"name": "touchBarItemPresence", "note": "`.touchBarItemPresence(_:)`, not on iOS. Apple: \"Sets the behavior of the user-customized view.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)"},
+        {"name": "touchBarItemPrincipal", "note": "`.touchBarItemPrincipal(_:)`, not on iOS. Apple: \"Sets principal views that have special significance to this Touch Bar.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)"},
+        {"name": "toolbarContainerBehavior", "note": "`.toolbarContainerBehavior(_:)`, iOS 27.3. Apple: \"Whether the container this modifier is applied to acts as a toolbar container, reading the toolbar content of its child views and placing that content into its own bar.\""}
+      ]
+    },
+    "android": {
+      "family": "AppBar",
+      "variants": [
+        {
+          "name": "CenterAlignedTopAppBar",
+          "note": "A top app bar with the title in the middle. Use it on a main screen with one short title."
+        },
+        {
+          "name": "MediumTopAppBar",
+          "note": "A taller top app bar with the title on its own line. It can shrink to a small bar as the content scrolls."
+        },
+        {
+          "name": "LargeTopAppBar",
+          "note": "The tallest top app bar, with a big title. It can shrink to a small bar as the content scrolls."
+        },
+        {
+          "name": "BottomAppBar",
+          "note": "A bar at the bottom of the screen with up to four actions and an optional FAB."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "TopAppBarDefaults",
+          "use": "Default colours, heights and window insets for top app bars, and the scroll behaviours pinnedScrollBehavior, enterAlwaysScrollBehavior and exitUntilCollapsedScrollBehavior."
+        },
+        {
+          "name": "TopAppBarColors",
+          "use": "The colours of a top app bar, before and after the content scrolls under it. Make one with TopAppBarDefaults."
+        },
+        {
+          "name": "TopAppBarScrollBehavior",
+          "use": "Links a top app bar to a scrolling list, so the bar hides, shrinks or changes colour. Pass it to the bar and its nestedScrollConnection to the list."
+        },
+        {
+          "name": "TopAppBarState",
+          "use": "The height offset and scroll state a top app bar scroll behaviour reads and writes."
+        },
+        {
+          "name": "rememberTopAppBarState",
+          "use": "Creates and keeps a TopAppBarState across recompositions."
+        },
+        {
+          "name": "BottomAppBarDefaults",
+          "use": "Default colours, height, padding and window insets for the bottom app bar, and exitAlwaysScrollBehavior."
+        },
+        {
+          "name": "BottomAppBarScrollBehavior",
+          "use": "Links a bottom app bar to a scrolling list, so the bar hides while the user scrolls."
+        },
+        {
+          "name": "BottomAppBarState",
+          "use": "The height offset and scroll state a bottom app bar scroll behaviour reads and writes."
+        },
+        {
+          "name": "rememberBottomAppBarState",
+          "use": "Creates and keeps a BottomAppBarState across recompositions."
+        }
+      ]
+    }
+  }
 };

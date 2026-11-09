@@ -40,7 +40,7 @@ check_markers() {
 check_md_blocks() { python3 "$HERE/check_md_blocks.py"; report md-blocks $?; }
 check_ui_docs() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_docs.py" --root ui/components; report ui-docs $?; }   # story #182
 check_ui_topics() { [ -d ui/integration ] || return 0; python3 "$HERE/ui_topics.py" --check; report ui-topics $?; }   # story #183
-check_ui_coverage() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_coverage.py"; report ui-coverage $?; }   # story #216; web part skips without ui/tool/node_modules
+check_ui_coverage() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_coverage.py" --strict-api; report ui-coverage $?; }   # stories #216, #231; web part skips without ui/tool/node_modules
 check_timeouts() { [ -d .github/workflows ] || return 0; python3 "$HERE/check_timeouts.py" .github/workflows; report timeouts $?; }
 check_commits() {
   have_base commits || return 0

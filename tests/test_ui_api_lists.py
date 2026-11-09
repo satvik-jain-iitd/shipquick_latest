@@ -237,6 +237,23 @@ def test_s231_an_unavailable_ios_row_with_no_alternative_or_a_bad_one_fails():
         ui_api_lists.parse_ios(EXTRACT, {**ALTS, "GoneView": "NotARow"})
 
 
+def test_s231_a_none_alternative_with_no_reason_fails_and_a_reason_is_kept():
+    import pytest
+    with pytest.raises(ValueError, match="GoneView: .*none.* needs a one-line reason"):
+        ui_api_lists.parse_ios(EXTRACT, {**ALTS, "GoneView": "none"})
+    with pytest.raises(ValueError, match="GoneView: .*none.* needs a one-line reason"):
+        ui_api_lists.parse_ios(EXTRACT, {**ALTS, "GoneView": "none:  "})
+    r = by_name(ui_api_lists.parse_ios(EXTRACT, {**ALTS, "GoneView": "none: a Mac window; iOS has no equivalent"}))["GoneView"]
+    assert (r["replacement"], r["reason"]) == ("none", "a Mac window; iOS has no equivalent")
+    assert r["detail"].endswith("`none`, because a Mac window; iOS has no equivalent")
+
+
+def test_s231_every_real_none_alternative_has_a_reason():
+    nones = {k: v for k, v in ui_api_lists.IOS_ALTERNATIVES.items() if v.split(":", 1)[0] == "none"}
+    assert nones and all(v.startswith("none: ") and len(v) > 12 for v in nones.values()), \
+        [k for k, v in nones.items() if not v.startswith("none: ")]
+
+
 def test_s231_the_real_ios_alternatives_are_all_live_rows():
     ui_api_lists.parse_ios(json.loads(ui_api_lists.IOS_SRC.read_text()))
 
@@ -337,8 +354,17 @@ def test_s231_a_doc_level_status_needs_a_replacement_and_the_schema_takes_it():
 
 def test_s231_a_name_listed_twice_in_one_doc_fails():
     import check_ui_docs
-    errs = check_ui_docs.api_shape_errors(api_doc(variants=[{"name": "X", "note": "a"}], supporting=[{"name": "X", "use": "b"}]))
+    errs = check_ui_docs.api_shape_errors(api_doc(variants=[{"name": "X", "note": "a"}, {"name": "X", "note": "b"}]))
     assert any("X" in e and "twice" in e for e in errs)
+    errs = check_ui_docs.api_shape_errors(api_doc(supporting=[{"name": "X", "use": "a"}, {"name": "X", "use": "b"}]))
+    assert any("X" in e and "twice" in e for e in errs)
+
+
+def test_s231_one_name_as_a_variant_and_as_supporting_passes():
+    # The M3 list has MaterialTheme twice: the composable (component) and the object (supporting). They are two rows.
+    import check_ui_docs
+    doc = api_doc(variants=[{"name": "MaterialTheme", "note": "a"}], supporting=[{"name": "MaterialTheme", "use": "b"}])
+    assert check_ui_docs.api_shape_errors(doc) == []
 
 
 def test_s231_the_real_lists_match_their_saved_sources():

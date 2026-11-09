@@ -62,6 +62,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "indexViewStyle: `.indexViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the index view within the current environment.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

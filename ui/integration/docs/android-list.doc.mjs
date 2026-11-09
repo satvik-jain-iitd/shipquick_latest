@@ -74,6 +74,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "ListItemDefaults: Default colours, elevation and shape for ListItem.",
+            "ListItemColors: The container, headline, supporting text, overline and icon colours of a ListItem. Make one with ListItemDefaults.colors()."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

@@ -52,8 +52,10 @@ def fixture(tmp_path, android_n=1, ios_n=2, core=("Button",)):
 def run(tmp_path, *extra):
     if not (tmp_path / "rows.json").exists():
         (tmp_path / "rows.json").write_text('{"ios": {}}')
+    if not (tmp_path / "frameworks.md").exists():
+        (tmp_path / "frameworks.md").write_text("## iOS\n\n| # | Topic | Framework | Official source |\n|---|---|---|---|\n")
     return check_ui_coverage.main([
-        "--core-floor", "1", "--row-map", str(tmp_path / "rows.json"),
+        "--core-floor", "1", "--row-map", str(tmp_path / "rows.json"), "--frameworks", str(tmp_path / "frameworks.md"),
         "--android-list", str(tmp_path / "android.md"), "--ios-list", str(tmp_path / "ios.md"),
         "--components", str(tmp_path / "components"), "--topics", str(tmp_path / "topics"),
         "--core", str(tmp_path / "core"), "--integration", str(tmp_path / "integration.mjs"), *extra])
@@ -310,6 +312,139 @@ def test_s231_the_gate_has_no_exclusion_list():
     assert "Left out" not in src and "exclu" not in src.lower()
 
 
-def test_s231_strict_api_fails_on_the_real_repo_today():
-    """Red first: the family docs have not landed, so the full lists are not covered yet."""
-    assert check_ui_coverage.main(["--strict-api"]) == 1
+# Story #231 (framework topics, reviewer's rule for both lanes): each row of framework-topics.md is one doc, served as
+# <platform>-<topic>, with platformApi items in the name plus use shape, counted like a component row.
+FRAMEWORKS = """## iOS
+
+| # | Topic | Framework | Official source |
+|---|---|---|---|
+| 1 | Swift Charts | Charts | https://developer.apple.com/documentation/charts |
+
+## Android
+
+| # | Topic | Framework | Official source |
+|---|---|---|---|
+"""
+
+
+def framework_doc(f, slug="swift-charts", items=({"name": "Chart", "use": "Apple: a chart view."},), topic="export default {};\n",
+                  variants=()):
+    d = f / "components" / slug
+    d.mkdir(parents=True)
+    ios = {"supporting": list(items), **({"variants": list(variants)} if variants else {})}
+    doc = {"name": slug, "platforms": {"android": None, "ios": None, "web": None},
+           "platformUsage": {"ios": {"description": "Use Swift Charts."}}, "platformApi": {"ios": ios}}
+    (d / f"{slug}.doc.mjs").write_text("export default " + json.dumps(doc) + ";\n")
+    (d / f"{slug}.contract.json").write_text("{}")
+    if topic is not None:
+        (f / "topics" / f"ios-{slug}.doc.mjs").write_text(topic)
+
+
+def test_s231_a_framework_topic_with_no_doc_is_a_gap_and_fails_strict(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    assert run_api(f, "--strict-api") == 1
+    assert "FAIL api ios framework topics: Swift Charts (framework)" in capsys.readouterr().out
+
+
+def test_s231_a_framework_doc_and_its_topic_cover_the_row_and_its_items_need_no_api_row(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+
+
+def test_s231_a_framework_doc_with_no_topic_file_is_still_a_gap(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, topic=None)
+    assert run_api(f, "--strict-api") == 1
+    assert "Swift Charts (framework)" in capsys.readouterr().out
+
+
+def test_s231_a_framework_doc_names_its_own_types_but_another_doc_naming_the_same_type_fails(tmp_path, capsys):
+    """Review 2 of the iOS stack: a true red. The exemption is for the framework doc only, so in one run the
+    framework doc's `Chart` passes and Button's `Chart` fails, and the error names Button, never swift-charts."""
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "ios": {**FULL_API["ios"], "supporting": [{"name": "Chart", "use": "x"}]}})
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f) == 1
+    errs = [l for l in capsys.readouterr().out.splitlines() if "names Chart" in l]
+    assert errs == ["FAIL api ios: Button names Chart under platformApi.ios.supporting, but the ios API list has no such supporting row"], errs
+
+
+def test_s231_a_framework_doc_still_gets_the_kind_check_for_a_name_that_is_a_row(tmp_path, capsys):
+    """Review 2 probe: a real API row named in the wrong slot of a framework doc is not skipped."""
+    f = api_fixture(tmp_path)
+    with_api(f, {"android": FULL_API["android"], "ios": {}})
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "Chart", "use": "x"}, {"name": "buttonStyle", "use": "x"}))
+    assert run_api(f, "--strict-api") == 1
+    assert "swift-charts names buttonStyle under platformApi.ios.supporting, but the ios API list has no such supporting row" \
+        in capsys.readouterr().out
+
+
+def test_s231_an_empty_framework_topic_file_does_not_count(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, topic="")
+    assert run_api(f, "--strict-api") == 1
+    assert "Swift Charts (framework)" in capsys.readouterr().out
+
+
+def test_s231_the_real_repo_passes_strict_api_and_ci_and_check_local_pass_the_flag():
+    """Every Android and iOS row and framework topic has its doc, so the gate runs strict everywhere (story #231 done)."""
+    assert check_ui_coverage.main(["--strict-api"]) == 0
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert "python3 scripts/check_ui_coverage.py --require-web --strict-api" in ci
+    local = (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
+    assert 'python3 "$HERE/check_ui_coverage.py" --strict-api;' in local
+
+
+def test_s231_strict_api_prints_each_gap_once(tmp_path, capsys):
+    """Second review nit: under --strict-api a gap was printed as FAIL twice, once as a gap and once as an error."""
+    assert run_api(api_fixture(tmp_path), "--strict-api") == 1
+    out = capsys.readouterr().out
+    assert out.count("api android Button: FilledTonalButton") == 1, out
+
+
+# PR #255 review 2: a component row is covered only by a doc of its own family (Android), and a doc whose Android
+# name is a component row of the generated API list is not an extra, even when the 30-card list does not name it.
+ICON_ROW = "| 4 | `Icon` | component | composable | Icon | `androidx.compose.material3` | - | - | - |\n"
+
+
+def icon_fixture(tmp_path):
+    f = api_fixture(tmp_path)
+    (f / "android-api.md").write_text(ANDROID_API.replace("Count: 3", "Count: 4") + ICON_ROW)
+    return f
+
+
+def test_s231_a_component_row_listed_as_a_variant_of_another_family_is_not_covered(tmp_path, capsys):
+    f = icon_fixture(tmp_path)
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "variants": [v("FilledTonalButton"), v("Icon")]}})
+    assert run_api(f) == 0
+    assert "Icon (component, needs a doc of family Icon)" in capsys.readouterr().out
+    assert run_api(f, "--strict-api") == 1
+
+
+def test_s231_a_doc_named_by_a_component_row_of_the_api_list_is_not_an_extra(tmp_path, capsys):
+    f = icon_fixture(tmp_path)
+    with_api(f, FULL_API)
+    doc(f, "Icon", "androidx.compose.material3.Icon")
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+    doc(f, "Other", "androidx.compose.material3.NotARow")
+    assert run_api(f) == 1
+    assert "android Other: extra" in capsys.readouterr().out
+
+
+def test_s231_a_supporting_entry_naming_a_variant_row_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "supporting": [
+        {"name": "ButtonDefaults", "use": "defaults"}, {"name": "FilledTonalButton", "use": "wrong kind"}]}})
+    assert run_api(f) == 1
+    assert "no such supporting row" in capsys.readouterr().out

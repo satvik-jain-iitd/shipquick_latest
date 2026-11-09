@@ -62,6 +62,20 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "TriStateCheckbox: A checkbox with three states: On, Off and Indeterminate (a ToggleableState). Use it for a parent box that checks or clears a group.",
+            "CheckboxDefaults: Default colours and stroke width for checkboxes. Make colours with CheckboxDefaults.colors().",
+            "CheckboxColors: The box, border and check mark colours of a checkbox in each state."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

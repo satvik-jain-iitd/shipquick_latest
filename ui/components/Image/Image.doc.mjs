@@ -66,5 +66,19 @@ export default {
       "type": "string",
       "description": "Apple's init(decorative:) label: the asset name of an unlabeled, decorative image that VoiceOver skips. Use it instead of name."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "AsyncImage", "note": "iOS 15.0. Apple: \"A view that asynchronously loads and displays an image.\""},
+        {"name": "symbolEffect", "note": "`.symbolEffect(_:options:isActive:)`, iOS 17.0. Apple: \"Returns a new view with a symbol effect added to it.\""},
+        {"name": "symbolEffectsRemoved", "note": "`.symbolEffectsRemoved(_:)`, iOS 17.0. Apple: \"Returns a new view with its inherited symbol image effects either removed or left unchanged.\""},
+        {"name": "symbolColorRenderingMode", "note": "`.symbolColorRenderingMode(_:)`, iOS 26.0. Apple: \"Sets the color rendering mode for symbol images.\""},
+        {"name": "symbolRenderingMode", "note": "`.symbolRenderingMode(_:)`, iOS 15.0. Apple: \"Sets the rendering mode for symbol images within this view.\""},
+        {"name": "symbolVariableValueMode", "note": "`.symbolVariableValueMode(_:)`, iOS 26.0. Apple: \"Sets the variable value mode mode for symbol images within this view.\""},
+        {"name": "symbolVariant", "note": "`.symbolVariant(_:)`, iOS 15.0. Apple: \"Makes symbols within the view show a particular variant.\""},
+        {"name": "imageScale", "note": "`.imageScale(_:)`, iOS 13.0. Apple: \"Scales images within the view according to one of the relative sizes available including small, medium, and large images sizes.\""}
+      ]
+    }
+  }
 };

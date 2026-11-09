@@ -229,7 +229,7 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Every counted component has a doc, a contract and a topic, and no name shadows core (story #216)
         timeout-minutes: 2
-        run: python3 scripts/check_ui_coverage.py --require-web
+        run: python3 scripts/check_ui_coverage.py --require-web --strict-api
       - name: The CLI serves the kit's integration as shipped
         shell: bash   # pipefail: a failing ui.sh piped to grep must fail the step
         run: |

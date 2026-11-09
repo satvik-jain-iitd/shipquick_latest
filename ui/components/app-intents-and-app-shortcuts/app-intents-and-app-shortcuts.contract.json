@@ -1,0 +1,9 @@
+{
+  "name": "app-intents-and-app-shortcuts",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

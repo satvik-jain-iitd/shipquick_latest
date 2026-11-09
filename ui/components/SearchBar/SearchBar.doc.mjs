@@ -140,5 +140,70 @@ export default {
       "platform": "ios",
       "default": "nil"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "searchable", "note": "`.searchable(text:placement:prompt:)`, iOS 16.0. Apple: \"Marks this view as searchable, which configures the display of a search field.\""},
+        {"name": "searchCompletion", "note": "`.searchCompletion(_:)`, iOS 15.0. Apple: \"Associates a fully formed string with the value of this view when used as a search suggestion.\""},
+        {"name": "searchDictationBehavior", "note": "`.searchDictationBehavior(_:)`, iOS 17.0. Apple: \"Configures the dictation behavior for any search fields configured by the searchable modifier.\""},
+        {"name": "searchPresentationToolbarBehavior", "note": "`.searchPresentationToolbarBehavior(_:)`, iOS 17.1. Apple: \"Configures the search toolbar presentation behavior for any searchable modifiers within this view.\""},
+        {"name": "searchScopes", "note": "`.searchScopes(_:scopes:)`, iOS 16.0. Apple: \"Configures the search scopes for this view.\""},
+        {"name": "searchSelection", "note": "`.searchSelection(_:)`, iOS 26.0. Apple: \"Binds the selection of the search field associated with the nearest searchable modifier to the given `TextSelection` value.\""},
+        {"name": "searchSuggestions", "note": "`.searchSuggestions(_:)`, iOS 16.0. Apple: \"Configures the search suggestions for this view.\""},
+        {"name": "searchToolbarBehavior", "note": "`.searchToolbarBehavior(_:)`, iOS 26.0. Apple: \"Configures the behavior for search in the toolbar.\""},
+        {"name": "searchFocused", "note": "`.searchFocused(_:)`, iOS 18.0. Apple: \"Modifies this view by binding the focus state of the search field associated with the nearest searchable modifier to the given Boolean value.\""}
+      ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "SearchBarDefaults.InputField",
+          "note": "The text field of a search bar: query, onSearch, and leading and trailing icons. Pass it as the bar's inputField."
+        },
+        {
+          "name": "TopSearchBar",
+          "note": "A search bar at the top of the screen that can scroll away with the content. Pass a SearchBarScrollBehavior."
+        },
+        {
+          "name": "ExpandedFullScreenSearchBar",
+          "note": "The full-screen view a SearchBar opens into, with the results. Use it on phones."
+        },
+        {
+          "name": "DockedSearchBar",
+          "note": "A search bar whose results open in a box under it, not over the whole screen. Use it on tablets and wide screens."
+        },
+        {
+          "name": "ExpandedDockedSearchBar",
+          "note": "The box under a search bar that shows results, for wide screens. It goes with a collapsed SearchBar and the same SearchBarState."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "SearchBarState",
+          "use": "Says if the bar is collapsed or expanded. Call animateToExpanded(), animateToCollapsed() or snapTo() from a coroutine."
+        },
+        {
+          "name": "rememberSearchBarState",
+          "use": "Creates and keeps a SearchBarState across recompositions."
+        },
+        {
+          "name": "SearchBarValue",
+          "use": "The two states of a search bar: Collapsed and Expanded."
+        },
+        {
+          "name": "SearchBarScrollBehavior",
+          "use": "Links a TopSearchBar to a scrolling list, so the bar scrolls away and back. Make one with SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()."
+        },
+        {
+          "name": "SearchBarDefaults",
+          "use": "Default colours, shapes, elevation, window insets, the InputField and the scroll behaviour for search bars."
+        },
+        {
+          "name": "SearchBarColors",
+          "use": "The container, divider and input field colours of a search bar. Make one with SearchBarDefaults.colors()."
+        }
+      ]
+    }
+  }
 };

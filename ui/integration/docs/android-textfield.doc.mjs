@@ -86,6 +86,36 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "TextFieldDefaults.Container: The default container (fill and indicator line) of a filled field. Use it inside DecorationBox only when you build on BasicTextField.",
+            "TextFieldDefaults.DecorationBox: The label, icons and container of a filled field around a BasicTextField. Use it only when TextField cannot do the job.",
+            "ExposedDropdownMenuBox: Holds a read-only or editable text field and the menu of choices that opens under it. Use it to pick one value from a list.",
+            "ExposedDropdownMenuBoxScope.ExposedDropdownMenu: The menu inside ExposedDropdownMenuBox. It is as wide as the field and opens under it.",
+            "ExposedDropdownMenuDefaults.TrailingIcon: The arrow icon at the end of the field. It turns when the menu opens.",
+            "TextFieldDefaults: Default colours, shapes, sizes, padding and the decorator for filled fields. Make colours with TextFieldDefaults.colors().",
+            "TextFieldColors: The text, container, cursor, icon, label and indicator colours of a field in each state, including error.",
+            "TextFieldLabelPosition: Where the label sits: Attached (inside the field, it moves up when the field has focus or text) or Above (always above the field).",
+            "TextFieldLabelScope: The scope of the label slot. Its labelMinimizedProgress says how far the label has moved to its small form.",
+            "ExposedDropdownMenuBoxScope: The scope inside ExposedDropdownMenuBox. Put menuAnchor on the text field so the menu opens from it.",
+            "ExposedDropdownMenuAnchorType: What the anchor is, for menuAnchor: PrimaryNotEditable (a read-only field), PrimaryEditable (a field the user types in) or SecondaryEditable (an icon inside an editable field).",
+            "ExposedDropdownMenuDefaults: Default colours, padding and the trailing icon for exposed dropdown menus."
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: TextFieldDefaults.ContainerBox. Use TextFieldDefaults.Container (Google: \"Renamed to TextFieldDefaults.Container\")."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

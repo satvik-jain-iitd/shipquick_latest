@@ -152,5 +152,58 @@ export default {
       "platform": "ios",
       "default": "[.hourAndMinute, .date]"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "MultiDatePicker", "note": "iOS 16.0. Apple: \"A control for picking multiple dates.\""},
+        {"name": "datePickerStyle", "note": "`.datePickerStyle(_:)`, iOS 13.0. Apple: \"Sets the style for date pickers within this view.\""}
+      ],
+      "supporting": [
+        {"name": "DatePickerStyleConfiguration.Label", "use": "iOS 16.0. Apple: \"A type-erased label of a `DatePicker`.\""}
+      ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "DatePickerDefaults.DatePickerTitle",
+          "note": "The default title at the top of a DatePicker. It changes with the display mode."
+        },
+        {
+          "name": "DatePickerDefaults.DatePickerHeadline",
+          "note": "The default headline that shows the chosen date, or a hint when none is chosen."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "DatePickerState",
+          "use": "Holds the chosen date (selectedDateMillis, in UTC), the month on show, the year range, the display mode and the selectable dates."
+        },
+        {
+          "name": "rememberDatePickerState",
+          "use": "Creates and keeps a DatePickerState, with the first date, year range, display mode and selectable dates you give."
+        },
+        {
+          "name": "DatePickerDefaults",
+          "use": "Default colours, shape, year range, date formatter, title, headline and sizes for date pickers."
+        },
+        {
+          "name": "DatePickerColors",
+          "use": "The container, title, headline, day, year and selection colours of a date picker. Make one with DatePickerDefaults.colors()."
+        },
+        {
+          "name": "DatePickerFormatter",
+          "use": "Turns dates into text for the picker's headline and month line (formatDate, formatMonthYear). Make one with DatePickerDefaults.dateFormatter()."
+        },
+        {
+          "name": "DisplayMode",
+          "use": "How a date picker shows: Picker (a calendar) or Input (a text field). The user can switch with the mode button."
+        },
+        {
+          "name": "SelectableDates",
+          "use": "Says which dates and years the user can pick: isSelectableDate and isSelectableYear. Use it to block past dates or weekends."
+        }
+      ]
+    }
+  }
 };

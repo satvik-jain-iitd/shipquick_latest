@@ -55,6 +55,21 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "NavigationRailItem: One destination in a NavigationRail: an icon, an optional label, and selected and onClick.",
+            "NavigationRailDefaults: Default container colour and window insets for NavigationRail.",
+            "NavigationRailItemDefaults: Default colours for NavigationRailItem. Make them with NavigationRailItemDefaults.colors().",
+            "NavigationRailItemColors: The icon, text and indicator colours of a NavigationRailItem, selected and not."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

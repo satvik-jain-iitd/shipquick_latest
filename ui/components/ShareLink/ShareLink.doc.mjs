@@ -73,5 +73,12 @@ export default {
       "type": "string",
       "description": "A message sent with the item."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "supporting": [
+        {"name": "DefaultShareLinkLabel", "use": "iOS 16.0. Apple: \"The default label used for a share link.\""}
+      ]
+    }
+  }
 };

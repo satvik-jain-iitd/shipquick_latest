@@ -26,6 +26,8 @@ scripts/mode.sh
 scripts/has_dev_link.sh
 scripts/check_*.py
 scripts/check_*.sh
+# story #231 review 2: the generator of the UI API lists the coverage gate counts against
+scripts/ui_api_lists.py
 .shipquick/*
 # story #180 review: a rule file is always owner-yes (rule 38 and every other rule live here)
 CLAUDE.md

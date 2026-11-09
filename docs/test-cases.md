@@ -563,3 +563,309 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
   And a topic prints a status item only as "Do not use: <name>. Use <replacement>."
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
+
+## Story #260: a child can enforce ShipQuick
+```gherkin
+Scenario: the gate is a required check on the child's default branch
+  Given a child adopted with adopt.sh and a GitHub origin
+  When adopt.sh runs
+  Then it prints one command, a ruleset POST to repos/<owner>/<repo>/rulesets that requires shipquick-checks / gate on ~DEFAULT_BRANCH, and never runs it
+  And with no GitHub origin the command names <owner>/<repo>
+  When adopt.sh --check runs and neither branch protection nor a ruleset requires the gate
+  Then it prints "gate not required" with the command and exits 1
+  And a ruleset that requires the gate passes, and no GitHub origin fails
+  And the printed ruleset pins the gate to the GitHub Actions app (integration_id 15368)
+  And a gate with no app, another app, a name that differs only in case, or another context does not count
+  And a 403 or 404 on the rules read prints "cannot read rules (403/404)" and exits 1
+  And docs/ADOPTION.md holds no per-child facts; each child's note and next step sit in docs/children.md
+
+Scenario: the daily scan never skips a child in silence
+  Given a private child with no SHIPQUICK_CHILD_TOKEN, or one the token gets a 404 or 403 on
+  When adoption_scan.py runs
+  Then the summary prints "<n> skipped" and "skipped <repo>: private, ..." per child, and files no issue
+  And a public child that cannot be read is still filed
+  And docs/children.md parses to GoServe, job-search (private) and Miraya (private)
+```
+Tests: `tests/test_adopt.py`, `tests/test_adoption_scan.py` (s260).
+## Story #231, Android A1 Buttons (issue #234)
+```gherkin
+Scenario: every Buttons row of the Android API list is covered by a structured field
+  Given the 35 rows of android-m3-api.md in Button, IconButton, FloatingActionButton, FabPosition and SegmentedButton
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+```
+Proof: the GAP count for these families drops from 32 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A8 Theme and base (issue #254)
+```gherkin
+Scenario: every Theme and base row of the Android API list is covered by a structured field
+  Given the 13 rows of android-m3-api.md in MaterialTheme, ColorScheme, Typography, Shapes, Shape, Ripple, RippleConfiguration, Text, Icon, ExperimentalMaterial3Api (Label went to A6)
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 13 to 0. Test: `test_s231_one_name_as_a_variant_and_as_supporting_passes` and the changed `test_s231_a_name_listed_twice_in_one_doc_fails` in `tests/test_ui_api_lists.py`. Local: `python3 scripts/check_ui_coverage.py`.
+Proof: the GAP count for these families drops from 31 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A2 App bars and navigation (issue #238)
+```gherkin
+Scenario: every App bars and navigation row of the Android API list is covered by a structured field
+  Given the 77 rows of android-m3-api.md in AppBar, AppBarColumn, AppBarRow, NavigationBar, ShortNavigationBar, NavigationRail, WideNavigationRail, NavigationDrawer, Drawer, DrawerValue, NavigationItem, NavigationItemIconPosition, Tab, TabRow
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 72 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A3 Text input and menus (issue #240)
+```gherkin
+Scenario: every Text input and menus row of the Android API list is covered by a structured field
+  Given the 39 rows of android-m3-api.md in TextField, OutlinedTextField, SecureTextField, SearchBar, ExposedDropdownMenu, Menu
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 36 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A4 Selection (issue #244)
+```gherkin
+Scenario: every Selection row of the Android API list is covered by a structured field
+  Given the 38 rows of android-m3-api.md in Checkbox, RadioButton, Switch, Slider, Chip, SelectableChip, SelectableChipElevation
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 33 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A5 Date and time pickers (issue #246)
+```gherkin
+Scenario: every Date and time pickers row of the Android API list is covered by a structured field
+  Given the 30 rows of android-m3-api.md in DatePicker, DateRangePicker, DatePickerDialog, TimePicker, TimePickerDialog, DisplayMode, SelectableDates
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 28 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A6 Sheets, dialogs and tooltips (issue #248)
+```gherkin
+Scenario: every Sheets, dialogs and tooltips row of the Android API list is covered by a structured field
+  Given the 35 rows of android-m3-api.md in BottomSheet, ModalBottomSheet, BottomSheetScaffold, DragHandle, AlertDialog, Tooltip, DefaultTooltipCaretShape, plus Label and Scaffold (moved here from A8 and A7, see Decisions)
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 32 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A7 Feedback and containment (issue #251)
+```gherkin
+Scenario: every Feedback and containment row of the Android API list is covered by a structured field
+  Given the 52 rows of android-m3-api.md in Snackbar, SnackbarHost, ProgressIndicator, Badge, Card, Carousel, Divider, ListItem, PullToRefresh, SwipeToDismissBox, Surface (Scaffold moved to A6)
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 44 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, PR #255 review 2: own family, own kind, API list as the Android source
+```gherkin
+Scenario: an Android component row counts only for a doc of its own family
+  Given an API list with a component row Icon of family Icon
+  When the Button doc lists Icon under platformApi.android.variants
+  Then check_ui_coverage.py prints "Icon (component, needs a doc of family Icon)" and --strict-api fails
+  And a doc whose platforms.android is a component row of the API list is not an extra
+  And a doc whose platforms.android is no row at all is still an extra
+  And a supporting entry that names a variant row fails with "no such supporting row"
+```
+Tests: `tests/test_ui_coverage.py` (s231, three new tests). Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #235: every iOS alternative is reviewed, and every "none" says why
+```gherkin
+Scenario: an agent reading a row Apple does not offer on iOS always learns what to use, or why there is nothing
+  Given IOS_ALTERNATIVES in scripts/ui_api_lists.py, reviewed against each entry's Apple page
+  When the generator meets an unavailable-ios row whose alternative is "none" with no reason after "none: "
+  Then it fails, naming the row and asking for a one-line reason
+  And a "none: <reason>" row keeps the reason, and its detail ends with "`none`, because <reason>"
+  And every real "none" in the table has a reason
+```
+Tests: `tests/test_ui_api_lists.py` (s231). Local: `python3 scripts/ui_api_lists.py --check`.
+
+## Story #231, sub-issue #249 (I1): iOS Controls have docs, and an iOS-only doc gets its topic
+```gherkin
+Scenario: every I1 Controls row of the SwiftUI list is covered, and an agent can read the new docs
+  Given the I1 rows of docs/research/ios-swiftui-api.md (Button parts and system buttons, Toggle parts, Picker,
+        MultiDatePicker, Gauge and ProgressView parts, Link, HelpLink, SettingsLink, TextFieldLink, ShareLink parts,
+        Menu parts, MenuButton, ControlGroup)
+  When check_ui_coverage.py runs
+  Then no I1 row is a GAP line, and each covering entry carries the row's status
+  And a doc with platforms.ios null but platformApi.ios or platformUsage.ios set gets an ios topic, and no android one
+  And that topic says "Use the SwiftUI API below as Apple ships it"
+```
+Tests: `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/ui_topics.py --check`, `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #256 (I2): iOS containers and navigation have docs
+```gherkin
+Scenario: every I2 row of the SwiftUI list is covered
+  Given the I2 rows of docs/research/ios-swiftui-api.md (NavigationStack, NavigationLink, NavigationView, TabView parts,
+        ForEach, Section, OutlineGroup, Form, LabeledContent, ScrollViewReader, Table, the grids and stacks,
+        GroupBox and DisclosureGroup parts, ContentUnavailableView, DocumentLaunchView)
+  When check_ui_coverage.py runs
+  Then no I2 row is a GAP line, and NavigationView and the not-on-iOS stacks carry their status and replacement
+  And each new doc has an ios topic that ui_topics.py --check keeps current
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #259 (I3): iOS text, images, shapes and plumbing have docs
+```gherkin
+Scenario: every I3 row of the SwiftUI list is covered
+  Given the I3 rows of docs/research/ios-swiftui-api.md (SecureField, TextEditor, AsyncImage, Label parts, Divider,
+        the shapes, Color and the gradients, Canvas, Liquid Glass types, the animators, the 27 plumbing types)
+  When check_ui_coverage.py runs
+  Then no I3 row is a GAP line
+  And the Shape doc says shapes, Path and Canvas never build a control (rule 38)
+  And the plumbing types sit together in two docs, ViewPlumbing and ShapePlumbing
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #262 (I4): iOS presentation, search and state modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Presentation, Search and State pages is covered
+  Given the 90 I4 modifier rows of docs/research/ios-swiftui-api.md
+  When check_ui_coverage.py runs
+  Then no I4 row is a GAP line
+  And .sheet and the presentation modifiers sit in BottomSheet, .alert in Dialog, .searchable in SearchBar
+  And the Mac-only and visionOS-only rows print as "Do not use: X. Use Y." in their topics
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #264 (I5): iOS input and event modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Input and event modifiers page is covered
+  Given the 128 I5 modifier rows of docs/research/ios-swiftui-api.md
+  When check_ui_coverage.py runs
+  Then no I5 row is a GAP line
+  And .swipeActions and .refreshable sit in List, the scroll modifiers in ScrollView, .onSubmit in TextField
+  And the Mac, tvOS, watchOS and visionOS-only rows print as "Do not use: X. Use Y." in their topics
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #266 (I6a): iOS style modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Style modifiers page is covered by its control's doc
+  Given the 26 I6a modifier rows (presentedWindowToolbarStyle moved to I6b) of docs/research/ios-swiftui-api.md
+  When check_ui_coverage.py runs
+  Then no I6a row is a GAP line
+  And .buttonStyle sits in Button, .toggleStyle in Switch, .pickerStyle in Picker, .listStyle in List, .glassEffect in Glass
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #269 (I6b): iOS appearance modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Appearance modifiers page is covered
+  Given the 70 Appearance rows of docs/research/ios-swiftui-api.md, plus presentedWindowToolbarStyle
+  When check_ui_coverage.py runs
+  Then no I6b row is a GAP line
+  And the list, scroll and menu appearance modifiers sit in List, ScrollView and Menu; the rest in AppearanceModifiers
+  And the Mac window and visionOS rows print as "Do not use: X. Use Y." in their topics
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #271 (I7): iOS text, symbol and accessibility modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Text and symbol and Accessibility pages is covered
+  Given the 92 I7 modifier rows of docs/research/ios-swiftui-api.md
+  When check_ui_coverage.py runs
+  Then no I7 row is a GAP line
+  And .font and the text styling modifiers sit in Text, .keyboardType and input rules in TextField,
+      the symbol modifiers in Image, and the accessibility modifiers in AccessibilityModifiers
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #273 (I8): iOS auxiliary view, layout and graphics modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Auxiliary view, Layout, and Graphics and rendering pages is covered
+  Given the 133 I8 modifier rows of docs/research/ios-swiftui-api.md
+  When check_ui_coverage.py runs
+  Then no I8 row is a GAP line
+  And .toolbar sits in AppBar, .navigationTitle in NavigationStack, .badge in Badge, .gridCellColumns in Grid,
+      .animation in Animators, and the rest in LayoutModifiers and GraphicsModifiers
+  And Badge and Tooltip, Android docs until now, get an ios topic with no Compose word in it
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #275: every framework topic has one doc, counted by the gate
+```gherkin
+Scenario: each row of framework-topics.md is one doc and one topic
+  Given docs/research/framework-topics.md with its iOS and Android tables
+  When check_ui_coverage.py runs
+  Then a topic with no ui/components/<topic-slug>/ doc, or no <platform>-<topic-slug> topic, is a GAP line
+      "api <platform> framework topics: <Topic> (framework)", and --strict-api fails on it
+  And a framework doc may name its framework's own types under platformApi, but any other doc naming a type
+      that is not an API list row still fails
+  And the 11 iOS docs (swift-charts ... controls) each point at Apple's official framework
+```
+Tests: `tests/test_ui_coverage.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, sub-issue #276 (I9): iOS technology, chart, deprecated and View-page modifiers have docs
+```gherkin
+Scenario: every modifier on Apple's Technology-specific, Chart view, Deprecated and View pages is covered
+  Given the 150 I9 modifier rows of docs/research/ios-swiftui-api.md
+  When check_ui_coverage.py runs
+  Then no I9 row is a GAP line, and the iOS GAP is 0
+  And the chart modifiers sit in swift-charts, the web view modifiers in web-view
+  And each deprecated modifier sits in the doc of its job and prints as "Do not use: X. Use <Apple's replacement>."
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, review 2 of the iOS stack (PRs #277 to #280)
+```gherkin
+Scenario: the framework exemption is narrow, an empty topic serves nothing, and the list generator is protected
+  Given a framework doc and another doc that both name a type that is no API row
+  When check_ui_coverage.py runs
+  Then only the other doc fails, and the error names only that doc
+  And a framework doc naming a real API row in the wrong slot still fails the kind check
+  And an empty <platform>-<topic> file is a GAP line, not a served topic
+  And scripts/protected_paths.txt lists scripts/ui_api_lists.py
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_protected_paths.py` (s231). CI and local: pytest.
+## Story #231, Android own docs part 2
+```gherkin
+Scenario: each Android component row has a doc of its own family
+  Given the component rows BottomSheetScaffold, DatePickerDialog, DateRangePicker, TimePickerDialog, SwipeToDismissBox, Icon, Label (folder TooltipLabel), MaterialTheme and Text (android side of the existing Text doc)
+  When check_ui_coverage.py runs
+  Then none of them prints "needs a doc of family" or "(component)" as a GAP
+  And each new doc names the row in platforms.android and is not an extra
+```
+Proof: the Android GAP drops from 18 to 9. No script changed. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android own docs part 1, and one topic file per doc
+```gherkin
+Scenario: each Android component row has a doc of its own family, and no two docs share a topic file
+  Given the component rows AppBarRow, AppBarColumn, ShortNavigationBar, WideNavigationRail, Tab, OutlinedTextField,
+    SecureTextField, Snackbar and Surface
+  When check_ui_coverage.py runs
+  Then none of them prints "needs a doc of family" or "(component)" as a GAP
+  Given two docs that would both write android-snackbar
+  When ui_topics.py runs
+  Then it fails and names both folders
+```
+Tests: `tests/test_ui_topics.py::test_s231_two_docs_with_one_topic_name_fail`. Local: `python3 scripts/ui_topics.py --check`.
+
+## Story #231, last part: Android framework topics and the strict gate (issue #286)
+```gherkin
+Scenario: every API row and framework topic is covered, and the gate is strict everywhere
+  Given the Android rows Pull to refresh, Widgets and Notifications of framework-topics.md
+  When check_ui_coverage.py --strict-api runs on the repo
+  Then it passes with no GAP line on either platform
+  And CI (ui-cli) and check_local.sh pass --strict-api
+  And under --strict-api each gap prints once, as a FAIL line
+```
+Tests: `tests/test_ui_coverage.py` (s231). Local: `bash scripts/check_local.sh ui-coverage`.
