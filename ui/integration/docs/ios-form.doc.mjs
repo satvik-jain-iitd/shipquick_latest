@@ -34,8 +34,13 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "Form: iOS 13.0. Apple: \"A container for grouping controls used for data entry, such as in settings or inspectors.\"",
+            "LabeledContent: iOS 16.0. Apple: \"A container for attaching a label to a value-bearing view.\"",
             "formStyle: `.formStyle(_:)`, iOS 16.0. Apple: \"Sets the style for forms in a view hierarchy.\"",
-            "labeledContentStyle: `.labeledContentStyle(_:)`, iOS 16.0. Apple: \"Sets a style for labeled content.\""
+            "labeledContentStyle: `.labeledContentStyle(_:)`, iOS 16.0. Apple: \"Sets a style for labeled content.\"",
+            "FormStyleConfiguration.Content: iOS 16.0. Apple: \"A type-erased content of a form.\"",
+            "LabeledContentStyleConfiguration.Content: iOS 16.0. Apple: \"A type-erased content of a labeled content instance.\"",
+            "LabeledContentStyleConfiguration.Label: iOS 16.0. Apple: \"A type-erased label of a labeled content instance.\""
           ]
         }
       ]

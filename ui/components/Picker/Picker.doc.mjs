@@ -35,6 +35,7 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "Picker", "note": "iOS 13.0. Apple: \"A control for selecting from a set of mutually exclusive values.\""},
         {"name": "pickerStyle", "note": "`.pickerStyle(_:)`, iOS 13.0. Apple: \"Sets the style for pickers within this view.\""}
       ]
     }

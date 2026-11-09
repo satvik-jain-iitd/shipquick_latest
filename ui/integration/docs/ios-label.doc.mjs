@@ -62,7 +62,9 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "labelStyle: `.labelStyle(_:)`, iOS 14.0. Apple: \"Sets the style for labels within this view.\""
+            "labelStyle: `.labelStyle(_:)`, iOS 14.0. Apple: \"Sets the style for labels within this view.\"",
+            "LabelStyleConfiguration.Icon: iOS 14.0. Apple: \"A type-erased icon view of a label.\"",
+            "LabelStyleConfiguration.Title: iOS 14.0. Apple: \"A type-erased title view of a label.\""
           ]
         }
       ]

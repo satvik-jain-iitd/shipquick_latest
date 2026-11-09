@@ -68,7 +68,12 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "gaugeStyle: `.gaugeStyle(_:)`, iOS 16.0. Apple: \"Sets the style for gauges within this view.\""
+            "gaugeStyle: `.gaugeStyle(_:)`, iOS 16.0. Apple: \"Sets the style for gauges within this view.\"",
+            "GaugeStyleConfiguration.CurrentValueLabel: iOS 16.0. Apple: \"A type-erased value label of a gauge that contains the current value.\"",
+            "GaugeStyleConfiguration.Label: iOS 16.0. Apple: \"A type-erased label of a gauge, describing its purpose.\"",
+            "GaugeStyleConfiguration.MarkedValueLabel: iOS 16.0. Apple: \"A type-erased label describing a specific value of a gauge.\"",
+            "GaugeStyleConfiguration.MaximumValueLabel: iOS 16.0. Apple: \"A type-erased value label of a gauge describing the maximum value.\"",
+            "GaugeStyleConfiguration.MinimumValueLabel: iOS 16.0. Apple: \"A type-erased value label of a gauge describing the minimum value.\""
           ]
         }
       ]

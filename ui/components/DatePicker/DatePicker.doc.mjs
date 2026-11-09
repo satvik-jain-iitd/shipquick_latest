@@ -156,7 +156,11 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "MultiDatePicker", "note": "iOS 16.0. Apple: \"A control for picking multiple dates.\""},
         {"name": "datePickerStyle", "note": "`.datePickerStyle(_:)`, iOS 13.0. Apple: \"Sets the style for date pickers within this view.\""}
+      ],
+      "supporting": [
+        {"name": "DatePickerStyleConfiguration.Label", "use": "iOS 16.0. Apple: \"A type-erased label of a `DatePicker`.\""}
       ]
     }
   }

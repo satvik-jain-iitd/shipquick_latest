@@ -68,7 +68,9 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "disclosureGroupStyle: `.disclosureGroupStyle(_:)`, iOS 16.0. Apple: \"Sets the style for disclosure groups within this view.\""
+            "disclosureGroupStyle: `.disclosureGroupStyle(_:)`, iOS 16.0. Apple: \"Sets the style for disclosure groups within this view.\"",
+            "DisclosureGroupStyleConfiguration.Content: iOS 16.0. Apple: \"A type-erased content of a disclosure group.\"",
+            "DisclosureGroupStyleConfiguration.Label: iOS 16.0. Apple: \"A type-erased label of a disclosure group.\""
           ]
         }
       ]

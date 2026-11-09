@@ -40,8 +40,20 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "EditButton", "note": "iOS 13.0. Apple: \"A button that toggles the edit mode environment value.\""},
+        {"name": "NewDocumentButton", "note": "iOS 18.0. Apple: \"A button that creates and opens new documents.\""},
+        {"name": "PasteButton", "note": "iOS 16.0. Apple: \"A system button that reads items from the pasteboard and delivers it to a closure.\""},
+        {"name": "RenameButton", "note": "iOS 16.0. Apple: \"A button that triggers a standard rename action.\""},
+        {"name": "pasteDestination", "note": "`.pasteDestination(for:action:validator:)`, iOS 27.0. Apple: \"Specifies an action that adds validated items to a view in response to the system’s Paste command.\""},
+        {"name": "renameAction", "note": "`.renameAction(_:)`, iOS 16.0. Apple: \"Sets a closure to run for the rename action.\""},
         {"name": "buttonSizing", "note": "`.buttonSizing(_:)`, iOS 26.0. Apple: \"The preferred sizing behavior of buttons in the view hierarchy.\""},
         {"name": "buttonStyle", "note": "`.buttonStyle(_:)`, iOS 13.0. Apple: \"Sets the style for buttons within this view to a button style with a custom appearance and standard interaction behavior.\""}
+      ],
+      "supporting": [
+        {"name": "ButtonStyleConfiguration.Label", "use": "iOS 13.0. Apple: \"A type-erased label of a button.\""},
+        {"name": "DefaultButtonLabel", "use": "iOS 26.0. Apple: \"The default label to use for a button.\""},
+        {"name": "DefaultNewDocumentButtonLabel", "use": "iOS 27.0. Apple: \"The default label used for a new document button.\""},
+        {"name": "PrimitiveButtonStyleConfiguration.Label", "use": "iOS 13.0. Apple: \"A type-erased label of a button.\""}
       ]
     },
     "android": {

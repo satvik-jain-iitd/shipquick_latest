@@ -140,5 +140,20 @@ export default {
       "platform": "ios",
       "default": "nil"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "searchable", "note": "`.searchable(text:placement:prompt:)`, iOS 16.0. Apple: \"Marks this view as searchable, which configures the display of a search field.\""},
+        {"name": "searchCompletion", "note": "`.searchCompletion(_:)`, iOS 15.0. Apple: \"Associates a fully formed string with the value of this view when used as a search suggestion.\""},
+        {"name": "searchDictationBehavior", "note": "`.searchDictationBehavior(_:)`, iOS 17.0. Apple: \"Configures the dictation behavior for any search fields configured by the searchable modifier.\""},
+        {"name": "searchPresentationToolbarBehavior", "note": "`.searchPresentationToolbarBehavior(_:)`, iOS 17.1. Apple: \"Configures the search toolbar presentation behavior for any searchable modifiers within this view.\""},
+        {"name": "searchScopes", "note": "`.searchScopes(_:scopes:)`, iOS 16.0. Apple: \"Configures the search scopes for this view.\""},
+        {"name": "searchSelection", "note": "`.searchSelection(_:)`, iOS 26.0. Apple: \"Binds the selection of the search field associated with the nearest searchable modifier to the given `TextSelection` value.\""},
+        {"name": "searchSuggestions", "note": "`.searchSuggestions(_:)`, iOS 16.0. Apple: \"Configures the search suggestions for this view.\""},
+        {"name": "searchToolbarBehavior", "note": "`.searchToolbarBehavior(_:)`, iOS 26.0. Apple: \"Configures the behavior for search in the toolbar.\""},
+        {"name": "searchFocused", "note": "`.searchFocused(_:)`, iOS 18.0. Apple: \"Modifies this view by binding the focus state of the search field associated with the nearest searchable modifier to the given Boolean value.\""}
+      ]
+    }
+  }
 };

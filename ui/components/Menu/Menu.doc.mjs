@@ -146,7 +146,12 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "MenuButton", "note": "not on iOS. Apple: \"A button that displays a menu containing a list of choices when pressed.\"", "status": "unavailable-ios", "replacement": "Menu"},
         {"name": "menuStyle", "note": "`.menuStyle(_:)`, iOS 14.0. Apple: \"Sets the style for menus within this view.\""}
+      ],
+      "supporting": [
+        {"name": "MenuStyleConfiguration.Content", "use": "iOS 14.0. Apple: \"A type-erased content of a menu.\""},
+        {"name": "MenuStyleConfiguration.Label", "use": "iOS 14.0. Apple: \"A type-erased label of a menu.\""}
       ]
     }
   }

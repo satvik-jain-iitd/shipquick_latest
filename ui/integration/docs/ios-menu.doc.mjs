@@ -68,7 +68,16 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "menuStyle: `.menuStyle(_:)`, iOS 14.0. Apple: \"Sets the style for menus within this view.\""
+            "menuStyle: `.menuStyle(_:)`, iOS 14.0. Apple: \"Sets the style for menus within this view.\"",
+            "MenuStyleConfiguration.Content: iOS 14.0. Apple: \"A type-erased content of a menu.\"",
+            "MenuStyleConfiguration.Label: iOS 14.0. Apple: \"A type-erased label of a menu.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: MenuButton. Use Menu."
           ]
         }
       ]

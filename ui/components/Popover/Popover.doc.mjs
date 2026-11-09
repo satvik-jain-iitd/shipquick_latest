@@ -73,5 +73,12 @@ export default {
       "description": "The view inside the popover.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "popover", "note": "`.popover(item:attachmentAnchor:arrowEdge:content:)`, iOS 13.0. Apple: \"Presents a popover using the given item as a data source for the popover’s content.\""}
+      ]
+    }
+  }
 };

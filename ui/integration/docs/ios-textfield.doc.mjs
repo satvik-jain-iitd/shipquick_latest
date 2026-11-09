@@ -74,8 +74,21 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "SecureField: iOS 13.0. Apple: \"A control into which people securely enter private text.\"",
+            "TextEditor: iOS 14.0. Apple: \"A view that can display and edit long-form text.\"",
+            "TextInputBorderShape: iOS 27.0. Apple: \"A shape used to draw the border of a text input control.\"",
+            "onSubmit: `.onSubmit(of:_:)`, iOS 15.0. Apple: \"Adds an action to perform when the user submits a value to this view.\"",
+            "submitLabel: `.submitLabel(_:)`, iOS 15.0. Apple: \"Sets the submit label for this view.\"",
+            "submitScope: `.submitScope(_:)`, iOS 15.0. Apple: \"Prevents submission triggers originating from this view to invoke a submission action configured by a submission modifier higher up in the view hierarchy.\"",
             "textEditorStyle: `.textEditorStyle(_:)`, iOS 17.0. Apple: \"Sets the style for text editors within this view.\"",
             "textFieldStyle: `.textFieldStyle(_:)`, iOS 13.0. Apple: \"Sets the style for text fields within this view.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: TextFieldLink. Use TextField."
           ]
         }
       ]

@@ -173,6 +173,10 @@ export default {
     "ios": {
       "variants": [
         {"name": "tabViewStyle", "note": "`.tabViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the tab view within the current environment.\""}
+      ],
+      "supporting": [
+        {"name": "DefaultTabLabel", "use": "iOS 18.0. Apple: \"The default label to use for a tab or tab section.\""},
+        {"name": "TabContentBuilder.Content", "use": "iOS 18.0. Apple: \"A view representation of the content of a builder-based tab view with selection.\""}
       ]
     },
     "android": {

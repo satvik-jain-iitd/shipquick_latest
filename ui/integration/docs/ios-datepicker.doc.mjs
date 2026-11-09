@@ -73,7 +73,9 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "datePickerStyle: `.datePickerStyle(_:)`, iOS 13.0. Apple: \"Sets the style for date pickers within this view.\""
+            "MultiDatePicker: iOS 16.0. Apple: \"A control for picking multiple dates.\"",
+            "datePickerStyle: `.datePickerStyle(_:)`, iOS 13.0. Apple: \"Sets the style for date pickers within this view.\"",
+            "DatePickerStyleConfiguration.Label: iOS 16.0. Apple: \"A type-erased label of a `DatePicker`.\""
           ]
         }
       ]

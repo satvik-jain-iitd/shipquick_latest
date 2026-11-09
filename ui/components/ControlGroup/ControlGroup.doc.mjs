@@ -23,7 +23,12 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "ControlGroup", "note": "iOS 15.0. Apple: \"A container view that displays semantically-related controls in a visually-appropriate manner for the context\""},
         {"name": "controlGroupStyle", "note": "`.controlGroupStyle(_:)`, iOS 15.0. Apple: \"Sets the style for control groups within this view.\""}
+      ],
+      "supporting": [
+        {"name": "ControlGroupStyleConfiguration.Content", "use": "iOS 15.0. Apple: \"A type-erased content of a `ControlGroup`.\""},
+        {"name": "ControlGroupStyleConfiguration.Label", "use": "iOS 16.0. Apple: \"A type-erased label of a `ControlGroup`.\""}
       ]
     }
   }

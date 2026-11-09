@@ -33,10 +33,19 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "GlassEffectContainer: iOS 26.0. Apple: \"A view that combines multiple Liquid Glass shapes into a single shape that can morph individual shapes into one another.\"",
             "glassEffect: `.glassEffect(_:in:)`, iOS 26.0. Apple: \"Applies the Liquid Glass effect to a view.\"",
             "glassEffectID: `.glassEffectID(_:in:)`, iOS 26.0. Apple: \"Associates an identity value to Liquid Glass effects defined within this view.\"",
             "glassEffectTransition: `.glassEffectTransition(_:)`, iOS 26.0. Apple: \"Associates a glass effect transition with any glass effects defined within this view.\"",
-            "glassEffectUnion: `.glassEffectUnion(id:namespace:)`, iOS 26.0. Apple: \"Associates any Liquid Glass effects defined within this view to a union with the provided identifier.\""
+            "glassEffectUnion: `.glassEffectUnion(id:namespace:)`, iOS 26.0. Apple: \"Associates any Liquid Glass effects defined within this view to a union with the provided identifier.\"",
+            "DefaultGlassEffectShape: iOS 26.0. Apple: \"The default shape applied by glass effects, a capsule.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: GlassBackgroundEffectConfiguration.Content. Use glassEffect."
           ]
         }
       ]

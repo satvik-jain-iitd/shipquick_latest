@@ -33,7 +33,10 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "controlGroupStyle: `.controlGroupStyle(_:)`, iOS 15.0. Apple: \"Sets the style for control groups within this view.\""
+            "ControlGroup: iOS 15.0. Apple: \"A container view that displays semantically-related controls in a visually-appropriate manner for the context\"",
+            "controlGroupStyle: `.controlGroupStyle(_:)`, iOS 15.0. Apple: \"Sets the style for control groups within this view.\"",
+            "ControlGroupStyleConfiguration.Content: iOS 15.0. Apple: \"A type-erased content of a `ControlGroup`.\"",
+            "ControlGroupStyleConfiguration.Label: iOS 16.0. Apple: \"A type-erased label of a `ControlGroup`.\""
           ]
         }
       ]
