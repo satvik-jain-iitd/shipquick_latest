@@ -273,3 +273,18 @@ Scenario: the publish list and the check come from canvas.json
   And --verify with a full listing exits 0
 ```
 Tests: `tests/test_canvas_stage.py` (S19 to S21).
+
+## Story #139: maker and checker are different sessions (ADR-011)
+```gherkin
+Scenario: the session that built a commit cannot approve the pull request
+  Given roles.yml lists coder_sessions and reviewer_sessions
+  And a commit on the PR carries "Built-by: proj-qa"
+  When proj-qa approves with "Reviewed-by: proj-qa"
+  Then review_merge.sh refuses: "proj-qa built a commit"
+  And an approval that names no session refuses
+  And an approval from a reviewer session that built nothing merges
+  And a commit with no coder session in Built-by fails the roles job
+  And a session name listed twice makes roles.py refuse the file
+  And with no session lists nothing about sessions is checked
+```
+Tests: `tests/test_check_roles.py`, `tests/test_roles.py`, `tests/test_role.py`, `tests/test_review_merge.py` (s139).

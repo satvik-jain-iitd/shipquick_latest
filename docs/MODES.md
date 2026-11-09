@@ -28,6 +28,30 @@ One account listed as both the only `coder` and the only `reviewer` can never ru
 refuses it): with one account playing both roles, the gate's "approver is not the author" check can never
 pass, so Auto would just stop on every pull request. Manual and Semi still work; the owner reviews by hand.
 
+### Maker and checker are different sessions (ADR-011, story #139)
+
+Two agent sessions on one machine can see both accounts. So the account check alone cannot tell
+who built a pull request. The session check closes that gap. It is opt-in.
+
+1. Add the session names to `.shipquick/roles.yml` (a protected path, so the owner merges it):
+   `coder_sessions:` and `reviewer_sessions:`, one name per line, from `docs/TEAM_ROSTER.md`.
+   One name may never appear twice; `roles.py` refuses the file.
+2. Each session takes its role once: `SHIPQUICK_SESSION=<name> source scripts/role.sh coder`
+   (or `reviewer`). This saves the name for that worktree.
+3. Install the hook once: `pre-commit install --hook-type prepare-commit-msg`. It adds
+   `Built-by: <session>` to every commit (`scripts/session_trailer.sh`).
+4. The approving review says `Reviewed-by: <session>` (a teammate block header `from <session>` counts).
+
+Then the `roles` CI job fails a commit with no coder session, and `scripts/review_merge.sh`
+refuses an approval that names no session, a session that is not a reviewer, or a session that
+built any commit on the pull request. A reviewer that has to fix something hands the review to
+the other session.
+
+The limit: the trailer is self-declared. It stops the accident (a reviewer builds, then approves
+its own work without noticing). It does not stop a session that types another session's name on
+purpose. The stronger setup, not a gate: give each session only its own `gh` login, so it cannot
+borrow the other account's token.
+
 ## The merge gate (Auto only)
 `scripts/review_merge.sh <pr> [owner/repo]` is the only way an agent merges. It refuses, and says which rule, unless all of these hold:
 1. The mode is `auto`.

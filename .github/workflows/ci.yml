@@ -141,11 +141,12 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
         run: |
-          commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '[.[] | "\(.author.login):\(.parents | length)"] | join(",")')
+          commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '[.[] | "\(.author.login):\(.parents | length):\([.commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)").s][0] // "")"] | join(",")')
           coders=$(python3 scripts/roles.py get coder)
           reviewers=$(python3 scripts/roles.py get reviewer)
           owner=$(python3 scripts/roles.py get owner)
-          python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner"
+          coder_sessions=$(python3 scripts/roles.py get coder_sessions)
+          python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner" --coder-sessions "$coder_sessions"
   team-block:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'

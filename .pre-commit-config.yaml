@@ -19,6 +19,12 @@ repos:
         entry: python3 scripts/check_commit_msg.py
         language: system
         stages: [commit-msg]
+      - id: session-trailer
+        name: Add Built-by <session> to the commit message (ADR-011)
+        entry: bash scripts/session_trailer.sh
+        language: system
+        always_run: true
+        stages: [prepare-commit-msg]
       - id: md-block-check
         name: Markdown code block check
         entry: python3 scripts/check_md_blocks.py

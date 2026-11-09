@@ -179,7 +179,13 @@ hooks="  - repo: local
         language: system
         pass_filenames: false
         always_run: true
-        stages: [pre-push]"
+        stages: [pre-push]
+      - id: session-trailer
+        name: Add Built-by <session> to the commit message (ADR-011)
+        entry: bash $rel/scripts/session_trailer.sh
+        language: system
+        always_run: true
+        stages: [prepare-commit-msg]"
 if [ -e "$child/.pre-commit-config.yaml" ] && grep -q "check_local.sh" "$child/.pre-commit-config.yaml"; then
   echo "unchanged .pre-commit-config.yaml (has the ShipQuick hooks)"
 elif [ -e "$child/.pre-commit-config.yaml" ]; then

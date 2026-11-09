@@ -29,9 +29,20 @@ elif ! printf ',%s,' "$_accounts" | grep -qF ",$_account,"; then
   echo "role.sh: $_account is not a $_role account in .shipquick/roles.yml (have: $_accounts)" >&2
   return 1
 fi
+# story #139 (ADR-011): with session lists in roles.yml, name this session ($SHIPQUICK_SESSION) and save
+# it for this worktree, so the prepare-commit-msg hook (session_trailer.sh) adds Built-by: to every commit.
+_sessions="$(python3 "$_role_here/roles.py" get "${_role}_sessions" --file "$_root/.shipquick/roles.yml" 2>&1)" || { echo "role.sh: $_sessions" >&2; return 1; }
+if [ -n "$_sessions" ]; then
+  if ! printf ',%s,' "$_sessions" | grep -qF ",${SHIPQUICK_SESSION:-},"; then
+    echo "role.sh: session '${SHIPQUICK_SESSION:-}' is not a $_role session in .shipquick/roles.yml (have: $_sessions). Run: SHIPQUICK_SESSION=<name> source role.sh $_role" >&2
+    return 1
+  fi
+  git -C "$_root" config extensions.worktreeConfig true
+  git -C "$_root" config --worktree shipquick.session "$SHIPQUICK_SESSION"
+fi
 _token="$(gh auth token --user "$_account" 2>&1)" || { echo "role.sh: no token for $_account on this machine ($_token)" >&2; return 1; }
 export GH_TOKEN="$_token"
 export SHIPQUICK_ROLE="$_role"
 export SHIPQUICK_ACCOUNT="$_account"
 echo "role: $_role ($_account)"
-unset _role _accounts _account _token _role_here _root
+unset _role _accounts _account _token _role_here _root _sessions

@@ -115,3 +115,32 @@ def test_s140_no_account_name_lives_in_a_gate_script(rel):
     text = (ROOT / rel).read_text(encoding="utf-8")
     for acct in ACCOUNTS:
         assert acct not in text, f"{rel} hardcodes {acct}"
+
+
+# Story #139 (ADR-011): optional session lists; one name may never play two parts.
+SESSIONS = GOOD + "coder_sessions:\n  - proj-dev\nreviewer_sessions:\n  - proj-qa\n"
+
+
+def test_session_lists_are_read(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(SESSIONS, encoding="utf-8")
+    assert roles.load(f)["coder_sessions"] == ["proj-dev"]
+    assert roles.main(["get", "reviewer_sessions", "--file", str(f)]) == 0
+
+
+def test_an_unset_session_list_prints_nothing_and_succeeds(tmp_path, capsys):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD, encoding="utf-8")
+    assert roles.main(["get", "coder_sessions", "--file", str(f)]) == 0
+    assert capsys.readouterr().out.strip() == ""
+
+
+def test_two_sessions_with_the_same_name_are_refused(tmp_path):
+    f = tmp_path / "roles.yml"
+    f.write_text(GOOD + "coder_sessions:\n  - proj-dev\nreviewer_sessions:\n  - proj-dev\n", encoding="utf-8")
+    try:
+        roles.load(f)
+    except ValueError as e:
+        assert "proj-dev" in str(e) and "twice" in str(e)
+    else:
+        raise AssertionError("a repeated session name must be refused")
