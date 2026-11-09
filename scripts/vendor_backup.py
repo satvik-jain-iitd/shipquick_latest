@@ -178,6 +178,14 @@ def resolve_maven(bom, roots, repos, fetch) -> list[dict]:
     info = pom_info(pom)
     managed = {(g, a): v for g, a, v in info["managed"]}
     out, seen = [_file(bom, f"{bom[1]}-{bom[2]}.pom", repo, pom, info["licenses"])], set()
+    bmod = fetch(f"{repo}/{mpath(*bom, f'{bom[1]}-{bom[2]}.module')}")
+    if bmod is not None:  # a Gradle platform lists its versions as constraints in the module file
+        out.append(_file(bom, f"{bom[1]}-{bom[2]}.module", repo, bmod, info["licenses"]))
+        for var in json.loads(bmod).get("variants", []):
+            for d in var.get("dependencyConstraints", []) + var.get("dependencies", []):
+                managed[(d["group"], d["module"])] = d.get("version", {}).get("requires", "")
+    if not managed:
+        raise SystemExit(f"BOM {bom} lists no versions; its POM starts: {pom[:600]!r}")
     todo = [(g, a, v or managed.get((g, a), "")) for g, a, v in roots]
     while todo:
         g, a, v = todo.pop()
