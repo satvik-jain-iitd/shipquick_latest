@@ -25,6 +25,12 @@ DETEKT = {
     ".background(Color.": "androidx.compose.ui.graphics.Color",
     "GenericShape": "androidx.compose.foundation.shape.GenericShape",
     "RoundedCornerShape(": "androidx.compose.foundation.shape.RoundedCornerShape",
+    "pointerInput": "androidx.compose.ui.input.pointer.pointerInput",
+    "detectTapGestures": "androidx.compose.foundation.gestures.detectTapGestures",
+    "detectDragGestures": "androidx.compose.foundation.gestures.detectDragGestures",
+    "draggable": "androidx.compose.foundation.gestures.draggable",
+    "transformable": "androidx.compose.foundation.gestures.transformable",
+    "AndroidView": "androidx.compose.ui.viewinterop.AndroidView",
 }
 KONSIST = {
     "Canvas(": "no_canvas",
@@ -35,6 +41,12 @@ KONSIST = {
     "GenericShape": "no_hand_made_shape",
     "RoundedCornerShape(": "no_hand_made_shape",
     "custom Shape class": "no_custom_shape_class",
+    "pointerInput": "no_gesture_input",
+    "detectTapGestures": "no_gesture_input",
+    "detectDragGestures": "no_gesture_input",
+    "draggable": "no_gesture_input",
+    "transformable": "no_gesture_input",
+    "AndroidView": "no_android_view",
 }
 # iOS: banned label -> the custom rule id in swiftlint.yml that refuses it.
 SWIFTLINT = {
@@ -42,8 +54,9 @@ SWIFTLINT = {
     "Path {": "no_path",
     "raw colour": "no_raw_color",
     "Canvas {": "no_canvas",
+    "raw gesture": "no_gesture",
     "UIKit view": "no_uikit_view",
-    "import other than SwiftUI or Foundation": "no_uikit_or_ui_kit_import",
+    "import other than SwiftUI or Foundation": "no_import_outside_allowlist",
     "number in a layout modifier": "no_number_in_layout_modifier",
     "fixed font size": "no_fixed_font_size",
     "number in spacing:": "no_number_in_spacing",
@@ -89,6 +102,18 @@ def test_s185_detekt_bans_the_off_list_imports_the_template_test_refuses():
         assert rx.search(imp), imp
     for ok in ["androidx.compose.material3.Button", "androidx.compose.material.icons.Icons", "androidx.compose.foundation.clickable"]:
         assert not rx.search(ok), ok
+
+
+def test_s185_detekt_bans_package_wildcards_and_konsist_scans_every_file():
+    pat = text(ALINT / "detekt.yml")
+    rx = re.compile(re.search(r"forbiddenPatterns: '(.*)'", pat).group(1))
+    for pkg in ["androidx.compose.ui.draw", "androidx.compose.foundation", "androidx.compose.foundation.shape",
+                "androidx.compose.foundation.gestures", "androidx.compose.ui.graphics", "androidx.compose.ui.input.pointer",
+                "androidx.compose.ui.viewinterop"]:
+        assert rx.search(pkg + ".*"), pkg
+    assert not rx.search("androidx.compose.foundation.layout.*") and not rx.search("androidx.compose.material3.*")
+    konsist = text(ALINT / "UiRulesKonsistTest.kt")
+    assert "scope.files" in konsist and "withAnnotationNamed" not in konsist, "text rules run on every Kotlin file"
 
 
 def test_s185_the_two_android_tiers_use_the_same_rule_with_a_different_severity():

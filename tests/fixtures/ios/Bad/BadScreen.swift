@@ -3,12 +3,17 @@
 import SwiftUI
 import UIKit
 import SnapKit
+import Combine
 
 struct Blob: Shape {
     func path(in rect: CGRect) -> Path {
         Path { p in p.move(to: .zero) }
     }
 }
+
+struct Chip<T>: Hashable, LabelStyle {}
+
+struct Both: View & ToggleStyle {}
 
 struct Fancy: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View { configuration.label }
@@ -25,6 +30,11 @@ struct BadScreen: View {
                 .foregroundStyle(Color(red: 0.2, green: 0.1, blue: 0.9))
                 .padding(8)
             Canvas { context, size in }
+            Canvas(opaque: true) { context, size in }
+                .gesture(DragGesture())
+                .onTapGesture { }
+                .highPriorityGesture(TapGesture())
+            Rectangle().fill(Color.init(red: 1, green: 0, blue: 0))
         }
     }
 }
