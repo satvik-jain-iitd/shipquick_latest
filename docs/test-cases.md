@@ -486,3 +486,16 @@ Scenario: a coder agent starts an Android screen from a template
   And the step flow puts the outline button before the filled one and uses imePadding()
 ```
 Tests: `tests/test_android_templates.py` (s134).
+
+## Story #216: the UI coverage gate
+```gherkin
+Scenario: no counted component is left out
+  Given the Android list and the iOS list each have a "Count: N" line and a numbered table
+  Then each Count equals its rows
+  And every Android row has one doc folder with a contract, platforms.android set, and an android-<name> topic
+  And every iOS row (iOS-only by "Our doc", shared by its M3 twin's folder) has platforms.ios set and an ios-<name> topic
+  And a doc that sets a platform no row names fails as extra
+  And when core is installed, a topic or registered component whose name equals a core doc name fails
+  And without core it prints "skip web: run npm ci --ignore-scripts in ui/tool" and passes, unless --require-web
+```
+Tests: `tests/test_ui_coverage.py` (s216). CI: step in job `ui-cli` with `--require-web`. Local: `check_local.sh ui-coverage`.
