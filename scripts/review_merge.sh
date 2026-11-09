@@ -131,18 +131,24 @@ bad_path=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   if protected_match "$f"; then bad_path="$f"; break; fi
-done < <(jq -r '.[].filename' <<<"$files_json")
+done < <(jq -r '.[] | .filename, (.previous_filename // empty)' <<<"$files_json")   # a rename away from a protected path is still protected
 # story #180 (S0, ADR-013): a protected PR may merge here only when the approving review on the head
 # records a second review and the owner's own yes. `.shipquick/*` (mode, roles, freeze) never: the owner merges it.
 if [ -n "$bad_path" ]; then
-  shipquick_file=$(jq -r '.[].filename | select(startswith(".shipquick/"))' <<<"$files_json" | head -1)
+  shipquick_file=$(jq -r '.[] | .filename, (.previous_filename // empty) | select(startswith(".shipquick/"))' <<<"$files_json" | head -1)
   [ -z "$shipquick_file" ] || refuse "protected path, owner merges ($shipquick_file: mode, roles and freeze are the owner's own merge)"
   approval=$(jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
     '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" | tr -d '\r')
-  grep -qE '^Second review: [^[:space:]]' <<<"$approval" \
+  # a placeholder (<...>) or a few letters is not a second review; the yes is a real date, today or up to 14 days back
+  grep -E '^Second review: ' <<<"$approval" | grep -vE '<[^>]*>' | grep -qE '^Second review: .{10,}' \
     || refuse "protected path, owner merges ($bad_path) -- or the approving review records 'Second review: <who, findings>'"
-  grep -qE '^Owner yes: [0-9]{4}-[0-9]{2}-[0-9]{2} ".+"' <<<"$approval" \
-    || refuse "protected path, owner merges ($bad_path) -- or the approving review records 'Owner yes: <YYYY-MM-DD> \"<his words>\"'"
+  python3 -c 'import datetime as d, re, sys
+m = [re.fullmatch(r"Owner yes: (\d{4}-\d{2}-\d{2}) \"([^\"<>]{2,})\"\s*", l) for l in sys.stdin.read().splitlines()]
+m = next((x for x in m if x), None)
+try: age = (d.date.today() - d.date.fromisoformat(m[1])).days if m else -1
+except ValueError: age = -1
+sys.exit(0 if 0 <= age <= 14 else 1)' <<<"$approval" \
+    || refuse "protected path, owner merges ($bad_path) -- or the approving review records 'Owner yes: <YYYY-MM-DD> \"<his words>\"' (a real date, at most 14 days old)"
 fi
 
 uat_exempt=0

@@ -518,7 +518,8 @@ def test_s140_cannot_read_roles_yml_refuses_it_is_never_treated_as_exempt(env):
 # Story #180 (S0): a protected PR merges only when the approving review records a second review and
 # the owner's own yes. `.shipquick/*` (mode, roles, freeze) stays owner-merge only, whatever the review says.
 PROTECTED = [{"filename": ".github/workflows/ci.yml", "status": "modified"}]
-YES = 'Approved.\nSecond review: fresh reviewer agent, 0 open findings\nOwner yes: 2026-11-09 "haan merge karo"\n'
+TODAY = __import__("datetime").date.today().isoformat()   # the gate checks the yes is at most 14 days old
+YES = f'Approved.\nSecond review: fresh reviewer agent, 0 open findings\nOwner yes: {TODAY} "haan merge karo"\n'
 
 
 def with_review(body):
@@ -534,7 +535,7 @@ def test_s180_a_protected_pr_with_a_second_review_and_the_owner_yes_merges(env):
 
 
 def test_s180_a_protected_pr_without_the_owner_yes_refuses(env):
-    body = YES.replace('Owner yes: 2026-11-09 "haan merge karo"\n', "")
+    body = YES.replace(f'Owner yes: {TODAY} "haan merge karo"\n', "")
     refused(*env(pr=with_review(body), pr_files=PROTECTED), "Owner yes:")
 
 
@@ -544,7 +545,7 @@ def test_s180_a_protected_pr_without_a_second_review_refuses(env):
 
 
 def test_s180_an_owner_yes_with_no_date_or_no_quoted_words_refuses(env):
-    refused(*env(pr=with_review(YES.replace("2026-11-09 ", "")), pr_files=PROTECTED), "Owner yes:")
+    refused(*env(pr=with_review(YES.replace(f"{TODAY} ", "")), pr_files=PROTECTED), "Owner yes:")
     refused(*env(pr=with_review(YES.replace('"haan merge karo"', "yes")), pr_files=PROTECTED), "Owner yes:")
 
 
@@ -557,3 +558,33 @@ def test_s180_the_lines_in_the_pr_body_do_not_count_only_the_approving_review(en
 def test_s180_a_shipquick_mode_or_roles_change_stays_owner_merge_even_with_the_yes(env):
     files = [{"filename": ".shipquick/mode", "status": "modified"}]
     refused(*env(pr=with_review(YES), pr_files=files), "owner merges")
+
+
+# PR #196 second review: the two lines must carry real content, and a rename cannot dodge the protected list.
+def test_s180_an_impossible_or_future_owner_yes_date_refuses(env):
+    for bad in ("9999-99-99", "2999-01-01"):
+        refused(*env(pr=with_review(YES.replace(TODAY, bad)), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s180_an_owner_yes_older_than_14_days_refuses(env):
+    refused(*env(pr=with_review(YES.replace(TODAY, "2020-01-01")), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s180_placeholder_lines_refuse(env):
+    refused(*env(pr=with_review(YES.replace('"haan merge karo"', '"<his words>"')), pr_files=PROTECTED), "Owner yes:")
+    refused(*env(pr=with_review(YES.replace("fresh reviewer agent, 0 open findings", "<who, findings>")), pr_files=PROTECTED), "Second review:")
+    refused(*env(pr=with_review(YES.replace("fresh reviewer agent, 0 open findings", "ok")), pr_files=PROTECTED), "Second review:")
+
+
+def test_s180_renaming_a_protected_file_away_is_still_protected(env):
+    files = [{"filename": "docs/old-list.txt", "previous_filename": "scripts/protected_paths.txt", "status": "renamed"}]
+    refused(*env(pr_files=files), "owner merges")
+
+
+def test_s180_renaming_shipquick_roles_away_stays_owner_only(env):
+    files = [{"filename": "docs/roles.yml", "previous_filename": ".shipquick/roles.yml", "status": "renamed"}]
+    refused(*env(pr=with_review(YES), pr_files=files), "mode, roles and freeze")
+
+
+def test_s180_claude_md_is_a_protected_path(env):
+    refused(*env(pr_files=[{"filename": "CLAUDE.md", "status": "modified"}]), "owner merges")
