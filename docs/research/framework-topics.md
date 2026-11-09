@@ -1,5 +1,10 @@
 # Framework topics: the parts outside the two UI libraries (story #231)
 
+The line below is written by `python3 scripts/ui_api_lists.py --fetch-frameworks`. Do not edit it by hand.
+It pins the saved public names of each framework package. The coverage gate checks every framework-doc name against them (story #288).
+
+Saved names: `docs/research/sources/framework-names.json` sha256 `c41b207248d2b69cea00f5edb3975b29dae123de220a6442810366d94c072b86`
+
 Date: 2026-11-09. Kept by hand. Each link was opened on that date and answered 200.
 
 These are not in the Compose Material 3 API or in SwiftUI's View list. They come from another framework.

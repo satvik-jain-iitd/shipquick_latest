@@ -338,3 +338,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   the classic PUT, so existing protection and its other checks stay.
 - Decision: about 40 lines added to `scripts/kit_branch.py` (stdlib), reusing its `gh api` protection read. No package added.
 - Confidence that nothing fits better: 0.8 (the job is two GitHub API calls; any tool would still need our gate name).
+
+## 9 Nov 2026, story #288: save the public names of each framework package
+- Need: save a list of public API names of Android and Apple framework packages to validate names in docs.
+- Run: `scout.py --need "save a list of public API names of Android and Apple framework packages to validate names in docs"`: no repos found.
+  `gh search repos "android api current.txt"`: none. `gh search repos --topic=docc`: DoccZz/docc2html, tayloraswift/swift-biome,
+  JosephDuffy/VaporDocC (and two not a fit).
+- Read: the top 3 READMEs. docc2html builds a static site from a DocC archive. swift-biome serves many Swift packages'
+  docs (superseded by swift-unidoc). VaporDocC serves a DocC archive from a Vapor app. None saves a name list we can check against.
+- Borrowed: nothing new. We reuse our own `scripts/ui_api_lists.py` (its `get`, `sha`, current.txt regexes and the Apple JSON reading).
+- Decision: about 90 lines added to `scripts/ui_api_lists.py` and 30 to `scripts/check_ui_coverage.py` (stdlib). No package added.
+- Confidence that nothing fits better: 0.8 (the job is our own glue on two vendor formats we already parse).
