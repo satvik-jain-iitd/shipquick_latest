@@ -456,9 +456,11 @@ Scenario: the iOS parts come from Apple's own list
   And a shared row names its M3 component and adds no new doc
 
 Scenario: the iOS screen templates use only standard SwiftUI
-  Given the five templates in ui/ios/templates/ (sign-in, list, detail, settings, step flow)
+  Given every template in ui/ios/templates/*.swift (sign-in, list, detail, settings, step flow today)
   When their text is scanned
-  Then none has a custom Shape, Color(red:, .padding( with a bare number, Canvas {, or a UIView subclass
+  Then none has a custom Shape or ButtonStyle, Path, a raw colour, Canvas, a UIKit view, an import but SwiftUI or Foundation,
+    or a numeric literal in padding, frame, cornerRadius, offset, a system font size or spacing
+  And a token reference such as .padding(.top, Tokens.space2) passes, and each refused form is injected and caught
   And the step flow puts the filled button last, the bordered one above it, in a bottom inset that rides above the keyboard
 ```
 Tests: `tests/test_ios_library.py`, `tests/test_ios_templates.py` (s135).

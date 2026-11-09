@@ -34,5 +34,14 @@ It will add `.package(path: "knowledge/shipquick_latest/ui/ios")`.
 
 - Tokens: `Tokens.swift` comes from `design/tokens.json` in story S6. Until then the templates use the system
   spacing (`.padding()` with no number) and system colours.
-- Compiling and snapshots: a macOS CI job runs when `ui/ios/**` changes. It comes in a later story.
+- Compiling and snapshots: a macOS CI job runs when `ui/ios/**` changes. It comes in a later story (#219).
   Today a text scan checks the templates (`tests/test_ios_templates.py`).
+- `Package.swift` lists iOS only. So `swift build` on a Mac builds for macOS and fails on iOS-only calls.
+  CI must build with `xcodebuild -scheme ShipQuickUI -destination 'generic/platform=iOS'`.
+
+## What the scan refuses
+
+A custom `Shape` or `ButtonStyle`, `Path`, a raw colour (`Color(red:`, `Color(hue:`, `Color(white:`), `Canvas`,
+a UIKit view (`UIView` subclass, `UIViewRepresentable`), any import but SwiftUI and Foundation, and a number
+written in `.padding`, `.frame`, `.cornerRadius`, `.offset`, `.system(size:` or `spacing:`.
+A token reference passes, like `.padding(.top, Tokens.space2)`.
