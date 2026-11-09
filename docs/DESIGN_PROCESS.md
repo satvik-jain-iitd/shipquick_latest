@@ -163,3 +163,18 @@ Exceptions:
 
 How it is checked: the reviewer looks at the steps side by side, not one screen at a time. Measure the main button's top edge and the hero's centre on every step. They match within 2 px, or the flow goes back.
 Why: the bottom of a phone is where the thumb rests (Steven Hoober, 2013, observed one-thumb use). Apple and Google's own guides put main actions within easy reach.
+
+## 13. A default screen is not a design (9 Nov 2026, story #148)
+
+On a screen with one job (sign-in, an empty state, a permission ask, a confirmation, an error with one way out), the words are most of what the person sees. So the words are the design.
+1. Options put to the owner differ in their words, not only in layout. Each option board says in one line the sentence that makes it different.
+2. A board whose text could be pasted into any other product unchanged is not an option. It is the default, and the default is not a design.
+3. A rejected option is annotated the same day: on the canvas, beside the board, in the owner's own words, with the one rule it leaves behind. The same reason goes on the story issue, so the coder reads it without opening the canvas. Add the rule to the Design learnings board too (rule 3).
+
+The manifest carries it, and `scripts/canvas_stage.py` stops the run without it:
+- A row with `"options": true` lists each board as `{"board": "<name>", "copy": "<the sentence that makes it different>"}`. A board with no `copy`, or two boards with the same `copy`, stops the run.
+- A row whose prefix is `REJECTED` lists each board as `{"board": "<name>", "reason": "<the owner's own words>"}`. A rejected board with no `reason` stops the run.
+- Old canvases do not break. Boards rejected before this rule have no reason written down. Run `canvas_stage.py --manifest <m> --canvas <folder> --write-rejected-baseline` once. It lists them in the manifest's `rejected_baseline`. A board on that list only warns (`WARN ...`). Any new rejected board needs a reason, or the run stops. Add the owner's words to an old board when you can, then take it off the list.
+
+Applies to: any options board shown to the owner for a pick, and any screen with one main action and little else.
+Does not apply to: dense screens where the real question is layout; motion frames; a board that only restates an approved screen; a screen with no text.
