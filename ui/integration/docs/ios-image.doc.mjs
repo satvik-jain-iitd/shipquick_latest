@@ -62,6 +62,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "symbolEffect: `.symbolEffect(_:options:isActive:)`, iOS 17.0. Apple: \"Returns a new view with a symbol effect added to it.\"",
+            "symbolEffectsRemoved: `.symbolEffectsRemoved(_:)`, iOS 17.0. Apple: \"Returns a new view with its inherited symbol image effects either removed or left unchanged.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

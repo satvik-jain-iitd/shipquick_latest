@@ -68,6 +68,33 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "headerProminence: `.headerProminence(_:)`, iOS 15.0. Apple: \"Sets the header prominence for this view.\"",
+            "listItemTint: `.listItemTint(_:)`, iOS 14.0. Apple: \"Sets a fixed tint color for content in a list.\"",
+            "listRowBackground: `.listRowBackground(_:)`, iOS 13.0. Apple: \"Places a custom background view behind a list row item.\"",
+            "listRowSeparator: `.listRowSeparator(_:edges:)`, iOS 15.0. Apple: \"Sets the display mode for the separator associated with this specific row.\"",
+            "listRowSeparatorTint: `.listRowSeparatorTint(_:edges:)`, iOS 15.0. Apple: \"Sets the tint color associated with a row.\"",
+            "listSectionIndexVisibility: `.listSectionIndexVisibility(_:)`, iOS 26.0. Apple: \"Changes the visibility of the list section index.\"",
+            "listSectionSeparator: `.listSectionSeparator(_:edges:)`, iOS 15.0. Apple: \"Sets whether to hide the separator associated with a list section.\"",
+            "listSectionSeparatorTint: `.listSectionSeparatorTint(_:edges:)`, iOS 15.0. Apple: \"Sets the tint color associated with a section.\"",
+            "typeSelectEquivalent: `.typeSelectEquivalent(_:)`, iOS 16.0. Apple: \"Sets an explicit type select equivalent text in a collection, such as a list or table.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: alternatingRowBackgrounds. Use listRowBackground."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

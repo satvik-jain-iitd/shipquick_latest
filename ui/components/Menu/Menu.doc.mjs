@@ -142,5 +142,14 @@ export default {
       "description": "A custom label, like a Label with an icon.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "menuActionDismissBehavior", "note": "`.menuActionDismissBehavior(_:)`, iOS 16.4. Apple: \"Tells a menu whether to dismiss after performing an action.\""},
+        {"name": "menuIndicator", "note": "`.menuIndicator(_:)`, iOS 15.0. Apple: \"Sets the menu indicator visibility for controls within this view.\""},
+        {"name": "menuOrder", "note": "`.menuOrder(_:)`, iOS 16.0. Apple: \"Sets the preferred order of items for menus presented from this view.\""}
+      ]
+    }
+  }
 };

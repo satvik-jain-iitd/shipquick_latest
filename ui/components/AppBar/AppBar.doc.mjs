@@ -154,6 +154,11 @@ export default {
     }
   ],
   "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "presentedWindowToolbarStyle", "note": "`.presentedWindowToolbarStyle(_:)`, not on iOS. Apple: \"Sets the style for the toolbar in windows created by interacting with this view.\"", "status": "unavailable-ios", "replacement": "toolbar"}
+      ]
+    },
     "android": {
       "family": "AppBar",
       "variants": [

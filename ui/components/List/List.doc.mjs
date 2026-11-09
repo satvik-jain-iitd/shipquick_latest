@@ -162,5 +162,21 @@ export default {
       "platform": "ios",
       "default": "nil"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "alternatingRowBackgrounds", "note": "`.alternatingRowBackgrounds(_:)`, not on iOS. Apple: \"Overrides whether lists and tables in this view have alternating row backgrounds.\"", "status": "unavailable-ios", "replacement": "listRowBackground"},
+        {"name": "headerProminence", "note": "`.headerProminence(_:)`, iOS 15.0. Apple: \"Sets the header prominence for this view.\""},
+        {"name": "listItemTint", "note": "`.listItemTint(_:)`, iOS 14.0. Apple: \"Sets a fixed tint color for content in a list.\""},
+        {"name": "listRowBackground", "note": "`.listRowBackground(_:)`, iOS 13.0. Apple: \"Places a custom background view behind a list row item.\""},
+        {"name": "listRowSeparator", "note": "`.listRowSeparator(_:edges:)`, iOS 15.0. Apple: \"Sets the display mode for the separator associated with this specific row.\""},
+        {"name": "listRowSeparatorTint", "note": "`.listRowSeparatorTint(_:edges:)`, iOS 15.0. Apple: \"Sets the tint color associated with a row.\""},
+        {"name": "listSectionIndexVisibility", "note": "`.listSectionIndexVisibility(_:)`, iOS 26.0. Apple: \"Changes the visibility of the list section index.\""},
+        {"name": "listSectionSeparator", "note": "`.listSectionSeparator(_:edges:)`, iOS 15.0. Apple: \"Sets whether to hide the separator associated with a list section.\""},
+        {"name": "listSectionSeparatorTint", "note": "`.listSectionSeparatorTint(_:edges:)`, iOS 15.0. Apple: \"Sets the tint color associated with a section.\""},
+        {"name": "typeSelectEquivalent", "note": "`.typeSelectEquivalent(_:)`, iOS 16.0. Apple: \"Sets an explicit type select equivalent text in a collection, such as a list or table.\""}
+      ]
+    }
+  }
 };

@@ -66,5 +66,13 @@ export default {
       "type": "string",
       "description": "Apple's init(decorative:) label: the asset name of an unlabeled, decorative image that VoiceOver skips. Use it instead of name."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "symbolEffect", "note": "`.symbolEffect(_:options:isActive:)`, iOS 17.0. Apple: \"Returns a new view with a symbol effect added to it.\""},
+        {"name": "symbolEffectsRemoved", "note": "`.symbolEffectsRemoved(_:)`, iOS 17.0. Apple: \"Returns a new view with its inherited symbol image effects either removed or left unchanged.\""}
+      ]
+    }
+  }
 };

@@ -81,6 +81,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "buttonBorderShape: `.buttonBorderShape(_:)`, iOS 15.0. Apple: \"Sets the border shape for buttons in this view.\"",
+            "buttonRepeatBehavior: `.buttonRepeatBehavior(_:)`, iOS 17.0. Apple: \"Sets whether buttons in this view should repeatedly trigger their actions on prolonged interactions.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

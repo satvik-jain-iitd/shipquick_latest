@@ -62,6 +62,20 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "menuActionDismissBehavior: `.menuActionDismissBehavior(_:)`, iOS 16.4. Apple: \"Tells a menu whether to dismiss after performing an action.\"",
+            "menuIndicator: `.menuIndicator(_:)`, iOS 15.0. Apple: \"Sets the menu indicator visibility for controls within this view.\"",
+            "menuOrder: `.menuOrder(_:)`, iOS 16.0. Apple: \"Sets the preferred order of items for menus presented from this view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

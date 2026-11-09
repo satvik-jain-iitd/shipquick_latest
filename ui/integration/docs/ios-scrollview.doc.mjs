@@ -55,6 +55,23 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "scrollBounceBehavior: `.scrollBounceBehavior(_:axes:)`, iOS 16.4. Apple: \"Configures the bounce behavior of scrollable views along the specified axis.\"",
+            "scrollClipDisabled: `.scrollClipDisabled(_:)`, iOS 17.0. Apple: \"Sets whether a scroll view clips its content to its bounds.\"",
+            "scrollContentBackground: `.scrollContentBackground(_:)`, iOS 16.0. Apple: \"Specifies the visibility of the background for scrollable views within this view.\"",
+            "scrollDisabled: `.scrollDisabled(_:)`, iOS 16.0. Apple: \"Disables or enables scrolling in scrollable views.\"",
+            "scrollIndicators: `.scrollIndicators(_:axes:)`, iOS 16.0. Apple: \"Sets the visibility of scroll indicators within this view.\"",
+            "scrollIndicatorsFlash: `.scrollIndicatorsFlash(onAppear:)`, iOS 17.0. Apple: \"Flashes the scroll indicators of a scrollable view when it appears.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

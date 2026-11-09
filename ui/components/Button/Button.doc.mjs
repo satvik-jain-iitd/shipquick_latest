@@ -38,6 +38,12 @@ export default {
     {"name": "type", "type": "'button' | 'submit' | 'reset'", "description": "The HTML button type. Web only.", "default": "'button'"}
   ],
   "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "buttonBorderShape", "note": "`.buttonBorderShape(_:)`, iOS 15.0. Apple: \"Sets the border shape for buttons in this view.\""},
+        {"name": "buttonRepeatBehavior", "note": "`.buttonRepeatBehavior(_:)`, iOS 17.0. Apple: \"Sets whether buttons in this view should repeatedly trigger their actions on prolonged interactions.\""}
+      ]
+    },
     "android": {
       "variants": [
         {

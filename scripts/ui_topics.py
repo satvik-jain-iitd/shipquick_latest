@@ -54,8 +54,10 @@ def topic(doc, contract, platform):
     ok = [f"{i['name']}: {i.get('note') or i.get('use') or 'own props: ' + ', '.join(p['name'] for p in i.get('props', []))}"
           for i in items if not i.get("status")]
     avoid = [f"Do not use: {i['name']}. Use {i['replacement']}." for i in items if i.get("status")]
+    # Story #231: a doc can speak to a platform with no main type of its own (a new iOS doc, a framework topic).
+    shown = f"`{target}`" if target else f"the {label.split(', ', 1)[1]} API below"
     lead = (f"Do not use: {target}. Use {doc['replacement']}." if doc.get("status") else
-            f"Use `{target}` as {vendor} ships it. Never wrap or redraw it. Brand comes from the tokens in design/tokens.json.")
+            f"Use {shown} as {vendor} ships it. Never wrap or redraw it. Brand comes from the tokens in design/tokens.json.")
     sections = [
         {"title": "Use", "content": [
             {"type": "prose", "text": lead},
@@ -80,7 +82,7 @@ def topic(doc, contract, platform):
     sections = [s for s in sections if s["content"]]
     return {"type": "generic", "name": f"{platform}-{doc['name'].lower()}",
             "title": f"{doc.get('displayName', doc['name'])} ({label})", "category": "guide",
-            "description": f"{target} used directly: the ShipQuick contract, props, do and do not.",
+            "description": f"{target or doc.get('displayName', doc['name'])} used directly: the ShipQuick contract, props, do and do not.",
             "keywords": [*doc.get("keywords", []), platform], "sections": sections}
 
 
@@ -92,6 +94,12 @@ def leaks(t, platform):
             for p in OTHER_API[platform] for m in re.finditer(p, text)]
 
 
+def speaks_to(doc, platform):
+    """Story #231: a doc has a topic for a platform when it names that platform's main type, or lists API or usage
+    for it. A new iOS doc cannot set platforms.ios (the gate counts only HIG rows there), so it uses platformApi."""
+    return any(doc.get(k, {}).get(platform) for k in ("platforms", "platformApi", "platformUsage"))
+
+
 def render(src=SRC):
     """({file name: file text} for every topic the sources ask for, [leak lines])."""
     files, bad = {}, []
@@ -99,7 +107,7 @@ def render(src=SRC):
         doc = read_doc(folder / f"{folder.name}.doc.mjs")
         contract = json.loads((folder / f"{folder.name}.contract.json").read_text(encoding="utf-8"))
         for platform in PLATFORMS:
-            if doc.get("platforms", {}).get(platform):
+            if speaks_to(doc, platform):
                 t = topic(doc, contract, platform)
                 bad += leaks(t, platform)
                 files[f"{t['name']}.doc.mjs"] = HEADER + "export default " + json.dumps(t, indent=2, ensure_ascii=False) + ";\n"
