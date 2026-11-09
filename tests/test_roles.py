@@ -144,3 +144,16 @@ def test_two_sessions_with_the_same_name_are_refused(tmp_path):
         assert "proj-dev" in str(e) and "twice" in str(e)
     else:
         raise AssertionError("a repeated session name must be refused")
+
+
+def test_one_session_list_without_the_other_is_refused(tmp_path):
+    # PR #178 review: reviewer_sessions alone let commits skip the trailer and a session approve itself.
+    for extra in ("coder_sessions:\n  - proj-dev\n", "reviewer_sessions:\n  - proj-qa\n"):
+        f = tmp_path / "roles.yml"
+        f.write_text(GOOD + extra, encoding="utf-8")
+        try:
+            roles.load(f)
+        except ValueError as e:
+            assert "both" in str(e)
+        else:
+            raise AssertionError("one session list alone must be refused")

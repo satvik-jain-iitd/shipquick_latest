@@ -554,3 +554,12 @@ def test_s139_an_approval_from_a_reviewer_session_that_built_nothing_merges(env,
 def test_s139_without_session_lists_the_review_body_is_not_read(env):
     r, merged = env()
     assert r.returncode == 0, r.stderr
+
+
+def test_s139_every_built_by_line_counts_not_only_the_first(env, stub_dir):
+    # PR #178 review: a prose "Built-by:" line earlier in the body must not hide the real trailer.
+    pr = session_pr("Reviewed-by: proj-qa", stub_dir=stub_dir)
+    (stub_dir / "commits.json").write_text(json.dumps(
+        [{"commit": {"message": "feat: x\n\nBuilt-by: proj-dev is how it works\n\nBuilt-by: proj-qa\n"}}]), encoding="utf-8")
+    r, merged = env(pr=pr, roles=SESSION_ROLES)
+    refused(r, merged, "proj-qa built a commit")

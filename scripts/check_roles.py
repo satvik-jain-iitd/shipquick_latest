@@ -54,7 +54,7 @@ def review_session(body: str, built_by: list, reviewer_sessions: list) -> str | 
     m = REVIEWED_BY.search(body or "") or BLOCK_FROM.search(body or "")
     if not m:
         return "the approving review names no session: add a 'Reviewed-by: <session>' line (ADR-011)"
-    s = m.group(1)
+    s = m.group(1).strip("`'\".,")
     if s not in reviewer_sessions:
         return f"the approving review is from {s}, not a reviewer session ({', '.join(reviewer_sessions)})"
     if s in built_by:

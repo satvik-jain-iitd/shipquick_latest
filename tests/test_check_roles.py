@@ -147,3 +147,7 @@ def test_an_approval_from_a_session_that_is_not_a_reviewer_is_refused():
 def test_the_reviewer_session_that_built_a_commit_cannot_approve_it():
     why = cr.review_session("Reviewed-by: proj-qa", ["proj-dev", "proj-qa"], REVIEWER_SESSIONS)
     assert why and "built" in why and "proj-qa" in why
+
+
+def test_a_reviewed_by_name_in_backticks_or_with_a_period_is_read():
+    assert cr.review_session("Reviewed-by: `proj-qa`.", ["proj-dev"], REVIEWER_SESSIONS) is None

@@ -66,6 +66,9 @@ def load(path=DEFAULT_FILE) -> dict:
     missing = [k for k in ("coder", "reviewer", "owner") if not data.get(k)]
     if missing:
         raise ValueError(f"{path} is missing {', '.join(missing)} -- fill it in before any script trusts it")
+    if bool(data.get(SESSION_KEYS[0])) != bool(data.get(SESSION_KEYS[1])):
+        raise ValueError(f"{path}: set both coder_sessions and reviewer_sessions, or neither -- one alone "
+                         "lets a commit skip Built-by: or a session approve its own work (ADR-011)")
     seen = set()
     for name in (s for k in SESSION_KEYS for s in data.get(k, [])):
         if name in seen:

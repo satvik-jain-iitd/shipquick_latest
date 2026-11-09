@@ -1,3 +1,5 @@
+# `pre-commit install` then sets up every stage these hooks use (ADR-011: prepare-commit-msg adds Built-by:).
+default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

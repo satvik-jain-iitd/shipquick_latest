@@ -189,10 +189,12 @@ hooks="  - repo: local
 if [ -e "$child/.pre-commit-config.yaml" ] && grep -q "check_local.sh" "$child/.pre-commit-config.yaml"; then
   echo "unchanged .pre-commit-config.yaml (has the ShipQuick hooks)"
 elif [ -e "$child/.pre-commit-config.yaml" ]; then
-  echo "kept      .pre-commit-config.yaml (yours). Add this under repos: to run the ShipQuick checks (scripts/check_local.sh):"
+  echo "kept      .pre-commit-config.yaml (yours). Add this line at the top so pre-commit install sets every stage:"
+  echo "default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]"
+  echo "and this under repos: to run the ShipQuick checks (scripts/check_local.sh):"
   echo "$hooks"
 else
-  printf 'repos:\n%s\n' "$hooks" | put .pre-commit-config.yaml
+  printf 'default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]\nrepos:\n%s\n' "$hooks" | put .pre-commit-config.yaml
 fi
 
 # 6. CLAUDE.md: one pointer line to the protocol. A new file starts from the template; yours keeps every line.

@@ -79,7 +79,7 @@ reviewer_account=$(jq -r --arg revs "$reviewers" --arg author "$author" --arg he
 # not appear in any commit's Built-by: trailer.
 if [ -n "$reviewer_sessions" ]; then
   commits=$(gh api "repos/$repo/pulls/$pr/commits" --paginate) || refuse "cannot read the commits of pull request $pr"
-  built_by=$(jq -rs '[.[][] | .commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)").s] | unique | join(",")' <<<"$commits")
+  built_by=$(jq -rs '[.[][] | .commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s] | unique | join(",")' <<<"$commits")
   review_body="$(mktemp)"
   jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
     '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" > "$review_body"

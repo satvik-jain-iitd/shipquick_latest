@@ -106,7 +106,7 @@ jobs:
           persist-credentials: false
       - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
         run: |
-          commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --jq '[.[] | "\(.author.login):\(.parents | length):\([.commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)").s][0] // "")"] | join(",")')
+          commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --paginate --jq '.[] | "\(.author.login):\(.parents | length):\([.commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s][-1] // "")"' | paste -sd, -)
           coders=$(python3 .shipquick/scripts/roles.py get coder --file project/.shipquick/roles.yml)
           reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file project/.shipquick/roles.yml)
           owner=$(python3 .shipquick/scripts/roles.py get owner --file project/.shipquick/roles.yml)
