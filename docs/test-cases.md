@@ -870,6 +870,33 @@ Scenario: every API row and framework topic is covered, and the gate is strict e
 ```
 Tests: `tests/test_ui_coverage.py` (s231). Local: `bash scripts/check_local.sh ui-coverage`.
 
+## Story #242: the offline vendor backup (separate repo `shipquick-vendor-backup`)
+
+```gherkin
+Scenario: s242 a complete backup passes the manifest check
+  Given a backup folder with every lockfile tarball, the pinned Gradle artifacts, their licenses and a MANIFEST
+  When scripts/vendor_backup.py --manifest-check runs on it
+  Then it prints ok and exits 0
+
+Scenario: s242 a broken backup fails, naming the problem
+  Given a changed file, a missing license file, a lockfile entry not in the backup, a tarball that is not the lockfile integrity, or a missing pinned Gradle artifact
+  When the manifest check runs
+  Then it exits 1 with one FAIL line for that problem
+
+Scenario: s242 the plan lists the lockfile and the Gradle pins
+  When vendor_backup.py --plan runs
+  Then every ui/tool lockfile package is listed with its integrity, the BOM, material3 and material-icons-core are listed, and the material3 pin matches docs/research/android-m3-api.md
+
+Scenario: s242 downloads happen on CI only
+  Given CI is not set
+  When vendor_backup.py --build runs, or restore_vendor.sh runs without RESTORE_ALLOW_LOCAL=1
+  Then it exits with a message and downloads nothing; an unchecked download (no checksum) is refused too
+
+Scenario: s242 the workflow proves the restore
+  Given the vendor-backup workflow runs and the backup repo has no backup yet
+  Then the restore job fails; after the backup job builds the branch, restore passes (npm ci --offline, Gradle --offline)
+```
+Tests: `tests/test_vendor_backup.py` (s242). CI: pytest and the `vendor backup` workflow. Local: `python3 -m pytest tests/test_vendor_backup.py`.
 ## Story #217: UI compile proof
 ```gherkin
 Scenario: every template and every contract prop compiles against the real libraries
@@ -889,6 +916,25 @@ Scenario: every template and every contract prop compiles against the real libra
 Tests: `tests/test_ui_proof.py` (s217). CI jobs: `ui-android-compile`, `ui-ios-compile`. Local: `bash scripts/check_local.sh ui-proof`.
 CI compiles the Kotlin and Swift only. Nothing is run.
 
+## Story #185: UI lint in a child
+```gherkin
+Scenario: the lint configs carry every ban the template tests carry
+  Given tests/test_android_templates.py and tests/test_ios_templates.py ban patterns in the kit's templates
+  When tests/test_ui_lint.py runs
+  Then each Android ban has a detekt import or a Konsist test, and each iOS ban has a SwiftLint custom rule
+  And a ban added to a template test with no lint twin fails the test
+Scenario: the bad screen fails with the rule named, the good screen passes
+  Given tests/fixtures/android and tests/fixtures/ios each hold GoodScreen and BadScreen
+  When CI job ui-android-lint runs detekt and Konsist in the CI tier
+  Then the good screen passes and the bad screen fails with ForbiddenImport and each Konsist rule named
+  When CI job ui-ios-lint runs SwiftLint with --strict
+  Then the good screen passes and the bad screen fails with every custom rule id named
+  When the local tier runs on the bad screen
+  Then it reports warnings and exits 0
+  When a PR does not change ui/** or tests/fixtures/**
+  Then both jobs are skipped and the gate still passes
+```
+Tests: `tests/test_ui_lint.py` (s185). CI jobs: `ui-android-lint`, `ui-ios-lint`.
 ## Story #184: token emitters (S6)
 ```gherkin
 Scenario: tokens.json produces both theme files

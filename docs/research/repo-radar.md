@@ -339,6 +339,17 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: about 40 lines added to `scripts/kit_branch.py` (stdlib), reusing its `gh api` protection read. No package added.
 - Confidence that nothing fits better: 0.8 (the job is two GitHub API calls; any tool would still need our gate name).
 
+## 9 Nov 2026, story #242: offline vendor backup of npm and Maven dependencies
+- Need: keep an offline, checksummed copy of the pinned npm tarballs and Compose Maven artifacts, and prove a restore with no registry.
+- Run: `scout.py --need "offline vendor backup of npm and maven dependencies"`: no repos found.
+  `gh search repos "offline maven npm mirror vendoring"`: none. `--topic=npm-mirror` and `--topic=offline-mirror`: shrinkpack
+  (JamieMason), netdoctor-ir, a few site mirrors.
+- Read: shrinkpack stores npm tarballs in the repo and installs offline; it is old (npm 5 era), npm only, no Maven. netdoctor-ir
+  switches mirrors; it keeps no copy. The Gradle docs describe a local file Maven repository with `--offline`; no tool needed.
+- Borrowed: shrinkpack's idea of keeping the tarballs and checking them against the lockfile integrity. npm's own cache does the
+  same today (`npm ci --offline --cache`), so we use that. Maven side: a plain folder in Maven layout.
+- Decision: about 300 lines, `scripts/vendor_backup.py` (stdlib) and `scripts/restore_vendor.sh`; npm and Gradle do the installing.
+- Confidence that nothing fits better: 0.8.
 ## 9 Nov 2026, story #217: prove every contract prop compiles against Compose Material 3 and SwiftUI
 - Need: generate a compile-only proof that every UI component contract prop exists in Jetpack Compose Material 3 and SwiftUI, checked in CI.
 - Run: `scout.py --need "generate a compile-only proof that every UI component contract prop exists in Jetpack Compose Material 3 and SwiftUI, checked in CI"`: no repos found.
@@ -353,6 +364,15 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   No package added to the repo.
 - Confidence that nothing fits better: 0.8 (the contracts are our own format; any tool would still need this glue).
 
+## 9 Nov 2026, story #185: lint that refuses hand-drawn UI in a child
+- Need: detekt SwiftLint forbid hand-drawn UI.
+- Run: `scout.py --need "detekt SwiftLint forbid hand-drawn UI"`: no repos found.
+  Read instead: detekt (`ForbiddenImport`), Konsist (`LemonAppDev/konsist`) and SwiftLint (`realm/SwiftLint`, `custom_rules`).
+  The owner said yes to all three on #185 ("Haan, teeno", 9 Nov 2026).
+- Borrowed: all three are used as they are, pinned exactly (detekt 1.23.8, Konsist 0.17.3, SwiftLint 0.65.1) and run on GitHub CI only.
+  No custom detekt rule module. The rules are config and one Kotlin test file.
+- Decision: no new tool. We write two configs, one Konsist test, two fixture apps and a drift test (stdlib Python).
+- Confidence that nothing fits better: 0.8 (the three tools are the usual choice for Compose and SwiftUI; no repo does both).
 ## 9 Nov 2026, story #184: one tokens.json to a Compose Theme and SwiftUI Tokens
 - Need: turn `design/tokens.json` into a Compose Material 3 `Theme.kt` and a SwiftUI `Tokens.swift`, checked in CI.
 - Run: `scout.py --need "design tokens json to Compose Theme and SwiftUI Tokens"`: no repos found.
