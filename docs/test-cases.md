@@ -563,3 +563,14 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
   And a topic prints a status item only as "Do not use: <name>. Use <replacement>."
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
+
+## Story #231, Android A4 Selection (issue #244)
+```gherkin
+Scenario: every Selection row of the Android API list is covered by a structured field
+  Given the 38 rows of android-m3-api.md in Checkbox, RadioButton, Switch, Slider, Chip, SelectableChip, SelectableChipElevation
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 33 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
