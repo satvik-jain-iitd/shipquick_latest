@@ -142,5 +142,22 @@ export default {
       "description": "A custom label, like a Label with an icon.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "MenuButton", "note": "not on iOS. Apple: \"A button that displays a menu containing a list of choices when pressed.\"", "status": "unavailable-ios", "replacement": "Menu"},
+        {"name": "menuStyle", "note": "`.menuStyle(_:)`, iOS 14.0. Apple: \"Sets the style for menus within this view.\""},
+        {"name": "menuActionDismissBehavior", "note": "`.menuActionDismissBehavior(_:)`, iOS 16.4. Apple: \"Tells a menu whether to dismiss after performing an action.\""},
+        {"name": "menuIndicator", "note": "`.menuIndicator(_:)`, iOS 15.0. Apple: \"Sets the menu indicator visibility for controls within this view.\""},
+        {"name": "menuOrder", "note": "`.menuOrder(_:)`, iOS 16.0. Apple: \"Sets the preferred order of items for menus presented from this view.\""},
+        {"name": "contextMenu", "note": "`.contextMenu(menuItems:)`, iOS 13.0. Apple: \"Adds a context menu to a view.\""},
+        {"name": "menuButtonStyle", "note": "`.menuButtonStyle(_:)`, not on iOS. Apple: \"Sets the style for menu buttons within this view.\"", "status": "unavailable-ios", "replacement": "menuStyle"}
+      ],
+      "supporting": [
+        {"name": "MenuStyleConfiguration.Content", "use": "iOS 14.0. Apple: \"A type-erased content of a menu.\""},
+        {"name": "MenuStyleConfiguration.Label", "use": "iOS 14.0. Apple: \"A type-erased label of a menu.\""}
+      ]
+    }
+  }
 };

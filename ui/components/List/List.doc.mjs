@@ -162,5 +162,43 @@ export default {
       "platform": "ios",
       "default": "nil"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "ForEach", "note": "iOS 13.0. Apple: \"A structure that computes views on demand from an underlying collection of identified data.\""},
+        {"name": "OutlineGroup", "note": "iOS 14.0. Apple: \"A structure that computes views and disclosure groups on demand from an underlying collection of tree-structured, identified data.\""},
+        {"name": "Section", "note": "iOS 13.0. Apple: \"A container view that you can use to add hierarchy within certain views.\""},
+        {"name": "deleteDisabled", "note": "`.deleteDisabled(_:)`, iOS 13.0. Apple: \"Adds a condition for whether the view’s view hierarchy is deletable.\""},
+        {"name": "listRowHoverEffect", "note": "`.listRowHoverEffect(_:)`, not on iOS. Apple: \"Requests that the containing list row use the provided hover effect.\"", "status": "unavailable-ios", "replacement": "hoverEffect"},
+        {"name": "listRowHoverEffectDisabled", "note": "`.listRowHoverEffectDisabled(_:)`, not on iOS. Apple: \"Requests that the containing list row have its hover effect disabled.\"", "status": "unavailable-ios", "replacement": "hoverEffectDisabled"},
+        {"name": "moveDisabled", "note": "`.moveDisabled(_:)`, iOS 13.0. Apple: \"Adds a condition for whether the view’s view hierarchy is movable.\""},
+        {"name": "refreshable", "note": "`.refreshable(action:)`, iOS 15.0. Apple: \"Adds an asynchronous handler that can update the data the view displays when a person initiates a request, such as by pulling to refresh.\""},
+        {"name": "selectionDisabled", "note": "`.selectionDisabled(_:)`, iOS 17.0. Apple: \"Adds a condition that controls whether users can select this view.\""},
+        {"name": "swipeActions", "note": "`.swipeActions(edge:allowsFullSwipe:content:)`, iOS 15.0. Apple: \"Adds custom swipe actions to a row in a list.\""},
+        {"name": "swipeActionsContainer", "note": "`.swipeActionsContainer()`, iOS 27.0. Apple: \"Coordinates swipe action dismissal and mutual exclusion across rows in a container.\""},
+        {"name": "listStyle", "note": "`.listStyle(_:)`, iOS 13.0. Apple: \"Sets the style for lists within this view.\""},
+        {"name": "alternatingRowBackgrounds", "note": "`.alternatingRowBackgrounds(_:)`, not on iOS. Apple: \"Overrides whether lists and tables in this view have alternating row backgrounds.\"", "status": "unavailable-ios", "replacement": "listRowBackground"},
+        {"name": "headerProminence", "note": "`.headerProminence(_:)`, iOS 15.0. Apple: \"Sets the header prominence for this view.\""},
+        {"name": "listItemTint", "note": "`.listItemTint(_:)`, iOS 14.0. Apple: \"Sets a fixed tint color for content in a list.\""},
+        {"name": "listRowBackground", "note": "`.listRowBackground(_:)`, iOS 13.0. Apple: \"Places a custom background view behind a list row item.\""},
+        {"name": "listRowSeparator", "note": "`.listRowSeparator(_:edges:)`, iOS 15.0. Apple: \"Sets the display mode for the separator associated with this specific row.\""},
+        {"name": "listRowSeparatorTint", "note": "`.listRowSeparatorTint(_:edges:)`, iOS 15.0. Apple: \"Sets the tint color associated with a row.\""},
+        {"name": "listSectionIndexVisibility", "note": "`.listSectionIndexVisibility(_:)`, iOS 26.0. Apple: \"Changes the visibility of the list section index.\""},
+        {"name": "listSectionSeparator", "note": "`.listSectionSeparator(_:edges:)`, iOS 15.0. Apple: \"Sets whether to hide the separator associated with a list section.\""},
+        {"name": "listSectionSeparatorTint", "note": "`.listSectionSeparatorTint(_:edges:)`, iOS 15.0. Apple: \"Sets the tint color associated with a section.\""},
+        {"name": "typeSelectEquivalent", "note": "`.typeSelectEquivalent(_:)`, iOS 16.0. Apple: \"Sets an explicit type select equivalent text in a collection, such as a list or table.\""},
+        {"name": "sectionActions", "note": "`.sectionActions(content:)`, iOS 18.0. Apple: \"Adds custom actions to a section.\""},
+        {"name": "sectionIndexLabel", "note": "`.sectionIndexLabel(_:)`, iOS 26.0. Apple: \"Sets the label that is used in a section index to point to this section, typically only a single character long.\""},
+        {"name": "listRowInsets", "note": "`.listRowInsets(_:)`, iOS 13.0. Apple: \"Applies an inset to the rows in a list.\""},
+        {"name": "listRowSpacing", "note": "`.listRowSpacing(_:)`, iOS 15.0. Apple: \"Sets the vertical spacing between two adjacent rows in a List.\""},
+        {"name": "listSectionMargins", "note": "`.listSectionMargins(_:_:)`, iOS 26.0. Apple: \"Set the section margins for the specific edges.\""},
+        {"name": "listSectionSpacing", "note": "`.listSectionSpacing(_:)`, iOS 17.0. Apple: \"Sets the spacing between adjacent sections in a `List` to a custom value.\""},
+        {"name": "listRowPlatterColor", "note": "`.listRowPlatterColor(_:)`, not on iOS. Apple: \"Sets the color that the system applies to the row background when this view is placed in a list.\"", "status": "unavailable-ios", "replacement": "listRowBackground"}
+      ],
+      "supporting": [
+        {"name": "SectionConfiguration.Actions", "use": "iOS 18.0. Apple: \"The type-erased actions of a section.\""}
+      ]
+    }
+  }
 };
