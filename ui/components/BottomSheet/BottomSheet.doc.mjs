@@ -151,6 +151,7 @@ export default {
   ],
   "platformApi": {
     "ios": {
+      "family": "BottomSheet",
       "variants": [
         {"name": "confirmationDialog", "note": "`.confirmationDialog(_:item:titleVisibility:actions:)`, iOS 15.0. Apple: \"Presents a confirmation dialog using data to produce the dialog’s content and a text view for the title.\""},
         {"name": "dismissalConfirmationDialog", "note": "`.dismissalConfirmationDialog(_:shouldPresent:actions:)`, iOS 27.0. Apple: \"Presents a confirmation dialog upon an attempt to dismiss the window for this view.\""},

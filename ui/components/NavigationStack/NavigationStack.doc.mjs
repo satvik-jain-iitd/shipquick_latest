@@ -34,6 +34,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "NavigationStack",
       "variants": [
         {"name": "NavigationStack", "note": "iOS 16.0. Apple: \"A view that displays a root view and enables you to present additional views over the root view.\""},
         {"name": "NavigationLink", "note": "iOS 13.0. Apple: \"A view that controls a navigation presentation.\""},

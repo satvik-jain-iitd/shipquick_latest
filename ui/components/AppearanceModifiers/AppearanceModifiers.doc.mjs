@@ -30,6 +30,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Appearance modifiers",
       "variants": [
         {"name": "accessoryWidgetGroupStyle", "note": "`.accessoryWidgetGroupStyle(_:)`, not on iOS. Apple: \"The view modifier that can be applied to `AccessoryWidgetGroup` to specify the shape the three content views will be masked with. The value of `style` is set to `.automatic`, which is `.circular` by default.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (a watchOS accessory widget group; build iOS widgets with WidgetKit)"},
         {"name": "allowedDynamicRange", "note": "`.allowedDynamicRange(_:)`, iOS 17.0. Apple: \"Returns a new view configured with the specified allowed dynamic range.\""},

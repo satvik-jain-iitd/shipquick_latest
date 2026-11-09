@@ -29,6 +29,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Animators",
       "variants": [
         {"name": "KeyframeAnimator", "note": "iOS 17.0. Apple: \"A container that animates its content with keyframes.\""},
         {"name": "PhaseAnimator", "note": "iOS 17.0. Apple: \"A container that animates its content by automatically cycling through a collection of phases that you provide, each defining a discrete step within an animation.\""},

@@ -22,6 +22,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "ControlGroup",
       "variants": [
         {"name": "ControlGroup", "note": "iOS 15.0. Apple: \"A container view that displays semantically-related controls in a visually-appropriate manner for the context\""},
         {"name": "controlGroupStyle", "note": "`.controlGroupStyle(_:)`, iOS 15.0. Apple: \"Sets the style for control groups within this view.\""}

@@ -195,10 +195,10 @@ ANDROID_API = """Count: 3
 """
 IOS_API = """Count: 2
 
-| # | Entry | Kind | What | Family | iOS since | Apple page |
-|---|---|---|---|---|---|---|
-| 1 | `Button` | component | view type | Button | 13.0 | https://y |
-| 2 | `buttonStyle` | modifier | view modifier | Controls | 13.0 | https://y |
+| # | Entry | Kind | What | Family | iOS since | Category | Status | Detail | Apple page | Doc family |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `Button` | component | view type | Button | 13.0 | - | - | - | https://y | Button |
+| 2 | `buttonStyle` | modifier | view modifier | Style modifiers | 13.0 | - | - | - | https://y | Button |
 """
 
 
@@ -545,3 +545,78 @@ def test_s288_the_notifications_doc_names_the_platform_types_exactly():
     d = read_doc(ROOT / "ui" / "components" / "notifications" / "notifications.doc.mjs")
     names = [i["name"] for i in d["platformApi"]["android"]["supporting"]]
     assert "android.app.NotificationChannel" in names and "Manifest.permission.POST_NOTIFICATIONS" in names, names
+
+
+# Story #285: iOS has the own-family rule too. A component or modifier row is covered only by a doc of the family the
+# list maps it to (column `Doc family`). A doc's families are the Doc family of its platforms.ios row and its
+# platformApi.ios.family.
+CAPSULE_ROW = "| 3 | `Capsule` | component | view type | Capsule | 13.0 | - | - | - | https://y | Shape |\n"
+
+
+def ios_doc(f, name, family=None, variants=()):
+    d = f / "components" / name
+    d.mkdir(parents=True)
+    ios = {**({"family": family} if family else {}), **({"variants": [v(n) for n in variants]} if variants else {})}
+    doc = {"name": name, "platforms": {"android": None, "ios": None, "web": None}, "platformApi": {"ios": ios}}
+    (d / f"{name}.doc.mjs").write_text("export default " + json.dumps(doc) + ";\n")
+    (d / f"{name}.contract.json").write_text("{}")
+
+
+def test_s285_a_swift_charts_doc_that_claims_button_style_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {"android": FULL_API["android"], "ios": {}})
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, variants=(v("buttonStyle"),))
+    assert run_api(f, "--strict-api") == 1
+    assert "FAIL api ios Style modifiers: buttonStyle (modifier, needs a doc of family Button)" in capsys.readouterr().out
+
+
+def test_s285_a_modifier_in_the_doc_its_list_maps_it_to_passes(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+
+
+def test_s285_an_ios_component_needs_a_doc_of_its_mapped_family(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "ios-api.md").write_text(IOS_API.replace("Count: 2", "Count: 3") + CAPSULE_ROW)
+    with_api(f, FULL_API)
+    ios_doc(f, "Shape", variants=("Capsule",))
+    assert run_api(f, "--strict-api") == 1
+    assert "Capsule (component, needs a doc of family Shape)" in capsys.readouterr().out
+    import shutil
+    shutil.rmtree(f / "components" / "Shape")
+    ios_doc(f, "Shapes", family="Shape", variants=("Capsule",))
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+
+
+def test_s285_an_ios_family_that_no_row_maps_to_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "ios": {**FULL_API["ios"], "family": "Buton"}})
+    assert run_api(f) == 1
+    assert "api ios: Button sets platformApi.ios.family Buton, but no row of the ios API list has that Doc family" \
+        in capsys.readouterr().out
+
+
+def test_s285_two_ios_docs_with_one_family_fail(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "ios-api.md").write_text(IOS_API.replace("Count: 2", "Count: 3") + CAPSULE_ROW)
+    with_api(f, FULL_API)
+    ios_doc(f, "Shape", family="Shape", variants=("Capsule",))
+    ios_doc(f, "Shapes", family="Shape")
+    assert run_api(f) == 1
+    assert "api ios: 2 docs set platformApi.ios.family Shape (Shape, Shapes); a family has one doc" in capsys.readouterr().out
+
+
+def test_s285_an_ios_list_with_no_doc_family_column_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "ios-api.md").write_text(IOS_API.replace(" Doc family |", "").replace("|---|\n", "\n", 1)
+                                  .replace(" | Button |\n", " |\n"))
+    with_api(f, FULL_API)
+    assert run_api(f) == 1
+    assert "ios API list: no Doc family column" in capsys.readouterr().out
+
+
+def test_s285_adr_012_no_longer_says_ios_has_no_family_rule():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "iOS has no own-family rule yet" not in adr

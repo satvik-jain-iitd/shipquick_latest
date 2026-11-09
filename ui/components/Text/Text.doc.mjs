@@ -104,6 +104,7 @@ export default {
   },
   "platformApi": {
     "ios": {
+      "family": "Text and symbol modifiers",
       "variants": [
         {"name": "allowsTightening", "note": "`.allowsTightening(_:)`, iOS 13.0. Apple: \"Sets whether text in this view can compress the space between characters when necessary to fit text in a line.\""},
         {"name": "attributedTextFormattingDefinition", "note": "`.attributedTextFormattingDefinition(_:)`, iOS 26.0. Apple: \"Apply a text formatting definition to nested views.\""},

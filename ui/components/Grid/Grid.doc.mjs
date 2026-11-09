@@ -23,6 +23,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Grid",
       "variants": [
         {"name": "Grid", "note": "iOS 16.0. Apple: \"A container view that arranges other views in a two dimensional layout.\""},
         {"name": "GridRow", "note": "iOS 16.0. Apple: \"A horizontal row in a two dimensional grid container.\""},
