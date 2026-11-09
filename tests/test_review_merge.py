@@ -483,6 +483,13 @@ def test_s131_the_enforcer_scripts_are_themselves_protected(env):
         assert result.returncode == 1 and "protected path" in result.stderr, (f, result.stderr)
 
 
+def test_s225_kit_branch_py_is_a_protected_path_since_the_gate_reads_kit_branch_through_it(env):
+    lines = (ROOT / "scripts" / "protected_paths.txt").read_text(encoding="utf-8").splitlines()
+    assert "scripts/kit_branch.py" in lines
+    result, merged = env(pr_files=[{"filename": "scripts/kit_branch.py", "status": "modified"}])
+    assert result.returncode == 1 and "protected path" in result.stderr, result.stderr
+
+
 def test_s131_a_lift_only_freeze_pr_is_refused_in_auto_mode_the_owner_merges_it(env):
     pr = good(); pr["baseRefName"] = "main"
     files = [{"filename": ".shipquick/freeze", "status": "removed"}]
