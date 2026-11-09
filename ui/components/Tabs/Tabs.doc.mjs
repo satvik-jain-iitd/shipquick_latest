@@ -93,14 +93,6 @@ export default {
       "family": "TabRow",
       "variants": [
         {
-          "name": "Tab",
-          "note": "One tab in a tab row: text, an icon or both, and selected and onClick."
-        },
-        {
-          "name": "LeadingIconTab",
-          "note": "A tab with the icon beside the text, not above it."
-        },
-        {
           "name": "SecondaryTabRow",
           "note": "A tab row for tabs inside one part of the screen, below a PrimaryTabRow or inside content."
         },
@@ -143,14 +135,6 @@ export default {
         {
           "name": "TabRowDefaults",
           "use": "Default colours, the indicator composables, and the edge padding and minimum tab width of scrollable rows."
-        },
-        {
-          "name": "TabIndicatorScope",
-          "use": "The scope of a tab row's indicator. Its tabIndicatorOffset moves the indicator under the selected tab."
-        },
-        {
-          "name": "TabPosition",
-          "use": "The left edge, width and content width of one tab, for an old-style indicator."
         }
       ]
     }
