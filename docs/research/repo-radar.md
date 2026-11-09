@@ -417,3 +417,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: nothing; the idea of a recorded approval step is already our rule 38.
 - Decision: build from scratch, about 100 lines of stdlib Python (`scripts/check_component_request.py`), calling `gh api` for issue events and comments.
 - Confidence that nothing fits better: 0.8.
+## 10 Nov 2026, story #91 (epic ShipQuick Desk): localhost dashboard for one repo
+- Need: a localhost dashboard for one GitHub repo that shows issues, PRs, decisions waiting for the owner and the roadmap, refreshed on a timer, with no server beyond the stdlib.
+- Run: `scout.py --need "localhost dashboard for one GitHub repo: issues, PRs, decisions waiting for the owner, roadmap, refreshed on a timer, no server beyond the stdlib"` found no repos (empty list).
+  Then `gh search repos --topic github-dashboard --sort stars -L 10`. Top hits: `javiertuya/dashgit`, `AKharytonchyk/git-pull-request-dashboard`, `imhamiddev/GitHub-monitor`, then unrelated small repos.
+- Read (top 3 READMEs, GitHub API, tier A for what the repo says, tier C for its own claims):
+  - `javiertuya/dashgit`: browser-only dashboard for many repos and GitLab, hosted on GitHub Pages. Has `dashgit-server-py/server.py`, a stdlib Python server on 127.0.0.1:8080, no Docker, no Node. Tokens kept in browser storage. Multi-repo, so too broad.
+  - `AKharytonchyk/git-pull-request-dashboard`: multi-org PR and issue view with a PAT in the browser, GitHub Pages demo. Built for many repos, not one repo's decisions and roadmap. Does not fit.
+  - `imhamiddev/GitHub-monitor`: Next.js 15 SaaS with a database and GitHub App auth. Far too heavy for a localhost page. Does not fit.
+- Borrowed: the idea of a stdlib Python server bound to 127.0.0.1 (from dashgit `server.py`). Our roadmap engine is reused as is: `roadmap/roadmap.js` and `roadmap/query.graphql`.
+- Verdict: nothing fits the need (one repo, decisions waiting, roadmap). Build from scratch, small, on top of the existing roadmap engine.
+- Confidence that nothing fits: 0.8. Test: the design doc's Option A and B each get a spike; if a tool turns up that covers one repo's decisions, swap the page only.
