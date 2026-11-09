@@ -81,5 +81,21 @@ export default {
       "description": "The part the badge sits on.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "Badge",
+          "note": "The small dot or count itself. Put it in the badge slot of BadgedBox. Leave content out for a dot."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "BadgeDefaults",
+          "use": "The default container colour of a badge."
+        }
+      ]
+    }
+  }
 };
