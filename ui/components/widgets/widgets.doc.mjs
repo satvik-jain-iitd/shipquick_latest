@@ -71,7 +71,7 @@ export default {
           "use": "Glance's modifier for size, padding, background and clicks."
         },
         {
-          "name": "updateAll",
+          "name": "androidx.glance.appwidget.updateAll",
           "use": "Redraws every placed copy of a GlanceAppWidget after its data changes."
         }
       ]

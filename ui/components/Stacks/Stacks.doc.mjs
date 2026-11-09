@@ -25,6 +25,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Stacks",
       "variants": [
         {"name": "ArrangementView", "note": "iOS 27.1. Apple: \"A view that dynamically lays out a primary and secondary view based on size class, orientation, and reserved regions.\""},
         {"name": "GeometryReader", "note": "iOS 13.0. Apple: \"A container view that defines its content as a function of its own size and coordinate space.\""},

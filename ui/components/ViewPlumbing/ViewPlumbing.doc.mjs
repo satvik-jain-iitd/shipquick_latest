@@ -24,6 +24,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "ViewPlumbing",
       "variants": [
         {"name": "AnyView", "note": "iOS 13.0. Apple: \"A type-erased view.\""},
         {"name": "DebugReplaceableView", "note": "iOS 26.0. Apple: \"Erases view opaque result types in debug builds.\""},

@@ -49,11 +49,22 @@ def fixture(tmp_path, android_n=1, ios_n=2, core=("Button",)):
     return tmp_path
 
 
+REAL_NAMES = ROOT / "docs" / "research" / "sources" / "framework-names.json"   # the default of --framework-names
+
+
+def pin_line(names=REAL_NAMES):
+    import hashlib
+    return f"Saved names: `docs/research/sources/framework-names.json` sha256 `{hashlib.sha256(names.read_bytes()).hexdigest()}`"
+
+
 def run(tmp_path, *extra):
     if not (tmp_path / "rows.json").exists():
         (tmp_path / "rows.json").write_text('{"ios": {}}')
     if not (tmp_path / "frameworks.md").exists():
         (tmp_path / "frameworks.md").write_text("## iOS\n\n| # | Topic | Framework | Official source |\n|---|---|---|---|\n")
+    md = (tmp_path / "frameworks.md").read_text()
+    if "Saved names:" not in md:   # story #288: the saved names (the default file) are pinned by sha256 in framework-topics.md
+        (tmp_path / "frameworks.md").write_text(pin_line() + "\n\n" + md)
     return check_ui_coverage.main([
         "--core-floor", "1", "--row-map", str(tmp_path / "rows.json"), "--frameworks", str(tmp_path / "frameworks.md"),
         "--android-list", str(tmp_path / "android.md"), "--ios-list", str(tmp_path / "ios.md"),
@@ -184,10 +195,10 @@ ANDROID_API = """Count: 3
 """
 IOS_API = """Count: 2
 
-| # | Entry | Kind | What | Family | iOS since | Apple page |
-|---|---|---|---|---|---|---|
-| 1 | `Button` | component | view type | Button | 13.0 | https://y |
-| 2 | `buttonStyle` | modifier | view modifier | Controls | 13.0 | https://y |
+| # | Entry | Kind | What | Family | iOS since | Category | Status | Detail | Apple page | Doc family |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `Button` | component | view type | Button | 13.0 | - | - | - | https://y | Button |
+| 2 | `buttonStyle` | modifier | view modifier | Style modifiers | 13.0 | - | - | - | https://y | Button |
 """
 
 
@@ -448,3 +459,173 @@ def test_s231_a_supporting_entry_naming_a_variant_row_fails(tmp_path, capsys):
         {"name": "ButtonDefaults", "use": "defaults"}, {"name": "FilledTonalButton", "use": "wrong kind"}]}})
     assert run_api(f) == 1
     assert "no such supporting row" in capsys.readouterr().out
+
+
+# Story #288: a framework doc's own type names are checked against the saved package names, so a typo fails.
+def test_s288_a_typo_in_a_framework_doc_name_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "Chart", "use": "x"}, {"name": "Chrat", "use": "a typo"}))
+    assert run_api(f, "--strict-api") == 1
+    out = capsys.readouterr().out
+    assert "FAIL api ios: swift-charts names Chrat under platformApi.ios.supporting, but neither the ios API list nor " \
+        "the saved framework names (framework-names.json) have it" in out, out
+    assert "names Chart " not in out
+
+
+def test_s288_a_name_of_the_other_platform_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "GlanceModifier", "use": "an Android name in an iOS slot"},))
+    assert run_api(f, "--strict-api") == 1
+    assert "swift-charts names GlanceModifier" in capsys.readouterr().out
+
+
+def test_s288_a_qualified_name_matches_on_a_dot_boundary_only(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "Charts.BarMark", "use": "x"}, {"name": "arMark", "use": "x"}))
+    assert run_api(f) == 1
+    out = capsys.readouterr().out
+    assert "names arMark" in out and "names Charts.BarMark" not in out
+
+
+def test_s288_saved_names_that_do_not_match_their_pin_fail(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+    md = f / "frameworks.md"
+    md.write_text(md.read_text().replace(pin_line(), "Saved names: `docs/research/sources/framework-names.json` sha256 `" + "0" * 64 + "`"))
+    assert run_api(f) == 1
+    assert "framework-names.json: its sha256" in capsys.readouterr().out
+
+
+def test_s288_a_names_file_edited_after_it_was_pinned_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    names = f / "edited-names.json"
+    names.write_text(REAL_NAMES.read_text().replace("Charts.BarMark", "Charts.Chrat"))
+    (f / "frameworks.md").write_text(pin_line() + "\n\n" + FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f, "--framework-names", str(names)) == 1
+    assert "edited-names.json: its sha256" in capsys.readouterr().out
+
+
+def test_s288_a_missing_names_file_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    run_api(f)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    assert check_ui_coverage.main([
+        "--core-floor", "1", "--row-map", str(f / "rows.json"), "--frameworks", str(f / "frameworks.md"),
+        "--framework-names", str(f / "no-such-names.json"), "--android-list", str(f / "android.md"),
+        "--ios-list", str(f / "ios.md"), "--components", str(f / "components"), "--topics", str(f / "topics"),
+        "--core", str(f / "core"), "--integration", str(f / "integration.mjs")]) == 1
+    assert "no-such-names.json: file not found" in capsys.readouterr().out
+
+
+def test_s288_review_2_a_bare_fragment_is_not_a_known_name():
+    names = {"android.Manifest.permission", "android.Manifest.permission.POST_NOTIFICATIONS", "android.app.Activity",
+             "androidx.glance.appwidget.updateAll"}
+    assert not check_ui_coverage.known("permission", names)          # a lowercase last segment must be qualified
+    assert check_ui_coverage.known("Manifest.permission.POST_NOTIFICATIONS", names)
+    assert check_ui_coverage.known("Activity", names)                 # a type-cased last segment may be bare
+    assert not check_ui_coverage.known("ctivity", names)
+    assert check_ui_coverage.known("androidx.glance.appwidget.updateAll", names)
+    assert not check_ui_coverage.known("updateAll", names)
+
+
+def test_s288_the_notifications_doc_names_the_platform_types_exactly():
+    """Nit from the second review of #287: NotificationChannel is android.app's, POST_NOTIFICATIONS is a Manifest constant."""
+    from check_ui_docs import read_doc
+    d = read_doc(ROOT / "ui" / "components" / "notifications" / "notifications.doc.mjs")
+    names = [i["name"] for i in d["platformApi"]["android"]["supporting"]]
+    assert "android.app.NotificationChannel" in names and "Manifest.permission.POST_NOTIFICATIONS" in names, names
+
+
+# Story #285: iOS has the own-family rule too. A component or modifier row is covered only by a doc of the family the
+# list maps it to (column `Doc family`). A doc's families are the Doc family of its platforms.ios row and its
+# platformApi.ios.family.
+CAPSULE_ROW = "| 3 | `Capsule` | component | view type | Capsule | 13.0 | - | - | - | https://y | Shape |\n"
+
+
+def ios_doc(f, name, family=None, variants=()):
+    d = f / "components" / name
+    d.mkdir(parents=True)
+    ios = {**({"family": family} if family else {}), **({"variants": [v(n) for n in variants]} if variants else {})}
+    doc = {"name": name, "platforms": {"android": None, "ios": None, "web": None}, "platformApi": {"ios": ios}}
+    (d / f"{name}.doc.mjs").write_text("export default " + json.dumps(doc) + ";\n")
+    (d / f"{name}.contract.json").write_text("{}")
+
+
+def test_s285_a_swift_charts_doc_that_claims_button_style_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {"android": FULL_API["android"], "ios": {}})
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, variants=(v("buttonStyle"),))
+    assert run_api(f, "--strict-api") == 1
+    assert "FAIL api ios Style modifiers: buttonStyle (modifier, needs a doc of family Button)" in capsys.readouterr().out
+
+
+def test_s285_a_modifier_in_the_doc_its_list_maps_it_to_passes(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+
+
+def test_s285_an_ios_component_needs_a_doc_of_its_mapped_family(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "ios-api.md").write_text(IOS_API.replace("Count: 2", "Count: 3") + CAPSULE_ROW)
+    with_api(f, FULL_API)
+    ios_doc(f, "Shape", variants=("Capsule",))
+    assert run_api(f, "--strict-api") == 1
+    assert "Capsule (component, needs a doc of family Shape)" in capsys.readouterr().out
+    import shutil
+    shutil.rmtree(f / "components" / "Shape")
+    ios_doc(f, "Shapes", family="Shape", variants=("Capsule",))
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+
+
+def test_s285_an_ios_family_that_no_row_maps_to_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "ios": {**FULL_API["ios"], "family": "Buton"}})
+    assert run_api(f) == 1
+    assert "api ios: Button sets platformApi.ios.family Buton, but no row of the ios API list has that Doc family" \
+        in capsys.readouterr().out
+
+
+def test_s285_two_ios_docs_with_one_family_fail(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "ios-api.md").write_text(IOS_API.replace("Count: 2", "Count: 3") + CAPSULE_ROW)
+    with_api(f, FULL_API)
+    ios_doc(f, "Shape", family="Shape", variants=("Capsule",))
+    ios_doc(f, "Shapes", family="Shape")
+    assert run_api(f) == 1
+    assert "api ios: 2 docs set platformApi.ios.family Shape (Shape, Shapes); a family has one doc" in capsys.readouterr().out
+
+
+def test_s285_an_ios_list_with_no_doc_family_column_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "ios-api.md").write_text(IOS_API.replace(" Doc family |", "").replace("|---|\n", "\n", 1)
+                                  .replace(" | Button |\n", " |\n"))
+    with_api(f, FULL_API)
+    assert run_api(f) == 1
+    assert "ios API list: no Doc family column" in capsys.readouterr().out
+
+
+def test_s285_adr_012_no_longer_says_ios_has_no_family_rule():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "iOS has no own-family rule yet" not in adr
+
+
+# Story #285, second review of PR #294.
+def test_s285_a_blank_doc_family_cell_names_the_row(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "ios-api.md").write_text(IOS_API.replace("| https://y | Button |\n| 2", "| https://y |  |\n| 2"))
+    with_api(f, FULL_API)
+    assert run_api(f) == 1
+    assert "FAIL ios API list: row 1 (Button): Doc family is empty" in capsys.readouterr().out

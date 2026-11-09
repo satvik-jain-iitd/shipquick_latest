@@ -49,7 +49,8 @@ export default {
         {"name": "buttonSizing", "note": "`.buttonSizing(_:)`, iOS 26.0. Apple: \"The preferred sizing behavior of buttons in the view hierarchy.\""},
         {"name": "buttonStyle", "note": "`.buttonStyle(_:)`, iOS 13.0. Apple: \"Sets the style for buttons within this view to a button style with a custom appearance and standard interaction behavior.\""},
         {"name": "buttonBorderShape", "note": "`.buttonBorderShape(_:)`, iOS 15.0. Apple: \"Sets the border shape for buttons in this view.\""},
-        {"name": "buttonRepeatBehavior", "note": "`.buttonRepeatBehavior(_:)`, iOS 17.0. Apple: \"Sets whether buttons in this view should repeatedly trigger their actions on prolonged interactions.\""}
+        {"name": "buttonRepeatBehavior", "note": "`.buttonRepeatBehavior(_:)`, iOS 17.0. Apple: \"Sets whether buttons in this view should repeatedly trigger their actions on prolonged interactions.\""},
+        {"name": "ButtonBorderShape", "note": "iOS 15.0. Apple: \"A shape used to draw a button’s border.\""}
       ],
       "supporting": [
         {"name": "ButtonStyleConfiguration.Label", "use": "iOS 13.0. Apple: \"A type-erased label of a button.\""},

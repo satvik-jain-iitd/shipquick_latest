@@ -23,6 +23,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Form",
       "variants": [
         {"name": "Form", "note": "iOS 13.0. Apple: \"A container for grouping controls used for data entry, such as in settings or inspectors.\""},
         {"name": "LabeledContent", "note": "iOS 16.0. Apple: \"A container for attaching a label to a value-bearing view.\""},
