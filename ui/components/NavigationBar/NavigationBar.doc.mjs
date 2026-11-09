@@ -172,6 +172,7 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "tabViewStyle", "note": "`.tabViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the tab view within the current environment.\""},
         {"name": "defaultAdaptableTabBarPlacement", "note": "`.defaultAdaptableTabBarPlacement(_:)`, iOS 18.0. Apple: \"Specifies the default placement for the tabs in a tab view using the adaptable sidebar style.\""},
         {"name": "defaultTabBarPlacement", "note": "`.defaultTabBarPlacement(_:)`, iOS 27.0. Apple: \"Specifies the preferred placement for the tabs of a `TabView` in the `sidebarAdaptable` style on platforms where the tab bar cannot adapt between different representations, and only one representation can be shown.\""},
         {"name": "sceneAccessory", "note": "`.sceneAccessory(content:)`, iOS 27.0. Apple: \"Defines any scene accessories associated with `self`.\""},
@@ -182,6 +183,10 @@ export default {
         {"name": "tabViewSidebarBottomBar", "note": "`.tabViewSidebarBottomBar(content:)`, iOS 18.0. Apple: \"Adds a custom bottom bar to the sidebar of a tab view.\""},
         {"name": "tabViewSidebarFooter", "note": "`.tabViewSidebarFooter(content:)`, iOS 18.0. Apple: \"Adds a custom footer to the sidebar of a tab view.\""},
         {"name": "tabViewSidebarHeader", "note": "`.tabViewSidebarHeader(content:)`, iOS 18.0. Apple: \"Adds a custom header to the sidebar of a tab view.\""}
+      ],
+      "supporting": [
+        {"name": "DefaultTabLabel", "use": "iOS 18.0. Apple: \"The default label to use for a tab or tab section.\""},
+        {"name": "TabContentBuilder.Content", "use": "iOS 18.0. Apple: \"A view representation of the content of a builder-based tab view with selection.\""}
       ]
     },
     "android": {

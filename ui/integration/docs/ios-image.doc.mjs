@@ -68,6 +68,13 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "AsyncImage: iOS 15.0. Apple: \"A view that asynchronously loads and displays an image.\"",
+            "symbolEffect: `.symbolEffect(_:options:isActive:)`, iOS 17.0. Apple: \"Returns a new view with a symbol effect added to it.\"",
+            "symbolEffectsRemoved: `.symbolEffectsRemoved(_:)`, iOS 17.0. Apple: \"Returns a new view with its inherited symbol image effects either removed or left unchanged.\"",
+            "symbolColorRenderingMode: `.symbolColorRenderingMode(_:)`, iOS 26.0. Apple: \"Sets the color rendering mode for symbol images.\"",
+            "symbolRenderingMode: `.symbolRenderingMode(_:)`, iOS 15.0. Apple: \"Sets the rendering mode for symbol images within this view.\"",
+            "symbolVariableValueMode: `.symbolVariableValueMode(_:)`, iOS 26.0. Apple: \"Sets the variable value mode mode for symbol images within this view.\"",
+            "symbolVariant: `.symbolVariant(_:)`, iOS 15.0. Apple: \"Makes symbols within the view show a particular variant.\"",
             "imageScale: `.imageScale(_:)`, iOS 13.0. Apple: \"Scales images within the view according to one of the relative sizes available including small, medium, and large images sizes.\""
           ]
         }

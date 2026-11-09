@@ -156,6 +156,7 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "presentedWindowToolbarStyle", "note": "`.presentedWindowToolbarStyle(_:)`, not on iOS. Apple: \"Sets the style for the toolbar in windows created by interacting with this view.\"", "status": "unavailable-ios", "replacement": "toolbar"},
         {"name": "contentToolbar", "note": "`.contentToolbar(for:content:)`, iOS 18.4. Apple: \"Populates the toolbar of the specified content view type with the views you provide.\""},
         {"name": "ornament", "note": "`.ornament(visibility:attachmentAnchor:contentAlignment:ornament:)`, not on iOS. Apple: \"Presents an ornament.\"", "status": "unavailable-ios", "replacement": "toolbar"},
         {"name": "statusBarHidden", "note": "`.statusBarHidden(_:)`, iOS 13.0. Apple: \"Sets the visibility of the status bar.\"", "status": "deprecated", "replacement": "toolbarVisibility"},
@@ -164,7 +165,7 @@ export default {
         {"name": "toolbarBackgroundVisibility", "note": "`.toolbarBackgroundVisibility(_:for:)`, iOS 18.0. Apple: \"Specifies the preferred visibility of backgrounds on a bar managed by SwiftUI.\""},
         {"name": "toolbarColorScheme", "note": "`.toolbarColorScheme(_:for:)`, iOS 16.0. Apple: \"Specifies the preferred color scheme of a bar managed by SwiftUI.\""},
         {"name": "toolbarForegroundStyle", "note": "`.toolbarForegroundStyle(_:for:)`, not on iOS. Apple: \"Specifies the preferred foreground style of bars managed by SwiftUI.\"", "status": "unavailable-ios", "replacement": "toolbarColorScheme"},
-        {"name": "toolbarItemHidden", "note": "`.toolbarItemHidden(_:)`, not on iOS. Apple: \"Hides an individual view within a control group toolbar item.\"", "status": "unavailable-ios", "replacement": "toolbarVisibility"},
+        {"name": "toolbarItemHidden", "note": "`.toolbarItemHidden(_:)`, not on iOS. Apple: \"Hides an individual view within a control group toolbar item.\"", "status": "unavailable-ios", "replacement": "toolbar"},
         {"name": "toolbarMinimizationBehavior", "note": "`.toolbarMinimizationBehavior(_:for:)`, iOS 27.0. Apple: \"Sets the minimize behavior for the specified bars.\""},
         {"name": "toolbarMinimizationRestoration", "note": "`.toolbarMinimizationRestoration(_:for:)`, iOS 27.0. Apple: \"Sets the restoration behavior for the specified bars during minimization.\""},
         {"name": "toolbarMinimizationSafeAreaAdjustment", "note": "`.toolbarMinimizationSafeAreaAdjustment(_:for:)`, iOS 27.0. Apple: \"Sets the safe area adjustment for the specified bars during minimization.\""},
@@ -176,10 +177,10 @@ export default {
         {"name": "toolbarVerticalBehavior", "note": "`.toolbarVerticalBehavior(_:)`, iOS 27.1. Apple: \"Sets the behavior for the vertical bar.\""},
         {"name": "toolbarVerticalCompressionBehavior", "note": "`.toolbarVerticalCompressionBehavior(_:)`, iOS 27.1. Apple: \"Sets how bars should compress when different types of toolbars are hosted together and space is constrained.\""},
         {"name": "toolbarVisibility", "note": "`.toolbarVisibility(_:for:)`, iOS 18.0. Apple: \"Specifies the visibility of a bar managed by SwiftUI.\""},
-        {"name": "touchBar", "note": "`.touchBar(content:)`, not on iOS. Apple: \"Sets the content that the Touch Bar displays.\"", "status": "unavailable-ios", "replacement": "nothing on iOS ()"},
-        {"name": "touchBarCustomizationLabel", "note": "`.touchBarCustomizationLabel(_:)`, not on iOS. Apple: \"Sets a user-visible string that identifies the view’s functionality.\"", "status": "unavailable-ios", "replacement": "nothing on iOS ()"},
-        {"name": "touchBarItemPresence", "note": "`.touchBarItemPresence(_:)`, not on iOS. Apple: \"Sets the behavior of the user-customized view.\"", "status": "unavailable-ios", "replacement": "nothing on iOS ()"},
-        {"name": "touchBarItemPrincipal", "note": "`.touchBarItemPrincipal(_:)`, not on iOS. Apple: \"Sets principal views that have special significance to this Touch Bar.\"", "status": "unavailable-ios", "replacement": "nothing on iOS ()"}
+        {"name": "touchBar", "note": "`.touchBar(content:)`, not on iOS. Apple: \"Sets the content that the Touch Bar displays.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)"},
+        {"name": "touchBarCustomizationLabel", "note": "`.touchBarCustomizationLabel(_:)`, not on iOS. Apple: \"Sets a user-visible string that identifies the view’s functionality.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)"},
+        {"name": "touchBarItemPresence", "note": "`.touchBarItemPresence(_:)`, not on iOS. Apple: \"Sets the behavior of the user-customized view.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)"},
+        {"name": "touchBarItemPrincipal", "note": "`.touchBarItemPrincipal(_:)`, not on iOS. Apple: \"Sets principal views that have special significance to this Touch Bar.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)"}
       ]
     },
     "android": {

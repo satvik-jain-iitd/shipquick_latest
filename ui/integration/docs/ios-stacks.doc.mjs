@@ -36,11 +36,33 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "ArrangementView: iOS 27.1. Apple: \"A view that dynamically lays out a primary and secondary view based on size class, orientation, and reserved regions.\"",
+            "GeometryReader: iOS 13.0. Apple: \"A container view that defines its content as a function of its own size and coordinate space.\"",
+            "Group: iOS 13.0. Apple: \"A type that collects multiple instances of a content type — like views, scenes, or commands — into a single unit.\"",
+            "HStack: iOS 13.0. Apple: \"A view that arranges its subviews in a horizontal line.\"",
+            "LazyHStack: iOS 14.0. Apple: \"A view that arranges its children in a line that grows horizontally, creating items only as needed.\"",
+            "LazyVStack: iOS 14.0. Apple: \"A view that arranges its children in a line that grows vertically, creating items only as needed.\"",
+            "Spacer: iOS 13.0. Apple: \"A flexible space that expands along the major axis of its containing stack layout, or on both axes if not contained in a stack.\"",
+            "ViewThatFits: iOS 16.0. Apple: \"A view that adapts to the available space by providing the first child view that fits.\"",
+            "VStack: iOS 13.0. Apple: \"A view that arranges its subviews in a vertical line.\"",
+            "ZStack: iOS 13.0. Apple: \"A view that overlays its subviews, aligning them in both axes.\"",
             "arrangementViewStyle: `.arrangementViewStyle(_:)`, iOS 27.1. Apple: \"Sets the style for arrangement views within this view.\"",
             "overlayArrangementEdge: `.overlayArrangementEdge(_:)`, iOS 27.1. Apple: \"The horizontal edge a view in an overlay arrangement aligns to when the arrangement transitions to a landscape orientation.\"",
             "splitArrangementFixedLayoutSize: `.splitArrangementFixedLayoutSize(horizontal:vertical:)`, iOS 27.1. Apple: \"Sets the preferred size constraint for a view in a split arrangement style to the ideal size of the view within its container.\"",
             "splitArrangementLayoutRatio: `.splitArrangementLayoutRatio(_:)`, iOS 27.1. Apple: \"Sets the preferred size ratio for a view in a split style arrangement view.\"",
-            "splitArrangementLayoutSize: `.splitArrangementLayoutSize(minWidth:idealWidth:maxWidth:minHeight:idealHeight:maxHeight:)`, iOS 27.1. Apple: \"Sets the size constraints for a view in a split style arrangement view.\""
+            "splitArrangementLayoutSize: `.splitArrangementLayoutSize(minWidth:idealWidth:maxWidth:minHeight:idealHeight:maxHeight:)`, iOS 27.1. Apple: \"Sets the size constraints for a view in a split style arrangement view.\"",
+            "ArrangementViewStyleConfiguration.Primary: iOS 27.1. Apple: \"A type-erased view of the primary content of an arrangement view.\"",
+            "ArrangementViewStyleConfiguration.Secondary: iOS 27.1. Apple: \"A type-erased view of the secondary content of an arrangement view.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: GeometryReader3D. Use GeometryReader.",
+            "Do not use: HSplitView. Use NavigationSplitView.",
+            "Do not use: VSplitView. Use VStack.",
+            "Do not use: ZStackContent3D. Use ZStack."
           ]
         }
       ]

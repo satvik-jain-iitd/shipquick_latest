@@ -30,6 +30,9 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "KeyframeAnimator", "note": "iOS 17.0. Apple: \"A container that animates its content with keyframes.\""},
+        {"name": "PhaseAnimator", "note": "iOS 17.0. Apple: \"A container that animates its content by automatically cycling through a collection of phases that you provide, each defining a discrete step within an animation.\""},
+        {"name": "TimelineView", "note": "iOS 15.0. Apple: \"A view that updates according to a schedule that you provide.\""},
         {"name": "animation", "note": "`.animation(_:value:)`, iOS 13.0. Apple: \"Applies the given animation to this view when the specified value changes.\""},
         {"name": "contentTransition", "note": "`.contentTransition(_:)`, iOS 16.0. Apple: \"Modifies the view to use a given transition as its method of animating changes to the contents of its views.\""},
         {"name": "geometryGroup", "note": "`.geometryGroup()`, iOS 17.0. Apple: \"Isolates the geometry (e.g. position and size) of the view from its parent view.\""},

@@ -34,6 +34,10 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "Grid: iOS 16.0. Apple: \"A container view that arranges other views in a two dimensional layout.\"",
+            "GridRow: iOS 16.0. Apple: \"A horizontal row in a two dimensional grid container.\"",
+            "LazyHGrid: iOS 14.0. Apple: \"A container view that arranges its child views in a grid that grows horizontally, creating items only as needed.\"",
+            "LazyVGrid: iOS 14.0. Apple: \"A container view that arranges its child views in a grid that grows vertically, creating items only as needed.\"",
             "gridCellAnchor: `.gridCellAnchor(_:)`, iOS 16.0. Apple: \"Specifies a custom alignment anchor for a view that acts as a grid cell.\"",
             "gridCellColumns: `.gridCellColumns(_:)`, iOS 16.0. Apple: \"Tells a view that acts as a cell in a grid to span the specified number of columns.\"",
             "gridCellUnsizedAxes: `.gridCellUnsizedAxes(_:)`, iOS 16.0. Apple: \"Asks grid layouts not to offer the view extra size in the specified axes.\"",

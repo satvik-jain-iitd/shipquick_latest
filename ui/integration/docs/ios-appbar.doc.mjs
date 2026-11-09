@@ -90,14 +90,15 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
+            "Do not use: presentedWindowToolbarStyle. Use toolbar.",
             "Do not use: ornament. Use toolbar.",
             "Do not use: statusBarHidden. Use toolbarVisibility.",
             "Do not use: toolbarForegroundStyle. Use toolbarColorScheme.",
-            "Do not use: toolbarItemHidden. Use toolbarVisibility.",
-            "Do not use: touchBar. Use nothing on iOS ().",
-            "Do not use: touchBarCustomizationLabel. Use nothing on iOS ().",
-            "Do not use: touchBarItemPresence. Use nothing on iOS ().",
-            "Do not use: touchBarItemPrincipal. Use nothing on iOS ()."
+            "Do not use: toolbarItemHidden. Use toolbar.",
+            "Do not use: touchBar. Use nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar).",
+            "Do not use: touchBarCustomizationLabel. Use nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar).",
+            "Do not use: touchBarItemPresence. Use nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar).",
+            "Do not use: touchBarItemPrincipal. Use nothing on iOS (the Mac Touch Bar; iOS has no Touch Bar)."
           ]
         }
       ]

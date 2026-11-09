@@ -35,6 +35,9 @@ export default {
   "platformApi": {
     "ios": {
       "variants": [
+        {"name": "NavigationStack", "note": "iOS 16.0. Apple: \"A view that displays a root view and enables you to present additional views over the root view.\""},
+        {"name": "NavigationLink", "note": "iOS 13.0. Apple: \"A view that controls a navigation presentation.\""},
+        {"name": "NavigationView", "note": "iOS 13.0. Apple: \"A view for presenting a stack of views that represents a visible path in a navigation hierarchy.\"", "status": "deprecated", "replacement": "NavigationStack"},
         {"name": "navigationBarBackButtonHidden", "note": "`.navigationBarBackButtonHidden(_:)`, iOS 13.0. Apple: \"Hides the navigation bar back button for the view.\""},
         {"name": "navigationBarTitleDisplayMode", "note": "`.navigationBarTitleDisplayMode(_:)`, iOS 14.0. Apple: \"Configures the title display mode for this view.\""},
         {"name": "navigationDestination", "note": "`.navigationDestination(for:destination:)`, iOS 16.0. Apple: \"Associates a destination view with a presented data type for use within a navigation stack.\""},

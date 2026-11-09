@@ -68,6 +68,46 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "SecureField: iOS 13.0. Apple: \"A control into which people securely enter private text.\"",
+            "TextEditor: iOS 14.0. Apple: \"A view that can display and edit long-form text.\"",
+            "TextInputBorderShape: iOS 27.0. Apple: \"A shape used to draw the border of a text input control.\"",
+            "onSubmit: `.onSubmit(of:_:)`, iOS 15.0. Apple: \"Adds an action to perform when the user submits a value to this view.\"",
+            "submitLabel: `.submitLabel(_:)`, iOS 15.0. Apple: \"Sets the submit label for this view.\"",
+            "submitScope: `.submitScope(_:)`, iOS 15.0. Apple: \"Prevents submission triggers originating from this view to invoke a submission action configured by a submission modifier higher up in the view hierarchy.\"",
+            "textEditorStyle: `.textEditorStyle(_:)`, iOS 17.0. Apple: \"Sets the style for text editors within this view.\"",
+            "textFieldStyle: `.textFieldStyle(_:)`, iOS 13.0. Apple: \"Sets the style for text fields within this view.\"",
+            "autocorrectionDisabled: `.autocorrectionDisabled(_:)`, iOS 13.0. Apple: \"Sets whether to disable autocorrection for this view.\"",
+            "findDisabled: `.findDisabled(_:)`, iOS 16.0. Apple: \"Prevents find and replace operations in a text editor.\"",
+            "findNavigator: `.findNavigator(isPresented:)`, iOS 16.0. Apple: \"Programmatically presents the find and replace interface for text editor views.\"",
+            "keyboardType: `.keyboardType(_:)`, iOS 13.0. Apple: \"Sets the keyboard type for this view.\"",
+            "replaceDisabled: `.replaceDisabled(_:)`, iOS 16.0. Apple: \"Prevents replace operations in a text editor.\"",
+            "scrollDismissesKeyboard: `.scrollDismissesKeyboard(_:)`, iOS 16.0. Apple: \"Configures the behavior in which scrollable content interacts with the software keyboard.\"",
+            "textContentType: `.textContentType(_:)`, iOS 13.0. Apple: \"Sets the text content type for this view, which the system uses to offer suggestions while the user enters text on an iOS or tvOS device.\"",
+            "textInputAutocapitalization: `.textInputAutocapitalization(_:)`, iOS 15.0. Apple: \"Sets how often the shift key in the keyboard is automatically enabled.\"",
+            "textInputBorderShape: `.textInputBorderShape(_:)`, iOS 27.0. Apple: \"Sets the border shape for text input controls in the view hierarchy.\"",
+            "textInputFormattingControlVisibility: `.textInputFormattingControlVisibility(_:for:)`, iOS 26.0. Apple: \"Specifies which system text formatting controls are available for people to format text.\"",
+            "writingToolsAffordanceVisibility: `.writingToolsAffordanceVisibility(_:)`, iOS 18.4. Apple: \"Specifies whether the system should show the Writing Tools affordance for text input views affected by the environment.\"",
+            "writingToolsBehavior: `.writingToolsBehavior(_:)`, iOS 18.0. Apple: \"Specifies the Writing Tools behavior for text and text input in the environment.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: TextFieldLink. Use TextField.",
+            "Do not use: textInputCompletion. Use searchCompletion.",
+            "Do not use: textInputSuggestions. Use searchSuggestions."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

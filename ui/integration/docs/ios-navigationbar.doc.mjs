@@ -79,6 +79,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "tabViewStyle: `.tabViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the tab view within the current environment.\"",
             "defaultAdaptableTabBarPlacement: `.defaultAdaptableTabBarPlacement(_:)`, iOS 18.0. Apple: \"Specifies the default placement for the tabs in a tab view using the adaptable sidebar style.\"",
             "defaultTabBarPlacement: `.defaultTabBarPlacement(_:)`, iOS 27.0. Apple: \"Specifies the preferred placement for the tabs of a `TabView` in the `sidebarAdaptable` style on platforms where the tab bar cannot adapt between different representations, and only one representation can be shown.\"",
             "sceneAccessory: `.sceneAccessory(content:)`, iOS 27.0. Apple: \"Defines any scene accessories associated with `self`.\"",
@@ -88,7 +89,9 @@ export default {
             "tabViewSearchActivation: `.tabViewSearchActivation(_:)`, iOS 26.0. Apple: \"Configures the activation and deactivation behavior of search in the search tab.\"",
             "tabViewSidebarBottomBar: `.tabViewSidebarBottomBar(content:)`, iOS 18.0. Apple: \"Adds a custom bottom bar to the sidebar of a tab view.\"",
             "tabViewSidebarFooter: `.tabViewSidebarFooter(content:)`, iOS 18.0. Apple: \"Adds a custom footer to the sidebar of a tab view.\"",
-            "tabViewSidebarHeader: `.tabViewSidebarHeader(content:)`, iOS 18.0. Apple: \"Adds a custom header to the sidebar of a tab view.\""
+            "tabViewSidebarHeader: `.tabViewSidebarHeader(content:)`, iOS 18.0. Apple: \"Adds a custom header to the sidebar of a tab view.\"",
+            "DefaultTabLabel: iOS 18.0. Apple: \"The default label to use for a tab or tab section.\"",
+            "TabContentBuilder.Content: iOS 18.0. Apple: \"A view representation of the content of a builder-based tab view with selection.\""
           ]
         }
       ]

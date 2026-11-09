@@ -35,6 +35,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "NavigationStack: iOS 16.0. Apple: \"A view that displays a root view and enables you to present additional views over the root view.\"",
+            "NavigationLink: iOS 13.0. Apple: \"A view that controls a navigation presentation.\"",
             "navigationBarBackButtonHidden: `.navigationBarBackButtonHidden(_:)`, iOS 13.0. Apple: \"Hides the navigation bar back button for the view.\"",
             "navigationBarTitleDisplayMode: `.navigationBarTitleDisplayMode(_:)`, iOS 14.0. Apple: \"Configures the title display mode for this view.\"",
             "navigationDestination: `.navigationDestination(for:destination:)`, iOS 16.0. Apple: \"Associates a destination view with a presented data type for use within a navigation stack.\"",
@@ -43,6 +45,13 @@ export default {
             "navigationSubtitle: `.navigationSubtitle(_:)`, iOS 26.0. Apple: \"Configures the view’s subtitle for purposes of navigation, using a localized string resource.\"",
             "navigationTitle: `.navigationTitle(_:)`, iOS 16.0. Apple: \"Configures the view’s title for purposes of navigation, using a localized string resource.\"",
             "navigationTransition: `.navigationTransition(_:)`, iOS 18.0. Apple: \"Sets the navigation transition style for this view.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: NavigationView. Use NavigationStack."
           ]
         }
       ]

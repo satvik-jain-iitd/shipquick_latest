@@ -148,5 +148,28 @@ export default {
       "platform": "ios",
       "default": "[.large]"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "confirmationDialog", "note": "`.confirmationDialog(_:item:titleVisibility:actions:)`, iOS 15.0. Apple: \"Presents a confirmation dialog using data to produce the dialog’s content and a text view for the title.\""},
+        {"name": "dismissalConfirmationDialog", "note": "`.dismissalConfirmationDialog(_:shouldPresent:actions:)`, iOS 27.0. Apple: \"Presents a confirmation dialog upon an attempt to dismiss the window for this view.\""},
+        {"name": "fullScreenCover", "note": "`.fullScreenCover(isPresented:onDismiss:content:)`, iOS 14.0. Apple: \"Presents a modal view that covers as much of the screen as possible when binding to a Boolean value you provide is true.\""},
+        {"name": "interactiveDismissDisabled", "note": "`.interactiveDismissDisabled(_:)`, iOS 15.0. Apple: \"Conditionally prevents interactive dismissal of presentations like popovers, sheets, and inspectors.\""},
+        {"name": "presentationBackground", "note": "`.presentationBackground(_:)`, iOS 16.4. Apple: \"Sets the presentation background of the enclosing sheet using a shape style.\""},
+        {"name": "presentationBackgroundInteraction", "note": "`.presentationBackgroundInteraction(_:)`, iOS 16.4. Apple: \"Controls whether people can interact with the view behind a presentation.\""},
+        {"name": "presentationBreakthroughEffect", "note": "`.presentationBreakthroughEffect(_:)`, not on iOS. Apple: \"Changes the way the enclosing presentation breaks through content occluding it.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (visionOS content seen through 3D models; iOS has no 3D occlusion)"},
+        {"name": "presentationCompactAdaptation", "note": "`.presentationCompactAdaptation(horizontal:vertical:)`, iOS 16.4. Apple: \"Specifies how to adapt a presentation to horizontally and vertically compact size classes.\""},
+        {"name": "presentationContentInteraction", "note": "`.presentationContentInteraction(_:)`, iOS 16.4. Apple: \"Configures the behavior of swipe gestures on a presentation.\""},
+        {"name": "presentationCornerRadius", "note": "`.presentationCornerRadius(_:)`, iOS 16.4. Apple: \"Requests that the presentation have a specific corner radius.\""},
+        {"name": "presentationDetents", "note": "`.presentationDetents(_:)`, iOS 16.0. Apple: \"Sets the available detents for the enclosing sheet.\""},
+        {"name": "presentationDragIndicator", "note": "`.presentationDragIndicator(_:)`, iOS 16.0. Apple: \"Sets the visibility of the drag indicator on top of a sheet.\""},
+        {"name": "presentationPlacement", "note": "`.presentationPlacement(_:)`, iOS 27.0. Apple: \"Sets the placement of a presentation within the presenting view.\""},
+        {"name": "presentationPreventsAppTermination", "note": "`.presentationPreventsAppTermination(_:)`, not on iOS. Apple: \"Whether a presentation prevents the app from being terminated/quit by the system or app termination menu item.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (it stops a Mac app from quitting; iOS apps are not quit from a menu)"},
+        {"name": "presentationSizing", "note": "`.presentationSizing(_:)`, iOS 18.0. Apple: \"Sets the sizing of the containing presentation.\""},
+        {"name": "sheet", "note": "`.sheet(isPresented:onDismiss:content:)`, iOS 13.0. Apple: \"Presents a sheet when a binding to a Boolean value that you provide is true.\""},
+        {"name": "presentedWindowStyle", "note": "`.presentedWindowStyle(_:)`, not on iOS. Apple: \"Sets the style for windows created by interacting with this view.\"", "status": "unavailable-ios", "replacement": "sheet"}
+      ]
+    }
+  }
 };
