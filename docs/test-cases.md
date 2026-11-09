@@ -538,3 +538,28 @@ Scenario: an iOS topic never names a Compose API, and an Android topic never nam
   And every ios topic of a doc with two or more platforms lists at least one prop
 ```
 Tests: `tests/test_ui_topics.py` (s228). CI and local: `python3 scripts/ui_topics.py --check`.
+
+## Story #231: the full API lists, generated from each library's own public API
+```gherkin
+Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and the gate names each one with no doc
+  Given Google's current.txt for material3 1.4.0 and Apple's SwiftUI documentation JSON, saved as small extracts
+  When scripts/ui_api_lists.py parses the extracts offline
+  Then a top-level composable named like its file is a component, another composable of that file is a variant
+  And a composable inside a *Defaults object or a scope is a variant row of its own
+  And rememberX, other lower-case composables and every public top-level class, interface and enum are supporting
+  And a family with no live component of its own name gets a family row
+  And iOS modifiers come from the View page and every View collection page it links
+  And @BytecodeOnly twins are not rows, and an experimental annotation is marked
+  And nothing is left out: a deprecated row names the vendor's replacement and the data field it came from
+  And a row Apple does not offer on iOS has status unavailable-ios, the platforms Apple lists, and an iOS alternative
+  And SwiftUI plumbing types keep category plumbing
+  And each list has its source, version, date, Count and the sha256 of every saved extract
+  And --check exits 1 when a list no longer matches its extracts or an extract no longer matches its sha256
+  And check_ui_coverage.py prints one GAP line per family of uncovered rows, and --strict-api fails on them
+  And a row is covered only by one doc's platforms name, or an object in platformApi.<platform>.variants,
+      .supporting or .family, carrying the row's status
+  And a string item, a name the list does not have, a row two docs claim, an empty note or use,
+      and a status with no replacement all fail
+  And a topic prints a status item only as "Do not use: <name>. Use <replacement>."
+```
+Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.

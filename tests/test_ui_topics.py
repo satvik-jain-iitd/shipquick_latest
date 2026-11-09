@@ -131,3 +131,30 @@ def test_s228_an_android_topic_with_a_swiftui_word_fails(word):
 @pytest.mark.parametrize("text", ["It costs $5.", "Pay in US$ or EUR.", "Use 2 columns.", "Wait 300ms."])
 def test_s228_money_and_plain_numbers_are_not_leaks(text):
     assert not one_word("android", text) and not one_word("ios", text), text
+
+
+# Story #231: a topic lists the doc's own variants and supporting API for its platform. A deprecated or
+# unavailable item is only ever a "Do not use" line, never a recommendation.
+API_DOC = {"name": "Tabs", "platforms": {"android": "androidx.compose.material3.PrimaryTabRow", "ios": None, "web": None}, "props": [],
+           "usage": {"description": "Tabs."},
+           "platformApi": {"android": {
+               "variants": [{"name": "SecondaryTabRow", "note": "A quieter row."},
+                            {"name": "TabRow", "note": "The old row.", "status": "deprecated", "replacement": "PrimaryTabRow"}],
+               "supporting": [{"name": "TabRowDefaults", "use": "Read the default colors."}]}}}
+
+
+def test_s231_a_topic_lists_variants_and_supporting_and_says_do_not_use_for_a_deprecated_one():
+    t = ui_topics.topic(API_DOC, {"core": {}}, "android")
+    text = text_of(t)
+    assert "SecondaryTabRow: A quieter row." in text and "TabRowDefaults: Read the default colors." in text
+    assert "Do not use: TabRow. Use PrimaryTabRow." in text
+    assert "TabRow: The old row." not in text
+    dos = [i for s in t["sections"] for b in s["content"] if b.get("style") == "do" for i in b["items"]]
+    assert not any("TabRow" in i for i in dos)
+
+
+def test_s231_a_doc_level_status_turns_the_use_line_into_do_not_use():
+    doc = {**API_DOC, "status": "deprecated", "replacement": "PrimaryTabRow", "platformApi": {}}
+    text = text_of(ui_topics.topic(doc, {"core": {}}, "android"))
+    assert "Do not use: androidx.compose.material3.PrimaryTabRow. Use PrimaryTabRow." in text
+    assert "as Google ships it" not in text

@@ -168,3 +168,148 @@ def test_s216_components_that_are_not_a_literal_list_fail(tmp_path, capsys):
     (f / "integration.mjs").write_text("const names = ['Stepper'];\nexport default { docs: './docs', components: names };\n")
     assert run(f) == 1
     assert "literal list" in capsys.readouterr().out
+
+
+# Story #231: the generated API lists. Each component, variant or modifier row maps to a doc (by its
+# `platforms` name, or a variant in `platformApi`); each supporting row is listed in a doc's `platformApi`.
+ANDROID_API = """Count: 3
+
+| # | Entry | Kind | What | Family | Package | Experimental |
+|---|---|---|---|---|---|---|
+| 1 | `Button` | component | composable | Button | `androidx.compose.material3` | - |
+| 2 | `FilledTonalButton` | variant | composable | Button | `androidx.compose.material3` | - |
+| 3 | `ButtonDefaults` | supporting | defaults | Button | `androidx.compose.material3` | - |
+"""
+IOS_API = """Count: 2
+
+| # | Entry | Kind | What | Family | iOS since | Apple page |
+|---|---|---|---|---|---|---|
+| 1 | `Button` | component | view type | Button | 13.0 | https://y |
+| 2 | `buttonStyle` | modifier | view modifier | Controls | 13.0 | https://y |
+"""
+
+
+def api_fixture(tmp_path):
+    f = fixture(tmp_path)
+    (f / "android-api.md").write_text(ANDROID_API)
+    (f / "ios-api.md").write_text(IOS_API)
+    return f
+
+
+def run_api(f, *extra):
+    return run(f, "--android-api", str(f / "android-api.md"), "--ios-api", str(f / "ios-api.md"), *extra)
+
+
+def with_api(f, api):
+    p = f / "components" / "Button" / "Button.doc.mjs"
+    d = json.loads(p.read_text()[len("export default "):-2])
+    p.write_text("export default " + json.dumps({**d, "platformApi": api}) + ";\n")
+
+
+def test_s231_uncovered_api_rows_are_listed_and_pass_without_strict(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    assert run_api(f) == 0
+    out = capsys.readouterr().out
+    assert "FilledTonalButton" in out and "ButtonDefaults" in out and "buttonStyle" in out
+    assert "Button (component)" not in out
+
+
+def test_s231_strict_api_fails_on_an_uncovered_row(tmp_path, capsys):
+    assert run_api(api_fixture(tmp_path), "--strict-api") == 1
+    assert "FAIL api android Button" in capsys.readouterr().out
+
+
+def v(name):
+    return {"name": name, "note": "how it differs"}
+
+
+FULL_API = {"android": {"variants": [v("FilledTonalButton")], "supporting": [{"name": "ButtonDefaults", "use": "defaults"}]},
+            "ios": {"variants": [v("buttonStyle")]}}
+
+
+def test_s231_variants_and_supporting_in_the_family_doc_cover_their_rows(tmp_path):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    assert run_api(f, "--strict-api") == 0
+
+
+def test_s231_a_supporting_row_named_as_a_variant_is_not_covered(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {"android": {"variants": [v("FilledTonalButton"), v("ButtonDefaults")]}, "ios": {"variants": [v("buttonStyle")]}})
+    assert run_api(f, "--strict-api") == 1
+    assert "ButtonDefaults" in capsys.readouterr().out
+
+
+def test_s231_a_prose_mention_does_not_cover_a_row(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "android": {"supporting": FULL_API["android"]["supporting"]}})
+    p = f / "components" / "Button" / "Button.doc.mjs"
+    d = json.loads(p.read_text()[len("export default "):-2])
+    d["usage"] = {"description": "Use FilledTonalButton for a second action."}
+    p.write_text("export default " + json.dumps(d) + ";\n")
+    assert run_api(f, "--strict-api") == 1
+    assert "FilledTonalButton (variant)" in capsys.readouterr().out
+
+
+def test_s231_a_plain_string_item_does_not_cover_and_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "variants": ["FilledTonalButton"]}})
+    assert run_api(f) == 1
+    assert "must be an object" in capsys.readouterr().out
+
+
+def test_s231_a_row_owned_by_two_docs_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    p = f / "components" / "Stepper" / "Stepper.doc.mjs"
+    d = json.loads(p.read_text()[len("export default "):-2])
+    p.write_text("export default " + json.dumps({**d, "platformApi": {"android": {"variants": [v("FilledTonalButton")]}}}) + ";\n")
+    assert run_api(f) == 1
+    out = capsys.readouterr().out
+    assert "FilledTonalButton" in out and "Button" in out and "Stepper" in out and "one owner" in out
+
+
+DEPRECATED_ROW = ("| 4 | `TabRow` | variant | composable | TabRow | `androidx.compose.material3` | - | deprecated |"
+                  " replacement: `SecondaryTabRow`; `@Deprecated` on every overload: current.txt line 2567 |\n")
+
+
+def test_s231_a_deprecated_row_is_covered_only_by_an_item_with_the_same_status_and_a_replacement(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "android-api.md").write_text(ANDROID_API.replace("Count: 3", "Count: 4") + DEPRECATED_ROW)
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "variants": [v("FilledTonalButton"), v("TabRow")]}})
+    assert run_api(f, "--strict-api") == 1
+    assert "TabRow (variant, needs status deprecated)" in capsys.readouterr().out
+    item = {"name": "TabRow", "note": "old", "status": "deprecated", "replacement": "SecondaryTabRow"}
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "variants": [v("FilledTonalButton"), item]}})
+    assert run_api(f, "--strict-api") == 0
+
+
+def test_s231_a_name_under_platform_api_that_is_not_in_the_list_fails(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "variants": [v("FilledTonalButton"), v("FiledTonalButton")]}})
+    assert run_api(f) == 1
+    assert "FiledTonalButton" in capsys.readouterr().out
+
+
+FAMILY_ROW = "| 4 | `Tooltip` | family | family | Tooltip | `androidx.compose.material3` | - | - | - |\n"
+
+
+def test_s231_a_family_row_is_covered_by_platform_api_family(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "android-api.md").write_text(ANDROID_API.replace("Count: 3", "Count: 4") + FAMILY_ROW)
+    with_api(f, FULL_API)
+    assert run_api(f, "--strict-api") == 1
+    assert "Tooltip (family)" in capsys.readouterr().out
+    with_api(f, {**FULL_API, "android": {**FULL_API["android"], "family": "Tooltip"}})
+    assert run_api(f, "--strict-api") == 0
+
+
+def test_s231_the_gate_has_no_exclusion_list():
+    import inspect
+    src = inspect.getsource(check_ui_coverage)
+    assert "Left out" not in src and "exclu" not in src.lower()
+
+
+def test_s231_strict_api_fails_on_the_real_repo_today():
+    """Red first: the family docs have not landed, so the full lists are not covered yet."""
+    assert check_ui_coverage.main(["--strict-api"]) == 1

@@ -311,3 +311,17 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   fields as upstream's `UsageDoc` (`description`, `bestPractices`, `accessibility`), so it reads like upstream. The leak
   check is about 10 lines of stdlib regex in `scripts/ui_topics.py`. No package added.
 - Confidence that nothing fits better: 0.8 (the split is about our own two-platform docs; a general tool would still need this glue).
+
+## 9 Nov 2026, story #231: generate the full UI lists from each library's public API
+- Need: parse a Jetpack Compose `api/current.txt` dump and Apple's DocC documentation JSON into lists of public UI components.
+- Run: `scout.py --need "parse a Jetpack Compose api current.txt dump and Apple DocC documentation JSON into lists of public UI components"`: no repos found.
+  `scout.py --need "parse Apple DocC documentation JSON symbol graph"`: no repos found.
+  `gh search repos --topic=docc`: DoccZz/docc2html, tayloraswift/swift-biome, and others not a fit. `gh search repos "docc json"`: thehammer/callimachus-adapter-docs.
+  `gh search repos "metalava api current.txt parser"`: none.
+- Read: the top 3 READMEs. docc2html turns a DocC archive into HTML (Swift, a whole site). swift-biome is superseded
+  by swift-unidoc and compiles symbol graphs into a docs server. callimachus-adapter-docs indexes DocC JSON into its own
+  knowledge store. None lists View conformers with iOS availability, and none reads a Compose API dump.
+- Borrowed: the callimachus idea of reading `metadata.symbolKind` and the relationship sections of each DocC page
+  (we read `conformingTypes` on the `View` page and `metadata.platforms` on each type's page).
+- Decision: build from scratch, about 300 lines of stdlib Python (`scripts/ui_api_lists.py`). No package added.
+- Confidence that nothing fits better: 0.8 (both inputs are vendor formats with no maintained parser for this job).
