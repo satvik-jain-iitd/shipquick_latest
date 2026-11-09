@@ -101,5 +101,25 @@ export default {
       "description": "When false, the part is greyed out and ignores the user.",
       "default": "true"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "TriStateCheckbox",
+          "note": "A checkbox with three states: On, Off and Indeterminate (a ToggleableState). Use it for a parent box that checks or clears a group."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "CheckboxDefaults",
+          "use": "Default colours and stroke width for checkboxes. Make colours with CheckboxDefaults.colors()."
+        },
+        {
+          "name": "CheckboxColors",
+          "use": "The box, border and check mark colours of a checkbox in each state."
+        }
+      ]
+    }
+  }
 };

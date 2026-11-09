@@ -115,5 +115,76 @@ export default {
       "type": "@Composable () -> Unit",
       "description": "An icon at the end."
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "Chip",
+      "variants": [
+        {
+          "name": "AssistChip",
+          "note": "Helps the user do a task linked to the content, like add an event to the calendar."
+        },
+        {
+          "name": "ElevatedAssistChip",
+          "note": "An AssistChip with a shadow and no border. Use it on a busy background."
+        },
+        {
+          "name": "ElevatedFilterChip",
+          "note": "A FilterChip with a shadow and no border. Use it on a busy background."
+        },
+        {
+          "name": "InputChip",
+          "note": "A piece of input the user gave, like a contact in a To field. It can have an avatar and a remove icon."
+        },
+        {
+          "name": "SuggestionChip",
+          "note": "A suggestion made from the content, like a smart reply."
+        },
+        {
+          "name": "ElevatedSuggestionChip",
+          "note": "A SuggestionChip with a shadow and no border. Use it on a busy background."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "AssistChipDefaults",
+          "use": "Default colours, border, elevation, height and shape for assist chips."
+        },
+        {
+          "name": "FilterChipDefaults",
+          "use": "Default colours, border, elevation, height and shape for filter chips."
+        },
+        {
+          "name": "InputChipDefaults",
+          "use": "Default colours, border, elevation, sizes and shape for input chips."
+        },
+        {
+          "name": "SuggestionChipDefaults",
+          "use": "Default colours, border, elevation, height and shape for suggestion chips."
+        },
+        {
+          "name": "ChipColors",
+          "use": "The container, label and icon colours of an assist or suggestion chip, on and off."
+        },
+        {
+          "name": "SelectableChipColors",
+          "use": "The colours of a filter or input chip, selected and not, on and off."
+        },
+        {
+          "name": "ChipElevation",
+          "use": "The shadow of an assist or suggestion chip in each state."
+        },
+        {
+          "name": "SelectableChipElevation",
+          "use": "The shadow of a filter or input chip in each state."
+        },
+        {
+          "name": "ChipBorder",
+          "use": "The old chip border class.",
+          "status": "deprecated",
+          "replacement": "the chipBorder functions, like AssistChipDefaults.assistChipBorder() (Google: \"Maintained for binary compatibility. Use the chipBorder functions instead\")"
+        }
+      ]
+    }
+  }
 };

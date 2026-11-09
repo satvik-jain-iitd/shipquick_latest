@@ -110,5 +110,22 @@ export default {
       "description": "Words that say what loads. VoiceOver reads them.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "ProgressIndicator",
+      "variants": [
+        {
+          "name": "CircularProgressIndicator",
+          "note": "A spinning or filling circle. Use it in small places, like a button or a card. Pass progress for a known amount; leave it out when the time is not known."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "ProgressIndicatorDefaults",
+          "use": "Default colours, track colours, stroke widths, stroke caps, gap sizes, the stop mark and the progress animation for both indicators."
+        }
+      ]
+    }
+  }
 };

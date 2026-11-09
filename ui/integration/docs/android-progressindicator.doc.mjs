@@ -50,6 +50,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "CircularProgressIndicator: A spinning or filling circle. Use it in small places, like a button or a card. Pass progress for a known amount; leave it out when the time is not known.",
+            "ProgressIndicatorDefaults: Default colours, track colours, stroke widths, stroke caps, gap sizes, the stop mark and the progress animation for both indicators."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
