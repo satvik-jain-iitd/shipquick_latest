@@ -36,5 +36,41 @@ export default {
     {"name": "isLoading", "type": "boolean", "description": "Shows a spinner and ignores presses until the action ends.", "default": "false"},
     {"name": "onClick", "type": "() => void", "description": "Runs when the user presses the button."},
     {"name": "type", "type": "'button' | 'submit' | 'reset'", "description": "The HTML button type. Web only.", "default": "'button'"}
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "FilledTonalButton",
+          "note": "Less strong than Button, stronger than OutlinedButton. Use it for a second action that still matters, like Next in a set-up flow."
+        },
+        {
+          "name": "ElevatedButton",
+          "note": "A tonal button with a shadow. Use it only when the button must stand apart from a busy background."
+        },
+        {
+          "name": "OutlinedButton",
+          "note": "A border and no fill. Use it for an important action that is not the main one."
+        },
+        {
+          "name": "TextButton",
+          "note": "Text only, the weakest look. Use it in dialogs, in cards, and for minor actions."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "ButtonDefaults",
+          "use": "The default colours, elevation, shape, padding and sizes for each button type. Take values from it, never type your own."
+        },
+        {
+          "name": "ButtonColors",
+          "use": "The colours of a button when it is on or off. Make one with ButtonDefaults.buttonColors() or the colour function of its type."
+        },
+        {
+          "name": "ButtonElevation",
+          "use": "The shadow of a button in each state. Make one with ButtonDefaults.buttonElevation() or the elevation function of its type."
+        }
+      ]
+    }
+  }
 };
