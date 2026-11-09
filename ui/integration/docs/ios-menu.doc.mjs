@@ -62,6 +62,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "contextMenu: `.contextMenu(menuItems:)`, iOS 13.0. Apple: \"Adds a context menu to a view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

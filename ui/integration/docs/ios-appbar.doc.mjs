@@ -62,6 +62,47 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "contentToolbar: `.contentToolbar(for:content:)`, iOS 18.4. Apple: \"Populates the toolbar of the specified content view type with the views you provide.\"",
+            "toolbar: `.toolbar(content:)`, iOS 14.0. Apple: \"Populates the toolbar or navigation bar with the specified items.\"",
+            "toolbarBackground: `.toolbarBackground(_:for:)`, iOS 16.0. Apple: \"Specifies the preferred shape style of the background of a bar managed by SwiftUI.\"",
+            "toolbarBackgroundVisibility: `.toolbarBackgroundVisibility(_:for:)`, iOS 18.0. Apple: \"Specifies the preferred visibility of backgrounds on a bar managed by SwiftUI.\"",
+            "toolbarColorScheme: `.toolbarColorScheme(_:for:)`, iOS 16.0. Apple: \"Specifies the preferred color scheme of a bar managed by SwiftUI.\"",
+            "toolbarMinimizationBehavior: `.toolbarMinimizationBehavior(_:for:)`, iOS 27.0. Apple: \"Sets the minimize behavior for the specified bars.\"",
+            "toolbarMinimizationRestoration: `.toolbarMinimizationRestoration(_:for:)`, iOS 27.0. Apple: \"Sets the restoration behavior for the specified bars during minimization.\"",
+            "toolbarMinimizationSafeAreaAdjustment: `.toolbarMinimizationSafeAreaAdjustment(_:for:)`, iOS 27.0. Apple: \"Sets the safe area adjustment for the specified bars during minimization.\"",
+            "toolbarOverflowMenu: `.toolbarOverflowMenu(content:)`, iOS 27.0. Apple: \"Configures the overflow menu of a toolbar.\"",
+            "toolbarRole: `.toolbarRole(_:)`, iOS 16.0. Apple: \"Configures the semantic role for the content populating the toolbar.\"",
+            "toolbarTitleAlignment: `.toolbarTitleAlignment(_:)`, iOS 27.2. Apple: \"Sets the preferred alignment of the navigation bar’s title.\"",
+            "toolbarTitleDisplayMode: `.toolbarTitleDisplayMode(_:)`, iOS 17.0. Apple: \"Configures the toolbar title display mode for this view.\"",
+            "toolbarTitleMenu: `.toolbarTitleMenu(content:)`, iOS 16.0. Apple: \"Configure the title menu of a toolbar.\"",
+            "toolbarVerticalBehavior: `.toolbarVerticalBehavior(_:)`, iOS 27.1. Apple: \"Sets the behavior for the vertical bar.\"",
+            "toolbarVerticalCompressionBehavior: `.toolbarVerticalCompressionBehavior(_:)`, iOS 27.1. Apple: \"Sets how bars should compress when different types of toolbars are hosted together and space is constrained.\"",
+            "toolbarVisibility: `.toolbarVisibility(_:for:)`, iOS 18.0. Apple: \"Specifies the visibility of a bar managed by SwiftUI.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: ornament. Use toolbar.",
+            "Do not use: statusBarHidden. Use toolbarVisibility.",
+            "Do not use: toolbarForegroundStyle. Use toolbarColorScheme.",
+            "Do not use: toolbarItemHidden. Use toolbarVisibility.",
+            "Do not use: touchBar. Use nothing on iOS ().",
+            "Do not use: touchBarCustomizationLabel. Use nothing on iOS ().",
+            "Do not use: touchBarItemPresence. Use nothing on iOS ().",
+            "Do not use: touchBarItemPrincipal. Use nothing on iOS ()."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

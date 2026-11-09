@@ -170,6 +170,20 @@ export default {
     }
   ],
   "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "defaultAdaptableTabBarPlacement", "note": "`.defaultAdaptableTabBarPlacement(_:)`, iOS 18.0. Apple: \"Specifies the default placement for the tabs in a tab view using the adaptable sidebar style.\""},
+        {"name": "defaultTabBarPlacement", "note": "`.defaultTabBarPlacement(_:)`, iOS 27.0. Apple: \"Specifies the preferred placement for the tabs of a `TabView` in the `sidebarAdaptable` style on platforms where the tab bar cannot adapt between different representations, and only one representation can be shown.\""},
+        {"name": "sceneAccessory", "note": "`.sceneAccessory(content:)`, iOS 27.0. Apple: \"Defines any scene accessories associated with `self`.\""},
+        {"name": "tabBarMinimizeBehavior", "note": "`.tabBarMinimizeBehavior(_:)`, iOS 26.0. Apple: \"Sets the behavior for tab bar minimization.\""},
+        {"name": "tabViewBottomAccessory", "note": "`.tabViewBottomAccessory(content:)`, iOS 26.0. Apple: \"Places a view as the bottom accessory of the tab view.\""},
+        {"name": "tabViewCustomization", "note": "`.tabViewCustomization(_:)`, iOS 18.0. Apple: \"Specifies the customizations to apply to the sidebar representation of the tab view.\""},
+        {"name": "tabViewSearchActivation", "note": "`.tabViewSearchActivation(_:)`, iOS 26.0. Apple: \"Configures the activation and deactivation behavior of search in the search tab.\""},
+        {"name": "tabViewSidebarBottomBar", "note": "`.tabViewSidebarBottomBar(content:)`, iOS 18.0. Apple: \"Adds a custom bottom bar to the sidebar of a tab view.\""},
+        {"name": "tabViewSidebarFooter", "note": "`.tabViewSidebarFooter(content:)`, iOS 18.0. Apple: \"Adds a custom footer to the sidebar of a tab view.\""},
+        {"name": "tabViewSidebarHeader", "note": "`.tabViewSidebarHeader(content:)`, iOS 18.0. Apple: \"Adds a custom header to the sidebar of a tab view.\""}
+      ]
+    },
     "android": {
       "variants": [
         {

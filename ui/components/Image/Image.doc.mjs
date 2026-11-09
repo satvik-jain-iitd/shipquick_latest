@@ -66,5 +66,12 @@ export default {
       "type": "string",
       "description": "Apple's init(decorative:) label: the asset name of an unlabeled, decorative image that VoiceOver skips. Use it instead of name."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "imageScale", "note": "`.imageScale(_:)`, iOS 13.0. Apple: \"Scales images within the view according to one of the relative sizes available including small, medium, and large images sizes.\""}
+      ]
+    }
+  }
 };

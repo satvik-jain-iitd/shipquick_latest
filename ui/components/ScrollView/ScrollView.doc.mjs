@@ -67,5 +67,13 @@ export default {
       "description": "What scrolls.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "scrollEdgeEffectHidden", "note": "`.scrollEdgeEffectHidden(_:for:)`, iOS 26.0. Apple: \"Hides any scroll edge effects for scroll views within this hierarchy.\""},
+        {"name": "scrollEdgeEffectStyle", "note": "`.scrollEdgeEffectStyle(_:for:)`, iOS 26.0. Apple: \"Configures the scroll edge effect style for scroll views within this hierarchy.\""}
+      ]
+    }
+  }
 };

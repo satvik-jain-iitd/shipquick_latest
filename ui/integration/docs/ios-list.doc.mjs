@@ -68,6 +68,23 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "sectionActions: `.sectionActions(content:)`, iOS 18.0. Apple: \"Adds custom actions to a section.\"",
+            "sectionIndexLabel: `.sectionIndexLabel(_:)`, iOS 26.0. Apple: \"Sets the label that is used in a section index to point to this section, typically only a single character long.\"",
+            "listRowInsets: `.listRowInsets(_:)`, iOS 13.0. Apple: \"Applies an inset to the rows in a list.\"",
+            "listRowSpacing: `.listRowSpacing(_:)`, iOS 15.0. Apple: \"Sets the vertical spacing between two adjacent rows in a List.\"",
+            "listSectionMargins: `.listSectionMargins(_:_:)`, iOS 26.0. Apple: \"Set the section margins for the specific edges.\"",
+            "listSectionSpacing: `.listSectionSpacing(_:)`, iOS 17.0. Apple: \"Sets the spacing between adjacent sections in a `List` to a custom value.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

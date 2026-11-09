@@ -62,6 +62,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "imageScale: `.imageScale(_:)`, iOS 13.0. Apple: \"Scales images within the view according to one of the relative sizes available including small, medium, and large images sizes.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

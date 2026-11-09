@@ -68,6 +68,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "navigationSplitViewColumnWidth: `.navigationSplitViewColumnWidth(_:)`, iOS 16.0. Apple: \"Sets a fixed, preferred width for the column containing this view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

@@ -55,6 +55,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "scrollEdgeEffectHidden: `.scrollEdgeEffectHidden(_:for:)`, iOS 26.0. Apple: \"Hides any scroll edge effects for scroll views within this hierarchy.\"",
+            "scrollEdgeEffectStyle: `.scrollEdgeEffectStyle(_:for:)`, iOS 26.0. Apple: \"Configures the scroll edge effect style for scroll views within this hierarchy.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

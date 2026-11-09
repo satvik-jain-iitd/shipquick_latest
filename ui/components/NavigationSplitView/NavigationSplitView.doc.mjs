@@ -83,5 +83,12 @@ export default {
       "type": "Binding<NavigationSplitViewVisibility>",
       "description": "Which columns show, kept by the screen."
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "navigationSplitViewColumnWidth", "note": "`.navigationSplitViewColumnWidth(_:)`, iOS 16.0. Apple: \"Sets a fixed, preferred width for the column containing this view.\""}
+      ]
+    }
+  }
 };

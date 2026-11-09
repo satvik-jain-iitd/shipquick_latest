@@ -142,5 +142,12 @@ export default {
       "description": "A custom label, like a Label with an icon.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "contextMenu", "note": "`.contextMenu(menuItems:)`, iOS 13.0. Apple: \"Adds a context menu to a view.\""}
+      ]
+    }
+  }
 };

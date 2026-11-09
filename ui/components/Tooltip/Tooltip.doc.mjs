@@ -105,5 +105,12 @@ export default {
       "description": "The anchor the tooltip belongs to.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "help", "note": "`.help(_:)`, iOS 16.0. Apple: \"Adds help text to a view using a localized string resource that you provide.\""}
+      ]
+    }
+  }
 };
