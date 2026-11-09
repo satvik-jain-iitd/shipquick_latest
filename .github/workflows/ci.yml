@@ -260,7 +260,7 @@ jobs:
           version: "0.4.x"
       - name: Install dependencies
         run: |
-          pip install pytest
+          pip install pytest==9.0.2 pillow==12.3.0   # pillow: scripts/qa/ flow map and audit report (story #162)
       - name: Run tests
         run: |
           mkdir -p logs
