@@ -166,4 +166,23 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: reuse GitHub's own issue form (`required: true` on a new field) for stories made in the UI,
   and a small `scripts/check_story.py` for stories made with `gh issue create --body` (agents do this,
   and it skips the form). It reuses the `LINK` regex of `close_linked_issues.py`.
+## 9 Nov 2026, story #163 (GoServe feedback): publish the canvas from canvas.json, then verify the listing
+- Need: derive the exact list of files to publish from a JSON manifest, and check a deploy listing holds every file it names.
+- Run: `scout.py --need "derive the exact list of files to publish from a JSON manifest and verify a deploy listing contains every referenced asset"`: no repos found.
+- The idea is old and plain (a bundler's asset manifest read by the deploy step; a link check after a static-site deploy). It is a set difference. A tool for it would be bigger than the code.
+- Decision: two modes in `scripts/canvas_stage.py` (`--publish-list`, `--verify <listing>`), about 15 lines, standard library only.
+- Confidence that nothing fits better: 0.9.
+
+## 9 Nov 2026, story #165 (GoServe feedback): stages as columns, and a Design learnings board
+- Need: lay out design canvas stage sections as kanban columns, left to right, and render a design decision log board from JSON.
+- Run: `scout.py --need "lay out design canvas stage sections as kanban columns left to right and render a design decision log board from json"`: no repos found.
+- Kanban tools (Trello, Jira, GitHub Projects) show the idea; none writes boards for the claude.ai Design canvas. The layout is one x offset in the existing loop.
+- Decision: a `"layout": "columns"` key and a learnings board inside `scripts/canvas_stage.py`, reusing its board template and contrast check.
+- Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #148 (GoServe feedback): options differ in copy, rejections carry a reason
+- Need: lint a design options manifest so each option names its copy difference and each rejected option carries a reason.
+- Run: `scout.py --need "lint a design options manifest so each option names its copy difference and each rejected option carries a reason"`: no repos found.
+- Content-design guides exist (Material 3 content design, Shopify Polaris content; Tier A, the vendors' own docs). They are rules to read, not a check to run.
+- Decision: two checks in the existing manifest loop of `scripts/canvas_stage.py`, read from the manifest only, no render.
 - Confidence that nothing fits better: 0.85.
