@@ -58,18 +58,25 @@ PLUMBING = {"AnyShape", "AnyView", "DebugReplaceableView", "EditableCollectionCo
             "StrokeBorderShapeView", "StrokeShapeView", "Subview", "SubviewsCollection", "SubviewsCollectionSlice",
             "TransformedShape", "TupleContent", "TupleView"}
 # The iOS alternative for each entry Apple does not offer on iOS. Apple's data names none, so this is our choice
-# (confidence 0.7). Each value is a live row of the iOS list, or "none" when iOS has no such surface (a Mac window,
-# a visionOS volume, the Touch Bar, the Digital Crown). The generator fails on a value that is not a live row, and a
-# new unavailable entry fails until it is added here.
+# (confidence 0.7; each one reviewed on 2026-11-09 against the entry's own Apple page and its platforms field).
+# Each value is a live row of the iOS list, or "none: <reason>" when iOS has no such surface. The reason is one
+# line, so an agent knows why there is nothing to use. The generator fails on a value that is not a live row, on a
+# bare "none", and on a new unavailable entry until it is added here.
+_MAC_WINDOW = "none: it shapes a Mac app window; an iOS app has no such window control"
+_TOUCH_BAR = "none: the Mac Touch Bar; iOS has no Touch Bar"
+_VOLUME = "none: a visionOS volume or immersive space; iOS has no 3D space around the app"
+_SERVICES = "none: Mac Services and Continuity Camera import or export; iOS has no Services menu"
 IOS_ALTERNATIVES = {
     # types
     "DefaultSettingsLinkLabel": "Link", "SettingsLink": "Link", "HelpLink": "Link", "TextFieldLink": "TextField",
-    "DefaultWindowVisibilityToggleLabel": "none", "WindowVisibilityToggle": "none", "MenuButton": "Menu",
+    "DefaultWindowVisibilityToggleLabel": _MAC_WINDOW, "WindowVisibilityToggle": _MAC_WINDOW, "MenuButton": "Menu",
     "HSplitView": "NavigationSplitView", "VSplitView": "VStack", "GeometryReader3D": "GeometryReader",
-    "ZStackContent3D": "ZStack", "GlassBackgroundEffectConfiguration.Content": "GlassEffectContainer",
+    # the content of a visionOS glass background; on iOS the content takes the Liquid Glass modifier itself
+    "ZStackContent3D": "ZStack", "GlassBackgroundEffectConfiguration.Content": "glassEffect",
     # modifiers with an iOS twin
     "textInputSuggestions": "searchSuggestions", "textInputCompletion": "searchCompletion",
-    "toolbarItemHidden": "toolbarVisibility", "toolbarForegroundStyle": "toolbarColorScheme",
+    # hides one item in a Mac control group; on iOS leave the item out of the toolbar content
+    "toolbarItemHidden": "toolbar", "toolbarForegroundStyle": "toolbarColorScheme",
     "defaultWheelPickerItemHeight": "pickerStyle", "horizontalRadioGroupLayout": "pickerStyle",
     "menuButtonStyle": "menuStyle", "ornament": "toolbar", "glassBackgroundEffect": "glassEffect",
     "alternatingRowBackgrounds": "listRowBackground", "listRowPlatterColor": "listRowBackground",
@@ -80,22 +87,49 @@ IOS_ALTERNATIVES = {
     "prefersDefaultFocus": "defaultFocus", "onCopyCommand": "copyable", "onCutCommand": "cuttable", "onPasteCommand": "pasteDestination",
     "onDeleteCommand": "swipeActions", "onMoveCommand": "onKeyPress", "pageCommand": "onKeyPress", "onExitCommand": "onKeyPress",
     "onPlayPauseCommand": "onKeyPress", "onCommand": "onKeyPress", "onModifierKeysChanged": "onKeyPress",
-    "dialogSeverity": "alert", "dialogPreventsAppTermination": "none", "presentationPreventsAppTermination": "none",
-    "presentedWindowStyle": "sheet", "presentedWindowToolbarStyle": "toolbar", "accessibilityQuickAction": "accessibilityAction",
-    # no iOS surface: visionOS volumes and immersion, macOS windows and Touch Bar, watchOS crown and complications, tvOS
-    **{name: "none" for name in (
-        "directTouchSystemGesturesDisabled", "preferredSurroundingsEffect", "spatialOverlay", "spatialOverlayPreferenceValue",
-        "breakthroughEffect", "contentCaptureProtected", "upperLimbVisibility", "volumeBaseplateVisibility",
-        "accessoryWidgetGroupStyle", "windowDismissBehavior", "windowFullScreenBehavior", "windowMinimizeBehavior",
-        "windowResizeAnchor", "windowResizeBehavior", "preferredWindowClippingMargins", "touchBar", "touchBarItemPrincipal",
-        "touchBarCustomizationLabel", "touchBarItemPresence", "chart3DRenderingStyle", "modifierKeyAlternate",
-        "handPointerBehavior", "manipulable", "manipulationGesture", "pointerVisibility", "pointerStyle", "focusScope",
-        "focusSection", "dragPreviewsFormation", "dropPreviewsFormation", "digitalCrownAccessory", "digitalCrownRotation",
-        "onImmersionChange", "onWorldRecenter", "immersiveEnvironmentPicker", "onVolumeViewpointChange",
-        "supportedVolumeViewpoints", "exportsItemProviders", "importsItemProviders", "exportableToServices",
-        "importableFromServices", "presentationBreakthroughEffect", "onWebViewImmersiveEnvironmentRequest",
-        "webViewContextMenu", "continuityDevicePicker", "cameraAnchor", "foveatedStreamingPauseSheet",
-        "groupActivityAssociation", "tabletopGame", "complicationForeground")},
+    "dialogSeverity": "alert", "presentedWindowStyle": "sheet", "presentedWindowToolbarStyle": "toolbar",
+    "accessibilityQuickAction": "accessibilityAction",
+    # iPadOS shows its pointer shape through hover effects
+    "pointerStyle": "hoverEffect",
+    # visionOS hand manipulation of a 3D view; on iOS attach drag, magnify or rotate gestures
+    "manipulable": "gesture", "manipulationGesture": "gesture",
+    # no iOS surface, each with its reason
+    "dialogPreventsAppTermination": "none: it stops a Mac app from quitting; iOS apps are not quit from a menu",
+    "presentationPreventsAppTermination": "none: it stops a Mac app from quitting; iOS apps are not quit from a menu",
+    "directTouchSystemGesturesDisabled": "none: Mac and Mac Catalyst direct-touch system gestures only",
+    "preferredSurroundingsEffect": "none: it tints visionOS passthrough video; iOS has no passthrough",
+    "spatialOverlay": _VOLUME, "spatialOverlayPreferenceValue": _VOLUME,
+    "breakthroughEffect": "none: visionOS content seen through 3D models; iOS has no 3D occlusion",
+    "presentationBreakthroughEffect": "none: visionOS content seen through 3D models; iOS has no 3D occlusion",
+    "contentCaptureProtected": "none: visionOS 26 only, Apple's page names no iOS twin",
+    "upperLimbVisibility": "none: the person's arms in a visionOS immersive space",
+    "volumeBaseplateVisibility": _VOLUME, "onVolumeViewpointChange": _VOLUME, "supportedVolumeViewpoints": _VOLUME,
+    "preferredWindowClippingMargins": "none: drawing past a visionOS window's bounds",
+    "onImmersionChange": _VOLUME, "immersiveEnvironmentPicker": _VOLUME, "onWorldRecenter": _VOLUME,
+    "onWebViewImmersiveEnvironmentRequest": _VOLUME,
+    "accessoryWidgetGroupStyle": "none: a watchOS accessory widget group; build iOS widgets with WidgetKit",
+    "windowDismissBehavior": _MAC_WINDOW, "windowFullScreenBehavior": _MAC_WINDOW, "windowMinimizeBehavior": _MAC_WINDOW,
+    "windowResizeAnchor": _MAC_WINDOW, "windowResizeBehavior": _MAC_WINDOW,
+    "touchBar": _TOUCH_BAR, "touchBarItemPrincipal": _TOUCH_BAR, "touchBarCustomizationLabel": _TOUCH_BAR,
+    "touchBarItemPresence": _TOUCH_BAR,
+    "chart3DRenderingStyle": "none: a visionOS 26 render style for 3D charts; Apple offers it on visionOS only",
+    "modifierKeyAlternate": "none: a Mac menu item that swaps while a modifier key is held",
+    "handPointerBehavior": "none: the visionOS hand pointer", "pointerVisibility": "none: hides the Mac pointer only",
+    "focusScope": "none: scopes prefersDefaultFocus on Mac, TV and Watch; iOS defaultFocus needs no scope",
+    "focusSection": "none: guides tvOS and Mac focus moves; iOS has no focus engine sections",
+    "dragPreviewsFormation": "none: Mac drag previews only; iOS shows the system drag preview",
+    "dropPreviewsFormation": "none: Mac drop previews only; iOS shows the system drop preview",
+    "digitalCrownAccessory": "none: the Apple Watch Digital Crown; iPhone has no crown",
+    "digitalCrownRotation": "none: the Apple Watch Digital Crown; iPhone has no crown",
+    "exportsItemProviders": _SERVICES, "importsItemProviders": _SERVICES, "exportableToServices": _SERVICES,
+    "importableFromServices": _SERVICES,
+    "webViewContextMenu": "none: replaces a WebView's menu on Mac only; Apple offers it on macOS only",
+    "continuityDevicePicker": "none: tvOS picks a nearby Continuity device; Apple offers it on tvOS only",
+    "cameraAnchor": "none: the virtual camera of a visionOS Persona stream",
+    "foveatedStreamingPauseSheet": "none: visionOS foveated streaming only",
+    "groupActivityAssociation": "none: visionOS SharePlay spatial placement only",
+    "tabletopGame": "none: a visionOS tabletop game in 3D space",
+    "complicationForeground": "none: a watchOS complication; iOS has no complications",
 }
 
 HEADER = re.compile(r"^// shipquick: (\w+): (.*)$")
@@ -418,12 +452,16 @@ def parse_ios(extract, alternatives=None):
             r["detail"] = f"{r['field']}; replacement: `{r['replacement']}`"
         elif r["status"] == "unavailable-ios":
             alt = alternatives.get(r["name"])
-            if alt is None:
+            alt, _, reason = (alt or "").partition(":")
+            reason = reason.strip()
+            if not alt:
                 errs.append(f"{r['name']}: not on iOS; add its iOS alternative to IOS_ALTERNATIVES")
+            elif alt == "none" and not reason:
+                errs.append(f"{r['name']}: its iOS alternative is none, so it needs a one-line reason (\"none: <why>\")")
             elif alt not in live_names:
                 errs.append(f"{r['name']}: its iOS alternative {alt} is not a live row of the iOS list")
-            r["replacement"] = alt or ""
-            r["detail"] = f"{r['field']}; iOS alternative (ours, Apple names none): `{alt}`"
+            r["replacement"], r["reason"] = alt, reason
+            r["detail"] = f"{r['field']}; iOS alternative (ours, Apple names none): `{alt}`" + (f", because {reason}" if reason else "")
     if errs:
         raise ValueError("; ".join(errs))
     order = {"component": 0, "supporting": 1, "modifier": 2}
@@ -465,6 +503,7 @@ def ios_md(files):
         "- iOS since: Apple's `introducedAt` for iOS. For a modifier, the earliest live overload.",
         "- Status and detail: the exact `metadata.platforms` field and value from the row's own Apple page, then the",
         "  replacement from Apple's deprecation message, or for `unavailable-ios` the iOS alternative we chose.",
+        "  When iOS has nothing to use, the alternative is `none` and the detail says why in one line.",
         "",
         "| # | Entry | Kind | What | Family | iOS since | Category | Status | Detail | Apple page |",
         "|---|---|---|---|---|---|---|---|---|---|",
