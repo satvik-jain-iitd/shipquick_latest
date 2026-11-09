@@ -99,5 +99,38 @@ export default {
       "description": "The screen body. Apply the padding it gets.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "DragHandle",
+      "variants": [
+        {
+          "name": "VerticalDragHandle",
+          "note": "A tall handle between two panes. The user drags it to change the pane widths, on large screens."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "ScaffoldDefaults",
+          "use": "The default contentWindowInsets of Scaffold."
+        },
+        {
+          "name": "VerticalDragHandleDefaults",
+          "use": "Default colours, shapes and sizes for VerticalDragHandle."
+        },
+        {
+          "name": "DragHandleColors",
+          "use": "The colours of a drag handle when it rests, is pressed and is dragged."
+        },
+        {
+          "name": "DragHandleShapes",
+          "use": "The shape of a drag handle when it rests, is pressed and is dragged."
+        },
+        {
+          "name": "DragHandleSizes",
+          "use": "The size of a drag handle when it rests, is pressed and is dragged."
+        }
+      ]
+    }
+  }
 };
