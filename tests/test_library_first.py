@@ -72,9 +72,10 @@ def test_s181_library_doc_has_the_web_row_and_never_twice():
     assert "an approved component joins the library and is never built twice" in lib.lower()
 
 
-def test_s181_trace_row_is_last_and_names_the_pr():
-    rows = [l for l in (ROOT / "docs/process-trace.md").read_text(encoding="utf-8").splitlines() if l.startswith("|")]
-    assert "Story #181" in rows[-1] and "PR #195" in rows[-1]
+def test_s181_trace_row_names_the_pr():
+    # "is last" held only until the next PR added a row (it broke PR #197), so check the row, not its place
+    rows = [l for l in (ROOT / "docs/process-trace.md").read_text(encoding="utf-8").splitlines() if "Story #181" in l]
+    assert rows and any("PR #195" in r for r in rows)
 
 
 def test_s181_adr_012_names_the_verdict_and_the_copy_policy():
