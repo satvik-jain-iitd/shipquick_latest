@@ -156,7 +156,7 @@ def module_info(raw: bytes) -> dict:
         if at.get("org.jetbrains.kotlin.platform.type", "androidJvm") not in PLATFORMS:
             continue
         files += [f["url"] for f in var.get("files", [])]
-        for d in var.get("dependencies", []) + var.get("dependencyConstraints", []):
+        for d in var.get("dependencies", []):  # not dependencyConstraints: they name every sibling library
             v = d.get("version", {})
             deps.append((d["group"], d["module"], v.get("requires") or v.get("strictly") or v.get("prefers") or ""))
         if "available-at" in var:
