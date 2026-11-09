@@ -43,6 +43,30 @@ export default {
               "@Composable RowScope.() -> Unit",
               "",
               "The NavigationBarItems."
+            ],
+            [
+              "selected",
+              "boolean",
+              "",
+              "NavigationBarItem: true for the place on screen now."
+            ],
+            [
+              "onClick",
+              "() => void",
+              "",
+              "NavigationBarItem: runs when the user taps the place. Go there here."
+            ],
+            [
+              "icon",
+              "@Composable () -> Unit",
+              "",
+              "NavigationBarItem: the icon for the place."
+            ],
+            [
+              "label",
+              "@Composable () -> Unit",
+              "",
+              "NavigationBarItem: the words under the icon."
             ]
           ]
         }
