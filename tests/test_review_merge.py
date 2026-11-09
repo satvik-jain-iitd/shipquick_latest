@@ -563,3 +563,12 @@ def test_s139_every_built_by_line_counts_not_only_the_first(env, stub_dir):
         [{"commit": {"message": "feat: x\n\nBuilt-by: proj-dev is how it works\n\nBuilt-by: proj-qa\n"}}]), encoding="utf-8")
     r, merged = env(pr=pr, roles=SESSION_ROLES)
     refused(r, merged, "proj-qa built a commit")
+
+
+def test_s139_a_dev_merge_commit_by_the_reviewer_session_does_not_block_its_approval(env, stub_dir):
+    pr = session_pr("Reviewed-by: proj-qa", stub_dir=stub_dir)
+    (stub_dir / "commits.json").write_text(json.dumps([
+        {"parents": [{}], "commit": {"message": "feat: x\n\nBuilt-by: proj-dev\n"}},
+        {"parents": [{}, {}], "commit": {"message": "Merge dev into feat/x\n\nBuilt-by: proj-qa\n"}}]), encoding="utf-8")
+    r, merged = env(pr=pr, roles=SESSION_ROLES)
+    assert r.returncode == 0, r.stderr

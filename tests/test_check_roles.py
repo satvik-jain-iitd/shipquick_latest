@@ -158,3 +158,9 @@ def test_a_reviewed_by_line_that_disagrees_with_the_block_header_is_refused():
     body = "```\nTo proj-qa, from proj-dev, re x:\n1. ok\nNothing needed from you.\n```\nReviewed-by: proj-qa\n"
     why = cr.review_session(body.replace("To proj-qa", "To someone"), ["proj-dev"], REVIEWER_SESSIONS)
     assert why and "proj-dev" in why and "proj-qa" in why
+
+
+def test_session_names_compare_without_case():
+    assert cr.review_session("Reviewed-by: Proj-QA", ["proj-dev"], REVIEWER_SESSIONS) is None
+    why = cr.review_session("Reviewed-by: proj-qa", ["Proj-QA"], REVIEWER_SESSIONS)
+    assert why and "built a commit" in why

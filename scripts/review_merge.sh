@@ -76,10 +76,10 @@ reviewer_account=$(jq -r --arg revs "$reviewers" --arg author "$author" --arg he
 
 # story #139 (ADR-011): maker and checker are different SESSIONS, not only different accounts. Opt-in:
 # only when roles.yml lists reviewer_sessions. The approving review names its session; that session must
-# not appear in any commit's Built-by: trailer.
+# not appear in any non-merge commit's Built-by: trailer (merge commits are exempt, ADR-011).
 if [ -n "$reviewer_sessions" ]; then
   commits=$(gh api "repos/$repo/pulls/$pr/commits" --paginate) || refuse "cannot read the commits of pull request $pr"
-  built_by=$(jq -rs '[.[][] | .commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s] | unique | join(",")' <<<"$commits")
+  built_by=$(jq -rs '[.[][] | select((.parents | length) < 2) | .commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s] | unique | join(",")' <<<"$commits")
   review_body="$(mktemp)"
   jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
     '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" > "$review_body"

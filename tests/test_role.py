@@ -142,3 +142,12 @@ def test_s139_an_amend_by_another_session_replaces_the_old_built_by(repo):
     subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": "proj-qa"})
     text = msg.read_text()
     assert "Built-by: proj-qa" in text and "Built-by: proj-dev" not in text
+
+
+def test_s139_with_no_session_known_the_hook_drops_an_old_built_by(repo):
+    # PR #178 verify: an amend with no session must not keep someone else's name.
+    msg = repo / "MSG"
+    msg.write_text("feat: x\n\nBuilt-by: proj-dev\nCo-Authored-By: a <a@b>\n", encoding="utf-8")
+    subprocess.run(["bash", str(TRAILER), str(msg)], cwd=repo, check=True, env={**os.environ, "SHIPQUICK_SESSION": ""})
+    text = msg.read_text()
+    assert "Built-by" not in text and "Co-Authored-By: a <a@b>" in text

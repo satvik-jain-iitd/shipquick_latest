@@ -37,7 +37,7 @@ def check(author: str, commits: list, coders: list, reviewers=(), owner=None, co
     for a, parents, *rest in commits:
         if a in DEPENDABOT:
             continue
-        if coder_sessions and parents < 2 and (rest[0] if rest else "") not in coder_sessions:
+        if coder_sessions and parents < 2 and (rest[0] if rest else "").lower() not in [c.lower() for c in coder_sessions]:
             got = rest[0] if rest and rest[0] else "no Built-by: trailer"
             return (f"a commit by {a} names {got}, not a coder session ({', '.join(coder_sessions)}); "
                     "set the session once (source scripts/role.sh coder) and the hook adds Built-by:")
@@ -51,7 +51,9 @@ def check(author: str, commits: list, coders: list, reviewers=(), owner=None, co
 
 def review_session(body: str, built_by: list, reviewer_sessions: list) -> str | None:
     """The approving review's own session must be a reviewer session that built no commit here."""
-    names = {m.group(1).strip("`'\".,") for rx in (REVIEWED_BY, BLOCK_FROM) for m in rx.finditer(body or "")}
+    names = {m.group(1).strip("`'\".,").lower() for rx in (REVIEWED_BY, BLOCK_FROM) for m in rx.finditer(body or "")}
+    reviewer_sessions = [x.lower() for x in reviewer_sessions]
+    built_by = [x.lower() for x in built_by]
     if not names:
         return "the approving review names no session: add a 'Reviewed-by: <session>' line (ADR-011)"
     if len(names) > 1:
