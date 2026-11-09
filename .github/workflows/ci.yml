@@ -228,6 +228,7 @@ jobs:
         working-directory: ui/tool
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: The CLI serves the kit's integration as shipped
+        shell: bash   # pipefail: a failing ui.sh piped to grep must fail the step
         run: |
           bash scripts/ui.sh doctor integration validate shipquick-ui
           bash scripts/ui.sh docs android-button --dense | grep -q "androidx.compose.material3.Button"

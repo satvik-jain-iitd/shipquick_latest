@@ -27,7 +27,7 @@ type files, so Python checks run without Node), `scripts/check_ui_docs.py` (the 
 3. Update the commit line here. Run `python3 scripts/check_ui_docs.py` and the tests.
 4. One PR. Name the old and new commit in it.
 
-Story S3 (#183) adds the copied CLI (`ui/cli/`) to this file.
+Story S3 (#183) does not copy the CLI; it pins it. See the next section.
 
 ## The CLI (story #183): used as shipped, not copied
 
@@ -38,3 +38,7 @@ The integration manifest fields we use (`docs`, `agentDocs.append`, `issuesUrl`)
 
 To upgrade: change both pins in `ui/tool/package.json`, run `npm install --ignore-scripts --save-exact` there
 to rewrite the lockfile, then run the `ui-cli` CI job and read the release notes.
+
+Why `@astryxdesign/cli` sits under `dependencies` and the rest under `devDependencies`: that is how the owner's
+install wrote it, and `ui/tool/` is a private tool package that is never published or shipped, so the split
+changes nothing. Moving it would need a fresh install that only the owner can run here.

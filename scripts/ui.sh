@@ -11,21 +11,32 @@ BIN="${UI_ASTRYX_BIN:-$TOOL/node_modules/.bin/astryx}"   # UI_ASTRYX_BIN: a stub
 [ -x "$BIN" ] || { echo "ui: the CLI is not installed. Run once: (cd \"$TOOL\" && npm ci --ignore-scripts)" >&2; exit 2; }
 mkdir -p "$TOOL/node_modules"
 ln -sfn ../../integration "$TOOL/node_modules/shipquick-ui"   # npm ci removes it; the config names it
-err="$(mktemp)"; trap 'rm -f "$err"' EXIT
-out="$(cd "$TOOL" && "$BIN" "$@" 2>"$err")"; code=$?
-printf '%s\n' "$out"; cat "$err" >&2
+outf="$(mktemp)"; errf="$(mktemp)"; trap 'rm -f "$outf" "$errf"' EXIT
+(cd "$TOOL" && "$BIN" "$@") >"$outf" 2>"$errf"; code=$?
+cat "$outf"; cat "$errf" >&2
 [ "$code" -eq 0 ] || exit "$code"
-for stream in "$out" "$(cat "$err")"; do   # the CLI may print its error on either stream
-  first="$(printf '%s\n' "$stream" | grep -v '^Warning:' | grep -m1 -v '^[[:space:]]*$' || true)"
-  case "$first" in Error:*) echo "ui: the CLI reported an error (exit 0 upstream), failing" >&2; exit 1 ;; esac
-done
-case " $* " in
-  *" --json "*)
-    printf '%s' "$out" | python3 -c 'import json, sys
-try: d = json.load(sys.stdin)
-except ValueError: sys.exit(0)
-bad = isinstance(d, dict) and ("error" in d or str(d.get("code", "")).startswith("ERR_"))
-sys.exit(1 if bad else 0)' || { echo "ui: the --json envelope carries an error, failing" >&2; exit 1; }
-    ;;
-esac
-exit 0
+json=0
+for a in "$@"; do case "$a" in --json|--json=*) json=1 ;; esac; done
+python3 - "$json" "$outf" "$errf" <<'PY'
+import json, re, sys
+mode, outf, errf = sys.argv[1] == "1", sys.argv[2], sys.argv[3]
+out, err = open(outf).read(), open(errf).read()
+# an error line anywhere, on either stream, in any case: "Error: ...", "error: ...", "ERROR ..."
+said_error = re.compile(r"^\s*error\s*:", re.I | re.M)   # Error: / error: / ERROR:
+shouted = re.compile(r"^\s*ERROR\b", re.M)                 # ERROR boom
+if any(said_error.search(s) or shouted.search(s) for s in (out, err)):
+    sys.exit("ui: the CLI reported an error (it exits 0 for some), failing")
+if mode:
+    try:
+        data = json.loads(out)
+    except ValueError:
+        sys.exit("ui: --json output is not JSON, failing")
+    def walk(v):
+        if isinstance(v, dict):
+            if v.get("error") is not None or v.get("ok") is False or str(v.get("code", "")).startswith("ERR_"):
+                return True
+            return any(walk(x) for x in v.values())
+        return isinstance(v, list) and any(walk(x) for x in v)
+    if walk(data):
+        sys.exit("ui: the --json envelope carries an error, failing")
+PY

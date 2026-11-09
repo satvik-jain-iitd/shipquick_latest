@@ -7,6 +7,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 UI = ROOT / "scripts" / "ui.sh"
 TOPICS = ROOT / "scripts" / "ui_topics.py"
@@ -110,3 +112,45 @@ def test_s183_every_topic_list_block_has_a_style_the_cli_accepts():
             for block in s["content"]:
                 if block["type"] == "list":
                     assert block.get("style") in {"ordered", "unordered", "do", "dont"}, (f.name, s["title"])
+
+
+# PR #202 second review: scan every line and both streams, and walk the whole JSON.
+def run_stub(tmp_path, stdout, stderr="", *args):
+    s = tmp_path / "astryx"
+    s.write_text(f"#!/usr/bin/env bash\ncat <<'OUT'\n{stdout}\nOUT\ncat >&2 <<'ERR'\n{stderr}\nERR\nexit 0\n", encoding="utf-8")
+    s.chmod(0o755)
+    return subprocess.run(["bash", str(UI), *args], capture_output=True, text=True, env={**os.environ, "UI_ASTRYX_BIN": str(s)})
+
+
+@pytest.mark.parametrize("stdout,stderr", [
+    ("Loading config\nError: boom", ""),
+    ("ok", "note\nError: later on stderr"),
+    ("error: lower case", ""),
+    ("ERROR something broke", ""),
+])
+def test_s183_an_error_line_anywhere_fails(tmp_path, stdout, stderr):
+    assert run_stub(tmp_path, stdout, stderr, "doctor").returncode == 1
+
+
+@pytest.mark.parametrize("stdout", ["not json", "", 'Warning: w\n{"error":"x"}'])
+def test_s183_json_mode_output_that_will_not_parse_fails(tmp_path, stdout):
+    assert run_stub(tmp_path, stdout, "", "docs", "x", "--json").returncode == 1
+
+
+@pytest.mark.parametrize("stdout", ['{"data":{"error":"boom"}}', '[{"error":"x"}]', '{"ok":false}', '{"data":{"code":"ERR_X"}}'])
+def test_s183_a_nested_error_fails(tmp_path, stdout):
+    assert run_stub(tmp_path, stdout, "", "docs", "x", "--json").returncode == 1
+
+
+def test_s183_a_null_error_passes(tmp_path):
+    assert run_stub(tmp_path, '{"apiVersion":1,"error":null,"data":{}}', "", "docs", "x", "--json").returncode == 0
+
+
+def test_s183_json_equals_true_is_json_mode(tmp_path):
+    assert run_stub(tmp_path, '{"error":"x"}', "", "docs", "x", "--json=true").returncode == 1
+
+
+def test_s183_the_ci_smoke_steps_run_with_pipefail():
+    ci = (ROOT / ".github/workflows/ci.yml").read_text()
+    step = ci[ci.index("The CLI serves the kit's integration as shipped"):].split("run: |")[0]
+    assert "shell: bash" in step
