@@ -33,7 +33,7 @@ Compose Multiplatform is not used. It draws Android parts on iOS. See ADR-012.
 4. The reviewer checks if existing components can do the job. If they can, the reviewer rejects the request and says how.
 5. If they cannot, the reviewer asks the owner in one line: the screen, what is missing, why, and a picture.
 6. When the owner says yes, a reviewer account posts an issue comment `Owner yes: <date> "<his words>"` and adds the label `component-approved`.
-7. The coder builds it in the library repo. It comes with a doc, a contract, a preview, a snapshot, a registry row
+7. The coder builds it in the kit's library folder (`ui/android/` or `ui/ios/`). It comes with a doc, a contract, a preview, a snapshot, a registry row
    and a board on the canvas. Its twin on the other platform is requested at the same time.
 
 An approved component joins the library and is never built twice.
@@ -47,7 +47,7 @@ reviewer -> can a library part do it?
             no  -> asks the owner in one line
 owner  -> yes (or no)
 reviewer -> posts the issue comment "Owner yes:" and adds the label component-approved
-coder  -> builds it in the library repo, with its twin requested on the other platform
+coder  -> builds it in the kit's library folder (`ui/android/` or `ui/ios/`), with its twin requested on the other platform
 child  -> bumps the library pin, then the screen uses it
 ```
 
@@ -63,7 +63,7 @@ Until S3 to S7 land, the reviewer checks by hand.
 1. **A screen starts as a copied template.** Once S3 lands, run `ui template <name> <path>`. The agent replaces only the content.
 2. **A component is used as the library ships it.** No wrapper that rewrites it. From S7, lint refuses hand-drawn UI in app code.
 3. **An approved custom component starts as a copy too.** `ui swizzle <BaseComponent>` (from S3) copies the nearest library part's
-   real source into the library repo, licence header included. Then only the approved change is made.
+   real source into the kit's library folder, licence header included. Then only the approved change is made.
 4. **Nothing ShipQuick writes replaces a library part.** ShipQuick adds only what no library has:
    the tokens bridge, the request flow, the gates and the canvas board.
 
@@ -72,11 +72,11 @@ Until S3 to S7 land, the reviewer checks by hand.
 | Place | What it holds |
 |---|---|
 | ShipQuick kit (submodule in every child) | The platform-neutral layer: doc schema, contracts, `design/tokens.json`, the copied Astryx CLI (`ui/cli/`), the agent block, the request flow, the checks |
-| `satvik-jain-iitd/shipquick-ui-android` | Generated `Theme.kt`; a `<Name>.doc.mjs` per M3 component we use (the component stays Google's); approved custom components, each swizzled from M3 source; screen templates; generated contracts; a catalog app; snapshots |
-| `satvik-jain-iitd/shipquick-ui-ios` | An SPM package `ShipQuickUI`: SwiftUI components, generated contracts, docs, templates, previews, snapshots |
+| `ui/android/` in the kit (Gradle, `includeBuild`) | Generated `Theme.kt`; a `<Name>.doc.mjs` per M3 component we use (the component stays Google's); approved custom components, each swizzled from M3 source; screen templates; generated contracts; a catalog app; snapshots |
+| `ui/ios/` in the kit (SPM, `.package(path:)`) | An SPM package `ShipQuickUI`: SwiftUI components, generated contracts, docs, templates, previews, snapshots |
 | A web child | `@astryxdesign/core`, exact pin, its own `astryx init` agent block; CI runs `astryx doctor --built` as a failing check |
 
-Both library repos are public. They hold no brand and no client data. A child carries them as submodules (story S9).
+The kit is public, so both libraries are too. They hold no brand and no client data. A child needs no new submodule: it already carries the kit, and `adopt.sh --platforms` (story S9) writes the build snippet. Why one repo: ADR-012, "Where it lives".
 A child's brand lives in the child, as tokens.
 
 ## The MIT copy policy
@@ -91,7 +91,7 @@ We copy Meta Astryx's agent architecture as code (MIT). We never rewrite it.
 ## Worked example: GoServe
 
 - GoServe's PWA stays as it is. It is moving to native, so it is not switched to Astryx.
-- When the native work starts, its Android screens use M3 parts from `shipquick-ui-android`, and its iOS screens use SwiftUI parts from `shipquick-ui-ios`.
+- When the native work starts, its Android screens use M3 parts through `ui/android/`, and its iOS screens use SwiftUI parts through `ui/ios/`.
 - Say a booking screen needs a time-slot grid. The coder first tries `FilterChip` in a `FlowRow`.
   If that cannot show a full slot, the coder files a component-request and stops. The reviewer asks the owner.
   After his yes, the grid is swizzled from the nearest M3 part. Its iOS twin is requested the same day.
