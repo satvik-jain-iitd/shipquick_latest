@@ -1,0 +1,92 @@
+# Component library: library first
+
+CLAUDE.md rule 38. Decision: `docs/decisions/ADR-012.md`.
+This works for any ShipQuick child and any stack. GoServe is only the worked example.
+
+## Why
+
+GoServe built every component by hand. No library was picked. So the UI was slow, and no two screens matched.
+A library already has the parts. They are tested. They are accessible. Agents can look them up.
+So we use the library, and we build only what it truly lacks.
+
+## The library for each platform
+
+| Platform | Library | How it is used |
+|---|---|---|
+| Android | Jetpack Compose Material 3 (Google) | Directly. Our brand through `MaterialTheme`. |
+| iOS | SwiftUI (Apple) | Directly. Our brand through `Tokens.swift`. |
+| Web | `@astryxdesign/core` (Meta) | Directly, exact version pinned. Theme through `defineTheme`. |
+
+Both apps share one tokens file, `design/tokens.json`. It holds the feel: colour, type, spacing, shape, motion, haptics and touch-target size.
+So the apps feel the same, even when they look a little different.
+
+Compose Multiplatform is not used. It draws Android parts on iOS. See ADR-012.
+
+## The rule
+
+1. A screen is built only from library components. It starts from a template. Layout containers are allowed.
+2. Lint refuses hand-drawn UI in app code. That means Canvas, a custom Shape or ButtonStyle, drawBehind,
+   controls built from raw gestures, M2 or View widgets, and third-party kits.
+3. If nothing fits, the coder files a `component-request` and stops. No stand-in is built while waiting.
+4. The reviewer checks if existing components can do the job. If they can, the reviewer rejects the request and says how.
+5. If they cannot, the reviewer asks the owner in one line: the screen, what is missing, why, and a picture.
+6. When the owner says yes, the reviewer writes `Owner yes: <date> "<his words>"` and adds the label `component-approved`.
+7. The coder builds it in the library repo. It comes with a doc, a contract, a preview, a snapshot, a registry row
+   and a board on the canvas. Its twin on the other platform is requested at the same time.
+
+## The request flow
+
+```
+coder  -> files a component-request (docs/templates/component-request.md), stops that part
+reviewer -> can a library part do it?
+            yes -> rejects, names the part and how
+            no  -> asks the owner in one line
+owner  -> yes (or no)
+reviewer -> writes "Owner yes:" and adds the label component-approved
+coder  -> builds it in the library repo, with its twin requested on the other platform
+child  -> bumps the library pin, then the screen uses it
+```
+
+Only the reviewer writes the `Owner yes:` line. The coder never does.
+No label, no build. Story S8 adds a check that fails a custom component with no approved request.
+
+## What "never hand-write" means
+
+These four points are enforced. Until the checks land (stories S3, S7, S8), the reviewer checks them by hand.
+
+1. **A screen starts as a copied template.** Run `ui template <name> <path>`. The agent replaces only the content.
+2. **A component is used as the library ships it.** No wrapper that rewrites it. Lint refuses hand-drawn UI in app code.
+3. **An approved custom component starts as a copy too.** `ui swizzle <BaseComponent>` copies the nearest library part's
+   real source into the library repo, licence header included. Then only the approved change is made.
+4. **Nothing ShipQuick writes replaces a library part.** ShipQuick adds only what no library has:
+   the tokens bridge, the request flow, the gates and the canvas board.
+
+## Where things live
+
+| Place | What it holds |
+|---|---|
+| ShipQuick kit (submodule in every child) | The platform-neutral layer: doc schema, contracts, `design/tokens.json`, the copied Astryx CLI (`ui/cli/`), the agent block, the request flow, the checks |
+| `satvik-jain-iitd/shipquick-ui-android` | Generated `Theme.kt`; a `<Name>.doc.mjs` per M3 component we use (the component stays Google's); approved custom components, each swizzled from M3 source; screen templates; generated contracts; a catalog app; snapshots |
+| `satvik-jain-iitd/shipquick-ui-ios` | An SPM package `ShipQuickUI`: SwiftUI components, generated contracts, docs, templates, previews, snapshots |
+| A web child | `@astryxdesign/core`, exact pin, its own `astryx init` agent block; CI runs `astryx doctor --built` as a failing check |
+
+Both library repos are public. They hold no brand and no client data. A child carries them as submodules (story S9).
+A child's brand lives in the child, as tokens.
+
+## The MIT copy policy
+
+We copy Meta Astryx's agent architecture as code (MIT). We never rewrite it.
+
+- Every copied file keeps `Copyright (c) Meta Platforms, Inc. and affiliates.` and the MIT notice.
+- The upstream commit is written down next to the copy, in `ui/UPSTREAM.md`. That file also says how to pull upstream changes.
+- A component swizzled from Compose M3 keeps its Apache 2.0 header the same way.
+- We never use the name "Astryx" for our product.
+
+## Worked example: GoServe
+
+- GoServe's PWA stays as it is. It is moving to native, so it is not switched to Astryx.
+- When the native work starts, its Android screens use M3 parts from `shipquick-ui-android`, and its iOS screens use SwiftUI parts from `shipquick-ui-ios`.
+- Say a booking screen needs a time-slot grid. The coder first tries `FilterChip` in a `FlowRow`.
+  If that cannot show a full slot, the coder files a component-request and stops. The reviewer asks the owner.
+  After his yes, the grid is swizzled from the nearest M3 part. Its iOS twin is requested the same day.
+- Rollout is story S13: warn-only for one sprint, then blocking.

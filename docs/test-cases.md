@@ -319,3 +319,14 @@ Scenario: the qa-loop skill installs from the kit as a thin pointer
   And docs/QA_LOOP.md has sections 1 to 15 and covers Web, Android, iOS and CLI
 ```
 Tests: `tests/test_install_skill.py` (`test_s162_*`).
+
+## Story #181: rule 38, library first
+```gherkin
+Scenario: rule 38 exists and points at its docs
+  Given CLAUDE.md
+  Then rule 38 is "Library first" and comes right after rule 37
+  And it links docs/COMPONENT_LIBRARY.md, docs/decisions/ADR-012.md and docs/templates/component-request.md, and each file exists
+  And the request template has Screen, What is missing, Tried, Picture, Platform twin, Owner yes and component-approved
+  And ADR-012 names Compose M3, SwiftUI, @astryxdesign/core, the dropped Compose Multiplatform and the MIT header
+```
+Tests: `tests/test_library_first.py` (`test_s181_*`).
