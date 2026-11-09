@@ -175,6 +175,56 @@ export default {
         {"name": "DefaultTabLabel", "use": "iOS 18.0. Apple: \"The default label to use for a tab or tab section.\""},
         {"name": "TabContentBuilder.Content", "use": "iOS 18.0. Apple: \"A view representation of the content of a builder-based tab view with selection.\""}
       ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "NavigationBarItem",
+          "note": "One destination in a NavigationBar: an icon, an optional label, and selected and onClick."
+        },
+        {
+          "name": "ShortNavigationBar",
+          "note": "A newer, shorter bottom bar for three to five destinations."
+        },
+        {
+          "name": "ShortNavigationBarItem",
+          "note": "One destination in a ShortNavigationBar. Its iconPosition puts the label under the icon or beside it."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "NavigationBarDefaults",
+          "use": "Default container colour, elevation and window insets for NavigationBar."
+        },
+        {
+          "name": "NavigationBarItemDefaults",
+          "use": "Default colours for NavigationBarItem. Make them with NavigationBarItemDefaults.colors()."
+        },
+        {
+          "name": "NavigationBarItemColors",
+          "use": "The icon, text and indicator colours of a NavigationBarItem, selected and not."
+        },
+        {
+          "name": "ShortNavigationBarDefaults",
+          "use": "Default colours, arrangement and window insets for ShortNavigationBar."
+        },
+        {
+          "name": "ShortNavigationBarItemDefaults",
+          "use": "Default colours for ShortNavigationBarItem."
+        },
+        {
+          "name": "ShortNavigationBarArrangement",
+          "use": "How ShortNavigationBar spreads its items: EqualWeight (each item gets the same width) or Centered (the items sit in the middle)."
+        },
+        {
+          "name": "NavigationItemColors",
+          "use": "The icon, text and indicator colours that ShortNavigationBarItem and WideNavigationRailItem use, selected and not."
+        },
+        {
+          "name": "NavigationItemIconPosition",
+          "use": "Where an item's icon sits next to its label: Top (label below) or Start (label beside)."
+        }
+      ]
     }
   }
 };
