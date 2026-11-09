@@ -34,8 +34,6 @@ export default {
           "style": "unordered",
           "items": [
             "ContentUnavailableView: iOS 17.0. Apple: \"An interface, consisting of a label and additional content, that you display when the content of your app is unavailable to users.\"",
-            "DocumentLaunchView: iOS 18.0. Apple: \"A view to present when launching document-related user experience.\"",
-            "DefaultDocumentGroupLaunchActions: iOS 18.0. Apple: \"The default actions for the document group launch scene and the document launch view.\"",
             "SearchUnavailableContent.Actions: iOS 17.0. Apple: \"A view that represents the actions of a static `ContentUnavailableView.search` view.\"",
             "SearchUnavailableContent.Description: iOS 17.0. Apple: \"A view that represents the description of a static `ContentUnavailableView.search` view.\"",
             "SearchUnavailableContent.Label: iOS 17.0. Apple: \"A view that represents the label of a static placeholder search view.\""

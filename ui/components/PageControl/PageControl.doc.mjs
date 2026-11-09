@@ -76,6 +76,7 @@ export default {
   ],
   "platformApi": {
     "ios": {
+      "family": "PageControl",
       "variants": [
         {"name": "indexViewStyle", "note": "`.indexViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for the index view within the current environment.\""}
       ]

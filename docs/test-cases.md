@@ -911,3 +911,29 @@ Scenario: a token change without regenerating fails
   Then `emit_tokens.py --check` exits 1 and names each stale file
 ```
 Tests: `tests/test_emit_tokens.py` (s184). CI: `ui-cli` runs `--check`; `ui-android-compile` and `ui-ios-compile` compile both files. Local: `bash scripts/check_local.sh ui-tokens`.
+## Story #288: framework-doc names are checked against saved package names
+```gherkin
+Scenario: a typo in a framework doc fails
+  Given a framework doc (swift-charts) that names Chrat under platformApi.ios.supporting
+  And the saved framework names, pinned by sha256 in framework-topics.md, have Charts.Chart but no Chrat
+  When check_ui_coverage.py runs
+  Then it fails and names swift-charts and Chrat
+  And an Android name in an iOS slot fails the same way
+  And a saved names file that does not match its pin fails
+```
+Tests: `tests/test_ui_coverage.py` (s288), `tests/test_ui_api_lists.py` (s288). Local: `bash scripts/check_local.sh ui-coverage`.
+
+## Story #285: iOS docs get a family, and the gate enforces it like Android
+```gherkin
+Scenario: an iOS row is covered only by a doc of its doc family
+  Given the iOS list maps buttonStyle to the doc family Button
+  When a swift-charts doc claims buttonStyle
+  Then check_ui_coverage.py --strict-api fails with "buttonStyle (modifier, needs a doc of family Button)"
+  And a component row mapped to Shape is covered only by the doc whose platformApi.ios.family is Shape
+  And a family that no row maps to, or two docs with one family, fails
+  And an iOS list with no Doc family column fails
+  And a blank Doc family cell fails and names the row
+  And each row sits in the doc of its meaning (confirmationDialog and fullScreenCover in Dialog, Color in Appearance,
+    ButtonBorderShape in Button, scrollDismissesKeyboard in ScrollView, Canvas and DocumentLaunchView in their own docs)
+```
+Tests: `tests/test_ui_coverage.py` (s285), `tests/test_ui_api_lists.py` (s285). Local: `bash scripts/check_local.sh ui-coverage`.

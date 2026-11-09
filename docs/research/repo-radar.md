@@ -367,3 +367,24 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: build from scratch, one stdlib Python file (`scripts/emit_tokens.py`), the same shape as `scripts/ui_proof.py`.
   It runs on CI with no install, and the output is the part that needs our own mapping anyway.
 - Confidence that nothing fits better: 0.75 (Style Dictionary would save the JSON walk, but not the mapping, and adds Node).
+## 9 Nov 2026, story #288: save the public names of each framework package
+- Need: save a list of public API names of Android and Apple framework packages to validate names in docs.
+- Run: `scout.py --need "save a list of public API names of Android and Apple framework packages to validate names in docs"`: no repos found.
+  `gh search repos "android api current.txt"`: none. `gh search repos --topic=docc`: DoccZz/docc2html, tayloraswift/swift-biome,
+  JosephDuffy/VaporDocC (and two not a fit).
+- Read: the top 3 READMEs. docc2html builds a static site from a DocC archive. swift-biome serves many Swift packages'
+  docs (superseded by swift-unidoc). VaporDocC serves a DocC archive from a Vapor app. None saves a name list we can check against.
+- Borrowed: nothing new. We reuse our own `scripts/ui_api_lists.py` (its `get`, `sha`, current.txt regexes and the Apple JSON reading).
+- Decision: about 90 lines added to `scripts/ui_api_lists.py` and 30 to `scripts/check_ui_coverage.py` (stdlib). No package added.
+- Confidence that nothing fits better: 0.8 (the job is our own glue on two vendor formats we already parse).
+
+## 9 Nov 2026, story #285: an own-family rule for iOS docs
+- Need: enforce that each API row is documented only in the doc of its own family, mapping SwiftUI modifiers to component docs.
+- Run: `scout.py --need "enforce that each API row is documented only in the doc of its own family, mapping SwiftUI modifiers to component docs"`: no repos found.
+  `gh search repos "swiftui modifiers list"`: none. `gh search repos "swiftui modifiers" --sort stars`: superwall/iOS-Backports,
+  Aeastr/AdaptiveDimensions, ngimelliUW/WiggleAnimationModifier (and two more single-modifier packages).
+- Read: the top 3 READMEs. iOS-Backports adds a `.backport` wrapper for new modifiers. AdaptiveDimensions scales sizes with text
+  size. WiggleAnimationModifier adds one animation. Each is a modifier to use in an app, not a catalog or a gate.
+- Borrowed: nothing. We reuse our own Android rule in `scripts/check_ui_coverage.py` (PR #255) and the generated list.
+- Decision: a `Doc family` column from `scripts/ui_api_lists.py` (one map, `IOS_DOC_FAMILY`) and about 20 lines in the gate. No package added.
+- Confidence that nothing fits better: 0.85 (the rule is about our own docs and our own list).

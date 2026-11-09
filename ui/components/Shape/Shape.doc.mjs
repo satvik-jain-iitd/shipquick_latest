@@ -35,9 +35,8 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Shape",
       "variants": [
-        {"name": "ButtonBorderShape", "note": "iOS 15.0. Apple: \"A shape used to draw a button’s border.\""},
-        {"name": "Canvas", "note": "iOS 15.0. Apple: \"A view type that supports immediate mode drawing.\""},
         {"name": "Capsule", "note": "iOS 13.0. Apple: \"A capsule shape aligned inside the frame of the view containing it.\""},
         {"name": "Circle", "note": "iOS 13.0. Apple: \"A circle centered on the frame of the view containing it.\""},
         {"name": "ConcentricRectangle", "note": "iOS 26.0. Apple: \"A shape whose corners you configure, individually or uniformly, to be squared, rounded, or concentric relative to a container shape’s corners.\""},

@@ -61,7 +61,8 @@ export default {
             "widgetAccentable: `.widgetAccentable(_:)`, iOS 16.0. Apple: \"Adds the view and all of its subviews to the accented group.\"",
             "widgetCurvesContent: `.widgetCurvesContent(_:)`, iOS 17.0. Apple: \"Displays the widget’s content along a curve if the context allows it.\"",
             "widgetLabel: `.widgetLabel(_:)`, iOS 16.0. Apple: \"Returns a localized text label that displays additional content outside the accessory family widget’s main SwiftUI view.\"",
-            "windowToolbarFullScreenVisibility: `.windowToolbarFullScreenVisibility(_:)`, iOS 18.0. Apple: \"Configures the visibility of the window toolbar when the window enters full screen mode.\""
+            "windowToolbarFullScreenVisibility: `.windowToolbarFullScreenVisibility(_:)`, iOS 18.0. Apple: \"Configures the visibility of the window toolbar when the window enters full screen mode.\"",
+            "Color: iOS 13.0. Apple: \"A representation of a color that adapts to a given context.\""
           ]
         },
         {
@@ -86,7 +87,8 @@ export default {
             "Do not use: colorScheme. Use preferredColorScheme.",
             "Do not use: complicationForeground. Use nothing on iOS (a watchOS complication; iOS has no complications).",
             "Do not use: foregroundColor. Use foregroundStyle.",
-            "Do not use: statusBar. Use statusBarHidden."
+            "Do not use: statusBar. Use statusBarHidden.",
+            "Do not use: statusBarHidden. Use toolbarVisibility."
           ]
         }
       ]

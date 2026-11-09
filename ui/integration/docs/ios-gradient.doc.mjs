@@ -36,7 +36,6 @@ export default {
           "style": "unordered",
           "items": [
             "AngularGradient: iOS 13.0. Apple: \"An angular gradient.\"",
-            "Color: iOS 13.0. Apple: \"A representation of a color that adapts to a given context.\"",
             "EllipticalGradient: iOS 15.0. Apple: \"A radial gradient that draws an ellipse.\"",
             "LinearGradient: iOS 13.0. Apple: \"A linear gradient.\"",
             "MeshGradient: iOS 18.0. Apple: \"A two-dimensional gradient defined by a 2D grid of positioned colors.\"",
