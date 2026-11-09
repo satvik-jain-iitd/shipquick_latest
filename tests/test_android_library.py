@@ -39,3 +39,13 @@ def test_s134_every_listed_component_with_a_folder_has_a_doc_a_contract_and_an_a
         assert body["platforms"]["android"] == api, f"{component}: table says {api}"
         assert page.startswith("https://developer.android.com/"), component
         assert (ROOT / "ui" / "integration" / "docs" / f"android-{name.lower()}.doc.mjs").exists(), component
+
+
+def android_props(name):
+    contract = json.loads((ROOT / "ui" / "components" / name / f"{name}.contract.json").read_text(encoding="utf-8"))
+    return set(contract["core"]) | set(contract["platforms"].get("android", {}))
+
+
+def test_s134_the_navigation_bar_documents_its_items():
+    # NavigationBarItem(selected, onClick, icon, label): Google's navigation-bar page and the M3 reference.
+    assert {"content", "selected", "onClick", "icon", "label"} <= android_props("NavigationBar")
