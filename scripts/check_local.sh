@@ -38,6 +38,7 @@ check_markers() {
   fi
 }
 check_md_blocks() { python3 "$HERE/check_md_blocks.py"; report md-blocks $?; }
+check_timeouts() { [ -d .github/workflows ] || return 0; python3 "$HERE/check_timeouts.py" .github/workflows; report timeouts $?; }
 check_commits() {
   have_base commits || return 0
   local bad
@@ -102,17 +103,18 @@ check_secrets_staged() {
 }
 
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks commits pr-size frontend-design disable-comments story secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks timeouts commits pr-size frontend-design disable-comments story secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
     md-blocks) check_md_blocks ;;
+    timeouts) check_timeouts ;;
     secrets-staged) check_secrets_staged ;;
     pr-size) check_pr_size ;;
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
     story) check_story ;;
-    *) echo "unknown check: $c (sizes markers md-blocks commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"

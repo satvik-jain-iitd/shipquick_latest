@@ -25,6 +25,7 @@ permissions:
 jobs:
   adoption:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out the project
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -58,10 +59,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 .shipquick/scripts/check_adoption_ancestor.py --repo "${{ inputs.shipquick_repo }}" --sha "${{ inputs.shipquick_ref }}"
+      - name: Check every job has timeout-minutes (story #154)
+        run: python3 .shipquick/scripts/check_timeouts.py project/.github/workflows
       - name: Check a configured docs/screens.txt is actually wired into CI (story #146)
         run: python3 .shipquick/scripts/check_screens_wired.py --screens-file project/docs/screens.txt --workflows-dir project/.github/workflows
   disable-comments:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
@@ -87,6 +91,7 @@ jobs:
           python3 .shipquick/scripts/check_disable_comments.py --base "origin/$BASE" --repo project --body-file "$RUNNER_TEMP/pr-body.md"
   roles:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -114,6 +119,7 @@ jobs:
           python3 .shipquick/scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner" --coder-sessions "$coder_sessions"
   team-block:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
@@ -139,6 +145,7 @@ jobs:
           printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
   frontend-design:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
@@ -164,6 +171,7 @@ jobs:
           bash .shipquick/scripts/check_frontend_design.sh --body-file "$RUNNER_TEMP/pr-body.md" --base "origin/$BASE" --repo project --head "${{ github.head_ref }}"
   uat-on-main:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
@@ -186,6 +194,7 @@ jobs:
           printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 .shipquick/scripts/check_uat.py
   freeze-on-main:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     steps:
       - name: Check out the project
@@ -208,6 +217,7 @@ jobs:
           python3 .shipquick/scripts/check_freeze.py < project/.shipquick/freeze
   environments:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     steps:
       - name: Check out the project
@@ -227,6 +237,7 @@ jobs:
   gate:
     name: gate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [adoption, disable-comments, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments]
     if: always()
     steps:
