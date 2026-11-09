@@ -499,8 +499,17 @@ Scenario: main carries only the caller; the pin, the hooks and roles.yml sit on 
   And adopt.sh --kit-branch dev writes kit_branch: dev under shipquick_ref in the caller
   And checks.yml takes kit_branch (default empty) and the adoption and roles jobs read from it, through env
   And a child without kit_branch is checked exactly as before
+
+Scenario: the kit branch is guarded (second review of PR #227)
+  Given a rule-24 child with kit_branch: dev
+  When dev has no branch protection, or its protection does not require pull request reviews
+  Then adopt.sh --check and adoption_scan.py both fail and say so
+  And kit_branch is parsed by one script (scripts/kit_branch.py): a trailing # comment is stripped, a ${{ }} expression is refused
+  And review_merge.sh reads roles.yml from the kit branch on a PR into another branch, and names the kit branch when it is missing
+  And the CI roles job prints a clear line when the kit branch or its roles.yml is missing
+  And adopt.sh run again without --kit-branch keeps the caller's kit_branch
 ```
-Tests: `tests/test_adopt.py`, `tests/test_adoption_scan.py`, `tests/test_checks_workflow.py` (s225).
+Tests: `tests/test_adopt.py`, `tests/test_adoption_scan.py`, `tests/test_checks_workflow.py`, `tests/test_review_merge.py` (s225).
 ## Story #216: the UI coverage gate
 ```gherkin
 Scenario: no counted component is left out

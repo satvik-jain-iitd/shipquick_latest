@@ -6,7 +6,9 @@ is ShipQuick noticing when a child never ran it at all.
 
 A caller with `kit_branch: <b>` (story #225, a rule-24 child) is also checked on branch <b>: the
 knowledge/shipquick_latest submodule there must equal the caller's pin, and .pre-commit-config.yaml
-there must carry the ShipQuick hooks. A caller without it is scanned exactly as before.
+there must carry the ShipQuick hooks, and branch <b> must be protected with required pull request
+reviews (roles.yml is read from it). That protection read needs Administration: read on a private
+child's SHIPQUICK_CHILD_TOKEN. A caller without it is scanned exactly as before.
 
 A line in docs/children.md may end with " private" (`owner/repo private`). A private child is
 read with the SHIPQUICK_CHILD_TOKEN secret (fine-grained PAT, contents+metadata read only on that
@@ -28,10 +30,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import kit_branch  # noqa: E402  (the one kit_branch parser, shared with adopt.sh and review_merge.sh)
+
 ROOT = Path(__file__).resolve().parent.parent
 REPO = "satvik-jain-iitd/shipquick_latest"
 PIN = re.compile(r"^\s*shipquick_ref:\s*([0-9a-f]{40})", re.M)
-KIT = re.compile(r"^\s*kit_branch:\s*['\"]?([\w./-]+)", re.M)
 CHILD_TOKEN_ENV = "SHIPQUICK_CHILD_TOKEN"
 
 
@@ -75,9 +79,13 @@ def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str |
     if not m:
         return f"{child}: shipquick-call.yml on {branch} has no shipquick_ref pin"
     sha = m.group(1)
-    k = KIT.search(body)
-    if k:   # story #225: a rule-24 child keeps the submodule and the hooks on its kit branch
-        kit = k.group(1)
+    kit, bad = kit_branch.parse(body)
+    if bad:
+        return f"{child}: shipquick-call.yml on {branch}: {bad}"
+    if kit:   # story #225: a rule-24 child keeps the submodule, the hooks and roles.yml on its kit branch
+        gap = kit_branch.protection_gap(kit, fetch(f"repos/{child}/branches/{kit}/protection"))
+        if gap:
+            return f"{child}: {gap}"
         sub = fetch(f"repos/{child}/contents/knowledge/shipquick_latest?ref={kit}")
         if not sub or sub.get("type") != "submodule":
             return f"{child}: no knowledge/shipquick_latest submodule on kit branch {kit}"

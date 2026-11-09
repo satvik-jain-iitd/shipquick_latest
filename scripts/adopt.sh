@@ -43,13 +43,31 @@ child="$(cd "$child" && pwd -P)"
 top="$(git -C "$child" rev-parse --show-toplevel 2>/dev/null)" || { echo "adopt.sh: $child is not a git repository" >&2; exit 2; }
 [ "$(cd "$top" && pwd -P)" = "$child" ] || { echo "adopt.sh: run it on the root of the repository ($top)" >&2; exit 2; }
 
-[ -z "$kit" ] || git check-ref-format --branch "$kit" >/dev/null 2>&1 || { echo "adopt.sh: not a branch name: $kit" >&2; exit 2; }
+if [ -n "$kit" ]; then
+  why="$(printf 'kit_branch: %s\n' "$kit" | python3 "$HERE/kit_branch.py" parse)" || { echo "adopt.sh: $why" >&2; exit 2; }
+fi
+call="$child/.github/workflows/shipquick-call.yml"
+# story #225: with no --kit-branch, the caller's own kit_branch is kept (one parser: scripts/kit_branch.py)
+if [ -z "$kit" ] && [ -f "$call" ]; then
+  if ! kit="$(python3 "$HERE/kit_branch.py" parse < "$call")"; then
+    if [ -n "$check_mode" ]; then echo "not adopted: shipquick-call.yml: $kit"; exit 1; fi
+    echo "adopt.sh: shipquick-call.yml: $kit (fix the line, or pass --kit-branch <branch>)" >&2; exit 2
+  fi
+fi
 
 if [ -n "$check_mode" ]; then
   ok=1
-  call="$child/.github/workflows/shipquick-call.yml"
   # story #225: the caller sits on this branch; the pin and the hooks sit on its kit branch (HEAD when none).
-  [ -n "$kit" ] || [ ! -f "$call" ] || kit="$(sed -n 's/^[[:space:]]*kit_branch:[[:space:]]*//p' "$call" | head -1 | tr -d "[:space:]'\"")"
+  if [ -n "$kit" ]; then
+    gh_repo="$(git -C "$child" remote get-url origin 2>/dev/null | sed -n 's#.*github\.com[:/]\([^/]*/[^/]*\)$#\1#p' | sed 's#\.git$##')"
+    if [ -z "$gh_repo" ]; then
+      echo "not adopted: no GitHub origin remote, so the protection of kit branch $kit cannot be checked"
+      ok=0
+    elif ! why="$(python3 "$HERE/kit_branch.py" protection "$gh_repo" "$kit")"; then
+      echo "not adopted: $why"
+      ok=0
+    fi
+  fi
   here="$(git -C "$child" symbolic-ref -q --short HEAD || echo HEAD)"
   kref=HEAD; at="at HEAD"
   if [ -n "$kit" ] && [ "$kit" != "$here" ]; then
