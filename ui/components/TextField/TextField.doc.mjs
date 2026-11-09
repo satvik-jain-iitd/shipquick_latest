@@ -174,5 +174,36 @@ export default {
       "description": "Pass .vertical to let the field grow to more lines.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "TextFieldLink", "note": "not on iOS. Apple: \"A control that requests text input from the user when pressed.\"", "status": "unavailable-ios", "replacement": "TextField"},
+        {"name": "SecureField", "note": "iOS 13.0. Apple: \"A control into which people securely enter private text.\""},
+        {"name": "TextEditor", "note": "iOS 14.0. Apple: \"A view that can display and edit long-form text.\""},
+        {"name": "TextInputBorderShape", "note": "iOS 27.0. Apple: \"A shape used to draw the border of a text input control.\""},
+        {"name": "onSubmit", "note": "`.onSubmit(of:_:)`, iOS 15.0. Apple: \"Adds an action to perform when the user submits a value to this view.\""},
+        {"name": "submitLabel", "note": "`.submitLabel(_:)`, iOS 15.0. Apple: \"Sets the submit label for this view.\""},
+        {"name": "submitScope", "note": "`.submitScope(_:)`, iOS 15.0. Apple: \"Prevents submission triggers originating from this view to invoke a submission action configured by a submission modifier higher up in the view hierarchy.\""},
+        {"name": "textEditorStyle", "note": "`.textEditorStyle(_:)`, iOS 17.0. Apple: \"Sets the style for text editors within this view.\""},
+        {"name": "textFieldStyle", "note": "`.textFieldStyle(_:)`, iOS 13.0. Apple: \"Sets the style for text fields within this view.\""},
+        {"name": "autocorrectionDisabled", "note": "`.autocorrectionDisabled(_:)`, iOS 13.0. Apple: \"Sets whether to disable autocorrection for this view.\""},
+        {"name": "findDisabled", "note": "`.findDisabled(_:)`, iOS 16.0. Apple: \"Prevents find and replace operations in a text editor.\""},
+        {"name": "findNavigator", "note": "`.findNavigator(isPresented:)`, iOS 16.0. Apple: \"Programmatically presents the find and replace interface for text editor views.\""},
+        {"name": "keyboardType", "note": "`.keyboardType(_:)`, iOS 13.0. Apple: \"Sets the keyboard type for this view.\""},
+        {"name": "replaceDisabled", "note": "`.replaceDisabled(_:)`, iOS 16.0. Apple: \"Prevents replace operations in a text editor.\""},
+        {"name": "scrollDismissesKeyboard", "note": "`.scrollDismissesKeyboard(_:)`, iOS 16.0. Apple: \"Configures the behavior in which scrollable content interacts with the software keyboard.\""},
+        {"name": "textContentType", "note": "`.textContentType(_:)`, iOS 13.0. Apple: \"Sets the text content type for this view, which the system uses to offer suggestions while the user enters text on an iOS or tvOS device.\""},
+        {"name": "textInputAutocapitalization", "note": "`.textInputAutocapitalization(_:)`, iOS 15.0. Apple: \"Sets how often the shift key in the keyboard is automatically enabled.\""},
+        {"name": "textInputBorderShape", "note": "`.textInputBorderShape(_:)`, iOS 27.0. Apple: \"Sets the border shape for text input controls in the view hierarchy.\""},
+        {"name": "textInputCompletion", "note": "`.textInputCompletion(_:)`, not on iOS. Apple: \"Associates a fully formed string with the value of this view when used as a text input suggestion\"", "status": "unavailable-ios", "replacement": "searchCompletion"},
+        {"name": "textInputFormattingControlVisibility", "note": "`.textInputFormattingControlVisibility(_:for:)`, iOS 26.0. Apple: \"Specifies which system text formatting controls are available for people to format text.\""},
+        {"name": "textInputSuggestions", "note": "`.textInputSuggestions(_:)`, not on iOS. Apple: \"Configures the text input suggestions for this view.\"", "status": "unavailable-ios", "replacement": "searchSuggestions"},
+        {"name": "writingToolsAffordanceVisibility", "note": "`.writingToolsAffordanceVisibility(_:)`, iOS 18.4. Apple: \"Specifies whether the system should show the Writing Tools affordance for text input views affected by the environment.\""},
+        {"name": "writingToolsBehavior", "note": "`.writingToolsBehavior(_:)`, iOS 18.0. Apple: \"Specifies the Writing Tools behavior for text and text input in the environment.\""},
+        {"name": "autocapitalization", "note": "`.autocapitalization(_:)`, iOS 13.0. Apple: \"Sets whether to apply auto-capitalization to this view.\"", "status": "deprecated", "replacement": "textInputAutocapitalization"},
+        {"name": "disableAutocorrection", "note": "`.disableAutocorrection(_:)`, iOS 13.0. Apple: \"Sets whether to disable autocorrection for this view.\"", "status": "deprecated", "replacement": "autocorrectionDisabled"}
+      ]
+    }
+  }
 };

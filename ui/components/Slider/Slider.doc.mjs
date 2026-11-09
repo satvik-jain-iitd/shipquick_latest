@@ -159,5 +159,12 @@ export default {
       "platform": "ios",
       "default": "{ _ in }"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "sliderThumbVisibility", "note": "`.sliderThumbVisibility(_:)`, iOS 26.0. Apple: \"Sets the thumb visibility for `Slider`s within this view.\""}
+      ]
+    }
+  }
 };
