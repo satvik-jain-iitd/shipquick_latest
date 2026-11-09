@@ -268,3 +268,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: `docs/research/ios-swiftui-components.md` (33 counted), 12 iOS-only docs in `ui/components/`, templates in
   `ui/ios/templates/` from standard controls only. No package added.
 - Confidence that nothing fits better: 0.85.
+## 9 Nov 2026, story #134 (S4): the Android library (Compose Material 3 docs and screen templates)
+- Need: one doc and contract per Material 3 component, and five Compose screen templates built only from M3 parts.
+- Run: `scout.py --need "Jetpack Compose Material 3 component catalog with per-component docs and screen templates"`: no repos found.
+  `gh search repos "topic:jetpack-compose topic:material3"`: gkd-kit/gkd and JunkFood02/Seal (apps, not libraries),
+  android/compose-samples and android/nowinandroid (Google's own samples).
+- Top READMEs read: android/compose-samples (Jetnews, Jetchat, Reply: M3 apps, Tier A), android/nowinandroid
+  (one app built with Compose, "follows Android design and development best practices", Tier A), gkd-kit/gkd (not a fit).
+- Decision: the source is Google's own Material 3, used as shipped (rule 38). Nothing is copied: the docs restate
+  Google's pages (`docs/research/android-m3-components.md`), and the templates call M3 composables the way Google's guides show.
+- Confidence that nothing fits better: 0.9 (the library is Google's, so there is nothing to find beyond it).

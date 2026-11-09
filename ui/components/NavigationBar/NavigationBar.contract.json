@@ -1,0 +1,38 @@
+{
+  "name": "NavigationBar",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "selected": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onClick": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "icon": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

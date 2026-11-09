@@ -1,0 +1,54 @@
+{
+  "name": "TextField",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "TextFieldState"
+        }
+      },
+      "enabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "placeholder": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "supportingText": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "isError": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "keyboardOptions": {
+        "type": {
+          "kind": "named",
+          "name": "KeyboardOptions"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

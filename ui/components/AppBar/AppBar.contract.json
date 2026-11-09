@@ -1,0 +1,35 @@
+{
+  "name": "AppBar",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "title": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "navigationIcon": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "actions": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "scrollBehavior": {
+        "type": {
+          "kind": "named",
+          "name": "TopAppBarScrollBehavior"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

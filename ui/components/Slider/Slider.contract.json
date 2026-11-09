@@ -1,0 +1,48 @@
+{
+  "name": "Slider",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "value": {
+        "type": {
+          "kind": "number"
+        }
+      },
+      "onValueChange": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "enabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "valueRange": {
+        "type": {
+          "kind": "named",
+          "name": "ClosedFloatingPointRange<Float>"
+        },
+        "optional": true
+      },
+      "steps": {
+        "type": {
+          "kind": "number"
+        },
+        "optional": true
+      },
+      "onValueChangeFinished": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

@@ -464,3 +464,25 @@ Scenario: the iOS screen templates use only standard SwiftUI
   And the step flow puts the filled button last, the bordered one above it, in a bottom inset that rides above the keyboard
 ```
 Tests: `tests/test_ios_library.py`, `tests/test_ios_templates.py` (s135).
+## Story #134 (S4): the Android library, counted from Google's own page
+```gherkin
+Scenario: every Material 3 component on Google's page has a ShipQuick doc
+  Given docs/research/android-m3-components.md names Google's components page, the date 2026-11-09 and "Count: N"
+  Then the table has exactly N numbered rows
+  And every row with a doc folder has a doc, a contract and an android topic
+  And the doc's platforms.android is the row's Compose API
+```
+Tests: `tests/test_android_library.py` (s134).
+
+## Story #134 (S4), part D: five Android screen templates
+```gherkin
+Scenario: a coder agent starts an Android screen from a template
+  Given ui/android/templates holds SignIn, List, Detail, Settings and StepFlow templates
+  Then every import is on the allow-list: androidx.compose.material3, foundation, runtime, ui, material.icons, kotlin
+  And no template has Canvas(, drawBehind, drawWithContent, Color(, .background(Color., GenericShape, RoundedCornerShape( or a custom Shape class
+  And each banned pattern and each off-list import, injected, is caught
+  And clickable, selectable, toggleable and verticalScroll stay allowed
+  And a call to an experimental M3 part without @OptIn(ExperimentalMaterial3Api::class) is caught
+  And the step flow puts the outline button before the filled one and uses imePadding()
+```
+Tests: `tests/test_android_templates.py` (s134).

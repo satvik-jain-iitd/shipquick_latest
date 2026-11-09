@@ -1,0 +1,17 @@
+{
+  "name": "TimePicker",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "TimePickerState"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}
