@@ -1,0 +1,27 @@
+{
+  "name": "Menu",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "expanded": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onDismissRequest": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

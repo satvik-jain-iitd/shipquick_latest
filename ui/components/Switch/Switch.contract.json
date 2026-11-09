@@ -1,0 +1,34 @@
+{
+  "name": "Switch",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "checked": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onCheckedChange": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "thumbContent": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "enabled": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

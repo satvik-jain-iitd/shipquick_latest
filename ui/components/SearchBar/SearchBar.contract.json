@@ -1,0 +1,32 @@
+{
+  "name": "SearchBar",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "inputField": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "expanded": {
+        "type": {
+          "kind": "boolean"
+        }
+      },
+      "onExpandedChange": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

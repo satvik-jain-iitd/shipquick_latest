@@ -12,7 +12,7 @@ That matches the reviewer's "30". Under the last group the page also has two lin
 So they are not counted.
 
 How to read the table:
-- "Doc folder" is the S2 doc and contract. A row that says pending gets its folder in a later part of S4.
+- "Doc folder" is the S2 doc and contract. Every row has one.
 - "Compose API" is the one composable the doc names in `platforms.android`. Its topic is `android-<folder name>`.
 - "Also on the page" lists the other composables Google shows on the same card. An app uses them directly too.
 - One card's link differs from its page. "Floating action button" links to the Buttons page.
@@ -42,15 +42,15 @@ How to read the table:
 | 19 | Navigation rail | `ui/components/NavigationRail/` | `androidx.compose.material3.NavigationRail` | NavigationRail, NavigationRailItem | https://developer.android.com/develop/ui/compose/components/navigation-rail |
 | 20 | Tabs | `ui/components/Tabs/` | `androidx.compose.material3.PrimaryTabRow` | PrimaryTabRow, SecondaryTabRow, Tab | https://developer.android.com/develop/ui/compose/components/tabs |
 | 21 | Checkbox | `ui/components/Checkbox/` | `androidx.compose.material3.Checkbox` | Checkbox, TriStateCheckbox | https://developer.android.com/develop/ui/compose/components/checkbox |
-| 22 | Chips | pending (part C, #207) | `androidx.compose.material3.FilterChip` | AssistChip, FilterChip, InputChip, SuggestionChip | https://developer.android.com/develop/ui/compose/components/chip |
-| 23 | Date picker | pending (part C, #207) | `androidx.compose.material3.DatePicker` | DatePicker, DatePickerDialog, DateRangePicker, rememberDatePickerState | https://developer.android.com/develop/ui/compose/components/datepickers |
-| 24 | Menus | pending (part C, #207) | `androidx.compose.material3.DropdownMenu` | DropdownMenu, DropdownMenuItem | https://developer.android.com/develop/ui/compose/components/menu |
-| 25 | Radio button | pending (part C, #207) | `androidx.compose.material3.RadioButton` | RadioButton | https://developer.android.com/develop/ui/compose/components/radio-button |
-| 26 | Sliders | pending (part C, #207) | `androidx.compose.material3.Slider` | Slider, RangeSlider | https://developer.android.com/develop/ui/compose/components/slider |
-| 27 | Switch | pending (part C, #207) | `androidx.compose.material3.Switch` | Switch | https://developer.android.com/develop/ui/compose/components/switch |
-| 28 | Time pickers | pending (part C, #207) | `androidx.compose.material3.TimePicker` | TimePicker, TimeInput, rememberTimePickerState | https://developer.android.com/develop/ui/compose/components/time-pickers |
-| 29 | Search | pending (part C, #207) | `androidx.compose.material3.SearchBar` | SearchBar, SearchBarDefaults.InputField (experimental) | https://developer.android.com/develop/ui/compose/components/search-bar |
-| 30 | Text fields | pending (part C, #207) | `androidx.compose.material3.TextField` | TextField, OutlinedTextField, SecureTextField | https://developer.android.com/develop/ui/compose/text/user-input |
+| 22 | Chips | `ui/components/Chip/` | `androidx.compose.material3.FilterChip` | AssistChip, FilterChip, InputChip, SuggestionChip | https://developer.android.com/develop/ui/compose/components/chip |
+| 23 | Date picker | `ui/components/DatePicker/` | `androidx.compose.material3.DatePicker` | DatePicker, DatePickerDialog, DateRangePicker, rememberDatePickerState | https://developer.android.com/develop/ui/compose/components/datepickers |
+| 24 | Menus | `ui/components/Menu/` | `androidx.compose.material3.DropdownMenu` | DropdownMenu, DropdownMenuItem | https://developer.android.com/develop/ui/compose/components/menu |
+| 25 | Radio button | `ui/components/RadioButton/` | `androidx.compose.material3.RadioButton` | RadioButton | https://developer.android.com/develop/ui/compose/components/radio-button |
+| 26 | Sliders | `ui/components/Slider/` | `androidx.compose.material3.Slider` | Slider, RangeSlider | https://developer.android.com/develop/ui/compose/components/slider |
+| 27 | Switch | `ui/components/Switch/` | `androidx.compose.material3.Switch` | Switch | https://developer.android.com/develop/ui/compose/components/switch |
+| 28 | Time pickers | `ui/components/TimePicker/` | `androidx.compose.material3.TimePicker` | TimePicker, TimeInput, rememberTimePickerState | https://developer.android.com/develop/ui/compose/components/time-pickers |
+| 29 | Search | `ui/components/SearchBar/` | `androidx.compose.material3.SearchBar` | SearchBar, SearchBarDefaults.InputField (experimental) | https://developer.android.com/develop/ui/compose/components/search-bar |
+| 30 | Text fields | `ui/components/TextField/` | `androidx.compose.material3.TextField` | TextField, OutlinedTextField, SecureTextField | https://developer.android.com/develop/ui/compose/text/user-input |
 
 Where the facts come from:
 - Each doc uses only Google: the guide page in the table, the M3 reference for the parameters, and Google's

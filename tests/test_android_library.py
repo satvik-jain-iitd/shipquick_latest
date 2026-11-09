@@ -39,3 +39,8 @@ def test_s134_every_listed_component_with_a_folder_has_a_doc_a_contract_and_an_a
         assert body["platforms"]["android"] == api, f"{component}: table says {api}"
         assert page.startswith("https://developer.android.com/"), component
         assert (ROOT / "ui" / "integration" / "docs" / f"android-{name.lower()}.doc.mjs").exists(), component
+
+
+def test_s134_every_component_on_googles_page_has_a_doc_folder():
+    pending = [r[0] for r in rows() if not r[1].startswith("ui/components/")]
+    assert not pending, f"no doc folder yet: {pending}"
