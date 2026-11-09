@@ -901,6 +901,6 @@ Scenario: the registry lists the public child whose name the hygiene test bans
   When the hygiene test scans the repo
   Then the forbidden name is allowed in docs/children.md only
   And any other file holding it fails the test
-  And docs/children.md lists satvik-jain-iitd/bhavna-ai as a public child
+  And docs/children.md lists that child as public
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
