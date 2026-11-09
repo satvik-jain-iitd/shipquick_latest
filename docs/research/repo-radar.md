@@ -202,4 +202,11 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   as a roadmap. So the kit takes the owner's own `qa-loop` skill (already written, already used) and makes
   it generic. EGM is used as is for plans (adopt, never fork). `qualiow` is named in `docs/QA_LOOP.md` as
   the mobile probe driver to borrow. gstack's issue taxonomy shaped the severity list.
+
+## 9 Nov 2026, story #154: every workflow job has a time limit
+- Need: fail CI when a GitHub Actions job has no `timeout-minutes`.
+- Run: `scout.py --need "lint GitHub Actions workflows: fail when a job has no timeout-minutes"` and
+  `scout.py --need "github actions workflow linter timeout"`: no repos found. `gh search repos "topic:github-actions linter"`:
+  act, gitea, ruff, shellcheck; none checks job timeouts. actionlint checks syntax and expressions, not a missing limit.
+- Decision: a 40-line stdlib checker, `scripts/check_timeouts.py` (no YAML dependency, since CI installs only pytest).
 - Confidence that nothing fits better: 0.75.

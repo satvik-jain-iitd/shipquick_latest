@@ -10,6 +10,7 @@ permissions:
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -62,6 +63,7 @@ jobs:
           "
   commit-msg:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -80,6 +82,7 @@ jobs:
           echo "Commit messages OK"
   pr-size:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -104,6 +107,7 @@ jobs:
           fi
   frontend-design:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
@@ -119,6 +123,7 @@ jobs:
           bash scripts/check_frontend_design.sh --body-file /tmp/pr-body.md --base "origin/$BASE" --repo . --head "${{ github.head_ref }}"
   disable-comments:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
@@ -134,6 +139,7 @@ jobs:
           python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
   roles:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -149,6 +155,7 @@ jobs:
           python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner"
   team-block:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
@@ -174,6 +181,7 @@ jobs:
           python3 scripts/check_story.py --pr-body-file /tmp/pr-body.md
   uat-checklist:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
@@ -185,6 +193,7 @@ jobs:
           printf '%s\n' "$PR_BODY" | awk '/^## UAT on dev/{f=1;next} /^## /{f=0} f' | python3 scripts/check_uat.py
   freeze:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -197,11 +206,13 @@ jobs:
           python3 scripts/check_freeze.py < .shipquick/freeze
   secret-scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
       - name: Install gitleaks 8.30.1 (SHA-256 checked)
+        timeout-minutes: 5
         run: |
           curl -sSfL -o gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
           echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tgz" | sha256sum -c -
@@ -222,6 +233,7 @@ jobs:
     # so enabling the graph (Settings -> Advanced Security) switches the real check on.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Probe Dependency graph availability
@@ -244,6 +256,7 @@ jobs:
           fail-on-severity: high
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [pre-commit]
     strategy:
       matrix:
@@ -255,10 +268,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install uv
+        timeout-minutes: 5
         uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4.2.0
         with:
           version: "0.4.x"
       - name: Install dependencies
+        timeout-minutes: 5
         run: |
           pip install pytest==9.0.2 pillow==12.3.0   # pillow: scripts/qa/ flow map and audit report (story #162)
       - name: Run tests
@@ -279,6 +294,7 @@ jobs:
   gate:
     name: gate
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, secret-scan, dependency-review, test]
     if: always()
     steps:

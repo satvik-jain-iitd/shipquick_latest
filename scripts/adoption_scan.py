@@ -30,7 +30,7 @@ PIN = re.compile(r"^\s*shipquick_ref:\s*([0-9a-f]{40})", re.M)
 CHILD_TOKEN_ENV = "SHIPQUICK_CHILD_TOKEN"
 
 
-CHILD_LINE = re.compile(r"([\w.-]+/[\w.-]+)( private)?")
+CHILD_LINE = re.compile(r"([\w.-]+/[\w.-]+)(\s+private)?")
 
 
 def read_children(path) -> list[tuple[str, bool]]:
