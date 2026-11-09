@@ -497,3 +497,13 @@ def test_s285_review_2_foreach_and_refreshable_notes_say_they_work_on_stacks_and
 def test_s285_review_2_adr_012_writes_the_catch_all_ceiling_and_its_follow_up():
     adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
     assert "catch-all" in adr and "split the catch-all docs" in adr
+
+def test_s288_review_2_the_saved_names_have_the_bridge_and_health_types():
+    names = {n for p in json.loads(ui_api_lists.FW_SRC.read_text())["packages"] for n in p["names"]}
+    assert {"SwiftUI.UIViewRepresentable", "SwiftUI.UIViewControllerRepresentable", "SwiftUI.UIHostingConfiguration",
+            "HealthKit.HKActivitySummary"} <= names
+
+
+def test_s288_review_2_adr_012_says_the_pin_catches_mistakes_not_tampering():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "catches mistakes, not tampering" in adr and "diff review is the guard" in adr

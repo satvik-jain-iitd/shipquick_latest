@@ -3,7 +3,7 @@
 The line below is written by `python3 scripts/ui_api_lists.py --fetch-frameworks`. Do not edit it by hand.
 It pins the saved public names of each framework package. The coverage gate checks every framework-doc name against them (story #288).
 
-Saved names: `docs/research/sources/framework-names.json` sha256 `b5ceaf908e47008782d379d64e225fc0362b97ca9066ba3ed69a7f0ff71f5833`
+Saved names: `docs/research/sources/framework-names.json` sha256 `7d687a60f1a23cc1b8da43b53c4bab825cadd528788fc374f67ecce0ca45cae3`
 
 Date: 2026-11-09. Kept by hand. Each link was opened on that date and answered 200.
 
