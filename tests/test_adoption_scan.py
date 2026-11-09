@@ -98,6 +98,12 @@ def test_read_children_skips_a_line_that_is_not_exactly_owner_repo(tmp_path):
     assert scan.read_children(f) == [("owner/a", False), ("owner/b", True)]
 
 
+def test_read_children_accepts_any_whitespace_before_private(tmp_path):
+    f = tmp_path / "children.md"
+    f.write_text("owner/a  private\nowner/b\tprivate\n", encoding="utf-8")
+    assert scan.read_children(f) == [("owner/a", True), ("owner/b", True)]
+
+
 def test_a_private_child_with_no_token_is_skipped_with_no_issue_filed():
     fetch = api(call_content=None)
     why, should_file = scan.scan_child("owner/child", True, fetch, 14, TODAY, has_token=False)

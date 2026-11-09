@@ -157,3 +157,11 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   screenshot`, skips when unconfigured -- same opt-in shape as `docs/frontend-paths.txt`); a `Render:`
   line requirement added to `scripts/check_frontend_design.sh`, opt-in on the same file existing.
 - Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #154: every workflow job has a time limit
+- Need: fail CI when a GitHub Actions job has no `timeout-minutes`.
+- Run: `scout.py --need "lint GitHub Actions workflows: fail when a job has no timeout-minutes"` and
+  `scout.py --need "github actions workflow linter timeout"`: no repos found. `gh search repos "topic:github-actions linter"`:
+  act, gitea, ruff, shellcheck; none checks job timeouts. actionlint checks syntax and expressions, not a missing limit.
+- Decision: a 40-line stdlib checker, `scripts/check_timeouts.py` (no YAML dependency, since CI installs only pytest).
+- Confidence that nothing fits better: 0.75.
