@@ -1,0 +1,36 @@
+# ShipQuick Android UI lint (story #185, rule 38). detekt refuses hand-drawn UI in a child.
+# Two tiers. This file is the local tier: the rules are warnings and the build never fails on them.
+# detekt-ci.yml is laid on top of it in CI (config = detekt.yml, then detekt-ci.yml): the same rules become errors
+# and `maxIssues: 0` fails the build. Pinned: detekt 1.23.8, Gradle plugin io.gitlab.arturbosch.detekt 1.23.8.
+# It runs on GitHub CI only (ADR-012). Only built-in rules are used; there is no custom rule module.
+# Text rules (Canvas( and the like) are in the Konsist test next to this file, UiRulesKonsistTest.kt.
+# A child copies both files and adds its own UI kit names to forbiddenPatterns.
+build:
+  maxIssues: -1
+
+style:
+  ForbiddenImport:
+    active: true
+    severity: warning
+    # The theme files may name a colour; everything else takes it from MaterialTheme.
+    excludes: ['**/theme/**', '**/Theme.kt', '**/Color.kt']
+    imports:
+      - 'androidx.compose.foundation.Canvas'
+      - 'androidx.compose.ui.draw.drawBehind'
+      - 'androidx.compose.ui.draw.drawWithContent'
+      - 'androidx.compose.ui.draw.drawWithCache'
+      - 'androidx.compose.ui.graphics.Color'
+      - 'androidx.compose.foundation.shape.GenericShape'
+      - 'androidx.compose.foundation.shape.RoundedCornerShape'
+      # raw gesture-built controls, and a View wrapped for Compose
+      - 'androidx.compose.ui.input.pointer.pointerInput'
+      - 'androidx.compose.foundation.gestures.detectTapGestures'
+      - 'androidx.compose.foundation.gestures.detectDragGestures'
+      - 'androidx.compose.foundation.gestures.draggable'
+      - 'androidx.compose.foundation.gestures.transformable'
+      - 'androidx.compose.ui.viewinterop.AndroidView'
+    # Material 2 widgets (androidx.compose.material.icons is the icon set M3 uses, so it stays),
+    # Google's View widgets, and third-party UI kits. com.example.fancyui is a placeholder; a child lists its own.
+    forbiddenPatterns: '^(androidx\.compose\.material\.(?!icons\.)|com\.google\.android\.material\.|android\.widget\.|com\.example\.fancyui\.|com\.composables\.|com\.alorma\.compose\.settings\.|com\.vanpra\.compose\.material\.dialogs\.|androidx\.compose\.(foundation|foundation\.shape|foundation\.gestures|ui\.draw|ui\.graphics|ui\.input\.pointer|ui\.viewinterop)$)'
+    # The last group bans a package wildcard (import androidx.compose.ui.draw.*). detekt reads that import as the bare package, so the group ends in $.
+    # A wildcard would bring in every name banned above.

@@ -13,10 +13,12 @@ ROOT = Path(__file__).resolve().parent.parent
 IOS = ROOT / "ui" / "ios"
 NUM = r"(?<![\w.])\d"   # a numeric literal; a token like Tokens.space2 is not one (PR #211 second review)
 RAW = {
-    "custom Shape or ButtonStyle": re.compile(r":\s*(?:[\w.]+\s*,\s*)*(?:Shape|InsettableShape|ButtonStyle|PrimitiveButtonStyle)\b"),
+    "custom Shape or ButtonStyle": re.compile(r":\s*(?:[\w.]+\s*[,&]\s*)*(?:Shape|InsettableShape|ButtonStyle|PrimitiveButtonStyle|ToggleStyle|LabelStyle)\b"),
     "Path {": re.compile(r"\bPath\s*[({]"),
-    "raw colour": re.compile(r"\b(?:UI|NS)?Color\([^)]*\b(?:red|hue|white)\s*:"),
-    "Canvas {": re.compile(r"\bCanvas\s*\{"),
+    "raw colour": re.compile(r"\b(?:UI|NS)?Color(?:\.init)?\([^)]*\b(?:red|hue|white)\s*:|\.init\(\s*(?:\.\w+\s*,\s*)?(?:red|hue|white)\s*:"),
+    "Canvas {": re.compile(r"\bCanvas\s*[({]"),
+    "raw gesture": re.compile(r"\.(?:gesture|simultaneousGesture|highPriorityGesture|onTapGesture|onLongPressGesture)\s*[({]|"
+                              r"\b(?:DragGesture|TapGesture|LongPressGesture|MagnificationGesture|RotationGesture|SpatialTapGesture)\b"),
     "UIKit view": re.compile(r"\bclass\s+\w+\s*:[^{]*\bUIView\b|\bUIView(?:Controller)?Representable\b"),
     "import other than SwiftUI or Foundation": re.compile(r"^\s*(?:@\w+\s+)?import\s+(?!(?:SwiftUI|Foundation)\b)\w+", re.M),
     "number in a layout modifier": re.compile(
@@ -43,6 +45,17 @@ BAD = [
     "Color(white: 0.5)",
     "UIColor(red: 1, green: 0, blue: 0, alpha: 1)",
     "Canvas { context, size in }",
+    "Canvas(opaque: true) { context, size in }",
+    "Text(\"x\").gesture(DragGesture())",
+    "Text(\"x\").onTapGesture { }",
+    "let g = LongPressGesture()",
+    "Text(\"x\").simultaneousGesture(TapGesture())",
+    "struct Pill: ToggleStyle {}",
+    "struct Tag: LabelStyle {}",
+    "struct Chip<T>: Hashable, ButtonStyle {}",
+    "struct Both: View & ButtonStyle {}",
+    "let c = Color.init(red: 1, green: 0, blue: 0)",
+    "let c: Color = .init(red: 1, green: 0, blue: 0)",
     "final class Card: UIView {}",
     "struct Map: UIViewRepresentable {}",
     "struct Picker2: UIViewControllerRepresentable {}",

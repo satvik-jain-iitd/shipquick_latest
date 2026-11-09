@@ -270,7 +270,7 @@ jobs:
           fi
           # Captured first: a failing git diff inside the `if` below would have written ui=false. --no-renames lists the old path of a move.
           names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
-          if grep -qE '^(ui/|scripts/ui_proof\.py|scripts/emit_tokens\.py|\.github/workflows/ci\.yml|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
+          if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_tokens\.py|\.github/workflows/ci\.yml|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
   ui-android-compile:
     # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
     # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
@@ -315,6 +315,96 @@ jobs:
       - name: Compile the templates and the proof for iOS
         working-directory: ui/ios
         run: xcodebuild -scheme ShipQuickUI -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+  ui-android-lint:
+    # Story #185: detekt (ForbiddenImport) and Konsist refuse hand-drawn UI. The good fixture screen must pass and the
+    # bad one must fail with every rule named. detekt 1.23.8, Konsist 0.17.3, Gradle from the pin in ui/android. CI only.
+    # Gradle checks every downloaded jar and pom against tests/fixtures/android/gradle/verification-metadata.xml; a missing or wrong sum fails the build.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FIX: tests/fixtures/android
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch Gradle, check it against distributionSha256Sum, and put it on PATH
+        run: |
+          props=ui/android/gradle/wrapper/gradle-wrapper.properties
+          sum=$(sed -n 's/^distributionSha256Sum=//p' "$props")
+          ver=$(sed -n 's#.*gradle-\([0-9.]*\)-bin\.zip#\1#p' "$props")
+          curl -sSfL -o "$RUNNER_TEMP/gradle.zip" "https://services.gradle.org/distributions/gradle-$ver-bin.zip"
+          echo "$sum  $RUNNER_TEMP/gradle.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-$ver/bin" >> "$GITHUB_PATH"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+      - name: The good screen passes detekt and Konsist (CI tier)
+        run: gradle --no-daemon --stacktrace -p "$FIX" detekt test -Ptier=ci -PuiDir=src/good
+      - name: The bad screen fails detekt, and the report names every forbidden import
+        run: |
+          if gradle --no-daemon -p "$FIX" detekt -Ptier=ci -PuiDir=src/bad > "$RUNNER_TEMP/detekt-bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/detekt-bad.txt"; echo "::error::the bad screen passed detekt"; exit 1
+          fi
+          cat "$RUNNER_TEMP/detekt-bad.txt"
+          missing=0
+          grep -q ForbiddenImport "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::rule ForbiddenImport is not named"; missing=1; }
+          for imp in $(sed -nE "s/^      - '(.*)'$/\1/p" ui/android/lint/detekt.yml) androidx.compose.material.Button com.google.android.material.button.MaterialButton android.widget.Button com.example.fancyui.FancyChip; do
+            grep -qF "$imp" "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::import not reported: $imp"; missing=1; }
+          done
+          grep -qF 'The import `androidx.compose.ui.draw` has been forbidden' "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::the wildcard import androidx.compose.ui.draw.* is not reported"; missing=1; }
+          exit $missing
+      - name: The bad screen fails Konsist, one named test per rule
+        run: |
+          if gradle --no-daemon -p "$FIX" test -Ptier=ci -PuiDir=src/bad > "$RUNNER_TEMP/konsist-bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/konsist-bad.txt"; echo "::error::the bad screen passed Konsist"; exit 1
+          fi
+          tail -60 "$RUNNER_TEMP/konsist-bad.txt"
+          xml=$(tr -d '\n' < "$FIX"/build/test-results/test/TEST-UiRulesKonsistTest.xml)
+          missing=0
+          for rule in $(sed -nE 's/.*fun ([a-z_]+)\(\).*/\1/p' ui/android/lint/UiRulesKonsistTest.kt); do
+            if grep -qE "testcase name=\"$rule\(\)\"[^>]*>[^<]*<failure" <<< "$xml"; then echo "failed as wanted: $rule"; else echo "::error::rule did not fail: $rule"; missing=1; fi
+          done
+          exit $missing
+      - name: The local tier warns and does not fail
+        run: |
+          gradle --no-daemon -p "$FIX" detekt -PuiDir=src/bad | tee "$RUNNER_TEMP/detekt-local.txt"
+          grep -q ForbiddenImport "$RUNNER_TEMP/detekt-local.txt"
+  ui-ios-lint:
+    # Story #185: SwiftLint custom_rules refuse hand-drawn UI. The good fixture screen must pass `--strict` and the bad one
+    # must fail with every rule id named. SwiftLint 0.65.1 from its release page, checked against the pinned SHA-256. CI only.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch SwiftLint 0.65.1 and check it against the pinned SHA-256
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/swiftlint.zip" https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip
+          echo "c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0  $RUNNER_TEMP/swiftlint.zip" | shasum -a 256 -c -
+          mkdir "$RUNNER_TEMP/swiftlint"
+          unzip -q "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/swiftlint"
+          echo "$RUNNER_TEMP/swiftlint" >> "$GITHUB_PATH"
+      - name: The good screen passes in strict mode (CI tier)
+        run: swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Good
+      - name: The bad screen fails in strict mode, and the report names every rule
+        run: |
+          if swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad > "$RUNNER_TEMP/bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/bad.txt"; echo "::error::the bad screen passed SwiftLint"; exit 1
+          fi
+          cat "$RUNNER_TEMP/bad.txt"
+          missing=0
+          for rule in $(sed -nE 's/^  ([a-z_]+):$/\1/p' ui/ios/lint/swiftlint.yml); do
+            if grep -qF "($rule)" "$RUNNER_TEMP/bad.txt"; then echo "reported as wanted: $rule"; else echo "::error::rule not reported: $rule"; missing=1; fi
+          done
+          exit $missing
+      - name: The local tier warns and does not fail
+        run: |
+          swiftlint lint --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad | tee "$RUNNER_TEMP/local.txt"
+          grep -q "warning:" "$RUNNER_TEMP/local.txt"
   secret-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -406,7 +496,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -425,6 +515,8 @@ jobs:
           echo "ui-changes: ${{ needs.ui-changes.result }}"
           echo "ui-android-compile: ${{ needs.ui-android-compile.result }}"
           echo "ui-ios-compile: ${{ needs.ui-ios-compile.result }}"
+          echo "ui-android-lint: ${{ needs.ui-android-lint.result }}"
+          echo "ui-ios-lint: ${{ needs.ui-ios-lint.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "test: ${{ needs.test.result }}"

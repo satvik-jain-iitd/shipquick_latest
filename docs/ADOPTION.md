@@ -84,6 +84,21 @@ The ruleset pins the gate to the GitHub Actions app (`integration_id: 15368`). W
 
 A private repo on GitHub Free cannot enforce rulesets or branch protection. Such a child needs a paid plan, or it stays "gate not required".
 
+## UI lint in a child (story #185)
+
+A child refuses hand-drawn UI with lint. The kit ships the configs. Wiring them in is story #187, not this one.
+- **Android:** copy `ui/android/lint/detekt.yml`, `detekt-ci.yml` and `UiRulesKonsistTest.kt`. detekt 1.23.8 and Konsist 0.17.3.
+- **iOS:** copy `ui/ios/lint/swiftlint.yml` to `.swiftlint.yml`. SwiftLint 0.65.1.
+- **Two tiers.** On a laptop every rule is a warning, so a local run reports and does not fail. In CI the same rules are errors:
+  detekt reads `detekt.yml` and then `detekt-ci.yml`, and SwiftLint runs with `--strict`.
+- **CI only.** Install nothing on a Mac. The kit's jobs `ui-android-lint` and `ui-ios-lint` show the exact steps.
+- **Your own UI kits and modules:** add UI kits to `forbiddenPatterns` (detekt). Add your own module names to the allow-list in `no_import_outside_allowlist` (SwiftLint).
+- Do not silence a rule with a disable comment. The lint does not stop one: `blanket_disable_command` flags only a disable that
+  is never switched back on, and `superfluous_disable_command` flags only a disable that hides nothing. A single
+  `swiftlint:disable:next` passes both. The kit's disable-comments check is what catches it: a disable comment on an added line
+  fails unless the PR names an ADR that justifies it.
+- The kit's fixture apps are `tests/fixtures/android` and `tests/fixtures/ios`: one good screen, one bad screen.
+
 ## Checklist for each child
 
 Do these in order, in the child repo. One step at a time.
