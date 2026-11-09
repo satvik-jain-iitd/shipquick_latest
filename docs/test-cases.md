@@ -297,3 +297,13 @@ Scenario: an options row and a rejected row carry their words
   And a rejected board with no reason stops the run, and one with a reason passes
 ```
 Tests: `tests/test_canvas_stage.py` (S27 to S30).
+
+```gherkin
+Scenario: old rejected boards do not break an old canvas (#148 review)
+  Given rejected boards with no reason from before the rule
+  When canvas_stage runs --write-rejected-baseline once
+  Then they go into the manifest's rejected_baseline and --apply passes with a WARN for each
+  And a new rejected board with no reason still stops the run
+  And layout run twice on one manifest object leaves the manifest unchanged
+```
+Tests: `tests/test_canvas_stage.py` (S31 to S33).

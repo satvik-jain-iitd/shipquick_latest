@@ -174,6 +174,7 @@ On a screen with one job (sign-in, an empty state, a permission ask, a confirmat
 The manifest carries it, and `scripts/canvas_stage.py` stops the run without it:
 - A row with `"options": true` lists each board as `{"board": "<name>", "copy": "<the sentence that makes it different>"}`. A board with no `copy`, or two boards with the same `copy`, stops the run.
 - A row whose prefix is `REJECTED` lists each board as `{"board": "<name>", "reason": "<the owner's own words>"}`. A rejected board with no `reason` stops the run.
+- Old canvases do not break. Boards rejected before this rule have no reason written down. Run `canvas_stage.py --manifest <m> --canvas <folder> --write-rejected-baseline` once. It lists them in the manifest's `rejected_baseline`. A board on that list only warns (`WARN ...`). Any new rejected board needs a reason, or the run stops. Add the owner's words to an old board when you can, then take it off the list.
 
 Applies to: any options board shown to the owner for a pick, and any screen with one main action and little else.
 Does not apply to: dense screens where the real question is layout; motion frames; a board that only restates an approved screen; a screen with no text.
