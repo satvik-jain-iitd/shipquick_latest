@@ -651,3 +651,15 @@ Scenario: every Feedback and containment row of the Android API list is covered 
   And a deprecated row prints only as "Do not use: X. Use Y."
 ```
 Proof: the GAP count for these families drops from 44 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, PR #255 review 2: own family, own kind, API list as the Android source
+```gherkin
+Scenario: an Android component row counts only for a doc of its own family
+  Given an API list with a component row Icon of family Icon
+  When the Button doc lists Icon under platformApi.android.variants
+  Then check_ui_coverage.py prints "Icon (component, needs a doc of family Icon)" and --strict-api fails
+  And a doc whose platforms.android is a component row of the API list is not an extra
+  And a doc whose platforms.android is no row at all is still an extra
+  And a supporting entry that names a variant row fails with "no such supporting row"
+```
+Tests: `tests/test_ui_coverage.py` (s231, three new tests). Local: `python3 scripts/check_ui_coverage.py`.

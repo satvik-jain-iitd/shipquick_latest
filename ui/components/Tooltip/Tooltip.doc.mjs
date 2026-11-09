@@ -117,10 +117,6 @@ export default {
         {
           "name": "RichTooltip",
           "note": "A tooltip with an optional title, more text and an optional action button. Put it in TooltipBox."
-        },
-        {
-          "name": "Label",
-          "note": "Adds a label tooltip to its content. It shows when the user hovers, focuses or long-presses the content. Set isPersistent to keep it open."
         }
       ],
       "supporting": [

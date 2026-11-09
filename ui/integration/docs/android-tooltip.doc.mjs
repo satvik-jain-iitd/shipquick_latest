@@ -75,7 +75,6 @@ export default {
           "items": [
             "PlainTooltip: A short line of text that names an icon or a button. Put it in TooltipBox.",
             "RichTooltip: A tooltip with an optional title, more text and an optional action button. Put it in TooltipBox.",
-            "Label: Adds a label tooltip to its content. It shows when the user hovers, focuses or long-presses the content. Set isPersistent to keep it open.",
             "TooltipState: Says if the tooltip shows. Call show() from a coroutine and dismiss() to hide it. isPersistent keeps it open.",
             "rememberTooltipState: Creates and keeps a TooltipState across recompositions.",
             "TooltipScope: The scope of tooltip content. Its drawCaret draws the small pointer to the anchor.",
