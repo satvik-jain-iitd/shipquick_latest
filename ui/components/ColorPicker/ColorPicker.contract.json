@@ -1,0 +1,27 @@
+{
+  "name": "ColorPicker",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "title": {
+      "type": {
+        "kind": "string"
+      }
+    },
+    "selection": {
+      "type": {
+        "kind": "named",
+        "name": "Binding<Color>"
+      }
+    },
+    "supportsOpacity": {
+      "type": {
+        "kind": "boolean"
+      },
+      "optional": true
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

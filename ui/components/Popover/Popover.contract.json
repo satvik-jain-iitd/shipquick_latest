@@ -1,0 +1,33 @@
+{
+  "name": "Popover",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "isPresented": {
+      "type": {
+        "kind": "named",
+        "name": "Binding<Bool>"
+      }
+    },
+    "arrowEdge": {
+      "type": {
+        "kind": "enum",
+        "values": [
+          "top",
+          "leading",
+          "bottom",
+          "trailing"
+        ]
+      },
+      "optional": true
+    },
+    "content": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}

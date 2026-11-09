@@ -1,0 +1,33 @@
+{
+  "name": "NavigationSplitView",
+  "baseTarget": "root",
+  "types": {},
+  "core": {
+    "sidebar": {
+      "type": {
+        "kind": "content"
+      }
+    },
+    "content": {
+      "type": {
+        "kind": "content"
+      },
+      "optional": true
+    },
+    "detail": {
+      "type": {
+        "kind": "content"
+      }
+    },
+    "columnVisibility": {
+      "type": {
+        "kind": "named",
+        "name": "Binding<NavigationSplitViewVisibility>"
+      },
+      "optional": true
+    }
+  },
+  "platforms": {},
+  "webOnly": [],
+  "sameMeaning": {}
+}
