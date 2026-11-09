@@ -30,6 +30,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Accessibility modifiers",
       "variants": [
         {"name": "accessibilityAction", "note": "`.accessibilityAction(_:_:)`, iOS 13.0. Apple: \"Adds an accessibility action to the view. Actions allow assistive technologies, such as the VoiceOver, to interact with the view by invoking the action.\""},
         {"name": "accessibilityActions", "note": "`.accessibilityActions(_:)`, iOS 16.0. Apple: \"Adds multiple accessibility actions to the view.\""},

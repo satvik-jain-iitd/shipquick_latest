@@ -376,3 +376,134 @@ def test_s231_an_ios_extract_split_into_two_files_gives_the_same_list():
     head = {**EXTRACT, "modifiers": EXTRACT["modifiers"][:1]}
     two = {"ios-swiftui-extract.json": json.dumps(head), "ios-swiftui-extract-2.json": json.dumps({"modifiers": EXTRACT["modifiers"][1:]})}
     assert ui_api_lists.merge_ios(two) == ui_api_lists.merge_ios(one)
+
+
+# Story #288: the saved public names of each framework package.
+GLANCE = """// Signature format: 4.0
+package androidx.glance.appwidget {
+
+  public abstract class GlanceAppWidget {
+    method public abstract suspend Object? provideGlance(android.content.Context context);
+  }
+
+  public final class GlanceAppWidgetKt {
+    method public static suspend Object? updateAll(androidx.glance.appwidget.GlanceAppWidget, android.content.Context);
+  }
+
+}
+
+package android {
+
+  public final class Manifest.permission {
+    field public static final String POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS";
+  }
+
+}
+"""
+
+
+def test_s288_android_names_keep_classes_top_level_functions_and_fields_but_not_members():
+    assert ui_api_lists.android_names(GLANCE) == [
+        "android.Manifest.permission", "android.Manifest.permission.POST_NOTIFICATIONS",
+        "androidx.glance.appwidget.GlanceAppWidget", "androidx.glance.appwidget.updateAll"]
+    assert ui_api_lists.android_names(GLANCE, r"^android\.Manifest\b") == [
+        "android.Manifest.permission", "android.Manifest.permission.POST_NOTIFICATIONS"]
+
+
+def test_s288_apple_names_keep_module_types_and_return_its_topic_pages():
+    page = {"references": {
+        "a": {"role": "symbol", "title": "BarMark", "url": "/documentation/charts/barmark"},
+        "b": {"role": "symbol", "title": "chartXAxis(_:)", "url": "/documentation/charts/x"},
+        "c": {"role": "symbol", "title": "View", "url": "/documentation/swiftui/view"},
+        "d": {"role": "collectionGroup", "title": "Marks", "url": "/documentation/charts/marks"},
+        "e": {"role": "collectionGroup", "title": "Other", "url": "/documentation/swiftui/other"}}}
+    assert ui_api_lists.apple_names(page, "Charts", "charts") == ({"Charts.BarMark"}, ["/documentation/charts/marks"])
+
+
+def test_s288_the_saved_framework_names_are_small_and_pinned():
+    import hashlib
+    raw = ui_api_lists.FW_SRC.read_bytes()
+    assert len(raw) < 500_000
+    assert f"sha256 `{hashlib.sha256(raw).hexdigest()}`" in ui_api_lists.FW_MD.read_text(encoding="utf-8")
+    for p in json.loads(raw)["packages"]:
+        assert p["sources"] and p["version"] and p["names"], p["package"]
+
+
+# Story #285: each iOS row has a doc family: its Family, or the control doc IOS_DOC_FAMILY maps it to.
+def test_s285_an_ios_row_gets_its_doc_family():
+    rows = by_name(ui_api_lists.parse_ios(EXTRACT, ALTS, {"BottomSheet": ["sheet"]}))
+    assert rows["sheet"]["doc_family"] == "BottomSheet" and rows["sheet"]["family"] == "Modal presentations"
+    assert rows["Button"]["doc_family"] == "Button"
+
+
+def test_s285_a_row_mapped_to_two_doc_families_fails():
+    import pytest
+    with pytest.raises(ValueError, match="sheet: mapped to two doc families"):
+        ui_api_lists.parse_ios(EXTRACT, ALTS, {"BottomSheet": ["sheet"], "Dialog": ["sheet"]})
+
+
+def test_s285_every_real_doc_family_entry_names_a_real_row():
+    rows = by_name(ui_api_lists.parse_ios(ui_api_lists.merge_ios(
+        {p.name: p.read_text() for p in ui_api_lists.SOURCES.glob("ios-swiftui-extract*.json")})))
+    named = [n for names in ui_api_lists.IOS_DOC_FAMILY.values() for n in names]
+    assert [n for n in named if n not in rows] == []
+
+
+def test_s285_the_ios_list_has_a_doc_family_column(tmp_path):
+    args, src, out = write_sources(tmp_path)
+    assert ui_api_lists.main(args) == 0
+    md = (out / ui_api_lists.IOS_MD.name).read_text()
+    assert "| Apple page | Doc family |" in md and "Doc family:" in md
+
+
+# Story #285, second review of PR #294: rows mapped to the doc that owns them.
+def test_s285_review_2_rows_sit_in_the_doc_of_their_meaning():
+    fam = {n: f for f, names in ui_api_lists.IOS_DOC_FAMILY.items() for n in names}
+    want = {"confirmationDialog": "Dialog", "dismissalConfirmationDialog": "Dialog", "fullScreenCover": "Dialog",
+            "statusBar": "Appearance modifiers", "statusBarHidden": "Appearance modifiers", "Color": "Appearance modifiers",
+            "Canvas": "Canvas", "ButtonBorderShape": "Button", "buttonBorderShape": "Button",
+            "DocumentLaunchView": "DocumentLaunchView", "scrollDismissesKeyboard": "ScrollView"}
+    assert {n: fam.get(n) for n in want} == want
+
+
+def test_s285_review_2_the_docs_hold_what_the_map_says():
+    from check_ui_docs import read_doc
+    held = {}
+    for d in (ROOT / "ui" / "components").iterdir():
+        p = d / f"{d.name}.doc.mjs"
+        if p.is_file():
+            ios = read_doc(p).get("platformApi", {}).get("ios", {})
+            for i in ios.get("variants", []):
+                held.setdefault(i["name"], []).append(d.name)
+    for n, doc in {"confirmationDialog": "Dialog", "fullScreenCover": "Dialog", "statusBarHidden": "AppearanceModifiers",
+                   "Color": "AppearanceModifiers", "Canvas": "Canvas", "ButtonBorderShape": "Button",
+                   "DocumentLaunchView": "DocumentLaunchView", "scrollDismissesKeyboard": "ScrollView"}.items():
+        assert held.get(n) == [doc], (n, held.get(n))
+
+
+def test_s285_review_2_the_canvas_doc_says_do_not_use_and_names_a_replacement():
+    from check_ui_docs import read_doc
+    d = read_doc(ROOT / "ui" / "components" / "Canvas" / "Canvas.doc.mjs")
+    bad = [b["description"] for b in d["usage"].get("bestPractices", []) if not b.get("guidance")]
+    assert any(t.startswith("Do not use: Canvas. Use ") and "rule 38" in t for t in bad), bad
+
+
+def test_s285_review_2_foreach_and_refreshable_notes_say_they_work_on_stacks_and_scroll_views():
+    from check_ui_docs import read_doc
+    items = {i["name"]: i["note"] for i in read_doc(ROOT / "ui" / "components" / "List" / "List.doc.mjs")["platformApi"]["ios"]["variants"]}
+    assert "stacks and scroll views" in items["ForEach"] and "stacks and scroll views" in items["refreshable"]
+
+
+def test_s285_review_2_adr_012_writes_the_catch_all_ceiling_and_its_follow_up():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "catch-all" in adr and "split the catch-all docs" in adr
+
+def test_s288_review_2_the_saved_names_have_the_bridge_and_health_types():
+    names = {n for p in json.loads(ui_api_lists.FW_SRC.read_text())["packages"] for n in p["names"]}
+    assert {"SwiftUI.UIViewRepresentable", "SwiftUI.UIViewControllerRepresentable", "SwiftUI.UIHostingConfiguration",
+            "HealthKit.HKActivitySummary"} <= names
+
+
+def test_s288_review_2_adr_012_says_the_pin_catches_mistakes_not_tampering():
+    adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
+    assert "catches mistakes, not tampering" in adr and "diff review is the guard" in adr

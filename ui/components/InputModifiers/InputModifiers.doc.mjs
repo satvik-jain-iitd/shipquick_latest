@@ -26,6 +26,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Input and event modifiers",
       "variants": [
         {"name": "allowsHitTesting", "note": "`.allowsHitTesting(_:)`, iOS 13.0. Apple: \"Configures whether this view participates in hit test operations.\""},
         {"name": "allowsWindowActivationEvents", "note": "`.allowsWindowActivationEvents()`, iOS 18.0. Apple: \"Configures gestures in this view hierarchy to handle events that activate the containing window.\""},

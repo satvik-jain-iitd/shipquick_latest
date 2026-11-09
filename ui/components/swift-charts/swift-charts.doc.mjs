@@ -29,6 +29,7 @@ export default {
   },
   "platformApi": {
     "ios": {
+      "family": "Chart view modifiers",
       "variants": [
         {"name": "chart3DCameraProjection", "note": "`.chart3DCameraProjection(_:)`, iOS 26.0. Apple's page gives no summary: https://developer.apple.com/documentation/swiftui/view/chart3dcameraprojection(_:)"},
         {"name": "chart3DPose", "note": "`.chart3DPose(_:)`, iOS 26.0. Apple: \"Associates a binding to be updated when the 3D chart’s pose is changed by an interaction.\""},

@@ -35,8 +35,8 @@ export default {
           "items": [
             "NotificationCompat.Builder: Builds the notification: setSmallIcon, setContentTitle, setContentText, setPriority and setContentIntent.",
             "NotificationManagerCompat: Posts, updates and cancels notifications with notify() and cancel().",
-            "NotificationChannel: A channel for one kind of message, with its own importance. Create it before you post, on Android 8 and later.",
-            "POST_NOTIFICATIONS: The runtime permission to post notifications on Android 13 and later."
+            "android.app.NotificationChannel: A channel for one kind of message, with its own importance. Create it before you post, on Android 8 and later.",
+            "Manifest.permission.POST_NOTIFICATIONS: The constant for the runtime permission to post notifications on Android 13 and later."
           ]
         }
       ]

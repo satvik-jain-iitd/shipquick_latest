@@ -25,6 +25,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Graphics and rendering modifiers",
       "variants": [
         {"name": "aspectRatio", "note": "`.aspectRatio(_:contentMode:)`, iOS 13.0. Apple: \"Constrains this view’s dimensions to the specified aspect ratio.\""},
         {"name": "aspectRatio3D", "note": "`.aspectRatio3D(_:contentMode:)`, not on iOS. Apple: \"Constrains this view’s dimensions to the specified 3D aspect ratio.\"", "status": "unavailable-ios", "replacement": "aspectRatio"},

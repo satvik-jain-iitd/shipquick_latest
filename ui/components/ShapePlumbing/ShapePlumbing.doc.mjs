@@ -24,6 +24,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "ShapePlumbing",
       "variants": [
         {"name": "AnyShape", "note": "iOS 16.0. Apple: \"A type-erased shape value.\""},
         {"name": "FillShapeView", "note": "iOS 17.0. Apple: \"A shape provider that fills its shape.\""},

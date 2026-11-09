@@ -897,3 +897,47 @@ Scenario: s242 the workflow proves the restore
   Then the restore job fails; after the backup job builds the branch, restore passes (npm ci --offline, Gradle --offline)
 ```
 Tests: `tests/test_vendor_backup.py` (s242). CI: pytest and the `vendor backup` workflow. Local: `python3 -m pytest tests/test_vendor_backup.py`.
+## Story #217: UI compile proof
+```gherkin
+Scenario: every template and every contract prop compiles against the real libraries
+  Given the contracts in ui/components
+  When scripts/ui_proof.py runs
+  Then ui/android/proof/ApiProof.kt calls each component with every platforms.android prop by name
+  And ui/ios/proof/ApiProof.swift does the same for platforms.ios
+  And a component whose doc names a platform API but has no spec fails the script by name
+  And --check fails when a contract changed and the proofs were not written again
+  When a PR changes ui/**
+  Then CI job ui-android-compile compiles the templates and ApiProof.kt with Gradle (Compose BOM 2025.10.00, material3 1.4.0)
+  And CI job ui-ios-compile compiles the templates and ApiProof.swift with xcodebuild for generic iOS (Xcode 16.4)
+  And an invented prop in one contract fails each job
+  When a PR does not change ui/**
+  Then both jobs are skipped and the gate still passes
+```
+Tests: `tests/test_ui_proof.py` (s217). CI jobs: `ui-android-compile`, `ui-ios-compile`. Local: `bash scripts/check_local.sh ui-proof`.
+CI compiles the Kotlin and Swift only. Nothing is run.
+## Story #288: framework-doc names are checked against saved package names
+```gherkin
+Scenario: a typo in a framework doc fails
+  Given a framework doc (swift-charts) that names Chrat under platformApi.ios.supporting
+  And the saved framework names, pinned by sha256 in framework-topics.md, have Charts.Chart but no Chrat
+  When check_ui_coverage.py runs
+  Then it fails and names swift-charts and Chrat
+  And an Android name in an iOS slot fails the same way
+  And a saved names file that does not match its pin fails
+```
+Tests: `tests/test_ui_coverage.py` (s288), `tests/test_ui_api_lists.py` (s288). Local: `bash scripts/check_local.sh ui-coverage`.
+
+## Story #285: iOS docs get a family, and the gate enforces it like Android
+```gherkin
+Scenario: an iOS row is covered only by a doc of its doc family
+  Given the iOS list maps buttonStyle to the doc family Button
+  When a swift-charts doc claims buttonStyle
+  Then check_ui_coverage.py --strict-api fails with "buttonStyle (modifier, needs a doc of family Button)"
+  And a component row mapped to Shape is covered only by the doc whose platformApi.ios.family is Shape
+  And a family that no row maps to, or two docs with one family, fails
+  And an iOS list with no Doc family column fails
+  And a blank Doc family cell fails and names the row
+  And each row sits in the doc of its meaning (confirmationDialog and fullScreenCover in Dialog, Color in Appearance,
+    ButtonBorderShape in Button, scrollDismissesKeyboard in ScrollView, Canvas and DocumentLaunchView in their own docs)
+```
+Tests: `tests/test_ui_coverage.py` (s285), `tests/test_ui_api_lists.py` (s285). Local: `bash scripts/check_local.sh ui-coverage`.

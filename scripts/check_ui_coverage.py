@@ -15,16 +15,20 @@ API lists (story #231): docs/research/android-m3-api.md and ios-swiftui-api.md, 
 A component, variant or modifier row is covered by a doc whose `platforms` names it, or that lists it under
 `platformApi.<platform>.variants`; a supporting row by `platformApi.<platform>.supporting`. Gaps print as GAP lines,
 one per family, and fail only with --strict-api. CI (job ui-cli) and check_local.sh pass --strict-api: every row is covered.
+On iOS (story #285) a component or modifier row counts only for a doc of its Doc family column (the family of the doc's
+platforms.ios row, or its platformApi.ios family, a label that one doc sets and some row names).
 On Android a component row counts only for a doc of its own family (its main row's family or platformApi family), and
 a doc whose platforms.android is a component row of the API list is not an extra (PR #255 review 2). Each slot names
 rows of its own kind only.
 Framework topics (story #231): each row of docs/research/framework-topics.md is one doc, ui/components/<topic-slug>/
 ("Swift Charts" -> swift-charts), that speaks to its platform (platformApi or platformUsage) and is served as the topic
 <platform>-<topic-slug>. A missing one is a GAP line like an API row. Its platformApi items name the framework's own
-types, which are not rows of the API lists, so only a framework doc may name them.
+types, which are not rows of the API lists, so only a framework doc may name them, and only names of the saved
+framework list docs/research/sources/framework-names.json (story #288), pinned by sha256 in framework-topics.md.
 usage: check_ui_coverage.py [--require-web] [--strict-api]
 """
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -88,7 +92,33 @@ def framework_topics(path):
     return out, []
 
 
-def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
+def framework_names(names_path, topics_path):
+    """({platform: set of qualified names}, errors) from the saved framework names (story #288), which must match the
+    sha256 framework-topics.md pins, so an edit by hand fails."""
+    if not names_path.is_file():
+        return {}, [f"{names_path.name}: file not found: {names_path}; run python3 scripts/ui_api_lists.py --fetch-frameworks"]
+    raw = names_path.read_bytes()
+    text = topics_path.read_text(encoding="utf-8") if topics_path.is_file() else ""
+    pin = re.search(rf"^Saved names: `docs/research/sources/{re.escape(names_path.name)}` sha256 `([0-9a-f]{{64}})`$", text, re.M)
+    if not pin or pin.group(1) != hashlib.sha256(raw).hexdigest():
+        return {}, [f"{names_path.name}: its sha256 does not match the pin in {topics_path.name}; "
+                    "run python3 scripts/ui_api_lists.py --fetch-frameworks, never edit it by hand"]
+    out = {}
+    for p in json.loads(raw)["packages"]:
+        out.setdefault(p["platform"], set()).update(p["names"])
+    return out, []
+
+
+def known(name, names):
+    """A doc name is known when a saved qualified name is it or ends with it after a dot (`Charts.BarMark`). A bare name
+    must be type-cased (its last segment starts with an uppercase letter), so a fragment like `permission` or a bare
+    function name is not known; write it qualified (`androidx.glance.appwidget.updateAll`)."""
+    if name in names:
+        return True
+    return name.rsplit(".", 1)[-1][:1].isupper() and any(n.endswith("." + name) for n in names)
+
+
+def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None, fw_names=None):
     """Lines naming, per platform and family, the API list rows no doc covers. A row is covered only by a structured
     field of exactly one doc: `platforms.<p>` (the doc's main API, with the doc-level `status`), an object in
     `platformApi.<p>.variants` or `.supporting`, or `platformApi.<p>.family` for a family row. A covering entry
@@ -99,13 +129,16 @@ def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
         rows, e = table(path, f"{platform} API")
         errs += e
         claims = {}   # (slot, name) -> [(doc, status)]; slot is main, variants, supporting or family
+        ios_fams = {}   # story #285: iOS family -> [docs]; an iOS family is a label, not a row
         topics = (frameworks or {}).get(platform, [])
         fw_docs = {slug(t) for t in topics}
         for doc, plats in docs.items():
             if plats.get(platform):
                 claims.setdefault(("main", plats[platform]), []).append((doc, status.get(doc) or "-"))
             mine = api[doc].get(platform, {})
-            if mine.get("family"):
+            if mine.get("family") and platform == "ios":
+                ios_fams.setdefault(mine["family"], []).append(doc)
+            elif mine.get("family"):
                 claims.setdefault(("family", mine["family"]), []).append((doc, "-"))
             for slot in ("variants", "supporting"):
                 for item in mine.get(slot, []):
@@ -122,16 +155,40 @@ def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
         for (slot, n), who in sorted(claims.items()):
             if n not in any_row and slot in of_kind:
                 # Review 2 of the iOS stack: only a framework doc, and only for a name that is no row at all (its
-                # framework's own type), skips this check. A real row in the wrong slot still fails.
+                # framework's own type), skips this check. A real row in the wrong slot still fails. Story #288: that
+                # name must be in the saved framework names of this platform, so a typo fails.
+                fw_bad = [w for w in who if w[0] in fw_docs and not known(n, (fw_names or {}).get(platform, set()))]
+                if fw_bad:
+                    errs.append(f"api {platform}: {', '.join(d for d, _ in fw_bad)} names {n} under platformApi.{platform}.{slot}, "
+                                f"but neither the {platform} API list nor the saved framework names (framework-names.json) have it")
                 who = [w for w in who if w[0] not in fw_docs]
                 if not who:
                     continue
             if slot in of_kind and n not in of_kind[slot]:
                 errs.append(f"api {platform}: {', '.join(d for d, _ in who)} names {n} under platformApi.{platform}.{slot}, "
                             f"but the {platform} API list has no such {word[slot]} row")
-        # Android (PR #255 review 2): a component row is covered only by a doc of its own family, through its main API
-        # or its variants. A doc's families are the family of the row its platforms name points to, and its platformApi family.
-        fam_of = {f"{r[5].strip('`')}.{r[1].strip('`')}": r[4] for r in rows if r[2] in ("component", "variant")} if platform == "android" else {}
+        # Own family (Android: PR #255 review 2; iOS: story #285). A row of a checked kind is covered only by a doc of
+        # its family, through its main API or its variants. A doc's families are the family of the row its platforms
+        # name points to, and its platformApi family. Android checks component rows, by the Family column. iOS checks
+        # component and modifier rows, by the Doc family column the generator writes (a modifier's Apple page, or the
+        # control doc the list maps it to, as `.sheet` to BottomSheet).
+        if platform == "android":
+            checked = ("component",)
+            need_of = {r[1].strip("`"): r[4] for r in rows}
+            fam_of = {f"{r[5].strip('`')}.{r[1].strip('`')}": r[4] for r in rows if r[2] in ("component", "variant")}
+        else:
+            checked = ("component", "modifier")
+            if any(len(r) < 11 for r in rows):
+                errs.append("ios API list: no Doc family column; run python3 scripts/ui_api_lists.py")
+            errs += [f"ios API list: row {r[0]} ({r[1].strip('`')}): Doc family is empty" for r in rows if len(r) > 10 and not r[10]]
+            need_of = {r[1].strip("`"): r[10] if len(r) > 10 else r[4] for r in rows}
+            fam_of = {f"SwiftUI.{r[1].strip('`')}": need_of[r[1].strip("`")] for r in rows if r[2] in checked}
+            for fam, ds in sorted(ios_fams.items()):
+                if len(ds) > 1:
+                    errs.append(f"api ios: {len(ds)} docs set platformApi.ios.family {fam} ({', '.join(ds)}); a family has one doc")
+                if fam not in set(need_of.values()):
+                    errs.append(f"api ios: {', '.join(ds)} sets platformApi.ios.family {fam}, but no row of the ios API list "
+                                "has that Doc family")
         doc_fams = {d: {fam_of.get(p.get(platform)), api[d].get(platform, {}).get("family")} for d, p in docs.items()}
         by_family = {}
         for r in rows:
@@ -140,8 +197,8 @@ def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
             full = f"{r[5].strip('`')}.{name}" if platform == "android" else f"SwiftUI.{name}"
             slots = {"family": [("family", name)], "supporting": [("supporting", name)]}.get(kind, [("main", full), ("variants", name)])
             owners = [o for s in slots for o in claims.get(s, [])]
-            if platform == "android" and kind == "component" and len(owners) == 1 and family not in doc_fams[owners[0][0]]:
-                by_family.setdefault(family, []).append(f"{name} ({kind}, needs a doc of family {family})")
+            if kind in checked and len(owners) == 1 and need_of[name] not in doc_fams[owners[0][0]]:
+                by_family.setdefault(family, []).append(f"{name} ({kind}, needs a doc of family {need_of[name]})")
             elif len(owners) > 1:
                 errs.append(f"api {platform} {name}: {len(owners)} docs claim this row ({', '.join(d for d, _ in owners)}); "
                             "a row has one owner")
@@ -178,6 +235,7 @@ def main(argv=None):
     ap.add_argument("--ios-api", type=Path, default=KIT / "docs" / "research" / "ios-swiftui-api.md")
     ap.add_argument("--strict-api", action="store_true", help="fail on every API list row no doc covers")
     ap.add_argument("--frameworks", type=Path, default=KIT / "docs" / "research" / "framework-topics.md")
+    ap.add_argument("--framework-names", type=Path, default=KIT / "docs" / "research" / "sources" / "framework-names.json")
     a = ap.parse_args(argv)
     errs = []
 
@@ -261,7 +319,9 @@ def main(argv=None):
 
     frameworks, e = framework_topics(a.frameworks)
     errs += e
-    gaps = api_gaps(a, docs, api, status, errs, frameworks, usage)
+    fw_names, e = framework_names(a.framework_names, a.frameworks)
+    errs += e
+    gaps = api_gaps(a, docs, api, status, errs, frameworks, usage, fw_names)
     if a.strict_api:
         errs += gaps   # printed once below, as FAIL lines
     else:
