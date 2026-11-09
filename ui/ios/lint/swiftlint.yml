@@ -1,0 +1,72 @@
+# ShipQuick iOS UI lint (story #185, rule 38). SwiftLint refuses hand-drawn UI in a child.
+# Two tiers, one file. Every rule is a warning here, so a local run reports and exits 0.
+# CI runs the same file with `swiftlint lint --strict`, which turns each warning into an error.
+# Pinned: SwiftLint 0.65.1. It runs on GitHub CI only (ADR-012); nothing is installed on the owner's Mac.
+# A child copies this file to `.swiftlint.yml` (adopt.sh wires that in story #187) and lists its own UI kits below.
+# A rule id is the key under custom_rules; CI greps for it, so never rename one without the fixture.
+only_rules:
+  - custom_rules
+  - blanket_disable_command
+  - superfluous_disable_command
+
+blanket_disable_command:
+  severity: warning
+superfluous_disable_command:
+  severity: warning
+
+custom_rules:
+  no_raw_color:
+    name: "No raw colour"
+    regex: '\b(?:UI|NS)?Color\s*\([^)]*\b(?:red|hue|white)\s*:'
+    message: "A raw colour. Use a colour from Tokens or a system colour."
+    severity: warning
+    excluded: '.*Tokens\.swift'
+  no_fixed_font_size:
+    name: "No fixed font size"
+    regex: '\.system\(\s*size:'
+    message: "A fixed font size. Use a text style such as .body, or Tokens."
+    severity: warning
+    excluded: '.*Tokens\.swift'
+  no_custom_font:
+    name: "No custom font outside Tokens"
+    regex: '\bFont\.custom\s*\('
+    message: "Font.custom outside Tokens. Put the font in Tokens.swift."
+    severity: warning
+    excluded: '.*Tokens\.swift'
+  no_uikit_or_ui_kit_import:
+    name: "No UIKit and no third-party UI kit"
+    regex: '^\s*(?:@\w+\s+)?import\s+(?:UIKit|SnapKit|Texture|AsyncDisplayKit|MaterialComponents|SwiftUIX|SwiftUIIntrospect|Introspect|PopupView)\b'
+    message: "A UIKit or third-party UI kit import. Use SwiftUI only. A child adds its own kit names to this list."
+    severity: warning
+  no_custom_shape_or_style:
+    name: "No custom Shape or ButtonStyle"
+    regex: '\b(?:struct|class|extension)\s+[\w.]+\s*:\s*(?:[\w.]+\s*,\s*)*(?:Shape|InsettableShape|ButtonStyle|PrimitiveButtonStyle)\b'
+    message: "A custom Shape or ButtonStyle. Use a standard shape and .buttonStyle(.bordered) or .borderedProminent."
+    severity: warning
+  no_path:
+    name: "No hand-drawn Path"
+    regex: '\bPath\s*[({]'
+    message: "A hand-drawn Path. Use a standard shape or an SF Symbol."
+    severity: warning
+  no_canvas:
+    name: "No Canvas"
+    regex: '\bCanvas\s*\{'
+    message: "A Canvas draws pixels by hand. Use a standard SwiftUI view."
+    severity: warning
+  no_uikit_view:
+    name: "No UIKit view"
+    regex: '\bclass\s+\w+\s*:[^{]*\bUIView\b|\bUIView(?:Controller)?Representable\b'
+    message: "A UIKit view wrapped for SwiftUI. Use a standard SwiftUI view."
+    severity: warning
+  no_number_in_layout_modifier:
+    name: "No number in a layout modifier"
+    regex: '\.(?:padding|frame|cornerRadius|offset|position|lineSpacing|shadow|blur|tracking|kerning)\([^)]*?(?<![\w.])\d'
+    message: "A number in a layout modifier. Use a Tokens value such as Tokens.space2."
+    severity: warning
+    excluded: '.*Tokens\.swift'
+  no_number_in_spacing:
+    name: "No number in spacing"
+    regex: '\bspacing:\s*\d'
+    message: "A number in spacing. Use a Tokens value such as Tokens.space3."
+    severity: warning
+    excluded: '.*Tokens\.swift'

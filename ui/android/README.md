@@ -42,4 +42,5 @@ Using this folder as a Gradle build with `includeBuild("knowledge/shipquick_late
 - `clickable`, `selectable`, `toggleable` and `verticalScroll` stay allowed. Google's own patterns use them.
 - A call to an experimental M3 part (like `TopAppBar`) needs `@OptIn(ExperimentalMaterial3Api::class)`.
 - The step flow: the filled button comes last, and the screen uses `imePadding()`.
-Lint takes over this job in story S7.
+Lint takes over this job in a child (story #185): `lint/detekt.yml` (local, warnings), `lint/detekt-ci.yml` (CI, errors)
+and `lint/UiRulesKonsistTest.kt`. `tests/test_ui_lint.py` keeps them in step with the bans above. See `docs/ADOPTION.md`.

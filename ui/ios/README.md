@@ -50,3 +50,6 @@ A custom `Shape` or `ButtonStyle`, `Path`, a raw colour (`Color(red:`, `Color(hu
 a UIKit view (`UIView` subclass, `UIViewRepresentable`), any import but SwiftUI and Foundation, and a number
 written in `.padding`, `.frame`, `.cornerRadius`, `.offset`, `.system(size:` or `spacing:`.
 A token reference passes, like `.padding(.top, Tokens.space2)`.
+
+In a child, `lint/swiftlint.yml` does this job (story #185): every rule is a warning locally, and CI runs `swiftlint lint --strict`.
+`tests/test_ui_lint.py` keeps it in step with this list. See `docs/ADOPTION.md`.
