@@ -31,7 +31,12 @@ Using this folder as a Gradle build with `includeBuild("knowledge/shipquick_late
 
 ## What is checked now
 
-`tests/test_android_templates.py` scans the templates. It fails on `Canvas(`, `drawBehind`, `Color(0x`,
-a custom `Shape` class, or a Material 2 import (`androidx.compose.material.`; the icon set is allowed).
-It also checks the step flow: the filled button comes last, and the screen uses `imePadding()`.
+`tests/test_android_templates.py` scans every `ui/android/templates/*.kt`.
+- Imports come from an allow-list: `androidx.compose.material3`, `foundation`, `runtime` and `ui`,
+  Google's icon set `androidx.compose.material.icons`, and the Kotlin stdlib. Anything else fails, Material 2 too.
+- Banned patterns fail: `Canvas(`, `drawBehind`, `drawWithContent`, `Color(`, `.background(Color.`,
+  `GenericShape`, `RoundedCornerShape(`, and a custom `Shape` class.
+- `clickable`, `selectable`, `toggleable` and `verticalScroll` stay allowed. Google's own patterns use them.
+- A call to an experimental M3 part (like `TopAppBar`) needs `@OptIn(ExperimentalMaterial3Api::class)`.
+- The step flow: the filled button comes last, and the screen uses `imePadding()`.
 Lint takes over this job in story S7.

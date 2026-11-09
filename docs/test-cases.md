@@ -459,8 +459,11 @@ Tests: `tests/test_android_library.py` (s134).
 ```gherkin
 Scenario: a coder agent starts an Android screen from a template
   Given ui/android/templates holds SignIn, List, Detail, Settings and StepFlow templates
-  Then no template has Canvas(, drawBehind, Color(0x, a custom Shape class or a Material 2 import
-  And the scan catches each of those patterns, and allows the M3 icon set and androidx.compose.material3
+  Then every import is on the allow-list: androidx.compose.material3, foundation, runtime, ui, material.icons, kotlin
+  And no template has Canvas(, drawBehind, drawWithContent, Color(, .background(Color., GenericShape, RoundedCornerShape( or a custom Shape class
+  And each banned pattern and each off-list import, injected, is caught
+  And clickable, selectable, toggleable and verticalScroll stay allowed
+  And a call to an experimental M3 part without @OptIn(ExperimentalMaterial3Api::class) is caught
   And the step flow puts the outline button before the filled one and uses imePadding()
 ```
 Tests: `tests/test_android_templates.py` (s134).

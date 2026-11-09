@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
 /** A switch setting, a one-of-many choice, and sign out behind a confirm dialog (a danger pair, never the default). */
+@OptIn(ExperimentalMaterial3Api::class) // TopAppBar is experimental in the stable M3 releases
 @Composable
 fun SettingsTemplate(
     notificationsOn: Boolean,
