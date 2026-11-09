@@ -147,5 +147,20 @@ class GhFailure(unittest.TestCase):
         self.assertEqual(payload["waiting"], first["waiting"])
 
 
+class ParseArgs(unittest.TestCase):
+    def test_repo_defaults_to_the_current_folder_and_takes_a_child_path(self):
+        import os
+        import tempfile
+        here = os.getcwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                os.chdir(tmp)
+                self.assertEqual(desk.parse_args([]).repo, Path(tmp).resolve())
+            finally:
+                os.chdir(here)
+            self.assertEqual(desk.parse_args(["--repo", tmp]).repo, Path(tmp).resolve())
+            self.assertNotEqual(desk.parse_args(["--repo", tmp]).repo, desk.HERE.parent.resolve())
+
+
 if __name__ == "__main__":
     unittest.main()

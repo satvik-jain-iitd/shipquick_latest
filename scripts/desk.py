@@ -122,6 +122,7 @@ class Desk:
         self.payload = None      # last answer, fresh or not
         self.good = None         # last answer with no error
         self.at = 0.0
+        self.status = 503        # no answer yet; set by every gather
 
     def state(self):
         """Return (http_status, payload). Never raises on gh failure."""
@@ -177,12 +178,19 @@ def make_server(port, desk, html_path=None):
     return ThreadingHTTPServer(("127.0.0.1", port), Handler)
 
 
-def main(argv=None):
+def parse_args(argv=None):
+    """The project to read is --repo (default: the folder you run it from), never the kit folder."""
     ap = argparse.ArgumentParser(description="ShipQuick Desk on 127.0.0.1")
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
+    ap.add_argument("--repo", default=".", help="the project folder to read (default: the current folder)")
     args = ap.parse_args(argv)
-    repo_dir = HERE.parent
-    server = make_server(args.port, Desk(repo_dir))
+    args.repo = Path(args.repo).resolve()
+    return args
+
+
+def main(argv=None):
+    args = parse_args(argv)
+    server = make_server(args.port, Desk(args.repo))
     print("ShipQuick Desk on http://127.0.0.1:%d/ (Ctrl-C to stop)" % args.port, flush=True)
     try:
         server.serve_forever()
