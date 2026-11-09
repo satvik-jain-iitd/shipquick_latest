@@ -28,6 +28,6 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    systemProperty("shipquick.ui.dir", uiDir) // relative to this build, as Konsist reads it
+    systemProperty("shipquick.ui.dir", "tests/fixtures/android/$uiDir") // Konsist reads a path from the repository root
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
