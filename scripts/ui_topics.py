@@ -41,7 +41,7 @@ def topic(doc, contract, platform):
             {"type": "list", "style": "do", "items": [b["description"] for b in practices if b.get("guidance")]},
             {"type": "list", "style": "dont", "items": [b["description"] for b in practices if not b.get("guidance")]},
         ]},
-        {"title": "Accessibility", "content": [{"type": "list", "items": [
+        {"title": "Accessibility", "content": [{"type": "list", "style": "unordered", "items": [
             f"{a['name']} ({a.get('criterion', '')}, {a.get('requirement', '')}): {a.get('description', '')}"
             for a in usage.get("accessibility", [])]}]},
     ]

@@ -99,3 +99,14 @@ def test_s183_an_error_on_stderr_with_exit_0_fails(tmp_path):
     r = subprocess.run(["bash", str(UI), "component", "--list"], capture_output=True, text=True,
                        env={**os.environ, "UI_ASTRYX_BIN": str(s)})
     assert r.returncode == 1 and "Could not find" in r.stderr
+
+
+def test_s183_every_topic_list_block_has_a_style_the_cli_accepts():
+    # CI on PR #202: the real CLI refused a list with no style ("expected one of ordered|unordered|do|dont").
+    import re as _re
+    for f in (ROOT / "ui/integration/docs").glob("*.doc.mjs"):
+        doc = json.loads(_re.sub(r"^.*?export default ", "", f.read_text(), flags=_re.S).rstrip().rstrip(";"))
+        for s in doc["sections"]:
+            for block in s["content"]:
+                if block["type"] == "list":
+                    assert block.get("style") in {"ordered", "unordered", "do", "dont"}, (f.name, s["title"])
