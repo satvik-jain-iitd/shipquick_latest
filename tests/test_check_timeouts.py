@@ -30,3 +30,28 @@ def test_a_job_with_a_timeout_and_a_reusable_call_pass():
 def test_every_kit_workflow_job_has_a_timeout():
     found = {p.name: ct.missing(p.read_text()) for p in (ROOT / ".github/workflows").glob("*.yml")}
     assert {k: v for k, v in found.items() if v} == {}
+
+
+# PR #171 second review: other indents, quoted keys and trailing comments must not slip past.
+def test_a_job_key_with_a_trailing_comment_is_still_checked():
+    text = "jobs:\n  b: # deploy\n    runs-on: ubuntu-latest\n    steps: []\n"
+    assert ct.missing(text) == ["b"]
+
+
+def test_a_four_space_indent_is_still_checked():
+    text = "jobs:\n    b:\n        runs-on: ubuntu-latest\n        steps: []\n"
+    assert ct.missing(text) == ["b"]
+
+
+def test_a_quoted_job_key_is_still_checked():
+    text = "jobs:\n  \"a\":\n    runs-on: ubuntu-latest\n"
+    assert ct.missing(text) == ["a"]
+
+
+def test_a_step_timeout_alone_does_not_count_for_the_job():
+    text = "jobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - run: x\n        timeout-minutes: 5\n"
+    assert ct.missing(text) == ["a"]
+
+
+def test_jobs_with_nothing_parsed_fails_instead_of_passing():
+    assert ct.missing("jobs: {build: {runs-on: ubuntu-latest}}\n") == [ct.NO_JOBS]
