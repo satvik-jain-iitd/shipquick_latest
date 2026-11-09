@@ -564,17 +564,6 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
 
-## Story #231, sub-issue #256 (I2): iOS containers and navigation have docs
-```gherkin
-Scenario: every I2 row of the SwiftUI list is covered
-  Given the I2 rows of docs/research/ios-swiftui-api.md (NavigationStack, NavigationLink, NavigationView, TabView parts,
-        ForEach, Section, OutlineGroup, Form, LabeledContent, ScrollViewReader, Table, the grids and stacks,
-        GroupBox and DisclosureGroup parts, ContentUnavailableView, DocumentLaunchView)
-  When check_ui_coverage.py runs
-  Then no I2 row is a GAP line, and NavigationView and the not-on-iOS stacks carry their status and replacement
-  And each new doc has an ios topic that ui_topics.py --check keeps current
-```
-Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
 ## Story #231, Android A1 Buttons (issue #234)
 ```gherkin
 Scenario: every Buttons row of the Android API list is covered by a structured field
