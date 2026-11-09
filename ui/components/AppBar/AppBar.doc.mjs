@@ -152,5 +152,90 @@ export default {
       "description": "The screen name, set on the view inside the navigation container.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "AppBar",
+      "variants": [
+        {
+          "name": "CenterAlignedTopAppBar",
+          "note": "A top app bar with the title in the middle. Use it on a main screen with one short title."
+        },
+        {
+          "name": "MediumTopAppBar",
+          "note": "A taller top app bar with the title on its own line. It can shrink to a small bar as the content scrolls."
+        },
+        {
+          "name": "LargeTopAppBar",
+          "note": "The tallest top app bar, with a big title. It can shrink to a small bar as the content scrolls."
+        },
+        {
+          "name": "BottomAppBar",
+          "note": "A bar at the bottom of the screen with up to four actions and an optional FAB."
+        },
+        {
+          "name": "AppBarRow",
+          "note": "A row for app bar actions. Items that do not fit move into an overflow menu. Set maxItemCount and an overflowIndicator."
+        },
+        {
+          "name": "AppBarColumn",
+          "note": "A column for app bar actions. Items that do not fit move into an overflow menu. Set maxItemCount and an overflowIndicator."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "TopAppBarDefaults",
+          "use": "Default colours, heights and window insets for top app bars, and the scroll behaviours pinnedScrollBehavior, enterAlwaysScrollBehavior and exitUntilCollapsedScrollBehavior."
+        },
+        {
+          "name": "TopAppBarColors",
+          "use": "The colours of a top app bar, before and after the content scrolls under it. Make one with TopAppBarDefaults."
+        },
+        {
+          "name": "TopAppBarScrollBehavior",
+          "use": "Links a top app bar to a scrolling list, so the bar hides, shrinks or changes colour. Pass it to the bar and its nestedScrollConnection to the list."
+        },
+        {
+          "name": "TopAppBarState",
+          "use": "The height offset and scroll state a top app bar scroll behaviour reads and writes."
+        },
+        {
+          "name": "rememberTopAppBarState",
+          "use": "Creates and keeps a TopAppBarState across recompositions."
+        },
+        {
+          "name": "BottomAppBarDefaults",
+          "use": "Default colours, height, padding and window insets for the bottom app bar, and exitAlwaysScrollBehavior."
+        },
+        {
+          "name": "BottomAppBarScrollBehavior",
+          "use": "Links a bottom app bar to a scrolling list, so the bar hides while the user scrolls."
+        },
+        {
+          "name": "BottomAppBarState",
+          "use": "The height offset and scroll state a bottom app bar scroll behaviour reads and writes."
+        },
+        {
+          "name": "rememberBottomAppBarState",
+          "use": "Creates and keeps a BottomAppBarState across recompositions."
+        },
+        {
+          "name": "AppBarScope",
+          "use": "The scope of AppBarRow and AppBarColumn content. Add items with clickableItem, toggleableItem or customItem."
+        },
+        {
+          "name": "AppBarRowScope",
+          "use": "The scope inside AppBarRow, where you add its items."
+        },
+        {
+          "name": "AppBarColumnScope",
+          "use": "The scope inside AppBarColumn, where you add its items."
+        },
+        {
+          "name": "AppBarMenuState",
+          "use": "Says if the overflow menu of AppBarRow or AppBarColumn is open. Call show() and dismiss() from the overflowIndicator."
+        }
+      ]
+    }
+  }
 };
