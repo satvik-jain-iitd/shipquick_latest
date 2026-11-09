@@ -144,6 +144,17 @@ def test_s242_a_version_range_in_a_pom_means_its_lower_end():
     assert "b-2.jar" in [m["file"].rsplit("/", 1)[1] for m in got]
 
 
+def test_s242_a_dependency_with_no_version_takes_the_one_its_own_pom_manages():
+    pom = b"<project><groupId>g</groupId><artifactId>a</artifactId><version>1</version><packaging>jar</packaging>" \
+          b"<dependencyManagement><dependencies><dependency><groupId>g</groupId><artifactId>c</artifactId><version>5</version></dependency></dependencies></dependencyManagement>" \
+          b"<dependencies><dependency><groupId>g</groupId><artifactId>c</artifactId></dependency></dependencies></project>"
+    bom = b"<project><dependencyManagement><dependencies><dependency><groupId>g</groupId><artifactId>a</artifactId><version>1</version></dependency></dependencies></dependencyManagement></project>"
+    files = {"r/g/bom/1/bom-1.pom": bom, "r/g/a/1/a-1.pom": pom, "r/g/a/1/a-1.jar": b"A",
+             "r/g/c/5/c-5.pom": _pom(pkg="jar"), "r/g/c/5/c-5.jar": b"C"}
+    got = vb.resolve_maven(("g", "bom", "1"), [("g", "a", "")], ["r"], lambda u: files.get(u))
+    assert "c-5.jar" in [m["file"].rsplit("/", 1)[1] for m in got]
+
+
 def test_s242_a_bom_that_lists_versions_only_in_its_module_file_is_read():
     mod = json.dumps({"variants": [{"dependencyConstraints": [{"group": "g", "module": "a", "version": {"requires": "1"}}]}]}).encode()
     files = {"r/g/bom/1/bom-1.pom": b"<project/>", "r/g/bom/1/bom-1.module": mod,

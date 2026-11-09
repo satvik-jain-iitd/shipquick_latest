@@ -143,12 +143,12 @@ def pom_info(xml: bytes) -> dict:
             and (d.findtext("optional") or "false").strip() != "true"]
     lic = [f"{(x.findtext('name') or '').strip()} {(x.findtext('url') or '').strip()}".strip() for x in root.findall("licenses/license")]
     return {"packaging": (root.findtext("packaging") or "jar").strip(), "deps": deps, "licenses": lic,
-            "managed": [dep(d) for d in root.findall("dependencyManagement/dependencies/dependency") + root.findall("dependencies/dependency")]}
+            "managed": [x for x in map(dep, root.findall("dependencyManagement/dependencies/dependency") + root.findall("dependencies/dependency")) if x[2]]}
 
 
 def module_info(raw: bytes) -> dict:
     """Gradle module metadata: keep the Android and JVM variants only (never iOS or native klibs)."""
-    files, deps, links = [], [], []
+    files, deps, links, cons = [], [], [], {}
     for var in json.loads(raw).get("variants", []):
         at = var.get("attributes", {})
         if at.get("org.gradle.usage") not in USAGES or at.get("org.gradle.category") == "documentation":
@@ -156,13 +156,15 @@ def module_info(raw: bytes) -> dict:
         if at.get("org.jetbrains.kotlin.platform.type", "androidJvm") not in PLATFORMS:
             continue
         files += [f["url"] for f in var.get("files", [])]
-        for d in var.get("dependencies", []):  # not dependencyConstraints: they name every sibling library
+        # Constraints only give a version to a dependency that has none; following them would pull in every sibling library.
+        cons.update({(d["group"], d["module"]): d.get("version", {}).get("requires", "") for d in var.get("dependencyConstraints", [])})
+        for d in var.get("dependencies", []):
             v = d.get("version", {})
             deps.append((d["group"], d["module"], v.get("requires") or v.get("strictly") or v.get("prefers") or ""))
         if "available-at" in var:
             x = var["available-at"]
             links.append((x["group"], x["module"], x["version"]))
-    return {"files": files, "deps": deps, "links": links}
+    return {"files": files, "deps": deps, "links": links, "constraints": cons}
 
 
 def _file(c, name, repo, data, lic) -> dict:
@@ -205,11 +207,13 @@ def resolve_maven(bom, roots, repos, fetch) -> list[dict]:
         info = pom_info(pom)
         out.append(_file((g, a, v), f"{a}-{v}.pom", repo, pom, info["licenses"]))
         names, deps = [], list(info["deps"])
+        local = {(x, y): z for x, y, z in info["managed"]}  # this POM's own dependencyManagement
         mod = fetch(f"{repo}/{mpath(g, a, v, f'{a}-{v}.module')}")
         if mod is not None:
             out.append(_file((g, a, v), f"{a}-{v}.module", repo, mod, info["licenses"]))
             mi = module_info(mod)
             names, deps = mi["files"], deps + mi["deps"]
+            local = {**mi["constraints"], **local}
             todo += mi["links"]
         elif info["packaging"] != "pom":
             names = [f"{a}-{v}.{'aar' if info['packaging'] == 'aar' else 'jar'}"]
@@ -219,7 +223,7 @@ def resolve_maven(bom, roots, repos, fetch) -> list[dict]:
                 raise SystemExit(f"{g}:{a}:{v}: file {n} is listed but not in {repo}")
             out.append(_file((g, a, v), n, repo, data, info["licenses"]))
         # Gradle takes the higher of the declared version and the BOM's, so keep both; no version anywhere: Gradle skips it too
-        todo += [(dg, da, ver) for dg, da, dv in deps for ver in {dv, managed.get((dg, da), "")} if ver and ver != "unspecified"]
+        todo += [(dg, da, ver) for dg, da, dv in deps for ver in {dv, local.get((dg, da), ""), managed.get((dg, da), "")} if ver and ver != "unspecified"]
     return out
 
 
