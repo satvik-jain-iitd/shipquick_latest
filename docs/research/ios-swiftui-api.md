@@ -35,11 +35,11 @@ How to read it:
 | 4 | `ArrangementView` | component | view type | ArrangementView | 27.1 | - | - | - | https://developer.apple.com/documentation/swiftui/arrangementview | Stacks |
 | 5 | `AsyncImage` | component | view type | AsyncImage | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/asyncimage | Image |
 | 6 | `Button` | component | view type | Button | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/button | Button |
-| 7 | `ButtonBorderShape` | component | view type | ButtonBorderShape | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/buttonbordershape | Shape |
-| 8 | `Canvas` | component | view type | Canvas | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/canvas | Shape |
+| 7 | `ButtonBorderShape` | component | view type | ButtonBorderShape | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/buttonbordershape | Button |
+| 8 | `Canvas` | component | view type | Canvas | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/canvas | Canvas |
 | 9 | `Capsule` | component | view type | Capsule | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/capsule | Shape |
 | 10 | `Circle` | component | view type | Circle | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/circle | Shape |
-| 11 | `Color` | component | view type | Color | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/color | Gradient |
+| 11 | `Color` | component | view type | Color | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/color | Appearance modifiers |
 | 12 | `ColorPicker` | component | view type | ColorPicker | 14.0 | - | - | - | https://developer.apple.com/documentation/swiftui/colorpicker | ColorPicker |
 | 13 | `ConcentricRectangle` | component | view type | ConcentricRectangle | 26.0 | - | - | - | https://developer.apple.com/documentation/swiftui/concentricrectangle | Shape |
 | 14 | `ContainerRelativeShape` | component | view type | ContainerRelativeShape | 14.0 | - | - | - | https://developer.apple.com/documentation/swiftui/containerrelativeshape | Shape |
@@ -49,7 +49,7 @@ How to read it:
 | 18 | `DebugReplaceableView` | component | view type | DebugReplaceableView | 26.0 | plumbing | - | - | https://developer.apple.com/documentation/swiftui/debugreplaceableview | ViewPlumbing |
 | 19 | `DisclosureGroup` | component | view type | DisclosureGroup | 14.0 | - | - | - | https://developer.apple.com/documentation/swiftui/disclosuregroup | DisclosureGroup |
 | 20 | `Divider` | component | view type | Divider | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/divider | Divider |
-| 21 | `DocumentLaunchView` | component | view type | DocumentLaunchView | 18.0 | - | - | - | https://developer.apple.com/documentation/swiftui/documentlaunchview | ContentUnavailableView |
+| 21 | `DocumentLaunchView` | component | view type | DocumentLaunchView | 18.0 | - | - | - | https://developer.apple.com/documentation/swiftui/documentlaunchview | DocumentLaunchView |
 | 22 | `EditableCollectionContent` | component | view type | EditableCollectionContent | 16.0 | plumbing | - | - | https://developer.apple.com/documentation/swiftui/editablecollectioncontent | ViewPlumbing |
 | 23 | `EditButton` | component | view type | EditButton | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/editbutton | Button |
 | 24 | `Ellipse` | component | view type | Ellipse | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/ellipse | Shape |
@@ -320,7 +320,7 @@ How to read it:
 | 289 | `scrollEdgeEffectStyle` | modifier | view modifier, 1 overload(s) | Auxiliary view modifiers | 26.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/scrolledgeeffectstyle(_:for:) | ScrollView |
 | 290 | `sectionActions` | modifier | view modifier, 1 overload(s) | Auxiliary view modifiers | 18.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/sectionactions(content:) | List |
 | 291 | `sectionIndexLabel` | modifier | view modifier, 1 overload(s) | Auxiliary view modifiers | 26.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/sectionindexlabel(_:) | List |
-| 292 | `statusBarHidden` | modifier | view modifier, 1 overload(s) | Auxiliary view modifiers | 13.0 | - | deprecated | `metadata.platforms[iOS].deprecatedAt`: `27.3`, `message`: "Use .toolbarVisibility(_, for: .statusBar) instead"; replacement: `toolbarVisibility` | https://developer.apple.com/documentation/swiftui/view/statusbarhidden(_:) | AppBar |
+| 292 | `statusBarHidden` | modifier | view modifier, 1 overload(s) | Auxiliary view modifiers | 13.0 | - | deprecated | `metadata.platforms[iOS].deprecatedAt`: `27.3`, `message`: "Use .toolbarVisibility(_, for: .statusBar) instead"; replacement: `toolbarVisibility` | https://developer.apple.com/documentation/swiftui/view/statusbarhidden(_:) | Appearance modifiers |
 | 293 | `tabBarMinimizeBehavior` | modifier | view modifier, 1 overload(s) | Auxiliary view modifiers | 26.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/tabbarminimizebehavior(_:) | TabView |
 | 294 | `tabViewBottomAccessory` | modifier | view modifier, 2 overload(s) | Auxiliary view modifiers | 26.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/tabviewbottomaccessory(content:) | TabView |
 | 295 | `tabViewCustomization` | modifier | view modifier, 1 overload(s) | Auxiliary view modifiers | 18.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/tabviewcustomization(_:) | TabView |
@@ -617,7 +617,7 @@ How to read it:
 | 586 | `appStoreMerchandising` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 26.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/appstoremerchandising(ispresented:kind:ondismiss:) | Presentation modifiers |
 | 587 | `appStoreOverlay` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 14.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/appstoreoverlay(ispresented:configuration:) | Presentation modifiers |
 | 588 | `certificateSheet` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 18.4 | - | - | - | https://developer.apple.com/documentation/swiftui/view/certificatesheet(trust:title:message:help:) | Presentation modifiers |
-| 589 | `confirmationDialog` | modifier | view modifier, 6 overload(s) | Presentation modifiers | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/confirmationdialog(_:ispresented:titlevisibility:actions:) | BottomSheet |
+| 589 | `confirmationDialog` | modifier | view modifier, 6 overload(s) | Presentation modifiers | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/confirmationdialog(_:ispresented:titlevisibility:actions:) | Dialog |
 | 590 | `contactAccessButtonCaption` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 18.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/contactaccessbuttoncaption(_:) | Presentation modifiers |
 | 591 | `contactAccessButtonStyle` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 18.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/contactaccessbuttonstyle(_:) | Presentation modifiers |
 | 592 | `contactAccessPicker` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 18.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/contactaccesspicker(ispresented:completionhandler:) | Presentation modifiers |
@@ -625,7 +625,7 @@ How to read it:
 | 594 | `dialogPreventsAppTermination` | modifier | view modifier, 1 overload(s) | Presentation modifiers | - | - | unavailable-ios | `metadata.platforms[]` has no `iOS` entry (names: macOS); iOS alternative (ours, Apple names none): `none`, because it stops a Mac app from quitting; iOS apps are not quit from a menu | https://developer.apple.com/documentation/swiftui/view/dialogpreventsapptermination(_:) | Dialog |
 | 595 | `dialogSeverity` | modifier | view modifier, 1 overload(s) | Presentation modifiers | - | - | unavailable-ios | `metadata.platforms[]` has no `iOS` entry (names: macOS, watchOS); iOS alternative (ours, Apple names none): `alert` | https://developer.apple.com/documentation/swiftui/view/dialogseverity(_:) | Dialog |
 | 596 | `dialogSuppressionToggle` | modifier | view modifier, 2 overload(s) | Presentation modifiers | 17.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/dialogsuppressiontoggle(issuppressed:) | Dialog |
-| 597 | `dismissalConfirmationDialog` | modifier | view modifier, 2 overload(s) | Presentation modifiers | 27.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/dismissalconfirmationdialog(_:shouldpresent:actions:) | BottomSheet |
+| 597 | `dismissalConfirmationDialog` | modifier | view modifier, 2 overload(s) | Presentation modifiers | 27.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/dismissalconfirmationdialog(_:shouldpresent:actions:) | Dialog |
 | 598 | `documentBrowserContextMenu` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 18.1 | - | - | - | https://developer.apple.com/documentation/swiftui/view/documentbrowsercontextmenu(_:) | Presentation modifiers |
 | 599 | `documentLaunchSubtitle` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 27.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/documentlaunchsubtitle(_:) | Presentation modifiers |
 | 600 | `documentLaunchTitle` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 27.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/documentlaunchtitle(_:) | Presentation modifiers |
@@ -642,7 +642,7 @@ How to read it:
 | 611 | `fileImporter` | modifier | view modifier, 3 overload(s) | Presentation modifiers | 14.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/fileimporter(ispresented:allowedcontenttypes:allowsmultipleselection:oncompletion:) | Presentation modifiers |
 | 612 | `fileMover` | modifier | view modifier, 4 overload(s) | Presentation modifiers | 14.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/filemover(ispresented:file:oncompletion:) | Presentation modifiers |
 | 613 | `foveatedStreamingPauseSheet` | modifier | view modifier, 1 overload(s) | Presentation modifiers | - | - | unavailable-ios | `metadata.platforms[]` has no `iOS` entry (names: visionOS); iOS alternative (ours, Apple names none): `none`, because visionOS foveated streaming only | https://developer.apple.com/documentation/swiftui/view/foveatedstreamingpausesheet(session:) | Presentation modifiers |
-| 614 | `fullScreenCover` | modifier | view modifier, 2 overload(s) | Presentation modifiers | 14.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/fullscreencover(ispresented:ondismiss:content:) | BottomSheet |
+| 614 | `fullScreenCover` | modifier | view modifier, 2 overload(s) | Presentation modifiers | 14.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/fullscreencover(ispresented:ondismiss:content:) | Dialog |
 | 615 | `gameSaveSyncingAlert` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 26.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/gamesavesyncingalert(directory:finishedloading:) | Presentation modifiers |
 | 616 | `inspector` | modifier | view modifier, 1 overload(s) | Presentation modifiers | 17.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/inspector(ispresented:content:) | NavigationSplitView |
 | 617 | `inspectorColumnWidth` | modifier | view modifier, 2 overload(s) | Presentation modifiers | 17.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/inspectorcolumnwidth(_:) | NavigationSplitView |
@@ -842,7 +842,7 @@ How to read it:
 | 811 | `monospacedDigit` | modifier | view modifier, 1 overload(s) | Text and symbol modifiers | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/monospaceddigit() | Text and symbol modifiers |
 | 812 | `multilineTextAlignment` | modifier | view modifier, 2 overload(s) | Text and symbol modifiers | 13.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/multilinetextalignment(_:) | Text and symbol modifiers |
 | 813 | `replaceDisabled` | modifier | view modifier, 1 overload(s) | Text and symbol modifiers | 16.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/replacedisabled(_:) | TextField |
-| 814 | `scrollDismissesKeyboard` | modifier | view modifier, 1 overload(s) | Text and symbol modifiers | 16.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/scrolldismisseskeyboard(_:) | TextField |
+| 814 | `scrollDismissesKeyboard` | modifier | view modifier, 1 overload(s) | Text and symbol modifiers | 16.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/scrolldismisseskeyboard(_:) | ScrollView |
 | 815 | `strikethrough` | modifier | view modifier, 1 overload(s) | Text and symbol modifiers | 16.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/strikethrough(_:pattern:color:) | Text and symbol modifiers |
 | 816 | `symbolColorRenderingMode` | modifier | view modifier, 1 overload(s) | Text and symbol modifiers | 26.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/symbolcolorrenderingmode(_:) | Image |
 | 817 | `symbolRenderingMode` | modifier | view modifier, 1 overload(s) | Text and symbol modifiers | 15.0 | - | - | - | https://developer.apple.com/documentation/swiftui/view/symbolrenderingmode(_:) | Image |

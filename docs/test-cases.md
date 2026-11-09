@@ -891,5 +891,8 @@ Scenario: an iOS row is covered only by a doc of its doc family
   And a component row mapped to Shape is covered only by the doc whose platformApi.ios.family is Shape
   And a family that no row maps to, or two docs with one family, fails
   And an iOS list with no Doc family column fails
+  And a blank Doc family cell fails and names the row
+  And each row sits in the doc of its meaning (confirmationDialog and fullScreenCover in Dialog, Color in Appearance,
+    ButtonBorderShape in Button, scrollDismissesKeyboard in ScrollView, Canvas and DocumentLaunchView in their own docs)
 ```
 Tests: `tests/test_ui_coverage.py` (s285), `tests/test_ui_api_lists.py` (s285). Local: `bash scripts/check_local.sh ui-coverage`.
