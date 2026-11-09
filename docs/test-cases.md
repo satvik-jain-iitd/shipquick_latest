@@ -285,3 +285,15 @@ Scenario: a column layout ends on the learnings board
   And a column layout with no learnings section, or a learnings row with an unknown kind, stops the run
 ```
 Tests: `tests/test_canvas_stage.py` (S22 to S26).
+
+## Options differ in copy, rejections carry a reason (#148)
+
+```gherkin
+Scenario: an options row and a rejected row carry their words
+  Given a manifest row with "options": true and a row whose prefix is REJECTED
+  When canvas_stage lays it out
+  Then options with different copy lines pass
+  And an option with no copy line, or two options with the same copy, stop the run
+  And a rejected board with no reason stops the run, and one with a reason passes
+```
+Tests: `tests/test_canvas_stage.py` (S27 to S30).

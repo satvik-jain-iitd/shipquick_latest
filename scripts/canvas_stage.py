@@ -190,11 +190,20 @@ def layout(canvas: dict, manifest: dict):
     named = {}
     for s in sections:
         for r in s["rows"]:
+            copies = {}   # story #148: options put to the owner differ in their words, not only in layout
             for entry in r["boards"]:
                 b = board_name(entry)
                 if b in named: problems.append(f"{b} is in two rows: {named[b]} and {r['id']}")
                 named[b] = r["id"]
                 if b not in boards: problems.append(f"{b} is in the manifest but not on the canvas (row {r['id']})")
+                meta = entry if isinstance(entry, dict) else {}
+                if r.get("options"):
+                    cp = " ".join(str(meta.get("copy") or "").lower().split())
+                    if not cp: problems.append(f"{b} (options row {r['id']}) has no copy line: write {{\"board\": ..., \"copy\": \"<the sentence that makes it different>\"}}")
+                    elif cp in copies: problems.append(f"{b} and {copies[cp]} (options row {r['id']}) have the same copy: options must differ in their words")
+                    else: copies[cp] = b
+                if r.get("prefix", s.get("prefix")) == "REJECTED" and not str(meta.get("reason") or "").strip():
+                    problems.append(f"{b} (row {r['id']}) is rejected with no reason: write {{\"board\": ..., \"reason\": \"<the owner's own words>\"}}")
                 if s.get("id") == "production":
                     prov = entry if isinstance(entry, dict) else {}
                     pr, approved = prov.get("pr"), prov.get("approved")

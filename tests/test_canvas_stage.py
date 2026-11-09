@@ -237,6 +237,38 @@ class Columns(unittest.TestCase):
         self.assertEqual({k: (v["x"], v["y"]) for k, v in a["boards"].items()}, {k: (v["x"], v["y"]) for k, v in b["boards"].items()})
 
 
+class Options(unittest.TestCase):
+    """Story #148: options put to the owner differ in their words; a rejected board carries the owner's reason."""
+
+    def setUp(self):
+        self.c = canvas(["A.dc.html", "B.dc.html", "C.dc.html"])
+        self.m = manifest([[{"id": "1a", "title": "1a", "boards": ["C.dc.html"], "notes": []}],
+                           [{"id": "2a", "title": "2a", "options": True, "boards": [{"board": "A.dc.html", "copy": "Your street, your cook"},
+                                                                                     {"board": "B.dc.html", "copy": "Hot food from next door"}], "notes": []}],
+                           [{"id": "3a", "title": "3a", "boards": [], "notes": []}]])
+
+    def test_S27_an_options_row_whose_boards_name_different_copy_passes(self):
+        self.assertEqual(cs.layout(self.c, self.m)[2], [])
+
+    def test_S28_an_option_board_with_no_copy_line_is_a_problem(self):
+        self.m["sections"][1]["rows"][0]["boards"][1] = "B.dc.html"
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("B.dc.html" in p and "copy" in p for p in problems), problems)
+
+    def test_S29_two_options_with_the_same_copy_are_a_problem(self):
+        self.m["sections"][1]["rows"][0]["boards"][1]["copy"] = " your street, your cook "
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("same copy" in p for p in problems), problems)
+
+    def test_S30_a_rejected_board_with_no_reason_is_a_problem_and_with_one_passes(self):
+        self.m["sections"][2]["rows"][0].update({"prefix": "REJECTED", "boards": ["C.dc.html"]})
+        self.m["sections"][0]["rows"][0]["boards"] = []
+        problems = cs.layout(self.c, self.m)[2]
+        self.assertTrue(any("C.dc.html" in p and "reason" in p for p in problems), problems)
+        self.m["sections"][2]["rows"][0]["boards"] = [{"board": "C.dc.html", "reason": "Looked like every other app"}]
+        self.assertEqual(cs.layout(self.c, self.m)[2], [])
+
+
 class Publish(unittest.TestCase):
     """Story #163: the publish list comes from canvas.json, never from memory, and a listing is checked against it."""
 
