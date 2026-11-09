@@ -6,3 +6,6 @@
 # docs/ideas.md (its rows get status edits; two edits of one row would be kept twice with no conflict shown).
 docs/process-trace.md merge=union
 docs/LEARNINGS.md merge=union
+# Also append-only (9 Nov 2026): every lane adds a section at the end, and they conflicted on every daily dev merge.
+docs/research/repo-radar.md merge=union
+docs/test-cases.md merge=union
