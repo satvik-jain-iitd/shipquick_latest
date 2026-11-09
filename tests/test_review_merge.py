@@ -37,6 +37,8 @@ case "$1" in
          *contents/.shipquick/roles.yml*)
            [ -f "$STUB_DIR/roles_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
            cat "$STUB_DIR/roles_yml_b64"; exit 0 ;;
+         *contents/docs/screens.txt*)
+           [ -f "$STUB_DIR/screens_b64" ] && { cat "$STUB_DIR/screens_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
          *pulls/*/files*)
            [ -f "$STUB_DIR/pr_files.json" ] && { cat "$STUB_DIR/pr_files.json"; exit 0; }; echo '[]'; exit 0 ;;
        esac
@@ -70,8 +72,12 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False, screens=None):
         (stub / "merge.log").unlink(missing_ok=True)
+        if screens is not None:   # story #153: the PR's own repo's docs/screens.txt on its base branch; None = not configured (404)
+            (stub / "screens_b64").write_text(base64.b64encode(screens.encode()).decode(), encoding="utf-8")
+        else:
+            (stub / "screens_b64").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
         (stub / "protection.json").unlink(missing_ok=True)
         default_roles_yml = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n"
@@ -513,3 +519,29 @@ def test_s140_dependabot_is_exempt_from_the_coder_check_but_still_needs_a_real_r
 
 def test_s140_cannot_read_roles_yml_refuses_it_is_never_treated_as_exempt(env):
     refused(*env(roles_unreadable=True), "cannot read")
+
+
+# ---- story #153: the approving review must say the render was compared with the named board ----
+SCREENS = "welcome | / | 412x915 | welcome\n"
+
+
+def design_pr(review_body):
+    pr = good()
+    pr["body"] = "Design board: Production / C1 Welcome\nApproved: 2026-11-08\nRender: https://github.com/o/r/actions/runs/1\n\nCloses #67\n"
+    pr["reviews"] = [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": review_body}]
+    return pr
+
+
+def test_s153_an_approval_on_the_diff_alone_refuses_a_frontend_pr_with_screens_configured(env):
+    refused(*env(pr=design_pr("LGTM"), screens=SCREENS), "Render: Production / C1 Welcome -- matches")
+
+
+def test_s153_an_approval_that_says_the_render_matches_the_board_merges(env):
+    r, merged = env(pr=design_pr("Compared side by side.\nRender: Production / C1 Welcome -- matches"), screens=SCREENS)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
+
+
+def test_s153_a_project_with_no_screens_txt_is_unaffected(env):
+    r, merged = env(pr=design_pr("LGTM"))
+    assert r.returncode == 0, (r.stdout, r.stderr)

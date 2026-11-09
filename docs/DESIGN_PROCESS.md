@@ -19,6 +19,13 @@ Never jump to making screens before the direction is final.
 - After the code ships to production, the board moves to "Production" (rule 3).
 - A PR that touches the project's own frontend paths (`scripts/check_frontend_design.sh`, globs configured per project) must name the approved board and its approval date in its body (`Design board: <name>` and `Approved: <date>`), or the check fails — in CI and in `scripts/check_local.sh`. A PR that says "no screen change" while still touching those paths also fails. A `dev -> main` promotion or a `main -> dev` back-merge (base or head is `main`) is never a frontend story and is always skipped.
 - Nothing on the canvas is deleted. An old version moves to the mistakes section (rule 4).
+- **Build from the board** (story #161). The approved board is the source, not the story text.
+  1. Before code, render the board and read its measurements from its markup: x, y, width, height, padding, gap, font, colour. Write them in a short table.
+  2. Port the board's markup and styles. Do not rebuild the screen from the story's words.
+  3. After each change, render the app screen in the same state. Put it beside the board: same scale, full height, all four edges.
+  4. The PR body carries `Board image:`, `Render:` and the `Measurements:` table (`.github/pull_request_template.md`). The reviewer rejects a frontend PR without them.
+  5. The reviewer compares the two pictures, then writes `Render: <board> -- matches` in the approval. `scripts/review_merge.sh` refuses the merge without it (story #153, `docs/SCREENS.md`).
+  - Applies when: the screen has an approved board. Does not apply to: backend-only stories, a screen with no approved board yet (design first), a copy change with no layout change.
 
 ## 3. The canvas by stage (29 Oct 2026)
 

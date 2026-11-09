@@ -157,3 +157,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   screenshot`, skips when unconfigured -- same opt-in shape as `docs/frontend-paths.txt`); a `Render:`
   line requirement added to `scripts/check_frontend_design.sh`, opt-in on the same file existing.
 - Confidence that nothing fits better: 0.85.
+
+## 9 Nov 2026, story #153 and #161 (epic #130): the approval says the render matches the board
+- Need: a merge gate that reads the approving review body and checks it says the screenshot was compared
+  with the named design board.
+- Run: `scout.py --need "merge gate that checks a pull request approval review body says the screenshot
+  matches the design"`: no repos found. Visual review tools (Chromatic, Percy) compare a build with an
+  older build, not with the design, which is the gap #161 names.
+- Decision: a small `scripts/check_design_reviewed.py` (pure `check()` + CLI, the `check_closes.py`
+  shape), called from `scripts/review_merge.sh` on the review it already resolves. #161's build rule is
+  text (DESIGN_PROCESS.md, SCREENS.md, the PR template); the approval line is its machine check.
+- Confidence that nothing fits better: 0.8.

@@ -73,6 +73,25 @@ reviewer_account=$(jq -r --arg revs "$reviewers" --arg author "$author" --arg he
 ' <<<"$json")
 [ -n "$reviewer_account" ] || refuse "not approved by a reviewer account (other than the author, $author) on the latest commit"
 
+# story #153: when the PR's own repo has configured docs/screens.txt (read from GitHub, 404 = not configured),
+# the approving review's body must say the render was compared with the PR's named board.
+if field .body | grep -qE '^Design board:'; then
+  err_tmp="$(mktemp)"
+  screens_raw=$(gh api "repos/$repo/contents/docs/screens.txt?ref=$(field .baseRefName)" --jq '.content' 2>"$err_tmp")
+  screens_rc=$?
+  [ "$screens_rc" -eq 0 ] || grep -q "404" "$err_tmp" || refuse "cannot read $repo's docs/screens.txt on $(field .baseRefName) to check the design review"
+  rm -f "$err_tmp"
+  if [ "$screens_rc" -eq 0 ] && printf '%s' "$screens_raw" | base64 -d 2>/dev/null | grep -qvE '^[[:space:]]*(#|$)'; then
+    pr_body_tmp="$(mktemp)"; review_tmp="$(mktemp)"
+    field .body > "$pr_body_tmp"
+    jq -r --arg a "$reviewer_account" --arg head "$(field .headRefOid)" '[.reviews[] | select(.author.login == $a and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" > "$review_tmp"
+    why=$(python3 "$HERE/check_design_reviewed.py" --pr-body-file "$pr_body_tmp" --review-body-file "$review_tmp")
+    design_rc=$?
+    rm -f "$pr_body_tmp" "$review_tmp"
+    [ "$design_rc" -eq 0 ] || refuse "$why"
+  fi
+fi
+
 threads=$(gh api graphql -f query='query($owner: String!, $name: String!, $n: Int!) { repository(owner: $owner, name: $name) { pullRequest(number: $n) { reviewThreads(first: 100) { pageInfo { hasNextPage } nodes { isResolved } } } } }' \
   -f owner="${repo%/*}" -f name="${repo#*/}" -F n="$pr") || refuse "cannot read the review threads"
 [ "$(jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage // false' <<<"$threads")" = false ] || refuse "more than 100 review threads (resolve some first)"

@@ -261,3 +261,14 @@ Scenario: a canvas is laid out from a manifest
   And a board the manifest forgets lands in an Unsorted row, and a box outside its board stops the run
 ```
 Tests: `tests/test_canvas_stage.py` (S1 to S8).
+
+## Story #153 and #161: the approval says the render matches the board
+```gherkin
+Scenario: a frontend PR approved on the code diff alone is not merged
+  Given a PR with a Design board line, in a repo with docs/screens.txt configured
+  When the approving review has no "Render: <that board> -- matches" line
+  Then review_merge.sh refuses and names the line to write
+  And with the line, naming the same board, it merges
+  And a repo with no docs/screens.txt, or a PR with no Design board, is unaffected
+```
+Tests: `tests/test_check_design_reviewed.py` (`test_s153_*`, `test_s161_*`), `tests/test_review_merge.py` (`test_s153_*`).
