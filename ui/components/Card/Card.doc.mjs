@@ -144,6 +144,36 @@ export default {
         {"name": "GroupBoxStyleConfiguration.Content", "use": "iOS 14.0. Apple: \"A type-erased content of a group box.\""},
         {"name": "GroupBoxStyleConfiguration.Label", "use": "iOS 14.0. Apple: \"A type-erased label of a group box.\""}
       ]
+    },
+    "android": {
+      "variants": [
+        {
+          "name": "ElevatedCard",
+          "note": "A card with a shadow. Use it to lift the card a little from the background."
+        },
+        {
+          "name": "OutlinedCard",
+          "note": "A card with a border and no shadow. Use it to set the card apart with the least weight."
+        },
+        {
+          "name": "Surface",
+          "note": "The base container under cards, sheets and bars: shape, colour, elevation and border. Use it only when no part above fits, like a plain coloured area."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "CardDefaults",
+          "use": "Default colours, elevations, shapes and borders for each card type."
+        },
+        {
+          "name": "CardColors",
+          "use": "The container and content colours of a card, on and off. Make one with CardDefaults.cardColors() or the colour function of its type."
+        },
+        {
+          "name": "CardElevation",
+          "use": "The shadow of a card in each state. Make one with CardDefaults.cardElevation() or the elevation function of its type."
+        }
+      ]
     }
   }
 };

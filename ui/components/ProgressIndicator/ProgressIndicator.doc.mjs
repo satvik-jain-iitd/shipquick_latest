@@ -121,6 +121,21 @@ export default {
         {"name": "ProgressViewStyleConfiguration.CurrentValueLabel", "use": "iOS 14.0. Apple: \"A type-erased label that describes the current value of a progress view.\""},
         {"name": "ProgressViewStyleConfiguration.Label", "use": "iOS 14.0. Apple: \"A type-erased label describing the task represented by the progress view.\""}
       ]
+    },
+    "android": {
+      "family": "ProgressIndicator",
+      "variants": [
+        {
+          "name": "CircularProgressIndicator",
+          "note": "A spinning or filling circle. Use it in small places, like a button or a card. Pass progress for a known amount; leave it out when the time is not known."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "ProgressIndicatorDefaults",
+          "use": "Default colours, track colours, stroke widths, stroke caps, gap sizes, the stop mark and the progress animation for both indicators."
+        }
+      ]
     }
   }
 };

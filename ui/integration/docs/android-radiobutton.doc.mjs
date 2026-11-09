@@ -61,6 +61,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "RadioButtonDefaults: Default colours for radio buttons. Make them with RadioButtonDefaults.colors().",
+            "RadioButtonColors: The colours of a radio button, selected and not, on and off."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

@@ -70,6 +70,27 @@ export default {
       "variants": [
         {"name": "Divider", "note": "iOS 13.0. Apple: \"A visual element that can be used to separate other content.\""}
       ]
+    },
+    "android": {
+      "family": "Divider",
+      "variants": [
+        {
+          "name": "VerticalDivider",
+          "note": "A thin vertical line between parts side by side, like items in a row."
+        },
+        {
+          "name": "Divider",
+          "note": "The old divider.",
+          "status": "deprecated",
+          "replacement": "HorizontalDivider (Google: \"Renamed to HorizontalDivider\")"
+        }
+      ],
+      "supporting": [
+        {
+          "name": "DividerDefaults",
+          "use": "The default thickness and colour of a divider."
+        }
+      ]
     }
   }
 };
