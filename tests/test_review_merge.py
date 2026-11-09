@@ -688,3 +688,36 @@ def test_s139_a_dev_merge_commit_by_the_reviewer_session_does_not_block_its_appr
         {"parents": [{}, {}], "commit": {"message": "Merge dev into feat/x\n\nBuilt-by: proj-qa\n"}}]), encoding="utf-8")
     r, merged = env(pr=pr, roles=SESSION_ROLES)
     assert r.returncode == 0, r.stderr
+
+
+# Story #194: lows from the PR #196 verify.
+def _days_ago(n):
+    import datetime
+    return (datetime.date.today() - datetime.timedelta(days=n)).isoformat()
+
+
+def test_s194_an_owner_yes_of_14_days_passes_and_15_refuses(env):
+    r, merged = env(pr=with_review(YES.replace(TODAY, _days_ago(14))), pr_files=PROTECTED)
+    assert r.returncode == 0, r.stderr
+    refused(*env(pr=with_review(YES.replace(TODAY, _days_ago(15))), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s194_owner_yes_words_made_only_of_spaces_refuse(env):
+    refused(*env(pr=with_review(YES.replace('"haan merge karo"', '"    "')), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s194_a_second_review_of_dots_refuses(env):
+    refused(*env(pr=with_review(YES.replace("fresh reviewer agent, 0 open findings", "..........")), pr_files=PROTECTED), "Second review:")
+
+
+def test_s194_the_second_review_prefix_does_not_count_as_words(env):
+    refused(*env(pr=with_review(YES.replace("fresh reviewer agent, 0 open findings", "ok fine!!!!")), pr_files=PROTECTED), "Second review:")
+
+
+def test_s194_owner_yes_words_need_a_letter(env):
+    refused(*env(pr=with_review(YES.replace('"haan merge karo"', '".."')), pr_files=PROTECTED), "Owner yes:")
+
+
+def test_s194_an_owner_yes_in_devanagari_passes(env):
+    r, merged = env(pr=with_review(YES.replace('"haan merge karo"', '"हाँ मर्ज करो"')), pr_files=PROTECTED)
+    assert r.returncode == 0, r.stderr

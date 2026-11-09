@@ -62,3 +62,15 @@ def test_s153_a_crlf_body_from_the_github_web_editor_still_matches(tmp_path):
     assert mod.check(PR.replace("\n", "\r\n"), "Render: Production / C1 Welcome -- matches\r\n") is None
     r = run(PR.replace("\n", "\r\n"), "Render: Production / C1 Welcome -- matches\r\n", tmp_path)
     assert r.returncode == 0, r.stdout
+
+
+# Story #194: lows from the PR #173 second review.
+def test_s194_a_board_name_in_backticks_matches(tmp_path):
+    r = run(PR, "Render: `Production / C1 Welcome` -- matches\n", tmp_path)
+    assert r.returncode == 0, r.stdout
+
+
+def test_s194_a_refusal_says_match_failed_and_names_both_sides(tmp_path):
+    r = run(PR, "Render: Production / C2 Menu -- matches\n", tmp_path)
+    assert r.returncode == 1
+    assert "match failed" in r.stdout and "Production / C1 Welcome" in r.stdout and "Production / C2 Menu" in r.stdout
