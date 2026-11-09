@@ -53,3 +53,12 @@ def test_s161_the_design_process_says_build_from_the_board_and_baselines_never_f
     s = (ROOT / "docs" / "SCREENS.md").read_text(encoding="utf-8")
     assert "Build from the board" in d
     assert "never from the first build" in s and "-- matches" in s
+
+
+def test_s153_a_crlf_body_from_the_github_web_editor_still_matches(tmp_path):
+    # The CLI reads files in text mode, which turns CRLF into LF; check() itself must not rely on that.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cdr", SCRIPT); mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+    assert mod.check(PR.replace("\n", "\r\n"), "Render: Production / C1 Welcome -- matches\r\n") is None
+    r = run(PR.replace("\n", "\r\n"), "Render: Production / C1 Welcome -- matches\r\n", tmp_path)
+    assert r.returncode == 0, r.stdout

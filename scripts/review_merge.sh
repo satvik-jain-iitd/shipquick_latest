@@ -84,7 +84,10 @@ if field .body | grep -qE '^Design board:'; then
   if [ "$screens_rc" -eq 0 ] && printf '%s' "$screens_raw" | base64 -d 2>/dev/null | grep -qvE '^[[:space:]]*(#|$)'; then
     pr_body_tmp="$(mktemp)"; review_tmp="$(mktemp)"
     field .body > "$pr_body_tmp"
-    jq -r --arg a "$reviewer_account" --arg head "$(field .headRefOid)" '[.reviews[] | select(.author.login == $a and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" > "$review_tmp"
+    # each reviewer account's latest verdict, kept when it approves the head commit: any one may carry the matches line
+    jq -r --arg revs "$reviewers" --arg author "$author" --arg head "$(field .headRefOid)" '($revs | split(",")) as $rs
+      | [.reviews[] | select(.author.login as $a | ($rs | index($a)) != null and $a != $author and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED"))]
+      | group_by(.author.login) | map(last) | .[] | select(.state == "APPROVED" and .commit.oid == $head) | .body // ""' <<<"$json" > "$review_tmp"
     why=$(python3 "$HERE/check_design_reviewed.py" --pr-body-file "$pr_body_tmp" --review-body-file "$review_tmp")
     design_rc=$?
     rm -f "$pr_body_tmp" "$review_tmp"

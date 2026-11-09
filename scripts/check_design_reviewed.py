@@ -17,7 +17,7 @@ COMPARED = re.compile(r"^\W*render:\s*(.+?)\s+[-–—]+\s*match(?:es|ing)?\b", 
 
 def check(pr_body: str, review_body: str) -> str | None:
     m = BOARD.search(pr_body)
-    board = m.group(1) if m else ""
+    board = m.group(1).strip() if m else ""   # strip: a GitHub web-edited body ends lines with \r\n
     if not board or board.startswith("<"):
         return None
     if any(b.strip().lower() == board.lower() for b in COMPARED.findall(review_body)):

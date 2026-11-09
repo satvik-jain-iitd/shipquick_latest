@@ -545,3 +545,12 @@ def test_s153_an_approval_that_says_the_render_matches_the_board_merges(env):
 def test_s153_a_project_with_no_screens_txt_is_unaffected(env):
     r, merged = env(pr=design_pr("LGTM"))
     assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_s153_a_second_reviewers_matches_line_counts_when_the_first_approval_lacks_it(env):
+    roles = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\n  - second-reviewer\nowner: satvik-jain-iitd\n"
+    pr = design_pr("LGTM")
+    pr["reviews"].append({"author": {"login": "second-reviewer"}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": "Render: Production / C1 Welcome -- matches"})
+    r, merged = env(pr=pr, roles=roles, screens=SCREENS)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != ""
