@@ -168,3 +168,71 @@ def test_s216_components_that_are_not_a_literal_list_fail(tmp_path, capsys):
     (f / "integration.mjs").write_text("const names = ['Stepper'];\nexport default { docs: './docs', components: names };\n")
     assert run(f) == 1
     assert "literal list" in capsys.readouterr().out
+
+
+# Story #231: the generated API lists. Each component, variant or modifier row maps to a doc (by its
+# `platforms` name, or a variant in `platformApi`); each supporting row is listed in a doc's `platformApi`.
+ANDROID_API = """Count: 3
+
+| # | Entry | Kind | What | Family | Package | Experimental |
+|---|---|---|---|---|---|---|
+| 1 | `Button` | component | composable | Button | `androidx.compose.material3` | - |
+| 2 | `FilledTonalButton` | variant | composable | Button | `androidx.compose.material3` | - |
+| 3 | `ButtonDefaults` | supporting | defaults | Button | `androidx.compose.material3` | - |
+"""
+IOS_API = """Count: 2
+
+| # | Entry | Kind | What | Family | iOS since | Apple page |
+|---|---|---|---|---|---|---|
+| 1 | `Button` | component | view type | Button | 13.0 | https://y |
+| 2 | `buttonStyle` | modifier | view modifier | Controls | 13.0 | https://y |
+"""
+
+
+def api_fixture(tmp_path):
+    f = fixture(tmp_path)
+    (f / "android-api.md").write_text(ANDROID_API)
+    (f / "ios-api.md").write_text(IOS_API)
+    return f
+
+
+def run_api(f, *extra):
+    return run(f, "--android-api", str(f / "android-api.md"), "--ios-api", str(f / "ios-api.md"), *extra)
+
+
+def with_api(f, api):
+    p = f / "components" / "Button" / "Button.doc.mjs"
+    d = json.loads(p.read_text()[len("export default "):-2])
+    p.write_text("export default " + json.dumps({**d, "platformApi": api}) + ";\n")
+
+
+def test_s231_uncovered_api_rows_are_listed_and_pass_without_strict(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    assert run_api(f) == 0
+    out = capsys.readouterr().out
+    assert "FilledTonalButton" in out and "ButtonDefaults" in out and "buttonStyle" in out
+    assert "Button (component)" not in out
+
+
+def test_s231_strict_api_fails_on_an_uncovered_row(tmp_path, capsys):
+    assert run_api(api_fixture(tmp_path), "--strict-api") == 1
+    assert "FAIL api android Button" in capsys.readouterr().out
+
+
+def test_s231_variants_and_supporting_in_the_family_doc_cover_their_rows(tmp_path):
+    f = api_fixture(tmp_path)
+    with_api(f, {"android": {"variants": ["FilledTonalButton"], "supporting": ["ButtonDefaults"]},
+                 "ios": {"variants": ["buttonStyle"]}})
+    assert run_api(f, "--strict-api") == 0
+
+
+def test_s231_a_supporting_row_named_as_a_variant_is_not_covered(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, {"android": {"variants": ["FilledTonalButton", "ButtonDefaults"]}, "ios": {"variants": ["buttonStyle"]}})
+    assert run_api(f, "--strict-api") == 1
+    assert "ButtonDefaults" in capsys.readouterr().out
+
+
+def test_s231_strict_api_fails_on_the_real_repo_today():
+    """Red first: the family docs have not landed, so the full lists are not covered yet."""
+    assert check_ui_coverage.main(["--strict-api"]) == 1

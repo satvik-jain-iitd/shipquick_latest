@@ -515,3 +515,19 @@ Scenario: an iOS topic never names a Compose API, and an Android topic never nam
   And every ios topic of a doc with two or more platforms lists at least one prop
 ```
 Tests: `tests/test_ui_topics.py` (s228). CI and local: `python3 scripts/ui_topics.py --check`.
+
+## Story #231: the full API lists, generated from each library's own public API
+```gherkin
+Scenario: every public UI entry of Compose Material 3 and SwiftUI is listed, and the gate names each one with no doc
+  Given Google's current.txt for material3 1.4.0 and Apple's SwiftUI documentation JSON, saved as small extracts
+  When scripts/ui_api_lists.py parses the extracts offline
+  Then a top-level composable named like its file is a component, another composable of that file is a variant
+  And rememberX, other lower-case composables, *Defaults, *Colors and *State classes are supporting
+  And @BytecodeOnly twins are not rows, and an experimental annotation is marked
+  And a deprecated entry, or one Apple does not offer on iOS, is left out with the reason
+  And each list has its source, version, date, Count and the sha256 of its saved extract
+  And --check exits 1 when a list no longer matches its extract or the extract no longer matches its sha256
+  And check_ui_coverage.py prints one GAP line per family of uncovered rows, and --strict-api fails on them
+  And a row is covered by a doc's platforms name, or by platformApi.<platform>.variants or .supporting
+```
+Tests: `tests/test_ui_api_lists.py` and `tests/test_ui_coverage.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.

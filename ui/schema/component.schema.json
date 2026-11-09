@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "JSON twin of doctypes/component/type.ts (SingleComponentDoc), so Python checks run without Node. Field names and meanings are Meta's (MIT, ui/LICENSE.meta-astryx.txt); only `platforms` and `platformUsage` are ShipQuick's. Multi and sub-component docs are not in this twin yet.",
+  "$comment": "JSON twin of doctypes/component/type.ts (SingleComponentDoc), so Python checks run without Node. Field names and meanings are Meta's (MIT, ui/LICENSE.meta-astryx.txt); only `platforms`, `platformUsage` and `platformApi` are ShipQuick's. Multi and sub-component docs are not in this twin yet.",
   "title": "ComponentDoc",
   "type": "object",
   "required": ["name", "displayName", "platforms", "usage", "props"],
@@ -25,6 +25,15 @@
         "android": {"$ref": "#/$defs/platformUsage"},
         "ios": {"$ref": "#/$defs/platformUsage"},
         "web": {"$ref": "#/$defs/platformUsage"}
+      }
+    },
+    "platformApi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "android": {"$ref": "#/$defs/platformApi"},
+        "ios": {"$ref": "#/$defs/platformApi"},
+        "web": {"$ref": "#/$defs/platformApi"}
       }
     },
     "keywords": {"type": "array", "items": {"type": "string"}},
@@ -65,6 +74,11 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {"description": {"type": "string"}, "bestPractices": {"$ref": "#/$defs/bestPractices"}, "accessibility": {"$ref": "#/$defs/accessibility"}}
+    },
+    "platformApi": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {"variants": {"type": "array", "items": {"type": "string"}}, "supporting": {"type": "array", "items": {"type": "string"}}}
     }
   }
 }

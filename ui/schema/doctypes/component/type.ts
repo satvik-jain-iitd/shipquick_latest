@@ -25,6 +25,15 @@ import type {
 /** ShipQuick addition (story #228): one platform's own usage text. */
 export type PlatformUsageDoc = Partial<Pick<UsageDoc, 'description' | 'bestPractices' | 'accessibility'>>;
 
+/** ShipQuick addition (story #231): the rows of a generated API list
+ *  (docs/research/android-m3-api.md, ios-swiftui-api.md) that this doc covers. */
+export interface PlatformApiDoc {
+  /** Component, variant or modifier names, e.g. `'FilledTonalButton'`, `'sheet'`. */
+  variants?: string[];
+  /** Supporting names, e.g. `'ButtonDefaults'`, `'rememberModalBottomSheetState'`. */
+  supporting?: string[];
+}
+
 /** What replaces a deprecated component (`ComponentBaseDoc.deprecated`). */
 export interface ComponentDeprecation {
   /** `name` of the documented component to use instead, e.g. `'BottomSheet'`. */
@@ -78,6 +87,14 @@ export interface ComponentBaseDoc extends AuthoredDocGraphFields {
     android?: PlatformUsageDoc;
     ios?: PlatformUsageDoc;
     web?: PlatformUsageDoc;
+  };
+  /** ShipQuick addition (story #231, ADR-012): the named variants and the
+   *  supporting API of each platform this doc covers, checked against the
+   *  generated API lists by scripts/check_ui_coverage.py. */
+  platformApi?: {
+    android?: PlatformApiDoc;
+    ios?: PlatformApiDoc;
+    web?: PlatformApiDoc;
   };
   /** Exact consumer import specifier for integration-owned components. */
   import?: string;
