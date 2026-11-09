@@ -79,7 +79,8 @@ export default {
             "scrollIndicators: `.scrollIndicators(_:axes:)`, iOS 16.0. Apple: \"Sets the visibility of scroll indicators within this view.\"",
             "scrollIndicatorsFlash: `.scrollIndicatorsFlash(onAppear:)`, iOS 17.0. Apple: \"Flashes the scroll indicators of a scrollable view when it appears.\"",
             "scrollEdgeEffectHidden: `.scrollEdgeEffectHidden(_:for:)`, iOS 26.0. Apple: \"Hides any scroll edge effects for scroll views within this hierarchy.\"",
-            "scrollEdgeEffectStyle: `.scrollEdgeEffectStyle(_:for:)`, iOS 26.0. Apple: \"Configures the scroll edge effect style for scroll views within this hierarchy.\""
+            "scrollEdgeEffectStyle: `.scrollEdgeEffectStyle(_:for:)`, iOS 26.0. Apple: \"Configures the scroll edge effect style for scroll views within this hierarchy.\"",
+            "scrollDismissesKeyboard: `.scrollDismissesKeyboard(_:)`, iOS 16.0. Apple: \"Configures the behavior in which scrollable content interacts with the software keyboard.\""
           ]
         }
       ]

@@ -606,3 +606,12 @@ def test_s285_an_ios_list_with_no_doc_family_column_fails(tmp_path, capsys):
 def test_s285_adr_012_no_longer_says_ios_has_no_family_rule():
     adr = (ROOT / "docs" / "decisions" / "ADR-012.md").read_text(encoding="utf-8")
     assert "iOS has no own-family rule yet" not in adr
+
+
+# Story #285, second review of PR #294.
+def test_s285_a_blank_doc_family_cell_names_the_row(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    (f / "ios-api.md").write_text(IOS_API.replace("| https://y | Button |\n| 2", "| https://y |  |\n| 2"))
+    with_api(f, FULL_API)
+    assert run_api(f) == 1
+    assert "FAIL ios API list: row 1 (Button): Doc family is empty" in capsys.readouterr().out

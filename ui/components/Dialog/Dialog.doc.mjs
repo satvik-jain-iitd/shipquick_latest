@@ -176,7 +176,10 @@ export default {
         {"name": "dialogIcon", "note": "`.dialogIcon(_:)`, iOS 17.0. Apple: \"Configures the icon used by dialogs within this view.\""},
         {"name": "dialogPreventsAppTermination", "note": "`.dialogPreventsAppTermination(_:)`, not on iOS. Apple: \"Whether the alert or confirmation dialog prevents the app from being quit/terminated by the system or app termination menu item.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (it stops a Mac app from quitting; iOS apps are not quit from a menu)"},
         {"name": "dialogSeverity", "note": "`.dialogSeverity(_:)`, not on iOS. Apple's page gives no summary: https://developer.apple.com/documentation/swiftui/view/dialogseverity(_:)", "status": "unavailable-ios", "replacement": "alert"},
-        {"name": "dialogSuppressionToggle", "note": "`.dialogSuppressionToggle(isSuppressed:)`, iOS 17.0. Apple: \"Enables user suppression of dialogs and alerts presented within `self`, with a default suppression message on macOS. Unused on other platforms.\""}
+        {"name": "dialogSuppressionToggle", "note": "`.dialogSuppressionToggle(isSuppressed:)`, iOS 17.0. Apple: \"Enables user suppression of dialogs and alerts presented within `self`, with a default suppression message on macOS. Unused on other platforms.\""},
+        {"name": "confirmationDialog", "note": "`.confirmationDialog(_:item:titleVisibility:actions:)`, iOS 15.0. Apple: \"Presents a confirmation dialog using data to produce the dialog’s content and a text view for the title.\""},
+        {"name": "dismissalConfirmationDialog", "note": "`.dismissalConfirmationDialog(_:shouldPresent:actions:)`, iOS 27.0. Apple: \"Presents a confirmation dialog upon an attempt to dismiss the window for this view.\""},
+        {"name": "fullScreenCover", "note": "`.fullScreenCover(isPresented:onDismiss:content:)`, iOS 14.0. Apple: \"Presents a modal view that covers as much of the screen as possible when binding to a Boolean value you provide is true.\""}
       ]
     },
     "android": {

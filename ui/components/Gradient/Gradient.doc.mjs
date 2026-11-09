@@ -33,7 +33,6 @@ export default {
       "family": "Gradient",
       "variants": [
         {"name": "AngularGradient", "note": "iOS 13.0. Apple: \"An angular gradient.\""},
-        {"name": "Color", "note": "iOS 13.0. Apple: \"A representation of a color that adapts to a given context.\""},
         {"name": "EllipticalGradient", "note": "iOS 15.0. Apple: \"A radial gradient that draws an ellipse.\""},
         {"name": "LinearGradient", "note": "iOS 13.0. Apple: \"A linear gradient.\""},
         {"name": "MeshGradient", "note": "iOS 18.0. Apple: \"A two-dimensional gradient defined by a 2D grid of positioned colors.\""},

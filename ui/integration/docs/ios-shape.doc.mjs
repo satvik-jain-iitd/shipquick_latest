@@ -36,8 +36,6 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "ButtonBorderShape: iOS 15.0. Apple: \"A shape used to draw a button’s border.\"",
-            "Canvas: iOS 15.0. Apple: \"A view type that supports immediate mode drawing.\"",
             "Capsule: iOS 13.0. Apple: \"A capsule shape aligned inside the frame of the view containing it.\"",
             "Circle: iOS 13.0. Apple: \"A circle centered on the frame of the view containing it.\"",
             "ConcentricRectangle: iOS 26.0. Apple: \"A shape whose corners you configure, individually or uniformly, to be squared, rounded, or concentric relative to a container shape’s corners.\"",
