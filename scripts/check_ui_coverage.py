@@ -15,6 +15,10 @@ API lists (story #231): docs/research/android-m3-api.md and ios-swiftui-api.md, 
 A component, variant or modifier row is covered by a doc whose `platforms` names it, or that lists it under
 `platformApi.<platform>.variants`; a supporting row by `platformApi.<platform>.supporting`. Gaps print as GAP lines,
 one per family, and fail only with --strict-api (off in CI until the family docs land).
+Framework topics (story #231): each row of docs/research/framework-topics.md is one doc, ui/components/<topic-slug>/
+("Swift Charts" -> swift-charts), that speaks to its platform (platformApi or platformUsage) and is served as the topic
+<platform>-<topic-slug>. A missing one is a GAP line like an API row. Its platformApi items name the framework's own
+types, which are not rows of the API lists, so only a framework doc may name them.
 usage: check_ui_coverage.py [--require-web] [--strict-api]
 """
 import argparse
@@ -61,7 +65,27 @@ def table(path, label):
 LITERAL_LIST = re.compile(r"""\bcomponents\s*:\s*\[\s*(?:(['"])[^'"]*\1\s*,?\s*)*\]""")
 
 
-def api_gaps(a, docs, api, status, errs):
+def slug(topic):
+    return re.sub(r"[^a-z0-9]+", "-", topic.lower()).strip("-")
+
+
+def framework_topics(path):
+    """({platform: [topic]}, errors) from the `## iOS` and `## Android` tables of framework-topics.md."""
+    if not path.is_file():
+        return {}, [f"framework topics list: file not found: {path}"]
+    out, plat = {}, None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if m := re.match(r"^## (iOS|Android)\s*$", line):
+            plat = m.group(1).lower()
+            out.setdefault(plat, [])
+        elif plat and line.startswith("|"):
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if cells[0].isdigit():
+                out[plat].append(cells[1])
+    return out, []
+
+
+def api_gaps(a, docs, api, status, errs, frameworks=None, usage=None):
     """Lines naming, per platform and family, the API list rows no doc covers. A row is covered only by a structured
     field of exactly one doc: `platforms.<p>` (the doc's main API, with the doc-level `status`), an object in
     `platformApi.<p>.variants` or `.supporting`, or `platformApi.<p>.family` for a family row. A covering entry
@@ -72,6 +96,8 @@ def api_gaps(a, docs, api, status, errs):
         rows, e = table(path, f"{platform} API")
         errs += e
         claims = {}   # (slot, name) -> [(doc, status)]; slot is main, variants, supporting or family
+        topics = (frameworks or {}).get(platform, [])
+        fw_docs = {slug(t) for t in topics}
         for doc, plats in docs.items():
             if plats.get(platform):
                 claims.setdefault(("main", plats[platform]), []).append((doc, status.get(doc) or "-"))
@@ -87,6 +113,8 @@ def api_gaps(a, docs, api, status, errs):
         names = {r[1].strip("`") for r in rows}
         families = {r[1].strip("`") for r in rows if r[2] == "family"}
         for (slot, n), who in sorted(claims.items()):
+            if all(d in fw_docs for d, _ in who):
+                continue   # a framework doc names its framework's own types
             if slot in ("variants", "supporting") and n not in names or slot == "family" and n not in families:
                 errs.append(f"api {platform}: {', '.join(d for d, _ in who)} names {n} under platformApi.{platform}.{slot}, "
                             f"but the {platform} API list has no such {'family ' if slot == 'family' else ''}row")
@@ -104,6 +132,11 @@ def api_gaps(a, docs, api, status, errs):
                 by_family.setdefault(family, []).append(f"{name} ({kind})")
             elif owners[0][1] != want:
                 by_family.setdefault(family, []).append(f"{name} ({kind}, needs status {want})")
+        for t in topics:
+            d = slug(t)
+            speaks = d in docs and (api[d].get(platform) or (usage or {}).get(d, {}).get(platform))
+            if not speaks or not (a.topics / f"{platform}-{d}.doc.mjs").exists():
+                by_family.setdefault("framework topics", []).append(f"{t} (framework)")
         gaps += [f"api {platform} {fam}: " + ", ".join(names) for fam, names in sorted(by_family.items())]
     return gaps
 
@@ -126,15 +159,17 @@ def main(argv=None):
     ap.add_argument("--android-api", type=Path, default=KIT / "docs" / "research" / "android-m3-api.md")
     ap.add_argument("--ios-api", type=Path, default=KIT / "docs" / "research" / "ios-swiftui-api.md")
     ap.add_argument("--strict-api", action="store_true", help="fail on every API list row no doc covers")
+    ap.add_argument("--frameworks", type=Path, default=KIT / "docs" / "research" / "framework-topics.md")
     a = ap.parse_args(argv)
     errs = []
 
-    docs, api, status = {}, {}, {}
+    docs, api, status, usage = {}, {}, {}, {}
     for folder in sorted(p for p in a.components.iterdir() if p.is_dir()) if a.components.is_dir() else []:
         d, c = folder / f"{folder.name}.doc.mjs", folder / f"{folder.name}.contract.json"
         if d.exists() and c.exists():
             doc = read_doc(d)
             docs[folder.name], api[folder.name], status[folder.name] = doc.get("platforms", {}), doc.get("platformApi", {}), doc.get("status")
+            usage[folder.name] = doc.get("platformUsage", {})
 
     android_rows, e1 = table(a.android_list, "Android")
     ios_rows, e2 = table(a.ios_list, "iOS")
@@ -201,7 +236,9 @@ def main(argv=None):
     else:
         print("skip web: run npm ci --ignore-scripts in ui/tool")
 
-    gaps = api_gaps(a, docs, api, status, errs)
+    frameworks, e = framework_topics(a.frameworks)
+    errs += e
+    gaps = api_gaps(a, docs, api, status, errs, frameworks, usage)
     for g in gaps:
         print("FAIL" if a.strict_api else "GAP", g)
     if gaps and not a.strict_api:
