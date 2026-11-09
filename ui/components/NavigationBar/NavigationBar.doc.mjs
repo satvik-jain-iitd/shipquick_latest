@@ -6,7 +6,7 @@ export default {
   "displayName": "Navigation bar",
   "platforms": {
     "android": "androidx.compose.material3.NavigationBar",
-    "ios": null,
+    "ios": "SwiftUI.TabView",
     "web": null
   },
   "group": "Navigation",

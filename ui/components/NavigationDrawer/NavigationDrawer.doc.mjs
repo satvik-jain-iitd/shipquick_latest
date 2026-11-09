@@ -6,7 +6,7 @@ export default {
   "displayName": "Navigation drawer",
   "platforms": {
     "android": "androidx.compose.material3.ModalNavigationDrawer",
-    "ios": null,
+    "ios": "SwiftUI.ListStyle.sidebar",
     "web": null
   },
   "group": "Navigation",

@@ -6,7 +6,7 @@ export default {
   "displayName": "Search bar",
   "platforms": {
     "android": "androidx.compose.material3.SearchBar",
-    "ios": null,
+    "ios": "SwiftUI.View.searchable(text:placement:prompt:)",
     "web": null
   },
   "group": "Search",

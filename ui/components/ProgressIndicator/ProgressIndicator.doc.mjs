@@ -6,7 +6,7 @@ export default {
   "displayName": "Progress indicator",
   "platforms": {
     "android": "androidx.compose.material3.LinearProgressIndicator",
-    "ios": null,
+    "ios": "SwiftUI.ProgressView",
     "web": "@astryxdesign/core/ProgressBar"
   },
   "group": "Progress",

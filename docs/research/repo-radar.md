@@ -278,3 +278,15 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: the source is Google's own Material 3, used as shipped (rule 38). Nothing is copied: the docs restate
   Google's pages (`docs/research/android-m3-components.md`), and the templates call M3 composables the way Google's guides show.
 - Confidence that nothing fits better: 0.9 (the library is Google's, so there is nothing to find beyond it).
+
+## 9 Nov 2026, story #216: the UI coverage gate (every counted component has a doc, a contract and a topic)
+- Need: check that every row of a counted component list has one doc, one contract and one served topic, and that no name we serve shadows a core doc.
+- Run: `scout.py --need "check that every component in a counted design-system list has a doc, a contract and a served topic, and no name shadows the upstream library"`: no repos found.
+  `scout.py --need "design system component documentation coverage check"`: no repos found.
+  `gh search repos "topic:design-system documentation coverage"`: system-design-primer, FreeDomain, the-art-of-command-line,
+  VoltAgent/awesome-design-md, Leonxlnx/taste-skill (none check coverage). `gh search repos "storybook coverage"`: small demos.
+- Top READMEs read: yannbf/storybook-coverage-recipes (code coverage of rendered stories, not doc coverage),
+  tomnar/storybook-coverage (a Chromatic Angular template), VoltAgent/awesome-design-md (a list of DESIGN.md files). Not a fit.
+- Decision: build from scratch, about 100 lines of stdlib Python. It reuses `read_doc` from `scripts/check_ui_docs.py`
+  and reads the same tables the S4 and S5 tests read. No package added.
+- Confidence that nothing fits better: 0.8 (the input is our own two tables, so a general tool would still need this glue).

@@ -6,7 +6,7 @@ export default {
   "displayName": "Slider",
   "platforms": {
     "android": "androidx.compose.material3.Slider",
-    "ios": null,
+    "ios": "SwiftUI.Slider",
     "web": "@astryxdesign/core/Slider"
   },
   "group": "Slider",

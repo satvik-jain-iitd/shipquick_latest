@@ -6,7 +6,7 @@ export default {
   "displayName": "List",
   "platforms": {
     "android": "androidx.compose.material3.ListItem",
-    "ios": null,
+    "ios": "SwiftUI.List",
     "web": "@astryxdesign/core/List"
   },
   "group": "List",

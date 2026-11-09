@@ -6,7 +6,7 @@ export default {
   "displayName": "Card",
   "platforms": {
     "android": "androidx.compose.material3.Card",
-    "ios": null,
+    "ios": "SwiftUI.GroupBox",
     "web": "@astryxdesign/core/Card"
   },
   "group": "Card",

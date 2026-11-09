@@ -6,7 +6,7 @@ export default {
   "displayName": "Text field",
   "platforms": {
     "android": "androidx.compose.material3.TextField",
-    "ios": null,
+    "ios": "SwiftUI.TextField",
     "web": "@astryxdesign/core/TextInput"
   },
   "group": "Text field",

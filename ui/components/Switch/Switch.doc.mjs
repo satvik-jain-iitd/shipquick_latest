@@ -6,7 +6,7 @@ export default {
   "displayName": "Switch",
   "platforms": {
     "android": "androidx.compose.material3.Switch",
-    "ios": null,
+    "ios": "SwiftUI.Toggle",
     "web": "@astryxdesign/core/Switch"
   },
   "group": "Switch",
