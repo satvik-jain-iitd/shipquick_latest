@@ -327,15 +327,17 @@ FRAMEWORKS = """## iOS
 """
 
 
-def framework_doc(f, slug="swift-charts", items=({"name": "Chart", "use": "Apple: a chart view."},), topic=True):
+def framework_doc(f, slug="swift-charts", items=({"name": "Chart", "use": "Apple: a chart view."},), topic="export default {};\n",
+                  variants=()):
     d = f / "components" / slug
     d.mkdir(parents=True)
+    ios = {"supporting": list(items), **({"variants": list(variants)} if variants else {})}
     doc = {"name": slug, "platforms": {"android": None, "ios": None, "web": None},
-           "platformUsage": {"ios": {"description": "Use Swift Charts."}}, "platformApi": {"ios": {"supporting": list(items)}}}
+           "platformUsage": {"ios": {"description": "Use Swift Charts."}}, "platformApi": {"ios": ios}}
     (d / f"{slug}.doc.mjs").write_text("export default " + json.dumps(doc) + ";\n")
     (d / f"{slug}.contract.json").write_text("{}")
-    if topic:
-        (f / "topics" / f"ios-{slug}.doc.mjs").write_text("")
+    if topic is not None:
+        (f / "topics" / f"ios-{slug}.doc.mjs").write_text(topic)
 
 
 def test_s231_a_framework_topic_with_no_doc_is_a_gap_and_fails_strict(tmp_path, capsys):
@@ -358,16 +360,41 @@ def test_s231_a_framework_doc_with_no_topic_file_is_still_a_gap(tmp_path, capsys
     f = api_fixture(tmp_path)
     with_api(f, FULL_API)
     (f / "frameworks.md").write_text(FRAMEWORKS)
-    framework_doc(f, topic=False)
+    framework_doc(f, topic=None)
     assert run_api(f, "--strict-api") == 1
     assert "Swift Charts (framework)" in capsys.readouterr().out
 
 
-def test_s231_a_name_with_no_api_row_still_fails_in_a_doc_that_is_not_a_framework_doc(tmp_path, capsys):
+def test_s231_a_framework_doc_names_its_own_types_but_another_doc_naming_the_same_type_fails(tmp_path, capsys):
+    """Review 2 of the iOS stack: a true red. The exemption is for the framework doc only, so in one run the
+    framework doc's `Chart` passes and Button's `Chart` fails, and the error names Button, never swift-charts."""
     f = api_fixture(tmp_path)
     with_api(f, {**FULL_API, "ios": {**FULL_API["ios"], "supporting": [{"name": "Chart", "use": "x"}]}})
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f)
     assert run_api(f) == 1
-    assert "has no such supporting row" in capsys.readouterr().out
+    errs = [l for l in capsys.readouterr().out.splitlines() if "names Chart" in l]
+    assert errs == ["FAIL api ios: Button names Chart under platformApi.ios.supporting, but the ios API list has no such supporting row"], errs
+
+
+def test_s231_a_framework_doc_still_gets_the_kind_check_for_a_name_that_is_a_row(tmp_path, capsys):
+    """Review 2 probe: a real API row named in the wrong slot of a framework doc is not skipped."""
+    f = api_fixture(tmp_path)
+    with_api(f, {"android": FULL_API["android"], "ios": {}})
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "Chart", "use": "x"}, {"name": "buttonStyle", "use": "x"}))
+    assert run_api(f, "--strict-api") == 1
+    assert "swift-charts names buttonStyle under platformApi.ios.supporting, but the ios API list has no such supporting row" \
+        in capsys.readouterr().out
+
+
+def test_s231_an_empty_framework_topic_file_does_not_count(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, topic="")
+    assert run_api(f, "--strict-api") == 1
+    assert "Swift Charts (framework)" in capsys.readouterr().out
 
 
 def test_s231_strict_api_fails_on_the_real_repo_today():
