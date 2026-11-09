@@ -261,3 +261,14 @@ Scenario: a canvas is laid out from a manifest
   And a board the manifest forgets lands in an Unsorted row, and a box outside its board stops the run
 ```
 Tests: `tests/test_canvas_stage.py` (S1 to S8).
+
+## Story #155: a story names who does it
+```gherkin
+Scenario: a story without a full Who does it line is refused at Ready
+  Given a user-story issue linked from a pull request with Closes #n
+  When its body has no "Who does it:" line, or the line is empty, a placeholder, or misses the screen or how often
+  Then check_story.py exits 1 and names the line to write
+  And a story with "Who does it: <actor>, <app or screen>, <how often>" filled in passes
+  And a pull request that links no issue passes
+```
+Tests: `tests/test_check_story.py` (`test_s155_*`).
