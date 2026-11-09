@@ -39,7 +39,7 @@ Using this folder as a Gradle build with `includeBuild("knowledge/shipquick_late
   Google's icon set `androidx.compose.material.icons`, and the Kotlin stdlib. Anything else fails, Material 2 too.
 - Banned patterns fail: `Canvas(`, `drawBehind`, `drawWithContent`, `Color(`, `.background(Color.`,
   `GenericShape`, `RoundedCornerShape(`, and a custom `Shape` class.
-- `clickable`, `selectable`, `toggleable` and `verticalScroll` stay allowed. Google's own patterns use them.
+- `clickable`, `selectable`, `toggleable` and `verticalScroll` stay allowed. Google's own patterns use them. `no_fake_button` (Konsist) refuses `clickable` on a `Box`, `Row`, `Column`, `Spacer`, `Text`, `Icon` or `Image`. Limit: it reads one level of parentheses in one call; a deeper or multi-line call can slip past, and the reviewer reads for that.
 - A call to an experimental M3 part (like `TopAppBar`) needs `@OptIn(ExperimentalMaterial3Api::class)`.
 - The step flow: the filled button comes last, and the screen uses `imePadding()`.
 Lint takes over this job in a child (story #185): `lint/detekt.yml` (local, warnings), `lint/detekt-ci.yml` (CI, errors)

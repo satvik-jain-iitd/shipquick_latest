@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.runtime.Composable
 import android.widget.Button as ViewButton
@@ -42,4 +43,5 @@ fun BadScreen() {
     Box(Modifier.pointerInput(Unit) { detectTapGestures { } ; detectDragGestures { _, _ -> } })
     Box(Modifier.draggable(state, Orientation.Horizontal).transformable(state))
     AndroidView(factory = { ctx -> View(ctx) })
+    Box(Modifier.clickable { }) { Text("Save") }
 }

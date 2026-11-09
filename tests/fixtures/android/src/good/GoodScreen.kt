@@ -3,7 +3,10 @@
 package fixture.good
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.Button
+import androidx.compose.material3.ListItem
+import androidx.compose.ui.Modifier
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,4 +21,5 @@ object Labels {
 fun GoodScreen(rows: List<Row>, onGo: () -> Unit) {
     Text(text = rows.first().title, color = MaterialTheme.colorScheme.primary)
     Button(onClick = onGo) { Text(Labels.GO) }
+    ListItem(modifier = Modifier.clickable {}, headlineContent = { Text(Labels.GO) })
 }

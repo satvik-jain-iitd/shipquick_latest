@@ -28,6 +28,11 @@ class UiRulesKonsistTest {
     @Test
     fun no_gesture_input() = filesHave("""\b(pointerInput|detectTapGestures|detectDragGestures|draggable|transformable)\b""")
 
+    // A layout or primitive with Modifier.clickable is a fake button. ListItem's own clickable is the M3 way and stays allowed.
+    // Limit: one level of nested parentheses inside the call. A deeper or multi-line call can slip past; the reviewer reads for it.
+    @Test
+    fun no_fake_button() = filesHave("""\b(Box|Row|Column|Spacer|Text|Icon|Image)\((?:[^()]|\([^()]*\))*?\.(clickable|combinedClickable)\b""")
+
     @Test
     fun no_android_view() = filesHave("""\bAndroidView\b""")
 

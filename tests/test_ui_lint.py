@@ -159,3 +159,22 @@ def test_s185_the_bad_android_screen_names_every_forbidden_import_and_banned_tex
 
 def test_s185_the_good_fixtures_pass_the_template_scans():
     assert ios.raw_ui(text(FIX / "ios" / "Good" / "GoodScreen.swift")) == []
+
+
+def test_s185_no_fake_button_refuses_clickable_on_a_layout_but_allows_a_list_item():
+    # Review of #299 (qa): a Box/Row/Column/Text/Icon/Image with Modifier.clickable is a fake button; ListItem's clickable is the M3 way.
+    konsist = text(ALINT / "UiRulesKonsistTest.kt")
+    m = re.search(r'fun no_fake_button\(\) = filesHave\("""(.*?)"""\)', konsist)
+    assert m, "no_fake_button is not a Konsist test"
+    rx = re.compile(m.group(1))
+    bad = text(FIX / "android" / "src" / "bad" / "BadScreen.kt")
+    good = text(FIX / "android" / "src" / "good" / "GoodScreen.kt")
+    assert rx.search(bad), "the bad fixture must hold a fake button"
+    assert 'Box(Modifier.clickable { }) { Text("Save") }' in bad
+    assert not rx.search(good), "the good fixture must pass no_fake_button"
+    assert "ListItem(modifier = Modifier.clickable {}" in good
+    assert rx.search('Row(Modifier.fillMaxWidth().clickable(onClick = onGo)) { Text("x") }')
+    assert rx.search('Text(text = "x", modifier = Modifier.clickable {})')
+    assert rx.search('Box(Modifier.padding(8.dp).clickable { })'), "one nested paren level must still match"
+    assert not rx.search('Box(Modifier.padding(Dp(8f)).clickable { })'), "two levels is the documented limit"
+    assert not rx.search('Box(Modifier.padding(8.dp)) { Icon(Icons.Default.Add, null) }')
