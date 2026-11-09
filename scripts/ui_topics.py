@@ -45,6 +45,10 @@ def topic(doc, contract, platform):
             f"{a['name']} ({a.get('criterion', '')}, {a.get('requirement', '')}): {a.get('description', '')}"
             for a in usage.get("accessibility", [])]}]},
     ]
+    # The CLI refuses an empty list or table (CI on PR #209), so drop empty blocks, then empty sections.
+    for s in sections:
+        s["content"] = [b for b in s["content"] if b.get("items", b.get("rows", True))]
+    sections = [s for s in sections if s["content"]]
     return {"type": "generic", "name": f"{platform}-{doc['name'].lower()}",
             "title": f"{doc.get('displayName', doc['name'])} ({label})", "category": "guide",
             "description": f"{target} used directly: the ShipQuick contract, props, do and do not.",

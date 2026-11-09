@@ -114,6 +114,20 @@ def test_s183_every_topic_list_block_has_a_style_the_cli_accepts():
                     assert block.get("style") in {"ordered", "unordered", "do", "dont"}, (f.name, s["title"])
 
 
+def test_s135_a_doc_with_no_dont_line_writes_no_empty_list():
+    # CI on PR #209: the real CLI refused ios-stepper ("sections.2.content.1.items: Too small: expected array to have >=1 items").
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from ui_topics import topic
+    doc = {"name": "X", "platforms": {"ios": "SwiftUI.X"}, "props": [],
+           "usage": {"description": "d", "bestPractices": [{"guidance": True, "description": "do this"}]}}
+    for s in topic(doc, {"core": {}}, "ios")["sections"]:
+        assert s["content"], s["title"]
+        for block in s["content"]:
+            assert block["type"] != "list" or block["items"], (s["title"], block)
+            assert block["type"] != "table" or block["rows"], (s["title"], block)
+
+
 # PR #202 second review: scan every line and both streams, and walk the whole JSON.
 def run_stub(tmp_path, stdout, stderr="", *args):
     s = tmp_path / "astryx"

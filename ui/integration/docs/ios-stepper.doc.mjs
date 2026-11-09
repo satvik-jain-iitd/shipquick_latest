@@ -78,11 +78,6 @@ export default {
             "Show the value next to the stepper. The stepper itself does not show it.",
             "Pair it with a text field when people may need big changes."
           ]
-        },
-        {
-          "type": "list",
-          "style": "dont",
-          "items": []
         }
       ]
     },
