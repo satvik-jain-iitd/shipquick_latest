@@ -824,3 +824,15 @@ Scenario: every modifier on Apple's Technology-specific, Chart view, Deprecated 
   And each deprecated modifier sits in the doc of its job and prints as "Do not use: X. Use <Apple's replacement>."
 ```
 Tests: `tests/test_ui_coverage.py`, `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, review 2 of the iOS stack (PRs #277 to #280)
+```gherkin
+Scenario: the framework exemption is narrow, an empty topic serves nothing, and the list generator is protected
+  Given a framework doc and another doc that both name a type that is no API row
+  When check_ui_coverage.py runs
+  Then only the other doc fails, and the error names only that doc
+  And a framework doc naming a real API row in the wrong slot still fails the kind check
+  And an empty <platform>-<topic> file is a GAP line, not a served topic
+  And scripts/protected_paths.txt lists scripts/ui_api_lists.py
+```
+Tests: `tests/test_ui_coverage.py`, `tests/test_protected_paths.py` (s231). CI and local: pytest.
