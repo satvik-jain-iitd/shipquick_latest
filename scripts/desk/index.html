@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShipQuick Desk</title>
+<style>
+/* Tokens from design/tokens.json (light). Dark values swap the same tokens; the token file has no dark set. */
+:root {
+  --backdrop: #F5F5F5;   /* surface token; no text sits here */
+  --bg: #FFFFFF;         /* background token */
+  --card: #F5F5F5;       /* surface token, text on it: ink 15.96:1, muted 6.42:1 */
+  --ink: #1A1A1A;        /* onSurface: 17.4:1 on bg, 15.96:1 on card */
+  --muted: #595959;      /* onSurfaceMuted: 7.0:1 on bg, 6.42:1 on card */
+  --line: #8C8C8C;       /* outline: 3.36:1 on bg, borders only, never text */
+  --primary: #1A1A1A;    /* primary token: the main button fill */
+  --on-primary: #FFFFFF; /* onPrimary: 17.4:1 on primary */
+  --error: #B3261E;      /* error token: a fill only, with onError text (6.54:1) */
+  --on-error: #FFFFFF;   /* onError: 6.54:1 on error */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --backdrop: #1A1A1A; --bg: #1A1A1A;
+    --card: #1A1A1A;     /* cards are the bg with a line border */
+    --ink: #FFFFFF;      /* 17.4:1 on bg */
+    --muted: #8C8C8C;    /* 5.18:1 on bg */
+    --line: #8C8C8C;     /* 5.18:1 on bg, borders only */
+    --primary: #FFFFFF; --on-primary: #1A1A1A; /* 17.4:1 */
+  }
+}
+:root[data-theme="dark"] {
+  --backdrop: #1A1A1A; --bg: #1A1A1A; --card: #1A1A1A;
+  --ink: #FFFFFF; --muted: #8C8C8C; --line: #8C8C8C;
+  --primary: #FFFFFF; --on-primary: #1A1A1A;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--backdrop); font-family: system-ui, sans-serif; color: var(--ink); }
+.board {
+  width: 100%; max-width: 390px; min-height: 844px; margin: 0 auto;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px; display: flex; flex-direction: column; gap: 16px;
+}
+.rule { font-size: 12px; color: var(--muted); margin: 0; }          /* rule line sits on the board bg: 7.0:1 */
+h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 700; }
+.sub { font-size: 14px; color: var(--muted); margin: 0; }
+.chip { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 9999px; border: 1px solid var(--line); color: var(--ink); }
+.chip.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.chip.error { background: var(--error); color: var(--on-error); border-color: var(--error); } /* never red text: #B3261E on dark is 2.66:1 */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.card h2 { font-size: 16px; margin: 0; font-weight: 700; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 16px; }
+.time { font-size: 12px; color: var(--muted); }                       /* 6.42:1 on card */
+.item { font-size: 16px; line-height: 22px; margin: 0; }
+.foot { margin-top: auto; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.btn { display: block; width: 100%; height: 48px; border: 0; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 16px; font-weight: 700; }
+
+.stack { display: flex; flex-direction: column; gap: 8px; }
+.pill { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="board">
+  <header>
+    <h1>ShipQuick Desk</h1>
+    <p class="sub" id="repo">This project, on this Mac</p>
+  </header>
+  <div id="status"><span class="chip" id="live">Loading</span></div>
+  <div id="errorBox"></div>
+
+  <section class="card" aria-labelledby="w">
+    <h2 id="w">Waiting for you</h2>
+    <div class="stack" id="waiting"></div>
+  </section>
+
+  <section class="card" aria-labelledby="d">
+    <h2 id="d">Agents decided for you</h2>
+    <div class="stack" id="decided"></div>
+  </section>
+
+  <section class="card" aria-labelledby="f">
+    <h2 id="f">Switches read from files</h2>
+    <div class="stack" id="switches"></div>
+  </section>
+
+  <section class="card" aria-labelledby="r">
+    <h2 id="r">Roadmap</h2>
+    <div class="stack" id="roadmap"></div>
+  </section>
+
+  <div class="foot"><button class="btn" type="button" id="refresh">Refresh now</button></div>
+</main>
+<script>
+(function () {
+  var asOf = null;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = String(text);
+    return e;
+  }
+  function row(left, right) {
+    var r = el("div", "row");
+    r.appendChild(left);
+    r.appendChild(right);
+    return r;
+  }
+  function empty(box, text) {
+    box.replaceChildren(el("p", "time", text));
+  }
+  function fill(id, nodes, none) {
+    var box = document.getElementById(id);
+    if (!nodes.length) return empty(box, none);
+    box.replaceChildren.apply(box, nodes);
+  }
+  function ago() {
+    if (!asOf) return "";
+    var s = Math.max(0, Math.round((Date.now() - asOf) / 1000));
+    return s < 90 ? "checked " + s + " s ago" : "checked " + Math.round(s / 60) + " min ago";
+  }
+
+  function render(data, httpStatus) {
+    asOf = Date.parse(data.as_of) || null;
+    var live = document.getElementById("live");
+    live.className = "chip" + (data.stale ? "" : " primary");
+    live.textContent = (data.stale ? "Stale, last good answer" : "Live") + " · " + ago();
+
+    var errorBox = document.getElementById("errorBox");
+    errorBox.replaceChildren();
+    if (data.error) {
+      var card = el("section", "card");
+      card.appendChild(el("h2", "", "gh could not answer"));
+      card.appendChild(row(el("p", "item", data.error), el("span", "chip error", "Error")));
+      errorBox.appendChild(card);
+    }
+
+    fill("waiting", (data.waiting || []).map(function (p) {
+      var label = "PR " + p.number + ": " + p.title + (p.draft ? " (draft)" : "");
+      return row(el("p", "item", label), el("span", p.checks === "failing" ? "chip error" : "chip", "Checks " + p.checks));
+    }), "Nothing waiting for you.");
+
+    fill("decided", (data.decided || []).map(function (r) {
+      return row(el("p", "item", r.text), el("span", "time", r.contact));
+    }), "No agent decisions in the trace yet.");
+
+    var sw = data.switches || {};
+    fill("switches", [
+      row(el("span", "", "Mode"), el("span", "", sw.mode || "not set")),
+      row(el("span", "", "Freeze"), el("span", "", sw.freeze || "Off")),
+      row(el("span", "", "Dev link"), el("span", "", sw.dev_link || "not set"))
+    ], "No switches.");
+
+    fill("roadmap", (data.roadmap || []).map(function (i) {
+      return el("p", "item", "#" + i.number + " " + i.title);
+    }), "No open issues.");
+  }
+
+  function load() {
+    fetch("/api/state.json", { cache: "no-store" })
+      .then(function (r) { return r.json().then(function (d) { render(d, r.status); }); })
+      .catch(function () {
+        document.getElementById("live").textContent = "Desk server not reachable";
+      });
+  }
+
+  document.getElementById("refresh").addEventListener("click", load);
+  load();
+  setInterval(load, 60000);
+  setInterval(function () {
+    if (asOf) document.getElementById("live").textContent = document.getElementById("live").textContent.replace(/· .*$/, "· " + ago());
+  }, 15000);
+})();
+</script>
+</body>
+</html>
