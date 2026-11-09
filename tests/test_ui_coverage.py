@@ -52,8 +52,10 @@ def fixture(tmp_path, android_n=1, ios_n=2, core=("Button",)):
 def run(tmp_path, *extra):
     if not (tmp_path / "rows.json").exists():
         (tmp_path / "rows.json").write_text('{"ios": {}}')
+    if not (tmp_path / "frameworks.md").exists():
+        (tmp_path / "frameworks.md").write_text("## iOS\n\n| # | Topic | Framework | Official source |\n|---|---|---|---|\n")
     return check_ui_coverage.main([
-        "--core-floor", "1", "--row-map", str(tmp_path / "rows.json"),
+        "--core-floor", "1", "--row-map", str(tmp_path / "rows.json"), "--frameworks", str(tmp_path / "frameworks.md"),
         "--android-list", str(tmp_path / "android.md"), "--ios-list", str(tmp_path / "ios.md"),
         "--components", str(tmp_path / "components"), "--topics", str(tmp_path / "topics"),
         "--core", str(tmp_path / "core"), "--integration", str(tmp_path / "integration.mjs"), *extra])
@@ -308,6 +310,91 @@ def test_s231_the_gate_has_no_exclusion_list():
     import inspect
     src = inspect.getsource(check_ui_coverage)
     assert "Left out" not in src and "exclu" not in src.lower()
+
+
+# Story #231 (framework topics, reviewer's rule for both lanes): each row of framework-topics.md is one doc, served as
+# <platform>-<topic>, with platformApi items in the name plus use shape, counted like a component row.
+FRAMEWORKS = """## iOS
+
+| # | Topic | Framework | Official source |
+|---|---|---|---|
+| 1 | Swift Charts | Charts | https://developer.apple.com/documentation/charts |
+
+## Android
+
+| # | Topic | Framework | Official source |
+|---|---|---|---|
+"""
+
+
+def framework_doc(f, slug="swift-charts", items=({"name": "Chart", "use": "Apple: a chart view."},), topic="export default {};\n",
+                  variants=()):
+    d = f / "components" / slug
+    d.mkdir(parents=True)
+    ios = {"supporting": list(items), **({"variants": list(variants)} if variants else {})}
+    doc = {"name": slug, "platforms": {"android": None, "ios": None, "web": None},
+           "platformUsage": {"ios": {"description": "Use Swift Charts."}}, "platformApi": {"ios": ios}}
+    (d / f"{slug}.doc.mjs").write_text("export default " + json.dumps(doc) + ";\n")
+    (d / f"{slug}.contract.json").write_text("{}")
+    if topic is not None:
+        (f / "topics" / f"ios-{slug}.doc.mjs").write_text(topic)
+
+
+def test_s231_a_framework_topic_with_no_doc_is_a_gap_and_fails_strict(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    assert run_api(f, "--strict-api") == 1
+    assert "FAIL api ios framework topics: Swift Charts (framework)" in capsys.readouterr().out
+
+
+def test_s231_a_framework_doc_and_its_topic_cover_the_row_and_its_items_need_no_api_row(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f, "--strict-api") == 0, capsys.readouterr().out
+
+
+def test_s231_a_framework_doc_with_no_topic_file_is_still_a_gap(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, topic=None)
+    assert run_api(f, "--strict-api") == 1
+    assert "Swift Charts (framework)" in capsys.readouterr().out
+
+
+def test_s231_a_framework_doc_names_its_own_types_but_another_doc_naming_the_same_type_fails(tmp_path, capsys):
+    """Review 2 of the iOS stack: a true red. The exemption is for the framework doc only, so in one run the
+    framework doc's `Chart` passes and Button's `Chart` fails, and the error names Button, never swift-charts."""
+    f = api_fixture(tmp_path)
+    with_api(f, {**FULL_API, "ios": {**FULL_API["ios"], "supporting": [{"name": "Chart", "use": "x"}]}})
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f)
+    assert run_api(f) == 1
+    errs = [l for l in capsys.readouterr().out.splitlines() if "names Chart" in l]
+    assert errs == ["FAIL api ios: Button names Chart under platformApi.ios.supporting, but the ios API list has no such supporting row"], errs
+
+
+def test_s231_a_framework_doc_still_gets_the_kind_check_for_a_name_that_is_a_row(tmp_path, capsys):
+    """Review 2 probe: a real API row named in the wrong slot of a framework doc is not skipped."""
+    f = api_fixture(tmp_path)
+    with_api(f, {"android": FULL_API["android"], "ios": {}})
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, items=({"name": "Chart", "use": "x"}, {"name": "buttonStyle", "use": "x"}))
+    assert run_api(f, "--strict-api") == 1
+    assert "swift-charts names buttonStyle under platformApi.ios.supporting, but the ios API list has no such supporting row" \
+        in capsys.readouterr().out
+
+
+def test_s231_an_empty_framework_topic_file_does_not_count(tmp_path, capsys):
+    f = api_fixture(tmp_path)
+    with_api(f, FULL_API)
+    (f / "frameworks.md").write_text(FRAMEWORKS)
+    framework_doc(f, topic="")
+    assert run_api(f, "--strict-api") == 1
+    assert "Swift Charts (framework)" in capsys.readouterr().out
 
 
 def test_s231_strict_api_fails_on_the_real_repo_today():

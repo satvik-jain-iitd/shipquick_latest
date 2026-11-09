@@ -169,3 +169,26 @@ def test_s231_two_docs_with_one_topic_name_fail(tmp_path):
     r = subprocess.run(["python3", str(TOPICS), "--check", "--root", str(tmp_path)], capture_output=True, text=True, cwd=ROOT)
     assert r.returncode == 1
     assert "android-snackbar" in r.stdout and "Snackbar" in r.stdout and "SnackbarMessage" in r.stdout, r.stdout
+
+# Story #231 (I1): a new iOS doc cannot set platforms.ios (the coverage gate counts only HIG rows there), so it
+# speaks to iOS through platformApi.ios or platformUsage.ios. It still gets its ios topic, so agents can read it.
+IOS_ONLY_API = {"name": "Picker", "platforms": {"android": None, "ios": None, "web": None}, "props": [],
+                "usage": {"description": "Pick one value."},
+                "platformApi": {"ios": {"variants": [{"name": "Picker", "note": "Apple: A control for picking a value."}]}}}
+
+
+def test_s231_a_doc_with_only_platform_api_ios_gets_an_ios_topic_and_no_android_one(tmp_path):
+    write_component(tmp_path, "Picker", IOS_ONLY_API, {"core": {}, "platforms": {}})
+    files, bad = ui_topics.render(tmp_path)
+    assert not bad and list(files) == ["ios-picker.doc.mjs"], list(files)
+    text = files["ios-picker.doc.mjs"]
+    assert "Picker: Apple: A control for picking a value." in text
+    assert "as Apple ships it" in text and "None" not in text and "null" not in text
+
+
+def test_s231_a_framework_doc_with_only_platform_usage_ios_gets_an_ios_topic(tmp_path):
+    doc = {"name": "Widgets", "platforms": {"android": None, "ios": None, "web": None}, "props": [],
+           "usage": {"description": "Widgets."}, "platformUsage": {"ios": {"description": "Use WidgetKit."}}}
+    write_component(tmp_path, "Widgets", doc, {"core": {}, "platforms": {}})
+    files, _ = ui_topics.render(tmp_path)
+    assert list(files) == ["ios-widgets.doc.mjs"] and "Use WidgetKit." in files["ios-widgets.doc.mjs"]
