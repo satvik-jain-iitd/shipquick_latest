@@ -164,3 +164,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - The idea is old and plain (a bundler's asset manifest read by the deploy step; a link check after a static-site deploy). It is a set difference. A tool for it would be bigger than the code.
 - Decision: two modes in `scripts/canvas_stage.py` (`--publish-list`, `--verify <listing>`), about 15 lines, standard library only.
 - Confidence that nothing fits better: 0.9.
+
+## 9 Nov 2026, story #165 (GoServe feedback): stages as columns, and a Design learnings board
+- Need: lay out design canvas stage sections as kanban columns, left to right, and render a design decision log board from JSON.
+- Run: `scout.py --need "lay out design canvas stage sections as kanban columns left to right and render a design decision log board from json"`: no repos found.
+- Kanban tools (Trello, Jira, GitHub Projects) show the idea; none writes boards for the claude.ai Design canvas. The layout is one x offset in the existing loop.
+- Decision: a `"layout": "columns"` key and a learnings board inside `scripts/canvas_stage.py`, reusing its board template and contrast check.
+- Confidence that nothing fits better: 0.85.

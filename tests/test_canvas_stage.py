@@ -181,6 +181,62 @@ class Layout(unittest.TestCase):
         self.assertTrue(any("C.dc.html" in p and "is not" in p for p in problems), problems)
 
 
+LEARN = [{"date": "2026-11-01", "kind": "craft", "text": "Main button last"},
+         {"date": "2026-11-09", "kind": "owner", "text": "He likes warm words", "link": "https://example.com/1"},
+         {"date": "2026-11-05", "kind": "owner", "text": "No grey on grey"},
+         {"date": "2026-11-03", "kind": "testing", "text": "Thumbs miss the top"}]
+
+
+class Columns(unittest.TestCase):
+    """Story #165: stages as columns, left to right, ending on a Design learnings board."""
+
+    def setUp(self):
+        self.c = canvas(["A.dc.html", "B.dc.html", "C.dc.html", "D.dc.html"])
+        self.m = manifest([[{"id": "1a", "title": "1a", "boards": ["A.dc.html", "B.dc.html"], "notes": []}],
+                           [{"id": "2a", "title": "2a", "boards": ["C.dc.html"], "notes": []}],
+                           [{"id": "3a", "title": "3a", "boards": ["D.dc.html"], "notes": []}]])
+        self.m["layout"] = "columns"
+        self.m["sections"].append({"id": "learnings", "title": "Section 4 · Design learnings", "purpose": "p", "prefix": "LEARNINGS",
+                                   "tint": "sage", "rows": [], "learnings": LEARN})
+
+    def first_tiles(self, new):
+        return [new["boards"][f"bg/section-{n}-1.dc.html"] for n in range(1, 5)]
+
+    def test_S22_columns_mode_puts_each_section_right_of_the_one_before_on_one_top_line(self):
+        new, _, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+        tiles = self.first_tiles(new)
+        for a, b in zip(tiles, tiles[1:]):
+            self.assertGreater(b["x"], a["x"] + a["w"])   # fully right of the column before it
+            self.assertEqual(a["y"], b["y"])               # every column starts on the same line
+        self.assertEqual(cs.check_existing(new), [])
+
+    def test_S23_columns_mode_without_a_learnings_section_is_a_problem(self):
+        self.m["sections"].pop()
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("learnings" in p for p in problems), problems)
+
+    def test_S24_the_learnings_board_has_three_columns_newest_on_top_and_sits_in_its_section(self):
+        new, files, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+        html = files["project/design-learnings.dc.html"]
+        for head in ("The owner's taste", "Craft rules", "What testing taught"): self.assertIn(head, html)
+        self.assertLess(html.index("He likes warm words"), html.index("No grey on grey"))   # newest on top
+        e = new["boards"]["design-learnings.dc.html"]; s4 = new["boards"]["bg/section-4-1.dc.html"]
+        self.assertTrue(cs.inside(cs.box(e["x"], e["y"], e["w"], e["h"], "l"), cs.box(s4["x"], s4["y"], s4["w"], s4["h"], "s4"), cs.PAD - 1))
+        self.assertTrue(e["title"].startswith("LEARNINGS · "))
+
+    def test_S25_a_learnings_row_with_an_unknown_kind_is_a_problem(self):
+        self.m["sections"][3]["learnings"] = LEARN + [{"date": "2026-11-09", "kind": "vibes", "text": "x"}]
+        _, _, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("vibes" in p for p in problems), problems)
+
+    def test_S26_columns_mode_gives_the_same_layout_twice(self):
+        a, _, _ = cs.layout(self.c, self.m); b, _, problems = cs.layout(a, self.m)
+        self.assertEqual(problems, [])
+        self.assertEqual({k: (v["x"], v["y"]) for k, v in a["boards"].items()}, {k: (v["x"], v["y"]) for k, v in b["boards"].items()})
+
+
 class Publish(unittest.TestCase):
     """Story #163: the publish list comes from canvas.json, never from memory, and a listing is checked against it."""
 
