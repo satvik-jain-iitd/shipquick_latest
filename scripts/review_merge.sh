@@ -132,7 +132,18 @@ while IFS= read -r f; do
   [ -z "$f" ] && continue
   if protected_match "$f"; then bad_path="$f"; break; fi
 done < <(jq -r '.[].filename' <<<"$files_json")
-[ -z "$bad_path" ] || refuse "protected path, owner merges ($bad_path)"
+# story #180 (S0, ADR-013): a protected PR may merge here only when the approving review on the head
+# records a second review and the owner's own yes. `.shipquick/*` (mode, roles, freeze) never: the owner merges it.
+if [ -n "$bad_path" ]; then
+  shipquick_file=$(jq -r '.[].filename | select(startswith(".shipquick/"))' <<<"$files_json" | head -1)
+  [ -z "$shipquick_file" ] || refuse "protected path, owner merges ($shipquick_file: mode, roles and freeze are the owner's own merge)"
+  approval=$(jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
+    '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" | tr -d '\r')
+  grep -qE '^Second review: [^[:space:]]' <<<"$approval" \
+    || refuse "protected path, owner merges ($bad_path) -- or the approving review records 'Second review: <who, findings>'"
+  grep -qE '^Owner yes: [0-9]{4}-[0-9]{2}-[0-9]{2} ".+"' <<<"$approval" \
+    || refuse "protected path, owner merges ($bad_path) -- or the approving review records 'Owner yes: <YYYY-MM-DD> \"<his words>\"'"
+fi
 
 uat_exempt=0
 if [ "$(field .baseRefName)" = main ]; then   # read the PR's OWN repo's CLAUDE.md on its base branch (never the local checkout's: it may be a different repo, story #122)
