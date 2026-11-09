@@ -36,5 +36,21 @@ export default {
     {"name": "isLoading", "type": "boolean", "description": "Shows a spinner and ignores presses until the action ends.", "default": "false"},
     {"name": "onClick", "type": "() => void", "description": "Runs when the user presses the button."},
     {"name": "type", "type": "'button' | 'submit' | 'reset'", "description": "The HTML button type. Web only.", "default": "'button'"}
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "EditButton", "note": "iOS 13.0. Apple: \"A button that toggles the edit mode environment value.\""},
+        {"name": "NewDocumentButton", "note": "iOS 18.0. Apple: \"A button that creates and opens new documents.\""},
+        {"name": "PasteButton", "note": "iOS 16.0. Apple: \"A system button that reads items from the pasteboard and delivers it to a closure.\""},
+        {"name": "RenameButton", "note": "iOS 16.0. Apple: \"A button that triggers a standard rename action.\""}
+      ],
+      "supporting": [
+        {"name": "ButtonStyleConfiguration.Label", "use": "iOS 13.0. Apple: \"A type-erased label of a button.\""},
+        {"name": "DefaultButtonLabel", "use": "iOS 26.0. Apple: \"The default label to use for a button.\""},
+        {"name": "DefaultNewDocumentButtonLabel", "use": "iOS 27.0. Apple: \"The default label used for a new document button.\""},
+        {"name": "PrimitiveButtonStyleConfiguration.Label", "use": "iOS 13.0. Apple: \"A type-erased label of a button.\""}
+      ]
+    }
+  }
 };

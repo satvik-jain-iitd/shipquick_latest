@@ -563,3 +563,16 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
   And a topic prints a status item only as "Do not use: <name>. Use <replacement>."
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
+
+## Story #231, sub-issue #249 (I1): iOS Controls have docs, and an iOS-only doc gets its topic
+```gherkin
+Scenario: every I1 Controls row of the SwiftUI list is covered, and an agent can read the new docs
+  Given the I1 rows of docs/research/ios-swiftui-api.md (Button parts and system buttons, Toggle parts, Picker,
+        MultiDatePicker, Gauge and ProgressView parts, Link, HelpLink, SettingsLink, TextFieldLink, ShareLink parts,
+        Menu parts, MenuButton, ControlGroup)
+  When check_ui_coverage.py runs
+  Then no I1 row is a GAP line, and each covering entry carries the row's status
+  And a doc with platforms.ios null but platformApi.ios or platformUsage.ios set gets an ios topic, and no android one
+  And that topic says "Use the SwiftUI API below as Apple ships it"
+```
+Tests: `tests/test_ui_topics.py` (s231). CI and local: `python3 scripts/ui_topics.py --check`, `python3 scripts/check_ui_coverage.py`.

@@ -174,5 +174,12 @@ export default {
       "description": "Pass .vertical to let the field grow to more lines.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "TextFieldLink", "note": "not on iOS. Apple: \"A control that requests text input from the user when pressed.\"", "status": "unavailable-ios", "replacement": "TextField"}
+      ]
+    }
+  }
 };

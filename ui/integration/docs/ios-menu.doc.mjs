@@ -62,6 +62,26 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "MenuStyleConfiguration.Content: iOS 14.0. Apple: \"A type-erased content of a menu.\"",
+            "MenuStyleConfiguration.Label: iOS 14.0. Apple: \"A type-erased label of a menu.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: MenuButton. Use Menu."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
