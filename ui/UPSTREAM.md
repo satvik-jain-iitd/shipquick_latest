@@ -42,3 +42,10 @@ to rewrite the lockfile, then run the `ui-cli` CI job and read the release notes
 Why `@astryxdesign/cli` sits under `dependencies` and the rest under `devDependencies`: that is how the owner's
 install wrote it, and `ui/tool/` is a private tool package that is never published or shipped, so the split
 changes nothing. Moving it would need a fresh install that only the owner can run here.
+
+## The Swift theme emitter (story #184): read, not copied
+
+Astryx has `packages/native/scripts/swift-ios-theme.mjs` (tag `v0.7.11`, commit `df8a86a3ae9d0b2d6337c5cf3369488a6f5ac838`).
+It turns resolved CSS custom properties into `Tokens.swift`. Our input is a W3C `design/tokens.json`, so no file was copied
+and nothing in the kit carries the Meta header for it. Ideas we used: a header that names the regenerate command, committed
+output, a test that fails when a file drifts, and a reserved-word check on names. Our own emitter is `scripts/emit_tokens.py`.

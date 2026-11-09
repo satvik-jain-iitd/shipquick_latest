@@ -888,3 +888,26 @@ Scenario: every template and every contract prop compiles against the real libra
 ```
 Tests: `tests/test_ui_proof.py` (s217). CI jobs: `ui-android-compile`, `ui-ios-compile`. Local: `bash scripts/check_local.sh ui-proof`.
 CI compiles the Kotlin and Swift only. Nothing is run.
+
+## Story #184: token emitters (S6)
+```gherkin
+Scenario: tokens.json produces both theme files
+  Given design/tokens.json
+  When scripts/emit_tokens.py runs
+  Then ui/android/theme/Theme.kt and ui/ios/Sources/ShipQuickUI/Tokens.swift exist and say they are generated
+
+Scenario: a golden file per platform
+  Given tests/golden/Theme.kt.golden and Tokens.swift.golden
+  When the emitter output is compared
+  Then each equals its golden file
+
+Scenario: no token is dropped
+  Given every leaf token in tokens.json
+  Then its name reaches Theme.kt and Tokens.swift (a touch target only its own platform)
+  And an unknown token group fails the run instead of being skipped
+
+Scenario: a token change without regenerating fails
+  When a colour changes and the files are not regenerated
+  Then `emit_tokens.py --check` exits 1 and names each stale file
+```
+Tests: `tests/test_emit_tokens.py` (s184). CI: `ui-cli` runs `--check`; `ui-android-compile` and `ui-ios-compile` compile both files. Local: `bash scripts/check_local.sh ui-tokens`.

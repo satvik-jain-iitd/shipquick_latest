@@ -17,7 +17,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    sourceSets["main"].java.srcDirs("templates", "proof")
+    sourceSets["main"].java.srcDirs("templates", "theme", "proof")
 }
 
 kotlin {
