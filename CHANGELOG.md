@@ -23,7 +23,7 @@ Tag `v0.10.0`, "every library entry is documented". Notes: `docs/RELEASE_NOTES_v
 - Child enforcement: `adopt.sh` prints a ruleset that requires the gate from the GitHub Actions app; `--check` fails when the gate is not required; the scan reports skipped private children (#260, PR #268).
 
 ### Changed
-- `scripts/ui_api_lists.py` and `scripts/kit_branch.py` are protected paths.
+- `scripts/ui_api_lists.py` is a protected path (kit PRs only).
 
 ## [0.9.0] - 2026-11-09
 Tag `v0.9.0`, "library first, and children can pin today's gates". Notes: `docs/RELEASE_NOTES_v0.9.0.md`.

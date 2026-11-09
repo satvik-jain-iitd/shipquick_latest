@@ -8,29 +8,23 @@ Every public entry of Compose Material 3 and SwiftUI now has a doc that agents c
 - **Nothing missing.** The lists come from each library's own public API: M3 1.4.0 has 319 entries
   and SwiftUI has 848. Every entry is covered by a structured field of one doc.
   Deprecated and not-on-iOS entries say "Do not use: X. Use Y."
-- **The gate is strict.** `check_ui_coverage.py --strict-api` runs in CI. A new API entry with no doc fails.
-- **Each entry has one owner.** On Android, a component is covered only by a doc of its own family,
-  and each slot names only entries of its own kind.
 - **Framework topics.** Widgets, notifications, pull to refresh, Swift Charts, web views and the
   other system surfaces each have one doc, served as `<platform>-<topic>`.
+- **The kit guards its own docs.** In the kit's own CI (not in `checks.yml`), `check_ui_coverage.py --strict-api`
+  fails on any API entry with no doc, and on Android a component counts only in a doc of its own family.
+  `scripts/ui_api_lists.py` is now a protected path; this applies to kit PRs only.
 - **Children are enforced, not only told.** `adopt.sh` prints the ruleset that makes
   `shipquick-checks / gate` a required check, pinned to the GitHub Actions app.
   `adopt.sh --check` fails when the gate is not required. The daily scan names every child it skipped.
 
 ## What breaks for children on the bump
 
-Each item has its one-line fix.
+The workflow children call (`checks.yml`) did not change since v0.9.0. Only the local tool changed.
 
-1. **`--strict-api` fails a child that adds or edits UI docs with an uncovered API row** (#231).
-   Fix: cover the row in a structured field (`platforms`, `variants`, `supporting` or `family`) of one doc.
-2. **On Android, a component row is covered only by a doc of its own family** (#231).
-   Fix: give the component its own doc, or move it to its family's doc.
-3. **`adopt.sh --check` fails when the gate is not a required check from the GitHub Actions app** (#260).
-   Fix: run the ruleset command that `adopt.sh` prints (it carries `integration_id` 15368).
-4. **A private child on GitHub Free cannot enforce rulesets** (#260). The gate then only reports.
-   Fix: a paid plan, or make the repo public.
-5. **New protected paths:** `scripts/ui_api_lists.py` and `scripts/kit_branch.py`.
-   Fix: a PR that touches them needs the second review and the owner's yes.
+1. **`bash knowledge/shipquick_latest/scripts/adopt.sh . --check` now fails when the gate is not a required check**
+   from the GitHub Actions app, on the default branch (#260). It also needs a GitHub `origin` to pass.
+   Fix: run the ruleset command that `adopt.sh .` prints (it carries `integration_id` 15368).
+   A private repo on GitHub Free cannot enforce rulesets, so there the gate only reports until the plan changes.
 
 ## Not yet
 
