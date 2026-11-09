@@ -9,7 +9,7 @@ We never call our product "Astryx". Rule 38, ADR-012.
 
 | Ours | Upstream path | Change |
 |---|---|---|
-| `schema/doctypes/component/type.ts` | `packages/cli/authoring/doctypes/component/type.ts` | One field added: `platforms: {android, ios, web}` |
+| `schema/doctypes/component/type.ts` | `packages/cli/authoring/doctypes/component/type.ts` | Two fields added: `platforms: {android, ios, web}`, and `platformUsage: {android?, ios?, web?}` with the type `PlatformUsageDoc` (upstream's `UsageDoc` fields `description`, `bestPractices`, `accessibility`; story #228, ADR-012); and on `SingleComponentDoc.props`, an optional `platform` per prop (story #228) |
 | `schema/doctypes/base/type.ts` | `packages/cli/authoring/doctypes/base/type.ts` | None |
 | `schema/contract/types.ts` | `packages/native/src/contract/types.ts` | `sameMeaning` takes the map shape of upstream's `NativeAdditions.sameMeaning` (`fromComponentDoc.ts`), because we write contracts by hand |
 | `schema/platforms.ts` | `packages/native/src/platforms.ts` | None |

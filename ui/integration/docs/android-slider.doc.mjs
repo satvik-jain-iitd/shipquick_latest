@@ -105,8 +105,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on the thumb only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults).",
-            "Value is read out (4.1.2 Name, Role, Value, label and value): Give the slider a label so the screen reader says what the value is for."
+            "Value is read out (4.1.2 Name, Role, Value, label and value): Give the slider a label so the screen reader says what the value is for.",
+            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on the thumb only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
           ]
         }
       ]

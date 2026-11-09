@@ -5,7 +5,8 @@ Every folder under --root is one component: <Name>/<Name>.doc.mjs plus <Name>/<N
 Fails when: a doc or contract is missing; either breaks its JSON schema (ui/schema/); a doc names a prop
 the contract lacks (core, a platform, or webOnly); a contract prop has no doc; an enum prop's doc type
 does not spell out exactly the contract's literal values; any prop (webOnly too) whose type is a bare
-name or mixes literals with an open `string`; a duplicate prop; text after the JSON other than an
+name or mixes literals with an open `string`; a duplicate prop (same name and same `platform`); a prop tagged
+`platform: X` that the contract has neither in core nor under platforms.X (story #228); text after the JSON other than an
 `export const <name> = {...}` block; no component folder at all. Upstream idea: Astryx docPropReferences and
 docPropLiterals tests (meta/astryx, MIT).
 
@@ -104,18 +105,27 @@ def check_component(folder, doc_schema, contract_schema):
     errs += [f"{contract_path.name} {e}" for e in validate(contract, contract_schema, contract_schema)]
     if errs:
         return errs
-    specs = dict(contract["core"])
-    for platform_props in contract["platforms"].values():
+    core, plats = contract["core"], contract["platforms"]
+    specs = dict(core)
+    for platform_props in plats.values():
         specs.update(platform_props)
     web_only = {w["name"] for w in contract["webOnly"]}
-    names = [p["name"] for p in doc["props"]]
-    errs += [f"{name}: duplicate prop '{n}' in the doc" for n in sorted({n for n in names if names.count(n) > 1})]
-    documented = {p["name"]: p for p in doc["props"]}
-    for prop, p in documented.items():
-        if prop not in specs and prop not in web_only:
+    # Story #228: a doc prop may carry `platform`, so one name can have a Compose type and a SwiftUI type.
+    keys = [(p["name"], p.get("platform")) for p in doc["props"]]
+    errs += [f"{name}: duplicate prop '{n}'{f' ({pl})' if pl else ''} in the doc" for n, pl in sorted({k for k in keys if keys.count(k) > 1}, key=str)]
+    for p in doc["props"]:
+        prop, plat = p["name"], p.get("platform")
+        if plat:
+            spec = plats.get(plat, {}).get(prop) or core.get(prop)
+            if spec is None:
+                errs.append(f"{name}: doc names prop '{prop}' for {plat}, but the contract has it neither in core nor under platforms.{plat}")
+                continue
+        elif prop not in specs and prop not in web_only:
             errs.append(f"{name}: doc names prop '{prop}', but the contract has no such prop (add it to core, a platform, or webOnly with a reason)")
             continue
-        t = specs.get(prop, {}).get("type", {})
+        else:
+            spec = specs.get(prop, {})
+        t = spec.get("type", {})
         if t.get("kind") not in ("named", "content", "icon"):
             errs += [f"{name}: {e}" for e in shape_errors(prop, p["type"])]
         if t.get("kind") in ("enum", "numberEnum"):
@@ -123,7 +133,15 @@ def check_component(folder, doc_schema, contract_schema):
             got = set(re.findall(r"'([^']*)'", p["type"])) if t["kind"] == "enum" else set(re.findall(r"-?\d+(?:\.\d+)?", p["type"]))
             if got != want:
                 errs.append(f"{name}: prop '{prop}' type \"{p['type']}\" must spell out its values: {literals(t)}")
-    errs += [f"{name}: contract prop '{prop}' has no doc entry" for prop in specs if prop not in documented]
+    untagged = {n for n, pl in keys if not pl}
+    errs += [f"{name}: contract prop '{prop}' has no doc entry" for prop in core if prop not in {n for n, _ in keys}]
+    # PR #230 review: a core prop with only tagged entries would vanish from the other platforms' topics.
+    on = [pl for pl, v in doc["platforms"].items() if v]
+    errs += [f"{name}: core prop '{prop}' needs an untagged doc entry, or one per platform (missing: {', '.join(miss)})"
+             for prop in core if prop not in untagged and prop in {n for n, _ in keys}
+             for miss in [[pl for pl in on if (prop, pl) not in keys]] if miss]
+    errs += [f"{name}: contract prop '{prop}' (platforms.{pl}) has no doc entry" for pl, props in plats.items()
+             for prop in props if prop not in untagged and (prop, pl) not in keys]
     return errs
 
 

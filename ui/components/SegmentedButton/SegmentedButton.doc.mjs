@@ -6,8 +6,76 @@ export default {
   "displayName": "Segmented button",
   "platforms": {
     "android": "androidx.compose.material3.SegmentedButton",
-    "ios": null,
+    "ios": "SwiftUI.SegmentedPickerStyle",
     "web": "@astryxdesign/core/SegmentedControl"
+  },
+  "platformUsage": {
+    "android": {
+      "description": "Single-select picks one. Multi-select picks some. Put the buttons in a SingleChoiceSegmentedButtonRow or a MultiChoiceSegmentedButtonRow.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Keep multi-select to two to five options."
+        },
+        {
+          "guidance": true,
+          "description": "Set each button's shape with SegmentedButtonDefaults.itemShape(index, count)."
+        },
+        {
+          "guidance": false,
+          "description": "Use it for more than five options or complex choices. Use chips."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "48dp",
+          "description": "Google: anything a user can tap is at least 48dp. Material sets this on each segment only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+        },
+        {
+          "name": "State is read out",
+          "category": "Semantics",
+          "criterion": "4.1.2 Name, Role, Value",
+          "requirement": "role and state",
+          "description": "Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page)."
+        }
+      ]
+    },
+    "ios": {
+      "description": "On iOS the twin is a Picker with .pickerStyle(.segmented). Apple: the style \"presents the options in a segmented control\". It picks one option. Each option gets a tag(_:) with its value.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Bind selection, and tag each option with its value, like Text(\"Day\").tag(Range.day)."
+        },
+        {
+          "guidance": true,
+          "description": "Use it for a few closely related choices (Apple HIG, Segmented controls)."
+        },
+        {
+          "guidance": false,
+          "description": "Mix actions and choices in one control."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "VoiceOver",
+          "category": "Semantics",
+          "criterion": "4.1.2 Name, Role, Value",
+          "requirement": "a spoken name and state",
+          "description": "VoiceOver says each segment's words and which one is selected."
+        },
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "44 by 44 pt",
+          "description": "Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
+        }
+      ]
+    }
   },
   "group": "Button",
   "category": "Form Controls",
@@ -18,36 +86,9 @@ export default {
     "choice"
   ],
   "usage": {
-    "description": "A segmented button lets the user pick from a few options set side by side. Single-select picks one. Multi-select picks some. Put the buttons in a SingleChoiceSegmentedButtonRow or a MultiChoiceSegmentedButtonRow.",
-    "bestPractices": [
-      {
-        "guidance": true,
-        "description": "Keep multi-select to two to five options."
-      },
-      {
-        "guidance": true,
-        "description": "Set each button's shape with SegmentedButtonDefaults.itemShape(index, count)."
-      },
-      {
-        "guidance": false,
-        "description": "Use it for more than five options or complex choices. Use chips."
-      }
-    ],
+    "description": "A segmented button lets the user pick from a few options set side by side.",
+    "bestPractices": [],
     "accessibility": [
-      {
-        "name": "Touch target",
-        "category": "Content",
-        "criterion": "2.5.8 Target Size (Minimum)",
-        "requirement": "48dp",
-        "description": "Google: anything a user can tap is at least 48dp. Material sets this on each segment only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
-      },
-      {
-        "name": "State is read out",
-        "category": "Semantics",
-        "criterion": "4.1.2 Name, Role, Value",
-        "requirement": "role and state",
-        "description": "Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page)."
-      },
       {
         "name": "Text contrast",
         "category": "Color contrast",
@@ -103,6 +144,27 @@ export default {
       "name": "label",
       "type": "@Composable () -> Unit",
       "description": "The words for the option.",
+      "required": true
+    },
+    {
+      "name": "titleKey",
+      "type": "LocalizedStringKey",
+      "description": "Says what the choice is for. VoiceOver reads it.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "selection",
+      "type": "Binding<SelectionValue>",
+      "description": "The picked option's tag.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "content",
+      "type": "() -> some View",
+      "description": "The options, each with a tag(_:).",
+      "platform": "ios",
       "required": true
     }
   ]

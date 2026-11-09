@@ -80,8 +80,8 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Use LazyColumn or LazyRow for long lists.",
-            "Give each item a stable key."
+            "Give each item a stable key.",
+            "Use LazyColumn or LazyRow for long lists."
           ]
         },
         {
@@ -100,8 +100,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on a clickable row only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults).",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "Touch target (2.5.8 Target Size (Minimum), 48dp): Google: anything a user can tap is at least 48dp. Material sets this on a clickable row only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
           ]
         }
       ]

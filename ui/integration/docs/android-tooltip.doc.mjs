@@ -93,8 +93,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Not the only name (1.4.13 Content on Hover or Focus, dismissible, stays): The tooltip can be closed and stays while the user looks at it. The icon still has its own contentDescription.",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "Not the only name (1.4.13 Content on Hover or Focus, dismissible, stays): The tooltip can be closed and stays while the user looks at it. The icon still has its own contentDescription."
           ]
         }
       ]

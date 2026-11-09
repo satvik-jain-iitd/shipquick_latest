@@ -12,6 +12,29 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "value": {
+        "type": {
+          "kind": "named",
+          "name": "Double?"
+        },
+        "optional": true
+      },
+      "total": {
+        "type": {
+          "kind": "named",
+          "name": "Double"
+        },
+        "optional": true
+      },
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

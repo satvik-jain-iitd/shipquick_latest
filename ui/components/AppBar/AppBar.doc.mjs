@@ -6,8 +6,72 @@ export default {
   "displayName": "App bar",
   "platforms": {
     "android": "androidx.compose.material3.TopAppBar",
-    "ios": null,
+    "ios": "SwiftUI.View.toolbar(content:)",
     "web": null
+  },
+  "platformUsage": {
+    "android": {
+      "description": "Pass app bars to Scaffold.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Pass the bar to Scaffold's topBar or bottomBar."
+        },
+        {
+          "guidance": true,
+          "description": "Use a scrollBehavior to shrink the bar as the content scrolls."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Icon name",
+          "category": "Semantics",
+          "criterion": "1.1.1 Non-text Content",
+          "requirement": "contentDescription",
+          "description": "An icon with no words next to it needs a contentDescription that names the action, like \"Add to favorites\"."
+        },
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "48dp",
+          "description": "Google: anything a user can tap is at least 48dp. Material sets this on each action only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+        }
+      ]
+    },
+    "ios": {
+      "description": "On iOS the bar is the navigation bar at the top, or a toolbar at the bottom. Add items with toolbar(content:) and ToolbarItem. Apple: \"Populates the toolbar or navigation bar with the specified items.\" Set the title with navigationTitle(_:).",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Put each item in a ToolbarItem with a placement, like .topBarTrailing, .bottomBar or .confirmationAction."
+        },
+        {
+          "guidance": true,
+          "description": "Set the screen name with navigationTitle(_:) on the view inside the navigation container."
+        },
+        {
+          "guidance": false,
+          "description": "Build your own top bar out of stacks and buttons."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "VoiceOver",
+          "category": "Semantics",
+          "criterion": "4.1.2 Name, Role, Value",
+          "requirement": "a spoken name and state",
+          "description": "An icon with no words needs an accessibilityLabel that names the action, like \"Add to favorites\"."
+        },
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "44 by 44 pt",
+          "description": "Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
+        }
+      ]
+    }
   },
   "group": "App bar",
   "category": "Navigation",
@@ -19,37 +83,14 @@ export default {
     "bottom bar"
   ],
   "usage": {
-    "description": "An app bar gives access to key tasks and navigation. A top app bar has the title, main actions and navigation. A bottom app bar has core navigation or actions. Pass app bars to Scaffold.",
+    "description": "An app bar gives access to key tasks and navigation. A top app bar has the title, main actions and navigation. A bottom app bar has core navigation or actions.",
     "bestPractices": [
-      {
-        "guidance": true,
-        "description": "Pass the bar to Scaffold's topBar or bottomBar."
-      },
-      {
-        "guidance": true,
-        "description": "Use a scrollBehavior to shrink the bar as the content scrolls."
-      },
       {
         "guidance": false,
         "description": "Put more than a few actions in the bar. Move the rest to a menu."
       }
     ],
-    "accessibility": [
-      {
-        "name": "Icon name",
-        "category": "Semantics",
-        "criterion": "1.1.1 Non-text Content",
-        "requirement": "contentDescription",
-        "description": "An icon with no words next to it needs a contentDescription that names the action, like \"Add to favorites\"."
-      },
-      {
-        "name": "Touch target",
-        "category": "Content",
-        "criterion": "2.5.8 Target Size (Minimum)",
-        "requirement": "48dp",
-        "description": "Google: anything a user can tap is at least 48dp. Material sets this on each action only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
-      }
-    ],
+    "accessibility": [],
     "anatomy": [
       {
         "name": "Navigation icon",
@@ -90,6 +131,26 @@ export default {
       "type": "TopAppBarScrollBehavior",
       "description": "How the bar reacts when the content scrolls.",
       "default": "null"
+    },
+    {
+      "name": "content",
+      "type": "() -> some ToolbarContent",
+      "description": "The ToolbarItems.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "placement",
+      "type": "ToolbarItemPlacement",
+      "description": "ToolbarItem: where the item sits, like .topBarTrailing or .bottomBar.",
+      "platform": "ios",
+      "default": ".automatic"
+    },
+    {
+      "name": "navigationTitle",
+      "type": "LocalizedStringKey",
+      "description": "The screen name, set on the view inside the navigation container.",
+      "platform": "ios"
     }
   ]
 };

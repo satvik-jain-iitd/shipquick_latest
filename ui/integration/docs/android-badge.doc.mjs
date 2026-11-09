@@ -81,8 +81,8 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Count is read out (1.1.1 Non-text Content, contentDescription): The badge is only a picture. Say the number in the icon's contentDescription, like \"Mail, 3 unread\".",
-            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in."
+            "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Text has at least 4.5:1 contrast with its fill. The colours come from the tokens, never typed in.",
+            "Count is read out (1.1.1 Non-text Content, contentDescription): The badge is only a picture. Say the number in the icon's contentDescription, like \"Mail, 3 unread\"."
           ]
         }
       ]

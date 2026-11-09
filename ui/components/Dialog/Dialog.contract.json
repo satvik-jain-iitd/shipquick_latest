@@ -40,6 +40,31 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        }
+      },
+      "isPresented": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<Bool>"
+        }
+      },
+      "actions": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "message": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

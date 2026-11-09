@@ -9,6 +9,36 @@ export default {
     "ios": null,
     "web": "@astryxdesign/core/TabList"
   },
+  "platformUsage": {
+    "android": {
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Use PrimaryTabRow for one set of tabs."
+        },
+        {
+          "guidance": true,
+          "description": "Use SecondaryTabRow only for a second level."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "State is read out",
+          "category": "Semantics",
+          "criterion": "4.1.2 Name, Role, Value",
+          "requirement": "role and state",
+          "description": "Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page)."
+        },
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "48dp",
+          "description": "Google: anything a user can tap is at least 48dp. Material sets this on each tab only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+        }
+      ]
+    }
+  },
   "group": "Tabs",
   "category": "Navigation",
   "keywords": [
@@ -21,34 +51,11 @@ export default {
     "description": "Tabs group related content. Primary tabs sit under the top app bar and show the main content. Secondary tabs split content further inside an area.",
     "bestPractices": [
       {
-        "guidance": true,
-        "description": "Use PrimaryTabRow for one set of tabs."
-      },
-      {
-        "guidance": true,
-        "description": "Use SecondaryTabRow only for a second level."
-      },
-      {
         "guidance": false,
         "description": "Use tabs to step through a task. Use a step flow."
       }
     ],
-    "accessibility": [
-      {
-        "name": "State is read out",
-        "category": "Semantics",
-        "criterion": "4.1.2 Name, Role, Value",
-        "requirement": "role and state",
-        "description": "Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page)."
-      },
-      {
-        "name": "Touch target",
-        "category": "Content",
-        "criterion": "2.5.8 Target Size (Minimum)",
-        "requirement": "48dp",
-        "description": "Google: anything a user can tap is at least 48dp. Material sets this on each tab only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
-      }
-    ],
+    "accessibility": [],
     "anatomy": [
       {
         "name": "Row",

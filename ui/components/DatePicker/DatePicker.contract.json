@@ -29,6 +29,34 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        }
+      },
+      "selection": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<Date>"
+        }
+      },
+      "in": {
+        "type": {
+          "kind": "named",
+          "name": "ClosedRange<Date>"
+        },
+        "optional": true
+      },
+      "displayedComponents": {
+        "type": {
+          "kind": "named",
+          "name": "DatePickerComponents"
+        },
+        "optional": true
+      }
     }
   },
   "webOnly": []

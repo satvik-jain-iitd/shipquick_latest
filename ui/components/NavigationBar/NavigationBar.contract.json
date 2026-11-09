@@ -32,6 +32,37 @@
         },
         "optional": true
       }
+    },
+    "ios": {
+      "selection": {
+        "type": {
+          "kind": "named",
+          "name": "Binding<SelectionValue>"
+        }
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "titleKey": {
+        "type": {
+          "kind": "named",
+          "name": "LocalizedStringKey"
+        }
+      },
+      "systemImage": {
+        "type": {
+          "kind": "named",
+          "name": "String"
+        }
+      },
+      "value": {
+        "type": {
+          "kind": "named",
+          "name": "SelectionValue"
+        }
+      }
     }
   },
   "webOnly": []

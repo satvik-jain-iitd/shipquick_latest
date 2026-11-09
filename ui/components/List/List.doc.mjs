@@ -6,8 +6,58 @@ export default {
   "displayName": "List",
   "platforms": {
     "android": "androidx.compose.material3.ListItem",
-    "ios": null,
+    "ios": "SwiftUI.List",
     "web": "@astryxdesign/core/List"
+  },
+  "platformUsage": {
+    "android": {
+      "description": "For a long list or one of unknown length, use LazyColumn (a layout container): it only builds the rows on screen. Build each row with ListItem.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Use LazyColumn or LazyRow for long lists."
+        },
+        {
+          "guidance": false,
+          "description": "Put a long list in a plain Column. It builds every row at once."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "48dp",
+          "description": "Google: anything a user can tap is at least 48dp. Material sets this on a clickable row only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+        }
+      ]
+    },
+    "ios": {
+      "description": "On iOS, List shows rows of data in one scrolling column and only builds the rows on screen. listStyle(_:) sets the look, like .insetGrouped or .plain.",
+      "bestPractices": [
+        {
+          "guidance": true,
+          "description": "Pass the data with an id, like List(items, id: \\.id) { item in ... }."
+        },
+        {
+          "guidance": true,
+          "description": "Bind selection when the user can pick rows."
+        },
+        {
+          "guidance": false,
+          "description": "Put a long list in a ScrollView with a VStack. Use List."
+        }
+      ],
+      "accessibility": [
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "44 by 44 pt",
+          "description": "Apple: a control needs a hit region of at least 44 by 44 pt (HIG, Buttons). The feel.touchTarget.ios token is 44pt."
+        }
+      ]
+    }
   },
   "group": "List",
   "category": "Table & List",
@@ -19,29 +69,14 @@ export default {
     "recycler"
   ],
   "usage": {
-    "description": "A list shows a set of items. For a long list or one of unknown length, use LazyColumn (a layout container): it only builds the rows on screen. Build each row with ListItem.",
+    "description": "A list shows a set of items.",
     "bestPractices": [
       {
         "guidance": true,
-        "description": "Use LazyColumn or LazyRow for long lists."
-      },
-      {
-        "guidance": true,
         "description": "Give each item a stable key."
-      },
-      {
-        "guidance": false,
-        "description": "Put a long list in a plain Column. It builds every row at once."
       }
     ],
     "accessibility": [
-      {
-        "name": "Touch target",
-        "category": "Content",
-        "criterion": "2.5.8 Target Size (Minimum)",
-        "requirement": "48dp",
-        "description": "Google: anything a user can tap is at least 48dp. Material sets this on a clickable row only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
-      },
       {
         "name": "Text contrast",
         "category": "Color contrast",
@@ -99,6 +134,33 @@ export default {
       "name": "trailingContent",
       "type": "@Composable () -> Unit",
       "description": "At the end, like a switch."
+    },
+    {
+      "name": "data",
+      "type": "RandomAccessCollection",
+      "description": "The items, one row each.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "id",
+      "type": "KeyPath<Data.Element, ID>",
+      "description": "The stable id of each item.",
+      "platform": "ios"
+    },
+    {
+      "name": "rowContent",
+      "type": "(Data.Element) -> some View",
+      "description": "Builds one row from one item.",
+      "platform": "ios",
+      "required": true
+    },
+    {
+      "name": "selection",
+      "type": "Binding<SelectionValue?>?",
+      "description": "The picked row, when rows can be picked.",
+      "platform": "ios",
+      "default": "nil"
     }
   ]
 };

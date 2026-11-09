@@ -22,7 +22,7 @@ export default {
         },
         {
           "type": "prose",
-          "text": "A navigation drawer is a menu that slides in from the side. The user swipes or taps a menu icon. Use it for many sections, account links, or features in a complex app."
+          "text": "A navigation drawer lists many sections, account links, or features in a complex app. It is a menu that slides in from the side. The user swipes or taps a menu icon."
         }
       ]
     },

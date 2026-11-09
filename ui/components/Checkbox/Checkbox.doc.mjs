@@ -9,6 +9,27 @@ export default {
     "ios": null,
     "web": "@astryxdesign/core/CheckboxInput"
   },
+  "platformUsage": {
+    "android": {
+      "description": "It is unselected, selected or indeterminate (TriStateCheckbox).",
+      "accessibility": [
+        {
+          "name": "State is read out",
+          "category": "Semantics",
+          "criterion": "4.1.2 Name, Role, Value",
+          "requirement": "role and state",
+          "description": "Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page)."
+        },
+        {
+          "name": "Touch target",
+          "category": "Content",
+          "criterion": "2.5.8 Target Size (Minimum)",
+          "requirement": "48dp",
+          "description": "Google: anything a user can tap is at least 48dp. Material sets this on the checkbox only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
+        }
+      ]
+    }
+  },
   "group": "Checkbox",
   "category": "Form Controls",
   "keywords": [
@@ -19,7 +40,7 @@ export default {
     "multi select"
   ],
   "usage": {
-    "description": "A checkbox lets the user pick one or more items from a list, turn an item on or off, or agree to terms. It is unselected, selected or indeterminate (TriStateCheckbox).",
+    "description": "A checkbox lets the user pick one or more items from a list, turn an item on or off, or agree to terms.",
     "bestPractices": [
       {
         "guidance": true,
@@ -35,20 +56,6 @@ export default {
       }
     ],
     "accessibility": [
-      {
-        "name": "State is read out",
-        "category": "Semantics",
-        "criterion": "4.1.2 Name, Role, Value",
-        "requirement": "role and state",
-        "description": "Screen readers say the role and the state (on, off, selected). Put the click on the whole row with its label, and pass a null click to the control (Google's api-defaults page)."
-      },
-      {
-        "name": "Touch target",
-        "category": "Content",
-        "criterion": "2.5.8 Target Size (Minimum)",
-        "requirement": "48dp",
-        "description": "Google: anything a user can tap is at least 48dp. Material sets this on the checkbox only when it has a click handler (https://developer.android.com/develop/ui/compose/accessibility/api-defaults)."
-      },
       {
         "name": "Shape contrast",
         "category": "Color contrast",
