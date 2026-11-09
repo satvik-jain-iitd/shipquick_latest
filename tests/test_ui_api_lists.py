@@ -337,8 +337,17 @@ def test_s231_a_doc_level_status_needs_a_replacement_and_the_schema_takes_it():
 
 def test_s231_a_name_listed_twice_in_one_doc_fails():
     import check_ui_docs
-    errs = check_ui_docs.api_shape_errors(api_doc(variants=[{"name": "X", "note": "a"}], supporting=[{"name": "X", "use": "b"}]))
+    errs = check_ui_docs.api_shape_errors(api_doc(variants=[{"name": "X", "note": "a"}, {"name": "X", "note": "b"}]))
     assert any("X" in e and "twice" in e for e in errs)
+    errs = check_ui_docs.api_shape_errors(api_doc(supporting=[{"name": "X", "use": "a"}, {"name": "X", "use": "b"}]))
+    assert any("X" in e and "twice" in e for e in errs)
+
+
+def test_s231_one_name_as_a_variant_and_as_supporting_passes():
+    # The M3 list has MaterialTheme twice: the composable (component) and the object (supporting). They are two rows.
+    import check_ui_docs
+    doc = api_doc(variants=[{"name": "MaterialTheme", "note": "a"}], supporting=[{"name": "MaterialTheme", "use": "b"}])
+    assert check_ui_docs.api_shape_errors(doc) == []
 
 
 def test_s231_the_real_lists_match_their_saved_sources():

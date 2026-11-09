@@ -574,3 +574,14 @@ Scenario: every Sheets, dialogs and tooltips row of the Android API list is cove
   And a deprecated row prints only as "Do not use: X. Use Y."
 ```
 Proof: the GAP count for these families drops from 32 to 0. No script changed, so no new test. Local: `python3 scripts/check_ui_coverage.py`.
+
+## Story #231, Android A8 Theme and base (issue #254)
+```gherkin
+Scenario: every Theme and base row of the Android API list is covered by a structured field
+  Given the 13 rows of android-m3-api.md in MaterialTheme, ColorScheme, Typography, Shapes, Shape, Ripple, RippleConfiguration, Text, Icon, ExperimentalMaterial3Api (Label went to A6)
+  When check_ui_coverage.py runs
+  Then it prints no GAP line for these families
+  And each variant has a note and each supporting entry has a use in platformApi.android of its family doc
+  And a deprecated row prints only as "Do not use: X. Use Y."
+```
+Proof: the GAP count for these families drops from 13 to 0. Test: `test_s231_one_name_as_a_variant_and_as_supporting_passes` and the changed `test_s231_a_name_listed_twice_in_one_doc_fails` in `tests/test_ui_api_lists.py`. Local: `python3 scripts/check_ui_coverage.py`.

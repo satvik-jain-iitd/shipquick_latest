@@ -107,6 +107,22 @@ export default {
         {
           "name": "VerticalDragHandle",
           "note": "A tall handle between two panes. The user drags it to change the pane widths, on large screens."
+        },
+        {
+          "name": "MaterialTheme",
+          "note": "Wraps the whole app once, above every Scaffold. It gives every part its colorScheme, typography and shapes. Build those three from the tokens in design/tokens.json."
+        },
+        {
+          "name": "Text",
+          "note": "M3 text. It takes its colour and style from the theme. Pass a style from MaterialTheme.typography, never a hand-set size."
+        },
+        {
+          "name": "ProvideTextStyle",
+          "note": "Sets the text style for all Text inside it. Parts like buttons and app bars use it for their labels."
+        },
+        {
+          "name": "Icon",
+          "note": "An M3 icon from an ImageVector, a Painter or an ImageBitmap, tinted by the theme. Give a contentDescription, or null when the icon is only decoration."
         }
       ],
       "supporting": [
@@ -129,6 +145,42 @@ export default {
         {
           "name": "DragHandleSizes",
           "use": "The size of a drag handle when it rests, is pressed and is dragged."
+        },
+        {
+          "name": "MaterialTheme",
+          "use": "Reads the current theme inside any composable: MaterialTheme.colorScheme, MaterialTheme.typography and MaterialTheme.shapes."
+        },
+        {
+          "name": "ColorScheme",
+          "use": "The named colour roles of the theme, like primary and onPrimary. Make one with lightColorScheme() or darkColorScheme(), or dynamicLightColorScheme() and dynamicDarkColorScheme() on Android 12 and later."
+        },
+        {
+          "name": "contentColorFor",
+          "use": "Gives the matching content colour for a background colour of the scheme, like onPrimary for primary."
+        },
+        {
+          "name": "Typography",
+          "use": "The type scale of the theme: display, headline, title, body and label, each in large, medium and small."
+        },
+        {
+          "name": "Shapes",
+          "use": "The shape scale of the theme: extraSmall, small, medium, large and extraLarge."
+        },
+        {
+          "name": "ShapeDefaults",
+          "use": "The default value of each shape in the scale."
+        },
+        {
+          "name": "RippleDefaults",
+          "use": "The default ripple alpha values."
+        },
+        {
+          "name": "RippleConfiguration",
+          "use": "Changes the ripple colour or alpha for one part of the screen, set through LocalRippleConfiguration. Use it only when the default ripple cannot be seen."
+        },
+        {
+          "name": "ExperimentalMaterial3Api",
+          "use": "Marks M3 API that may still change. Opt in with @OptIn(ExperimentalMaterial3Api::class) where you call it; experimental rows are marked in docs/research/android-m3-api.md."
         }
       ]
     }
