@@ -87,8 +87,8 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Keep one primary button per screen. Use secondary or ghost for the rest.",
-            "Name the action in the label, like \"Save changes\", not \"OK\"."
+            "Name the action in the label, like \"Save changes\", not \"OK\".",
+            "Keep one filled Button per screen for the main action. Use FilledTonalButton, OutlinedButton or TextButton for the rest."
           ]
         },
         {

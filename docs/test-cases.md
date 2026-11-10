@@ -1599,7 +1599,7 @@ Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_
 Scenario: the Android Button topic shows only M3 parameters and the five M3 buttons
   Given the Button doc and contract in ui/components/Button
   When the android topic is built
-  Then every prop row is a Compose Material 3 Button parameter (tests/fixtures/m3_button.json, from Google's page), onClick, enabled and content are among them, and Button, FilledTonalButton, ElevatedButton, OutlinedButton and TextButton are named
+  Then every prop row is a Compose Material 3 Button parameter (tests/fixtures/m3_button.json, from Google's page), onClick, enabled and content are among them, and Button, FilledTonalButton, ElevatedButton, OutlinedButton and TextButton are named, and no web variant word (primary, secondary, ghost, destructive) appears anywhere in the topic text (PR #367 review: the web Do line moved to platformUsage.web, Android got its own M3 line)
   Test: test_s223_the_android_button_topic_shows_only_m3_parameters_and_the_five_m3_buttons
 Scenario: a web prop in core is caught as not M3
   Given a contract with `variant` in core

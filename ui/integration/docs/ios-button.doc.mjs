@@ -83,7 +83,6 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Keep one primary button per screen. Use secondary or ghost for the rest.",
             "Name the action in the label, like \"Save changes\", not \"OK\"."
           ]
         },

@@ -3,6 +3,7 @@
 `scripts/ui_topics.py` builds `ios-<name>` and `android-<name>` from one shared doc. Text that fits one platform
 lives in `platformUsage.<platform>`; props come from `core` or that platform only. The generator fails on a leak."""
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -223,6 +224,9 @@ def test_s223_the_android_button_topic_shows_only_m3_parameters_and_the_five_m3_
     assert {"onClick", "enabled", "content"} <= set(prop_names(t))
     text = text_of(t)
     assert all(name in text for name in M3["composables"]), M3["composables"]
+    # PR #367 review: the shared Do list once told an Android coder to use a "ghost" button. M3 has no web variant.
+    web_words = re.findall(r"\b(?:primary|secondary|ghost|destructive)\b", text, re.IGNORECASE)
+    assert web_words == [], f"web variant words in the Android topic: {web_words}"
 
 
 def test_s223_a_web_prop_in_core_is_caught_as_not_m3():

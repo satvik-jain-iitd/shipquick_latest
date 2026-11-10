@@ -14,7 +14,6 @@ export default {
   "usage": {
     "description": "A button starts an action when the user presses it. Use it to save, send, confirm or start a task.",
     "bestPractices": [
-      {"guidance": true, "description": "Keep one primary button per screen. Use secondary or ghost for the rest."},
       {"guidance": true, "description": "Name the action in the label, like \"Save changes\", not \"OK\"."},
       {"guidance": false, "description": "Use a button only to go to another page. Use a link instead."}
     ],
@@ -27,6 +26,18 @@ export default {
       {"name": "Label", "required": true, "description": "The words for the action. Also the accessible name."},
       {"name": "Spinner", "required": false, "description": "Shows while the action runs."}
     ]
+  },
+  "platformUsage": {
+    "android": {
+      "bestPractices": [
+        {"guidance": true, "description": "Keep one filled Button per screen for the main action. Use FilledTonalButton, OutlinedButton or TextButton for the rest."}
+      ]
+    },
+    "web": {
+      "bestPractices": [
+        {"guidance": true, "description": "Keep one primary button per screen. Use secondary or ghost for the rest."}
+      ]
+    }
   },
   "props": [
     {"name": "label", "type": "string", "description": "The words on the button. Screen readers read them too.", "required": true},
