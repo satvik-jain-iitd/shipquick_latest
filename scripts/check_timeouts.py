@@ -54,8 +54,9 @@ def main(args: list[str]) -> int:
     for f in files:
         text = f.read_text(encoding="utf-8")
         if not re.search(r"^jobs\s*:", text, re.M):
-            # story #174: zero jobs is named, never a silent pass (the file is not checked).
-            print(f"no jobs found in {f}: file not checked (write `jobs:` at column 0, block style)")
+            # story #174: zero jobs fails, never a silent pass (a root-indented file still runs
+            # on GitHub, so its jobs may have no timeout), same as the flow-style NO_JOBS case.
+            bad.append(f"{f}: no jobs found (write `jobs:` at column 0, block style)")
             continue
         bad += [f"{f}: {j}" for j in missing(text)]
     for b in bad:

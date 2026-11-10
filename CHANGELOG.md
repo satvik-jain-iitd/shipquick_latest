@@ -14,7 +14,7 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ### Changed
 - Children warning, for the next release notes: after the pin bump the `adoption` job fails any child job with no `timeout-minutes`. Fix: add `timeout-minutes: 10` per job; `python3 knowledge/shipquick_latest/scripts/check_timeouts.py .github/workflows` lists them (#174).
-- `check_timeouts.py` names a workflow file that has zero jobs, instead of passing it silently (#174).
+- `check_timeouts.py` names and fails a workflow file that has zero jobs (for example a root-indented `jobs:`), instead of passing it silently (#174).
 
 ## [0.11.1] - 2026-11-10
 Tag `v0.11.1`, "a child sets its milestone". Notes: `docs/RELEASE_NOTES_v0.11.1.md`.
