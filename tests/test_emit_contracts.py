@@ -48,6 +48,16 @@ def components_with(tmp_path, contracts):
     return root
 
 
+def test_s222_every_committed_struct_is_current_with_its_contract():
+    """Each committed struct file is a fresh render of its contract; none is stale, none has lost its contract."""
+    files = emit_contracts.render(SRC)
+    have = sorted(OUT.glob("*.swift")) if OUT.is_dir() else []
+    assert have, "no struct file is committed yet"
+    for p in have:
+        assert p.name in files, f"{p.name} has no contract"
+        assert p.read_text(encoding="utf-8") == files[p.name], f"{p.name} is stale"
+
+
 def test_s222_every_prop_kind_maps_to_a_swift_type(tmp_path):
     files = emit_contracts.render(components_with(tmp_path, [SAMPLE]))
     assert list(files) == ["SampleCard.swift"]
