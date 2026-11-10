@@ -1095,3 +1095,21 @@ Scenario: a coder learns where the Red section goes before the first push
   Then the usage line names tdd, the header and the guidelines say the Red section is in a commit body before a push, and the template has a Red section above Test Output
 ```
 Tests: `tests/test_check_tdd.py` (`test_s319_dependabot_is_exempt_in_the_tdd_job_like_team_block`, `test_s319_check_local_usage_and_header_name_tdd`, `test_s319_commit_guidelines_say_a_code_branch_carries_a_red_line`, `test_s319_the_pr_template_has_a_red_section_above_test_output`).
+## Story #312: the bench report (dry parts)
+```gherkin
+Scenario: the run says where it put the folder
+  Given a finished bench --run
+  When it ends
+  Then its last line is "run folder: <the folder>"
+Scenario: cell numbers come from the claude JSON and survive a rescore
+  Given a fake claude that prints cost, output tokens and turns
+  When the run finishes and then --rescore runs
+  Then results.json holds those numbers and the lines of code of solution.py, before and after
+Scenario: the report compares the arms task by task
+  Given results for two tasks, two arms and three runs each
+  When bench/report.py runs
+  Then each task ratio is the kit median over the no-kit median, the table shows their geometric mean and a 95% bootstrap interval, and a metric nobody recorded shows n/a
+Scenario: the decision is written down
+  Then ADR-014 says a kit rule wording change must beat the current kit in a paired run, and experiments.md has a pending row for the bench
+```
+Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
