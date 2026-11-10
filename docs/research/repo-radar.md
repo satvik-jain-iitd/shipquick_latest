@@ -437,3 +437,12 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: extend `scripts/check_story.py` (the story-shape check of #155). No new tool: the same issue read, the same skip rule for old stories.
 - Confidence that nothing fits better: 0.7 (a narrow ShipQuick rule; the search was thin).
 - Study of Ponytail and ECC (the epic's source, read in full by the reviewer, 10 Nov 2026): `docs/research/2026-11-10-ponytail-ecc-study.md`.
+
+---
+## 10 Nov 2026, story #331 (A1a-2): bench cell runner and --rescore
+- Need: a headless `claude -p` runner per task and arm, with a timeout tree-kill and an offline rescore.
+- Run: `scout.py --need "headless claude -p benchmark runner per task and arm with fake claude test and offline rescore"`: no repos found.
+  `gh search repos "claude code benchmark harness headless claude -p arms"`: no results.
+- Read: ponytail `benchmarks/agentic/run.py` (`run_cell`, `_kill_group` via process group, stdout to file, `rescore`), study clone, read only.
+- Decision: adopt ponytail's cell pattern (stdout to a file, `start_new_session`, group kill on timeout, logs outside the scored folder). Written for the kit's bench with stdlib only; the ponytail fixtures, plugin arms and cache warm-up are not borrowed (ShipQuick has no plugin arms yet).
+- Confidence that nothing fits better: 0.7 (the search is thin; ponytail is the only close fit).
