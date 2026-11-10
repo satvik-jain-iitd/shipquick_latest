@@ -50,7 +50,7 @@ artifact. To see the new look, do a record run (above) and open the downloaded P
 
 ```
 cd ui/ios
-SHIPQUICK_SNAPSHOTS=1 xcodebuild test -scheme ShipQuickUI-Package \
+SHIPQUICK_SNAPSHOTS=1 xcodebuild test -scheme ShipQuickUI \
   -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
   -skipPackagePluginValidation -skipMacroValidation -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO
 ```

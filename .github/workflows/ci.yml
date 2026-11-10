@@ -481,7 +481,11 @@ jobs:
       - name: Run the snapshot tests on iPhone 16, iOS 18.5
         working-directory: ui/ios
         run: |
-          xcodebuild test -scheme ShipQuickUI-Package -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
+          xcodebuild -list
+          # the test target is in the manifest only with SHIPQUICK_SNAPSHOTS set: the "-Package" scheme holds every target when Xcode makes one
+          scheme=$(xcodebuild -list -json | python3 -c 'import json,sys; s=json.load(sys.stdin)["workspace"]["schemes"]; print(next((x for x in s if x.endswith("-Package")), s[0]))')
+          echo "scheme: $scheme"
+          xcodebuild test -scheme "$scheme" -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
             -skipPackagePluginValidation -skipMacroValidation -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO -quiet
       - name: Upload the recorded reference images (record=true only)
         if: always() && inputs.record == true
