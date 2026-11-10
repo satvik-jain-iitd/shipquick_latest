@@ -24,7 +24,7 @@ export default {
         },
         {
           "type": "prose",
-          "text": "Modifiers from other Apple frameworks that have no doc of their own: HealthKit, WorkoutKit, MusicKit, RealityKit, Core Motion, Core Location, Nearby Interaction, device management, Sign in with Apple and the system pickers. StoreKit, MapKit, TipKit, PassKit and Image Playground rows live in their own docs. Each entry is a SwiftUI view modifier. Add it to a view as Apple ships it."
+          "text": "Modifiers from other Apple frameworks that have no doc of their own: HealthKit, WorkoutKit, MusicKit, RealityKit, Core Motion, Core Location, Nearby Interaction, device management, Sign in with Apple and the music, journaling and transaction pickers. StoreKit, MapKit, TipKit, PassKit and Image Playground rows live in their own docs. Each entry is a SwiftUI view modifier. Add it to a view as Apple ships it."
         }
       ]
     },
@@ -40,7 +40,6 @@ export default {
             "journalingSuggestionsPicker: `.journalingSuggestionsPicker(isPresented:onCompletion:)`, iOS 17.2. Apple: \"Presents a visual picker interface that contains events and images that a person can select to retrieve more information.\"",
             "managedContentStyle: `.managedContentStyle(_:)`, iOS 17.2. Apple: \"Applies a managed content style to the view.\"",
             "musicPicker: `.musicPicker(isPresented:title:selection:)`, iOS 27.0. Apple: \"Presents a music picker to select items from the Apple Music catalog and the user’s music library.\"",
-            "photosPickerMetadataOptions: `.photosPickerMetadataOptions(_:)`, iOS 27.0. Apple: \"Sets metadata options for the Photos picker.\"",
             "realityViewCameraControls: `.realityViewCameraControls(_:)`, iOS 18.0. Apple: \"Adds gestures that control the position and direction of a virtual camera.\"",
             "realityViewLayoutBehavior: `.realityViewLayoutBehavior(_:)`, iOS 26.0. Apple: \"A view modifier that controls the frame sizing and content alignment behavior for `RealityView`\"",
             "signInWithAppleButtonStyle: `.signInWithAppleButtonStyle(_:)`, iOS 14.0. Apple: \"Sets the style used for displaying the control (see `SignInWithAppleButton.Style`).\"",

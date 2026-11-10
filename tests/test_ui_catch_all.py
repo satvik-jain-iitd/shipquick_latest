@@ -36,7 +36,7 @@ SPLIT = {
         "tip": "Tips",
         "applepay": "Wallet", "wallet": "Wallet", "paylater": "Wallet",
         "imageplayground": "ImagePlayground",
-        "webview": "web-view", "gesture": "Gestures",
+        "webview": "web-view", "gesture": "Gestures", "photospicker": "PresentationModifiers",
     },
 }
 

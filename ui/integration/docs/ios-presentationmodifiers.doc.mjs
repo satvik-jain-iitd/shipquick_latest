@@ -64,6 +64,7 @@ export default {
             "photosPicker: `.photosPicker(isPresented:selection:matching:preferredItemEncoding:)`, iOS 16.0. Apple: \"Presents a Photos picker that selects a `PhotosPickerItem`.\"",
             "photosPickerAccessoryVisibility: `.photosPickerAccessoryVisibility(_:edges:)`, iOS 17.0. Apple: \"Sets the accessory visibility of the Photos picker. Accessories include anything between the content and the edge, like the navigation bar or the sidebar.\"",
             "photosPickerDisabledCapabilities: `.photosPickerDisabledCapabilities(_:)`, iOS 17.0. Apple: \"Disables capabilities of the Photos picker.\"",
+            "photosPickerMetadataOptions: `.photosPickerMetadataOptions(_:)`, iOS 27.0. Apple: \"Sets metadata options for the Photos picker.\"",
             "photosPickerSearchText: `.photosPickerSearchText(_:)`, iOS 27.0. Apple: \"Sets search text of the Photos picker.\"",
             "photosPickerStyle: `.photosPickerStyle(_:)`, iOS 17.0. Apple: \"Sets the mode of the Photos picker.\"",
             "photosReferenceImageViewer: `.photosReferenceImageViewer(asset:onProcessingCompletion:)`, iOS 27.0. Apple: \"Presents an image viewer for an asset in a photo library that contains Apple Reference Image data when `asset` is set.\"",

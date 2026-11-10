@@ -190,7 +190,7 @@ IOS_DOC_FAMILY = {
     "PageControl": ["indexViewStyle"],
     "Picker": ["defaultWheelPickerItemHeight", "horizontalRadioGroupLayout", "paletteSelectionEffect", "pickerStyle"],
     "Popover": ["popover"],
-    "Presentation modifiers": ["postToPhotosSharedAlbumSheet"],
+    "Presentation modifiers": ["photosPickerMetadataOptions", "postToPhotosSharedAlbumSheet"],
     "ProgressView": ["progressViewStyle"],
     "ScrollView": ["defaultScrollAnchor", "scrollDismissesKeyboard", "onScrollGeometryChange", "onScrollPhaseChange", "onScrollTargetVisibilityChange",
                    "onScrollVisibilityChange", "scrollBounceBehavior", "scrollClipDisabled", "scrollContentBackground",
