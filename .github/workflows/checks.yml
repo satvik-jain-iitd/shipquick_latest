@@ -306,10 +306,23 @@ jobs:
           path: .shipquick
           sparse-checkout: |
             scripts
+            skills
             CLAUDE.md
           persist-credentials: false
       - name: The child's rule block matches the kit and the kit phrases are present (story #316)
-        run: python3 .shipquick/scripts/check_rule_copies.py --child project/CLAUDE.md
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          child_file=project/CLAUDE.md
+          # a rule-24 child keeps its rules on its kit branch; a PR into another branch reads them from there (as the roles job does).
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo (the caller's kit_branch)."; exit 1; }
+            ref="origin/$KIT_BRANCH"
+            git -C project show "$ref:CLAUDE.md" > "$RUNNER_TEMP/CLAUDE.md" 2>/dev/null || { echo "no CLAUDE.md on kit branch $KIT_BRANCH. Run adopt.sh there to write it."; exit 1; }
+            child_file="$RUNNER_TEMP/CLAUDE.md"
+          fi
+          python3 .shipquick/scripts/check_rule_copies.py --child "$child_file"
   gate:
     name: gate
     runs-on: ubuntu-latest

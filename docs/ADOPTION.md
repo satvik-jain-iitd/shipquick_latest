@@ -97,9 +97,13 @@ The child marks the copy with two lines, one above and one below the rules, each
 <!-- shipquick-rules:end -->
 ```
 
-The check also confirms that 10 load-bearing phrases are in the kit CLAUDE.md. Those phrases are listed at the top of `scripts/check_rule_copies.py`.
+`scripts/adopt.sh` writes this block for you and rewrites it on every run, so a pin bump refreshes the copy. Run `adopt.sh` again after you bump the ShipQuick pin. What sits outside the two lines is yours and is never touched. If the lines are broken (one missing, or in the wrong order), `adopt.sh` stops before it writes anything and says so.
 
-A child without the two marker lines fails the `rule-copies` job. To fix it, copy the kit rules from `knowledge/shipquick_latest/CLAUDE.md` between the two lines, then push again.
+Where the copy lives: the check reads `CLAUDE.md` from the branch the PR touches. A rule-24 child keeps its rules on its kit branch, not on `main`, so for a PR into another branch the `rule-copies` job reads `CLAUDE.md` from the caller's `kit_branch`, the same way the `roles` job reads `roles.yml`.
+
+The check also confirms that 11 load-bearing phrases are in the kit. They are listed at the top of `scripts/check_rule_copies.py`. Rule 33 is restated in the `shipquick-feedback` skill, so its phrase must be in both `CLAUDE.md` and `skills/shipquick-feedback/SKILL.md`.
+
+A child without the two marker lines fails the `rule-copies` job. To fix it, run `bash knowledge/shipquick_latest/scripts/adopt.sh .` and push again.
 
 ## UI lint in a child (story #185)
 

@@ -1062,3 +1062,21 @@ Scenario: a task's seed files reach the cell folder
   Then the fake claude finds that file in its working folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
+
+## Story #316 review fixes: the child's copy, adopt.sh and the skill
+```gherkin
+Scenario: a rule-24 child's rules are read from its kit branch
+  Given a child whose rules live on its kit branch and a PR into another branch
+  When the rule-copies job runs
+  Then it reads CLAUDE.md from the caller's kit_branch, like the roles job, and checks out the skills folder too
+Scenario: adopt.sh writes and refreshes the rule block
+  Given a new child, or a child with its own CLAUDE.md and no markers
+  When adopt.sh runs
+  Then the block sits between the two markers, check_rule_copies.py --child passes, and the child's own lines stay
+  And a hand change inside the markers is restored on the next run, and broken markers stop the run before anything is written
+Scenario: the skill that restates rule 33 is watched
+  Given a kit copy where the phrase at least three "Why" lines is changed in the skill
+  When check_rule_copies.py runs
+  Then it exits 1 and names skills/shipquick-feedback/SKILL.md
+```
+Tests: `tests/test_adopt.py` (`test_s316_*`), `tests/test_check_rule_copies.py` (`test_s316_*`), `tests/test_checks_workflow.py` (`test_s316_rule_copies_reads_the_child_claude_md_from_the_kit_branch`).

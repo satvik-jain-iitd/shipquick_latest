@@ -28,10 +28,15 @@ def run(*args):
     )
 
 
-def kit_copy(tmp_path, text=KIT_TEXT):
+def kit_copy(tmp_path, text=KIT_TEXT, skill=True):
+    """A kit folder with CLAUDE.md and, unless skill=False, the shipquick-feedback skill file."""
     kit = tmp_path / "kit"
     kit.mkdir()
     (kit / "CLAUDE.md").write_text(text, encoding="utf-8")
+    if skill:
+        target = kit / "skills" / "shipquick-feedback" / "SKILL.md"
+        target.parent.mkdir(parents=True)
+        shutil.copy(ROOT / "skills" / "shipquick-feedback" / "SKILL.md", target)
     return kit
 
 
@@ -87,3 +92,24 @@ def test_the_script_is_stdlib_only():
         if line.startswith(("import ", "from ")):
             mod = line.split()[1].split(".")[0]
             assert mod in sys.stdlib_module_names, line
+
+
+# ---- review of #335: the rule 33 phrase also lives in the shipquick-feedback skill ----
+def test_s316_the_skill_restating_rule_33_is_watched(tmp_path):
+    """Changing the phrase in the skill (not in CLAUDE.md) turns the check red and names the skill file."""
+    kit = kit_copy(tmp_path, skill=False)
+    skill = kit / "skills" / "shipquick-feedback" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    original = (ROOT / "skills" / "shipquick-feedback" / "SKILL.md").read_text(encoding="utf-8")
+    assert 'at least three "Why" lines' in original
+    skill.write_text(original.replace('at least three "Why" lines', 'at least two "Why" lines'), encoding="utf-8")
+    result = run("--kit-root", str(kit))
+    assert result.returncode == 1, result.stdout
+    assert "skills/shipquick-feedback/SKILL.md" in result.stdout
+    assert "three" in result.stdout
+
+
+def test_s316_the_skill_file_is_a_required_part_of_the_kit_root(tmp_path):
+    result = run("--kit-root", str(kit_copy(tmp_path, skill=False)))     # a kit copy with no skill file at all
+    assert result.returncode == 1
+    assert "skills/shipquick-feedback/SKILL.md" in result.stdout

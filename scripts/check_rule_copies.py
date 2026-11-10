@@ -7,7 +7,7 @@ Idea borrowed from Ponytail's scripts/check-rule-copies.js (MIT, read only). Two
    `<!-- shipquick-rules:start -->` and `<!-- shipquick-rules:end -->`. The kit block is every
    line from the rule 0 line to the end of the kit CLAUDE.md. Compared after CRLF -> LF and
    trimming outer blank lines. Marker placement for a child: docs/ADOPTION.md.
-2. Each load-bearing phrase is present in the kit file(s) it names. A missing phrase names
+2. Each load-bearing phrase is present in the kit file(s) it names (CLAUDE.md, and a skill that restates the rule). A missing phrase names
    the file and the phrase.
 
 Usage: scripts/check_rule_copies.py [--kit-root DIR] [--child CLAUDE.md ...]
@@ -21,8 +21,8 @@ START = "<!-- shipquick-rules:start -->"
 END = "<!-- shipquick-rules:end -->"
 
 # (rule number in CLAUDE.md, exact phrase, files that must carry it).
-# shortcut: plain substring match, not a regex, and no skill file carries these rules yet.
-# upgrade when a phrase needs wildcards, or when a skill file starts to restate a rule.
+# Plain substring match, not a regex (upgrade when a phrase needs wildcards). Rule 33 is also restated in
+# the shipquick-feedback skill, so that phrase names both files (review of #335).
 PHRASES = [
     (0, "run `scripts/mode.sh get`", ("CLAUDE.md",)),
     (4, "Work only from GitHub issues", ("CLAUDE.md",)),
@@ -33,6 +33,7 @@ PHRASES = [
     (22, "The build account (`klickbae8yt-star`) makes every commit, push and PR", ("CLAUDE.md",)),
     (30, "The reviewer leaves comments on every changed file", ("CLAUDE.md",)),
     (37, "Harden the gate before enforcing anything new", ("CLAUDE.md",)),
+    (33, 'at least three "Why" lines', ("CLAUDE.md", "skills/shipquick-feedback/SKILL.md")),
     (38, "Library first", ("CLAUDE.md",)),
 ]
 
