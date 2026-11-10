@@ -180,3 +180,25 @@ def test_s218_swiftformat_config_and_ci_job_run_the_two_tiers():
     assert "CI=1 bash ui/tool/ios_lint.sh" in job and "CI= bash ui/tool/ios_lint.sh" in job, "both tiers run through the runner"
     assert re.search(r"SwiftFormat/releases/download/\d+\.\d+\.\d+/swiftformat\.zip", job) and job.count("shasum -a 256 -c") >= 2, "SwiftFormat is pinned by version and SHA-256 like SwiftLint"
     assert "timeout-minutes:" in job
+
+
+def test_s218_a_missing_base_ref_fails_the_ci_tier_and_only_warns_locally(tmp_path):
+    r = repo(tmp_path)
+    (r / "Bad.swift").write_text("let c = Color(red: 1, green: 0, blue: 0)\n", encoding="utf-8")
+    git = lambda *a: subprocess.run(["git", "-C", str(r), *a], check=True, capture_output=True)
+    git("add", "-A")
+    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "bad")
+    # No LINT_BASE: the default origin/dev does not exist here, like a shallow checkout.
+    strict, args = run(tmp_path, cwd=r, ci="1", env=KIT)
+    out = strict.stdout + strict.stderr
+    assert strict.returncode != 0 and "LINT_BASE" in out and "fetch-depth" in out, out
+    local, _ = run(tmp_path, cwd=r, env=KIT)
+    assert local.returncode == 0 and "LINT_BASE" in local.stdout + local.stderr
+
+
+def test_s218_a_missing_swiftformat_alone_fails_the_ci_tier_and_only_warns_locally(tmp_path):
+    gone = {"SWIFTFORMAT_BIN": str(tmp_path / "no-swiftformat")}
+    strict, _ = run(tmp_path, GOOD, ci="1", env=gone)
+    assert strict.returncode != 0 and "swiftformat is not installed" in strict.stdout + strict.stderr
+    local, _ = run(tmp_path, GOOD, env=gone)
+    assert local.returncode == 0 and "swiftformat is not installed" in local.stdout + local.stderr

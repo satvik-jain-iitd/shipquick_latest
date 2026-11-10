@@ -1613,6 +1613,13 @@ Scenario: only the changed Swift files are linted
 Scenario: a missing swiftlint fails CI and only warns locally
   When swiftlint is not on PATH
   Then the CI tier exits non-zero and the local tier exits 0, both saying "swiftlint is not installed"
+Scenario: a missing swiftformat alone fails CI and only warns locally (#366 review)
+  When swiftlint is on PATH but swiftformat is not
+  Then the CI tier exits non-zero and the local tier exits 0, both saying "swiftformat is not installed"
+Scenario: a missing base ref fails CI and only warns locally (#366 review)
+  Given a repo with no origin/dev (a shallow checkout) and a committed Swift change
+  When the runner runs with no file argument
+  Then the CI tier exits non-zero naming fetch-depth and LINT_BASE, and the local tier exits 0 with the same warning
 Scenario: the baseline is committed empty and protected
   Then ui/ios/lint/swiftlint-baseline.json is the JSON array [] and matches a glob in scripts/protected_paths.txt (*baseline*)
 Scenario: the Tokens file is the one place for raw colours and fixed fonts

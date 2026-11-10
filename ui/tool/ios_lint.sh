@@ -23,8 +23,13 @@ if [ $# -gt 0 ]; then
   files=("$@")
 else
   # Changed against the merge base (committed or not) plus new untracked files. Deleted files are left out.
+  # The merge base is its own statement: inside the process substitution a failure would pass as "nothing changed".
+  if ! mb=$(git merge-base "$base" HEAD 2>/dev/null); then
+    echo "ios lint: no merge base with $base (check out with fetch-depth: 0, or set LINT_BASE)"
+    [ $strict -eq 1 ] && exit 1 || exit 0
+  fi
   while IFS= read -r f; do [ -n "$f" ] && [ -f "$f" ] && files+=("$f"); done < <(
-    { git diff --name-only --diff-filter=ACMR "$(git merge-base "$base" HEAD)" -- '*.swift'
+    { git diff --name-only --diff-filter=ACMR "$mb" -- '*.swift'
       git ls-files --others --exclude-standard -- '*.swift'; } | sort -u)
 fi
 if [ ${#files[@]} -eq 0 ]; then echo "ios lint: no Swift file changed against $base"; exit 0; fi
@@ -43,7 +48,8 @@ if command -v "$swiftformat" >/dev/null 2>&1; then
   [ $strict -eq 1 ] || fargs+=(--lenient)
   "$swiftformat" "${fargs[@]}" "${files[@]}" || rc=$?
 else
-  echo "ios lint: swiftformat is not installed, format check skipped (CI pins 0.64.6)"
+  echo "ios lint: swiftformat is not installed (CI pins 0.64.6; brew install swiftformat for a local run)"
+  [ $strict -eq 1 ] && exit 1
 fi
 [ $strict -eq 1 ] && exit $rc
 exit 0   # the local tier never fails: it only reports
