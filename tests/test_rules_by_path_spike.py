@@ -20,6 +20,29 @@ def test_a13_experiments_row_exists_with_docs_url():
     assert "#328" in row, "the row must name story #328"
 
 
+def _cells(row):
+    return [c.strip() for c in row.strip().strip("|").split("|")]
+
+
+def _spike_row():
+    rows = [r for r in _rows(EXPERIMENTS) if "rules" in r.lower() and "paths" in r.lower()]
+    assert rows, "no 2026-11-10 experiments row about path-scoped rules (#328)"
+    return rows[0]
+
+
+def test_a13_experiments_row_has_five_cells_like_the_header():
+    header = next(line for line in EXPERIMENTS.splitlines() if line.startswith("| Date |"))
+    row = _spike_row()
+    assert row.count("|") == header.count("|") == 6, "the #328 row must have 5 cells, as the header does"
+    assert len(_cells(row)) == 5
+
+
+def test_a13_result_and_decision_sit_in_their_own_columns():
+    cells = _cells(_spike_row())
+    assert "pending test" in cells[3].lower(), "Result cell (index 3) must say pending test"
+    assert "pending test" not in cells[2].lower(), "Design cell must not hold the result"
+    assert cells[4].startswith("Decision:"), "Decision cell (index 4) must start with Decision:"
+
 def test_a13_study_adapt_row_cites_the_docs_url():
     rows = [line for line in STUDY.splitlines() if line.startswith("| Rules split by path")]
     assert rows, "the Adapt table row for #328 is missing"
