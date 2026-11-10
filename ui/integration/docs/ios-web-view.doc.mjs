@@ -52,7 +52,8 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Do not use: webViewContextMenu. Use nothing on iOS (replaces a WebView's menu on Mac only; Apple offers it on macOS only)."
+            "Do not use: webViewContextMenu. Use nothing on iOS (replaces a WebView's menu on Mac only; Apple offers it on macOS only).",
+            "Do not use: onWebViewImmersiveEnvironmentRequest. Use nothing on iOS (a visionOS volume or immersive space; iOS has no 3D space around the app)."
           ]
         }
       ]

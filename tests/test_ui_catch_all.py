@@ -28,6 +28,16 @@ SPLIT = {
         "shortcutslink": "app-intents-and-app-shortcuts", "siritip": "app-intents-and-app-shortcuts",
         "widget": "widgets", "asyncimage": "Image",
     },
+    # 2/6: TechnologyModifiers split by Apple framework (each row's module read from its own Apple page, 11 Nov 2026)
+    "TechnologyModifiers": {
+        "inapppurchase": "InAppPurchase", "entitlement": "InAppPurchase", "storeproduct": "InAppPurchase",
+        "storebutton": "InAppPurchase", "subscription": "InAppPurchase", "product": "InAppPurchase", "multiseat": "InAppPurchase",
+        "map": "Map", "lookaround": "Map",
+        "tip": "Tips",
+        "applepay": "Wallet", "wallet": "Wallet", "paylater": "Wallet",
+        "imageplayground": "ImagePlayground",
+        "webview": "web-view", "gesture": "Gestures",
+    },
 }
 
 

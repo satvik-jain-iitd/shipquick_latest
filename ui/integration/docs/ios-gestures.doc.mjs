@@ -54,7 +54,8 @@ export default {
           "items": [
             "Do not use: manipulable. Use gesture.",
             "Do not use: manipulationGesture. Use gesture.",
-            "Do not use: onLongTouchGesture. Use onLongPressGesture."
+            "Do not use: onLongTouchGesture. Use onLongPressGesture.",
+            "Do not use: directTouchSystemGesturesDisabled. Use nothing on iOS (Mac and Mac Catalyst direct-touch system gestures only)."
           ]
         }
       ]

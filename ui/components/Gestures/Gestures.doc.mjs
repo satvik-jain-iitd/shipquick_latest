@@ -45,7 +45,8 @@ export default {
         {"name": "onPencilDoubleTap", "note": "`.onPencilDoubleTap(perform:)`, iOS 17.5. Apple: \"Adds an action to perform after the user double-taps their Apple Pencil.\""},
         {"name": "onPencilSqueeze", "note": "`.onPencilSqueeze(perform:)`, iOS 17.5. Apple: \"Adds an action to perform when the user squeezes their Apple Pencil.\""},
         {"name": "onTapGesture", "note": "`.onTapGesture(count:perform:)`, iOS 13.0. Apple: \"Adds an action to perform when this view recognizes a tap gesture.\""},
-        {"name": "simultaneousGesture", "note": "`.simultaneousGesture(_:including:)`, iOS 13.0. Apple: \"Attaches a gesture to the view to process simultaneously with gestures defined by the view.\""}
+        {"name": "simultaneousGesture", "note": "`.simultaneousGesture(_:including:)`, iOS 13.0. Apple: \"Attaches a gesture to the view to process simultaneously with gestures defined by the view.\""},
+        {"name": "directTouchSystemGesturesDisabled", "note": "`.directTouchSystemGesturesDisabled(_:)`, not on iOS. Apple: \"Disables direct-touch system gestures.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (Mac and Mac Catalyst direct-touch system gestures only)"}
       ]
     }
   }
