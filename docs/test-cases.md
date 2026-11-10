@@ -1051,3 +1051,13 @@ Scenario: a task's seed files reach the cell folder
   Then the fake claude finds that file in its working folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
+
+## Story #328 (A13): rules split by path, spike
+```gherkin
+Scenario: the path-scoped rules finding is written with its source
+  Given the Claude Code docs page on memory and rules
+  When the spike is recorded
+  Then docs/research/experiments.md has a 10 Nov 2026 row for #328 that cites https://code.claude.com/docs/en/memory and says pending test
+  And the #328 row in the ponytail study cites the same URL
+```
+Tests: `tests/test_rules_by_path_spike.py` (`test_a13_experiments_row_exists_with_docs_url`, `test_a13_study_adapt_row_cites_the_docs_url`).

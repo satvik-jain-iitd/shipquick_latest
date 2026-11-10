@@ -446,3 +446,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: ponytail `benchmarks/agentic/run.py` (`run_cell`, `_kill_group` via process group, stdout to file, `rescore`), study clone, read only.
 - Decision: adopt ponytail's cell pattern (stdout to a file, `start_new_session`, group kill on timeout, logs outside the scored folder). Written for the kit's bench with stdlib only; the ponytail fixtures, plugin arms and cache warm-up are not borrowed (ShipQuick has no plugin arms yet).
 - Confidence that nothing fits better: 0.7 (the search is thin; ponytail is the only close fit).
+
+## 10 Nov 2026, story #328 (A13): rules split by path, spike
+- Need: move the UI rules (31, 38) into a path-scoped rule file only if Claude Code supports it, and record what the docs say.
+- Run: `scout.py --need "split Claude Code instruction rules into path-scoped rule files using paths frontmatter"`: no repos found.
+  `gh search repos --topic=claude-code-rules --limit 5`: AIPMAndy/AndySoul, omergocmen/vibe-coder-kit, JakeSelby/model-citizen, alex-feel/claude-code-toolbox, luiseiman/dotforge. All are rule templates or config installers, none reads `paths:` frontmatter to scope rules.
+  `gh search repos "claude code rules paths frontmatter" --limit 5`: no further hit that scopes rules by path.
+- Read: the Claude Code docs, not the repos (tier A): https://code.claude.com/docs/en/memory, read 10 Nov 2026. Section "Path-specific rules".
+- Borrowed: nothing. The feature is built into Claude Code; no tool is needed.
+- Decision: use the platform feature. No new code in #328; the move is a separate PR gated by the bench (#312).
+- Confidence that nothing fits better: 0.8 (the topic search is thin, but the docs settle the feature question).
