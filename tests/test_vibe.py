@@ -140,6 +140,16 @@ def test_a_web_screen_with_jsx_but_no_library_import_is_raw(tmp_path):
     assert "PlainScreen.tsx:no_library_import" in plain["hits"], plain
 
 
+def test_a_web_screen_that_imports_a_library_subpath_is_clean(tmp_path):
+    # PR #371 review, round 2: the kit's component docs name the web twin as `@astryxdesign/core/Button`, so a
+    # screen written from those docs must pass; the bare `@astryxdesign/core` form passes too, and no import still hits
+    vibe = _mod()
+    (tmp_path / "Screen.tsx").write_text('import { Button } from "@astryxdesign/core/Button";\n'
+                                         'export const S = () => <Button>Go</Button>;\n', encoding="utf-8")
+    assert vibe.score_dir("web", tmp_path)["clean"] == 1, vibe.score_dir("web", tmp_path)
+    assert "PlainScreen.tsx:no_library_import" in vibe.score_dir("web", BAD["web"])["hits"]
+
+
 def test_an_issue_number_after_a_colon_in_a_web_comment_is_not_a_hex_colour(tmp_path):
     # PR #371 review: `// Story: #189 sign in` is an issue number; `color: #fff;` in CSS is still a colour
     vibe = _mod()

@@ -1622,6 +1622,10 @@ Scenario: a web screen with JSX but no library import is raw (PR #371 review)
   Given a Screen.tsx that renders a plain div and imports nothing from @astryxdesign/core
   Then score_dir hits exactly no_library_import, and the bad fixture PlainScreen.tsx carries the same case for --selftest
   Test: test_a_web_screen_with_jsx_but_no_library_import_is_raw
+Scenario: a web screen that imports a library subpath is clean (PR #371 review, round 2)
+  Given a Screen.tsx that imports Button from "@astryxdesign/core/Button", the form the component docs teach
+  Then it scores clean, while PlainScreen.tsx with no library import still hits no_library_import
+  Test: test_a_web_screen_that_imports_a_library_subpath_is_clean
 Scenario: an issue number after a colon in a web comment is not a hex colour (PR #371 review)
   Given the good web screen with a first line "// Story: #189 sign in"
   Then it scores clean, while a CSS file with "color: #fff;" still hits no_hex_colour

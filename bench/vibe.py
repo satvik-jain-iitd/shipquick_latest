@@ -78,8 +78,10 @@ RAW = {
         ("no_other_ui_kit", r"from\s+['\"](@mui/|antd|@chakra-ui/|react-bootstrap|@radix-ui/|@headlessui/|bootstrap)", None),
         # rule 38: a screen is built from library components, so a .tsx/.jsx with a JSX tag and no @astryxdesign/core
         # import used no library at all (PR #371 review). Library-agnostic: it needs no list of what Astryx ships.
+        # Both import forms count: the bare `@astryxdesign/core` (the package index) and the subpath form
+        # `@astryxdesign/core/Button` that the component docs (`platforms.web`) and ui/schema teach (review round 2).
         # shortcut: `<[A-Za-z]` also matches a spaceless `a<b` comparison; a real JSX parse replaces it if that bites.
-        ("no_library_import", r"\A(?![\s\S]*from\s+['\"]@astryxdesign/core['\"])[\s\S]*<[A-Za-z]", r"\.(ts|js|css|html)$"),
+        ("no_library_import", r"\A(?![\s\S]*from\s+['\"]@astryxdesign/core(?:/[^'\"]+)?['\"])[\s\S]*<[A-Za-z]", r"\.(ts|js|css|html)$"),
     ],
 }
 
