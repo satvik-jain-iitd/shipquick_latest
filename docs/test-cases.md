@@ -1627,6 +1627,8 @@ Scenario: the snapshot job runs only when iOS paths change (#375 review, round 2
   Given ui-changes has an `ios` output written by a grep over the changed names
   Then that grep matches ui/ios/** and design/** and does not match ui/android/** or tests/fixtures/**
   And the job ui-ios-snapshots waits on needs.ui-changes.outputs.ios, not on `ui`
+  And it runs unless ios is 'false', so a fail-safe exit that writes only ui=true still runs it (round 3)
+  And the story #217 fail-safe lines stay as they were
   Test: test_s219_the_snapshot_job_runs_only_when_ios_paths_change
 Scenario: the doc states the real precision of the compare (#375 review, round 2)
   Then ui/ios/SNAPSHOTS.md names `perceptualPrecision <n>` with the same n as TemplateSnapshotTests.swift, points to that file, and never says "changed pixel"

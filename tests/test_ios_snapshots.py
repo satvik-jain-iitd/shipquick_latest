@@ -60,7 +60,7 @@ def test_s219_every_template_has_a_preview_for_prefire():
 
 def test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout():
     j = job("ui-ios-snapshots")
-    assert "needs: [ui-changes]" in j and "needs.ui-changes.outputs.ios == 'true'" in j  # #375 review: ios, not ui
+    assert "needs: [ui-changes]" in j and "needs.ui-changes.outputs.ios != 'false'" in j  # #375 review: ios, not ui
     assert "runs-on: macos-15" in j
     assert re.search(r"^    timeout-minutes: \d+$", j, re.M)
     assert "xcode-select -s /Applications/Xcode_16.4.app" in j
@@ -119,8 +119,10 @@ def test_s219_the_snapshot_job_runs_only_when_ios_paths_change():
     assert not pattern.search("ui/android/templates/ListTemplate.kt")
     assert not pattern.search("tests/fixtures/ios/Bad/BadScreen.swift")
     j = job("ui-ios-snapshots")
-    assert "if: needs.ui-changes.outputs.ios == 'true'" in j
+    # #375 round 3: the fail-safe exits write only ui=true (story #217 pins those lines), so an empty ios must run the job
+    assert "if: needs.ui-changes.outputs.ios != 'false'" in j
     assert "needs.ui-changes.outputs.ui == 'true'" not in j
+    assert 'echo ios=true >> "$GITHUB_OUTPUT"; exit 0; }' not in changes, "leave the #217 fail-safe lines as they are"
 
 
 def test_s219_the_doc_states_the_real_precision_of_the_compare():
