@@ -1,5 +1,6 @@
 """ShipQuick Desk, Option B (epic #91): Host check, state shape, 60 s cache, gh failure path. Stdlib unittest only."""
 import json
+import os
 import sys
 import tempfile
 import threading
@@ -7,6 +8,7 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -204,6 +206,14 @@ class SpendLedger(unittest.TestCase):
     def test_band_path_uses_the_same_name_rule_as_the_ponytail_writer(self):
         self.assertEqual(desk.default_band_path("/x/my repo (1)").name, "my_repo__1_.csv")
         self.assertEqual(desk.default_band_path("/x/shipquick_latest").name, "shipquick_latest.csv")
+
+    def test_band_path_follows_xdg_config_home_like_the_writer(self):
+        with mock.patch.dict(os.environ, {"XDG_CONFIG_HOME": "/tmp/xdgtest"}):
+            self.assertEqual(desk.default_band_path("/x/shipquick_latest"),
+                             Path("/tmp/xdgtest/ponytail/band/shipquick_latest.csv"))
+
+    def test_band_name_rule_is_ascii_like_the_javascript_writer(self):
+        self.assertEqual(desk.default_band_path("/x/caf\u00e9").name, "caf_.csv")
 
 
 class SpendInServer(ServerCase):

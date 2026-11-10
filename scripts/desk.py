@@ -7,6 +7,7 @@ Usage: python3 scripts/desk.py [--port 8765]
 import argparse
 import csv
 import json
+import os
 import re
 import subprocess
 import threading
@@ -86,8 +87,10 @@ def read_switches(repo_dir):
 
 def default_band_path(repo_dir):
     # The Ponytail ledger for this project: one CSV per repo folder name, written on this Mac.
-    name = re.sub(r"[^\w.-]", "_", Path(repo_dir).name)
-    return Path.home() / ".config" / "ponytail" / "band" / (name + ".csv")
+    # The writer's rule is ASCII only (JS \w), so re.ASCII. The config root follows XDG_CONFIG_HOME, like the writer.
+    name = re.sub(r"[^\w.-]", "_", Path(repo_dir).name, flags=re.ASCII)
+    root = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    return root / "ponytail" / "band" / (name + ".csv")
 
 
 def read_spend(path):
