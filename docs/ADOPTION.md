@@ -114,6 +114,16 @@ Do these in order, in the child repo. One step at a time.
 
 Add its `owner/repo` to `docs/children.md` once (a one-line PR to ShipQuick, or let the owner do it). Add `private` only when `gh repo view` says it is private. Write one `# <name>: <what GitHub shows>. Next: <step>` note above its line. Then follow the checklist above.
 
+## UI platforms (story #187, S9)
+
+`adopt.sh <child> --platforms android,ios[,web]` wires a child to the kit's UI libraries (ADR-012). Nothing is installed on the machine that runs it.
+- `ui/platforms/android-settings.snippet.kts` and `ui/platforms/ios-package.snippet.swift`: the one line to paste (`includeBuild` and SPM `.package(path:)`), both pointing into `knowledge/shipquick_latest/ui/`.
+- `ui/platforms/lint/`: the lint configs and the Konsist test, copied for the child's CI.
+- `ui/platforms/PROTECTED.txt`: the lint paths the child should protect from loosening.
+- `ui/platforms/KIT_PIN`: the kit commit the lint and the snippets were written for.
+- `ui init` is not run by `adopt.sh`. It needs npm and the Astryx CLI, so it runs in CI: `bash knowledge/shipquick_latest/scripts/ui.sh init`. The script prints this line.
+- `--check --platforms ...` prints `platforms: OK <list>`, or `platforms: not ready` with what is missing or stale.
+
 ## The offline vendor backup
 
 A child never fetches the vendor backup. It is a private repo, read only by the kit's own CI with a token. It fetches the ShipQuick submodule commit and nothing else. ShipQuick keeps
