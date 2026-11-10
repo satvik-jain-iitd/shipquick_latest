@@ -84,17 +84,20 @@ def parity(rows):
     return {k: sorted(v) for k, v in seen.items() if len(v) == 1}
 
 
-def gh_fetch(repo):
+def gh_fetch(repo, runner=subprocess.run):
     def get(path):
-        out = subprocess.run(["gh", "api", "--paginate", "--slurp", path], capture_output=True, text=True)
+        out = runner(["gh", "api", "--paginate", "--slurp", path], capture_output=True, text=True)
         if out.returncode:
             raise SystemExit(f"cannot read {path}: {out.stderr.strip()}")
         return [item for page in json.loads(out.stdout) for item in page]
 
     def fetch(n):
-        issue = json.loads(subprocess.run(["gh", "api", f"repos/{repo}/issues/{n}"], capture_output=True, text=True).stdout or "{}")
-        return {"labels": issue.get("labels", []), "events": get(f"repos/{repo}/issues/{n}/events"),
-                "comments": get(f"repos/{repo}/issues/{n}/comments")}
+        out = runner(["gh", "api", f"repos/{repo}/issues/{n}"], capture_output=True, text=True)
+        if out.returncode:
+            raise SystemExit(f"cannot read issue #{n}: {out.stderr.strip()}")
+        issue = json.loads(out.stdout or "{}")
+        return {"title": issue.get("title", ""), "labels": issue.get("labels", []),
+                "events": get(f"repos/{repo}/issues/{n}/events"), "comments": get(f"repos/{repo}/issues/{n}/comments")}
     return fetch
 
 

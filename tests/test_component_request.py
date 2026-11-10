@@ -176,3 +176,24 @@ def test_the_gate_is_wired_into_both_ci_files_and_the_docs_name_it():
     assert "ui-registry" in (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     assert "component-registry" in (ROOT / ".github/workflows/checks.yml").read_text(encoding="utf-8")
     assert "check_component_request.py" in (ROOT / "docs/COMPONENT_LIBRARY.md").read_text(encoding="utf-8")
+
+
+def test_the_live_fetch_returns_the_title_labels_events_and_comments_with_a_stubbed_gh():
+    # review of #305 (qa): the live fetch returned no title, so every real row failed in CI. Stub gh and read every key.
+    import json as _json
+
+    def runner(cmd, **kw):
+        if "--slurp" in cmd:
+            if cmd[-1].endswith("/events"):
+                page = [{"event": "labeled", "label": {"name": "component-approved"}, "actor": {"login": "alice"}}]
+            else:
+                page = [{"user": {"login": "alice"}, "body": YES, "created_at": "2026-11-10T09:00:00Z", "updated_at": "2026-11-10T09:00:00Z"}]
+            return subprocess.CompletedProcess(cmd, 0, stdout=_json.dumps([page]), stderr="")
+        issue_json = {"title": "Stepper: a slider with steps", "labels": [{"name": "component-approved"}]}
+        return subprocess.CompletedProcess(cmd, 0, stdout=_json.dumps(issue_json), stderr="")
+
+    data = c.gh_fetch("owner/child", runner=runner)(12)
+    assert set(data) >= {"title", "labels", "events", "comments"}
+    assert data["title"] == "Stepper: a slider with steps"
+    assert c.check_row(ROW, c.gh_fetch("owner/child", runner=runner), REV) is None
+
