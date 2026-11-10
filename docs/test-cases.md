@@ -1067,7 +1067,6 @@ Scenario: a cross-origin API request gets 403
   Given the desk server on 127.0.0.1
   When /api/state.json is requested with an Origin that is not the server's own
   Then the answer is 403, and a request with no Origin or the own origin is served
-```
 Scenario: a real ledger header renders its names, tokens and reuse
   Given a ponytail band CSV with the upstream header (name, tokens_total, reuse_pct, tests)
   When the desk state is read
@@ -1077,9 +1076,18 @@ Scenario: the ledger file name follows the writer's rule
   Given a repo folder named "my repo (1)"
   When the default ledger path is built
   Then the file is my_repo__1_.csv
+Scenario: the ledger folder follows XDG_CONFIG_HOME like the writer
+  Given XDG_CONFIG_HOME is set to /tmp/xdgtest
+  When the default ledger path is built
+  Then the file is under /tmp/xdgtest/ponytail/band
+Scenario: the ledger file name uses the ASCII rule of the writer
+  Given a repo folder named "café"
+  When the default ledger path is built
+  Then the file is caf_.csv
 Scenario: an unreadable ledger keeps the rest of the desk
   Given a ledger with "n/a" in cost_usd
   When /api/state.json is requested
   Then the answer is 200, spend has no rows and a "ledger unreadable" note
   And waiting and roadmap are still filled
-Tests: `tests/test_desk.py` (`SpendLedger`, `SpendInServer`, `OriginCheck`; new: `test_real_ledger_header_is_read_row_by_row_with_totals`, `test_row_without_a_name_uses_the_key_as_task`, `test_band_path_uses_the_same_name_rule_as_the_ponytail_writer`, `test_unreadable_ledger_keeps_the_other_sections`).
+```
+Tests: `tests/test_desk.py` (`SpendLedger`, `SpendInServer`, `OriginCheck`; new: `test_real_ledger_header_is_read_row_by_row_with_totals`, `test_row_without_a_name_uses_the_key_as_task`, `test_band_path_uses_the_same_name_rule_as_the_ponytail_writer`, `test_unreadable_ledger_keeps_the_other_sections`, `test_band_path_follows_xdg_config_home_like_the_writer`, `test_band_name_rule_is_ascii_like_the_javascript_writer`).
