@@ -50,6 +50,11 @@ Write it with `bash knowledge/shipquick_latest/scripts/adopt.sh . --kit-branch d
 
 If you run `adopt.sh` again without `--kit-branch`, it keeps the kit branch your caller already names.
 
+## The milestone (story #357)
+
+The `environments` job needs a filled `Dev link:` and `Production link:` in the project's `CLAUDE.md` once the project is past D0. It reads the project's milestone from the caller: `milestone: D2` under `shipquick_ref:` in `shipquick-call.yml`. The default is `D0`, so a project that has deployed nothing is not blocked.
+Write it with `adopt.sh . --milestone D2` (D0 to D6; anything else is refused before a file is written). A run without the flag keeps the caller's own line. Move the value up when the project reaches D1.
+
 What changes when `kit_branch` is set:
 - The adoption job reads the submodule pin and `.pre-commit-config.yaml` from the kit branch.
 - The roles job reads `.shipquick/roles.yml` from the kit branch. So does `scripts/review_merge.sh` in auto mode.

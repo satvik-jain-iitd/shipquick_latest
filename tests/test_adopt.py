@@ -629,3 +629,19 @@ def test_s316_broken_markers_stop_adopt_and_leave_the_file_alone(child):
     assert r.returncode != 0
     assert "markers" in (r.stdout + r.stderr)
     assert (child / "CLAUDE.md").read_bytes() == before
+
+
+# ---- story #357: the child's milestone is a caller input, written by adopt.sh --milestone ----
+CALL_FILE = ".github/workflows/shipquick-call.yml"
+
+
+def test_s357_milestone_is_written_kept_and_a_bad_one_is_refused(child):
+    r = adopt(child, "--milestone", "D2")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "      milestone: D2\n" in (child / CALL_FILE).read_text(encoding="utf-8")
+    assert adopt(child).returncode == 0                                   # a later run keeps the caller's own line
+    assert "      milestone: D2\n" in (child / CALL_FILE).read_text(encoding="utf-8")
+    before = (child / CALL_FILE).read_bytes()
+    bad = adopt(child, "--milestone", "X9")
+    assert bad.returncode != 0 and "milestone" in (bad.stdout + bad.stderr)
+    assert (child / CALL_FILE).read_bytes() == before                     # refused before anything is written

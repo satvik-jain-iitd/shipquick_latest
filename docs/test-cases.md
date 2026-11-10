@@ -1584,3 +1584,12 @@ Scenario: a cost warning is printed once per dollar
   Then the first prints the warn line, and the second prints nothing
   Test: test_a_cost_warning_is_printed_once_per_dollar
 ```
+
+## Story #357: the child's milestone is a caller input
+```gherkin
+Scenario: the environments job reads the milestone from the caller
+  Then checks.yml has a milestone input with default D0 and passes ${{ inputs.milestone }} to check_environments.sh, with no literal D1
+Scenario: adopt.sh writes, keeps and validates the milestone
+  When adopt.sh runs with --milestone D2, the caller has `milestone: D2`; a later run without the flag keeps it; --milestone X9 is refused and the caller is untouched
+```
+Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_kept_and_a_bad_one_is_refused`.

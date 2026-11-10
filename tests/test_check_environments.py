@@ -83,3 +83,11 @@ def test_s120_an_unknown_milestone_is_a_usage_error(tmp_path):
     f = claude_md(tmp_path, FILLED)
     r = run("--claude-md", str(f), "--milestone", "D9")
     assert r.returncode == 2 and "usage" in r.stderr.lower()
+
+
+# ---- story #357: checks.yml takes the milestone from a caller input, default D0 ----
+def test_s357_checks_yml_environments_job_reads_the_milestone_input():
+    text = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
+    assert "      milestone:\n" in text and "type: string\n        default: D0" in text
+    assert "--milestone ${{ inputs.milestone }}" in text
+    assert "--milestone D1" not in text

@@ -27,13 +27,14 @@
 set -eu
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQ="$(cd "$HERE/.." && pwd -P)"
-usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--platforms android,ios[,web]] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
-child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""; platforms=""
+usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--platforms android,ios[,web]] [--milestone D0..D6] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
+child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""; platforms=""; milestone=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --ref) [ -n "${2:-}" ] || usage; ref="$2"; shift 2 ;;
     --kit-branch) [ -n "${2:-}" ] || usage; kit="$2"; shift 2 ;;
     --check) check_mode=1; shift ;;
+    --milestone) [ -n "${2:-}" ] || usage; milestone="$2"; shift 2 ;;
     --platforms) [ -n "${2:-}" ] || usage; platforms="$2"; shift 2 ;;
     --coder) [ -n "${2:-}" ] || usage; coder="$2"; shift 2 ;;
     --reviewer) [ -n "${2:-}" ] || usage; reviewer="$2"; shift 2 ;;
@@ -47,6 +48,11 @@ done
 child="$(cd "$child" && pwd -P)"
 top="$(git -C "$child" rev-parse --show-toplevel 2>/dev/null)" || { echo "adopt.sh: $child is not a git repository" >&2; exit 2; }
 [ "$(cd "$top" && pwd -P)" = "$child" ] || { echo "adopt.sh: run it on the root of the repository ($top)" >&2; exit 2; }
+
+# story #357: --milestone D0..D6 is written as `milestone:` in the caller; without it the caller's own line is kept. Checked before anything is written.
+if [ -n "$milestone" ]; then
+  case "$milestone" in D0|D1|D2|D3|D4|D5|D6) ;; *) echo "adopt.sh: unknown milestone '$milestone' (use D0 to D6)" >&2; exit 2 ;; esac
+fi
 
 # story #187 (S9): --platforms android,ios[,web] wires the child to the kit's UI libraries (ADR-012). Checked before anything is written.
 SNIP="ui/platforms"
@@ -237,9 +243,13 @@ put .github/workflows/roadmap-call.yml < "$tmp/call"
 [ -n "$ci_name" ] || echo "note: no name: found in .github/workflows/ci.yml, so the caller has no workflow_run trigger. Add one by hand if you want Review to update when the checks finish."
 
 # 2b. the ShipQuick checks caller (story #124): same pinning, triggered on every pull_request
-python3 - "$SQ/.github/workflows/shipquick-call.yml" "$sha" "$tag" "$kit" > "$tmp/checkscall" <<'PYEOF'
+ms="$milestone"
+if [ -z "$ms" ] && [ -f "$child/.github/workflows/shipquick-call.yml" ]; then   # story #357: keep the caller's own milestone
+  ms="$(sed -nE 's/^[[:space:]]+milestone:[[:space:]]*(D[0-6])[[:space:]]*$/\1/p' "$child/.github/workflows/shipquick-call.yml" | head -1)"
+fi
+python3 - "$SQ/.github/workflows/shipquick-call.yml" "$sha" "$tag" "$kit" "$ms" > "$tmp/checkscall" <<'PYEOF'
 import sys
-src, sha, tag, kit = sys.argv[1:5]
+src, sha, tag, kit, ms = sys.argv[1:6]
 lines = [l for l in open(src, encoding="utf-8").read().splitlines() if not l.startswith("#")]
 out = ["# The ShipQuick checks every pull request needs (added by ShipQuick scripts/adopt.sh): a call to the reusable workflow, pinned to one commit.",
        "# To move to a newer ShipQuick release, run adopt.sh again with --ref <tag>: it changes `uses:` and `shipquick_ref` together."]
@@ -252,6 +262,8 @@ for l in lines:
     out.append(l)
     if kit and l.strip().startswith("shipquick_ref:"):   # story #225: pin and hooks live on this branch
         out.append(l[: len(l) - len(l.lstrip())] + f"kit_branch: {kit}")
+    if ms and l.strip().startswith("shipquick_ref:"):   # story #357: the child's milestone, read by the environments job
+        out.append(l[: len(l) - len(l.lstrip())] + f"milestone: {ms}")
 print("\n".join(out))
 PYEOF
 put .github/workflows/shipquick-call.yml < "$tmp/checkscall"
