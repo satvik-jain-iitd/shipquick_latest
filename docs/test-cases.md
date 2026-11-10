@@ -1051,3 +1051,23 @@ Scenario: a task's seed files reach the cell folder
   Then the fake claude finds that file in its working folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
+
+## Story #324 (A6): the release gate
+```gherkin
+Scenario: a release with a green gate on HEAD is tagged and pushed
+  Given release notes whose first line names the tag, and a gate check that is SUCCESS on HEAD
+  When scripts/release.sh vX.Y.Z runs
+  Then an annotated tag points at HEAD and is pushed to origin
+Scenario: a dry run prints the plan and tags nothing
+  Given the same release
+  When scripts/release.sh vX.Y.Z --dry-run runs
+  Then it prints what it would do and no tag exists locally or on origin
+Scenario: each missing condition refuses and tags nothing
+  Given one of: no notes file, a notes version line that is not the tag, a tag already local, a tag already on origin, no gate check, a failed gate, a gate still running, a green gate only on an older commit
+  When scripts/release.sh vX.Y.Z runs
+  Then it exits non-zero naming the condition and creates no tag
+Scenario: a version that is not vX.Y.Z is refused before any gh call
+  When scripts/release.sh v1.2 runs
+  Then it exits non-zero and gh is never called
+```
+Tests: `tests/test_release.py` (13 tests, `test_s324_*`).
