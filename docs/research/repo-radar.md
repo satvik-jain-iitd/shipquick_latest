@@ -480,6 +480,19 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: adopt ponytail's cell pattern (stdout to a file, `start_new_session`, group kill on timeout, logs outside the scored folder). Written for the kit's bench with stdlib only; the ponytail fixtures, plugin arms and cache warm-up are not borrowed (ShipQuick has no plugin arms yet).
 - Confidence that nothing fits better: 0.7 (the search is thin; ponytail is the only close fit).
 
+## 10 Nov 2026, story #324 (A6, epic #309): release gate for `scripts/release.sh vX.Y.Z`
+- Need: tag a release only when `docs/RELEASE_NOTES_vX.Y.Z.md` exists, its version line equals the tag, the tag is new (local and origin), and the `gate` check is SUCCESS on the exact HEAD sha.
+- Run: `scout.py --need "release script that tags a version only after the CI gate passed on the exact commit"`: no repos found (exit 1, empty list).
+  `gh search repos --topic=release-gate --limit 5`: agents-shipgate, frontend-promotion-guard, faultgate, flowreel, hermes-skilleval. None tags a git version. They gate agent tool changes, deploys or traces.
+  `gh search repos --topic=release-automation --limit 5`: release-it, semantic-release, goreleaser, release-drafter, devtron.
+- Read (top 3 README heads, gh API, tier A for what the repo says):
+  - `semantic-release/semantic-release`: publishes npm packages from commit messages. Too big; it decides the version itself. Does not fit.
+  - `release-it/release-it`: bumps package.json, tags, pushes, makes GitHub releases, with hooks. Node tool and a version bump we do not use. Does not fit.
+  - `Reality-JH/frontend-promotion-guard`: promotes Docker deploys after screenshot checks. Different gate. Does not fit.
+  - Study reference (read only): ECC `scripts/ci/verify-release-gates.js` (MIT). Borrowed: read check runs for the exact sha, and refuse a tag that already exists. Ponytail `scripts/check-versions.js` (MIT): versions must agree across files; borrowed as the idea that the notes version line must equal the tag.
+- Borrowed: the two ideas above. Code is our own bash, about 50 lines, using `gh api` and `git`, which the repo already uses (`review_merge.sh`).
+- Verdict: nothing fits (a tag gate with notes and the gate check). Build from scratch in `scripts/release.sh`, small, on top of `gh` and `git`.
+- Confidence that nothing fits better: 0.75 (one scout run found nothing, and the topic search was thin).
 ---
 ## 10 Nov 2026, story #312 (A1b): bench report, stats and docs
 - Need: a report on bench results: median per task, kit divided by no-kit, geometric mean over tasks, 95% bootstrap interval, as a markdown table.
