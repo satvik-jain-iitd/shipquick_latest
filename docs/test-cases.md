@@ -1035,3 +1035,37 @@ Scenario: check_local warns with the count and the CI job never gates
   Then check_local prints the count as a warning and the shortcut-ledger job is not in the gate needs
 ```
 Tests: `test_s327_one_good_and_one_no_trigger_comment_are_listed_and_only_the_second_is_tagged`, `test_s327_write_appends_one_row_per_shortcut_once_and_never_edits_old_rows`, `test_s327_the_real_repo_scan_runs_and_prints_the_count`, `test_s327_check_local_warns_with_the_count_and_never_fails`, `test_s327_ci_job_is_warn_only_and_not_in_the_gate`.
+## Story #331: the bench cell runner and offline rescore
+```gherkin
+Scenario: one cell per arm runs with the real flags and the rules only in the kit arm
+  Given a fake claude on PATH that writes solution.py into its folder and logs its arguments
+  When bench/run.py --run runs task T1 on the no-kit and kit arms with two workers
+  Then each arm has a work folder holding solution.py, each call carries the bench flags, and only the kit call gets --append-system-prompt
+Scenario: rescore recomputes the same scores with no claude call
+  Given a finished run folder
+  When bench/run.py --rescore runs with the fake claude still on PATH
+  Then the scores match the run and the fake claude log does not grow
+Scenario: a hung cell is killed at the timeout
+  Given a fake claude that sleeps forever and a timeout of 2 seconds
+  When the run finishes
+  Then the run ends and that cell's cell.json says killed true
+Scenario: an unknown task, arm or model is refused before any call
+  Given a fake claude on PATH
+  When bench/run.py --run names an unknown task or arm
+  Then it exits non-zero and the fake claude is never called
+```
+Tests: `tests/test_bench_runner.py` (4 tests).
+
+## Story #331 review fixes: the run folder and the seed
+```gherkin
+Scenario: a run folder inside a git repo is refused
+  Given a fake claude on PATH
+  When bench/run.py --run gets an --out inside a git work tree
+  Then it exits non-zero naming git, creates no folder, and the fake claude is never called
+  And without --out the folder is a fresh temp dir outside any repo
+Scenario: a task's seed files reach the cell folder
+  Given a task with a one-file seed
+  When its cell runs
+  Then the fake claude finds that file in its working folder
+```
+Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
