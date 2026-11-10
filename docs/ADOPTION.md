@@ -32,7 +32,7 @@ Layer 1 only fires once a child is wired enough to have the caller running. A ch
 
 ## The story job (story #175)
 
-`checks.yml` runs `scripts/check_story.py` on every user story the PR body links (`Closes #n`): the story must say `Who does it:` and, from 10 Nov 2026, `Done when:`. The job reads the child's own issues, so it needs `issues: read`. A reusable workflow gets only what the caller grants, and the caller `adopt.sh` writes grants it. A caller written by hand without it makes the job fail with "Resource not accessible"; `adopt.sh . --check` reports it as `not adopted: shipquick-call.yml grants no issues: read`.
+`checks.yml` runs `scripts/check_story.py` on every user story the PR body links (`Closes #n`): the story must say `Who does it:` and, from 10 Nov 2026, `Done when:`. The job reads the child's own issues, so it needs `issues: read`. A called workflow gets only what the caller grants, never more, and the caller `adopt.sh` writes grants it. With a caller written by hand without it, GitHub refuses the whole ShipQuick checks run at startup with `The nested job 'story' is requesting 'issues: read', but is only allowed 'issues: none'`, and no gate check appears (no job of `checks.yml` runs at all). `adopt.sh . --check` names it as `not adopted: shipquick-call.yml grants no issues: read`; a caller that grants `issues: write` passes too.
 
 ## Rule-24 children (story #225)
 

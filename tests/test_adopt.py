@@ -685,3 +685,13 @@ def test_s175_check_reports_a_caller_without_issues_read(child, gh):
     r = adopt(child, "--check", env=gh)
     assert r.returncode == 1, r.stdout
     assert "not adopted" in r.stdout and "issues: read" in r.stdout
+
+
+def test_s175_check_accepts_a_caller_that_grants_issues_write(child, gh):
+    gh.protect(None)
+    (gh.stub / "rules.json").write_text(json.dumps(ruleset()), encoding="utf-8")
+    call = adopted(child) / ".github" / "workflows" / "shipquick-call.yml"
+    call.write_text(call.read_text(encoding="utf-8").replace("issues: read", "issues: write"), encoding="utf-8")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "issues: read" not in r.stdout

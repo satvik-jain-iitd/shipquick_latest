@@ -139,8 +139,8 @@ if [ -n "$check_mode" ]; then
       ok=0
     fi
   fi
-  # story #175: the story job reads the linked issues, so the caller must grant issues: read (any permissions block counts).
-  if [ -f "$call" ] && ! grep -qE '^[[:space:]]+issues:[[:space:]]*read[[:space:]]*$' "$call"; then
+  # story #175: the story job reads the linked issues, so the caller must grant issues: read or write (any permissions block counts).
+  if [ -f "$call" ] && ! grep -qE '^[[:space:]]+issues:[[:space:]]*(read|write)[[:space:]]*$' "$call"; then
     echo "not adopted: shipquick-call.yml grants no issues: read, so the story job cannot read the linked stories (run: bash $HERE/adopt.sh $child)"
     ok=0
   fi
