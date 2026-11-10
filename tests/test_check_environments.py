@@ -85,9 +85,10 @@ def test_s120_an_unknown_milestone_is_a_usage_error(tmp_path):
     assert r.returncode == 2 and "usage" in r.stderr.lower()
 
 
-# ---- story #357: checks.yml takes the milestone from a caller input, default D0 ----
+# ---- story #357: checks.yml takes the milestone from a caller input, default D1 (today's gate) ----
 def test_s357_checks_yml_environments_job_reads_the_milestone_input():
     text = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
-    assert "      milestone:\n" in text and "type: string\n        default: D0" in text
-    assert "--milestone ${{ inputs.milestone }}" in text
-    assert "--milestone D1" not in text
+    assert "      milestone:\n" in text and "type: string\n        default: D1" in text
+    assert "MILESTONE: ${{ inputs.milestone }}" in text and '--milestone "$MILESTONE"' in text
+    assert "--milestone D1" not in text and "--milestone ${{" not in text    # never expanded inside run:
+    assert "exempts" in text and "blocks a project" not in text

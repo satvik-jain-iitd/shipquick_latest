@@ -53,6 +53,12 @@ top="$(git -C "$child" rev-parse --show-toplevel 2>/dev/null)" || { echo "adopt.
 if [ -n "$milestone" ]; then
   case "$milestone" in D0|D1|D2|D3|D4|D5|D6) ;; *) echo "adopt.sh: unknown milestone '$milestone' (use D0 to D6)" >&2; exit 2 ;; esac
 fi
+# an existing caller line that is not exactly `  milestone: D0..D6` is refused, never dropped (a dropped line would fall back to the default silently)
+existing_call="$child/.github/workflows/shipquick-call.yml"
+if [ -z "$milestone" ] && [ -f "$existing_call" ]; then   # with --milestone the flag replaces the line
+  badline="$(grep -E '^[[:space:]]+milestone:' "$existing_call" | grep -vE '^[[:space:]]+milestone:[[:space:]]*D[0-6][[:space:]]*$' | head -1 || true)"
+  [ -z "$badline" ] || { echo "adopt.sh: shipquick-call.yml: the line '$(printf '%s' "$badline" | sed -E 's/^[[:space:]]+//')' is not 'milestone: D0' to 'milestone: D6' (fix the line, or pass --milestone D<n>)" >&2; exit 2; }
+fi
 
 # story #187 (S9): --platforms android,ios[,web] wires the child to the kit's UI libraries (ADR-012). Checked before anything is written.
 SNIP="ui/platforms"
