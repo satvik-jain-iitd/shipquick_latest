@@ -543,6 +543,15 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Confidence that nothing fits better: 0.7 (thin search; the stats are a few lines of stdlib).
 
 ---
+## 10 Nov 2026, story #320 (A5a): block `--no-verify` and `core.hooksPath` in a Bash hook
+- Need: a PreToolUse Bash hook that stops `git commit --no-verify`, `git push --no-verify` and `core.hooksPath` redirects, with no outside tool.
+- Run: `scout.py --need "PreToolUse hook that blocks git commands with --no-verify or core.hooksPath"`: no repos found.
+  `gh search repos --topic=claude-code-hooks --limit 5`: mksglu/context-mode (context window, not git), parcadei/Continuous-Claude-v3 (hooks for state and ledgers, no bypass guard), wesammustafa/Claude-Code-Quest (a guide, no hooks), vshulcz/deja-vu (memory), first-fluke/oh-my-agent (skills and presets). None blocks a git bypass.
+  `gh search repos "block no-verify git hook bypass" --limit 5`: the same unrelated set.
+- Read: the READMEs of mksglu/context-mode, parcadei/Continuous-Claude-v3 and wesammustafa/Claude-Code-Quest (tier C or B, first lines only). None describes a git bypass guard.
+- Borrowed: the idea from ECC `scripts/hooks/block-no-verify.js` (MIT, study clone, read only): a list of bypass flags, a check that the word is a real git call and not text, a split on shell separators, and the `core.hooksPath` redirect. Rewritten in stdlib Python (`plugin/hooks/git_guard.py`), because the kit's plugin hooks are Python.
+- Decision: adopt the idea, build the small Python hook. The ECC file is a Node module with a large shell scanner and a budget; it does not fit a stdlib plugin.
+- Confidence that nothing fits better: 0.7 (the search is thin; ECC is the only close fit and it is a whole plugin, not a single hook).
 ## 10 Nov 2026, story #315 (A12): cost and loop guard
 - Need: a Claude Code hook that warns on five identical tool calls in a row and warns or denies when the session cost (from the transcript usage records) is over a line.
 - Run: `scout.py --need "Claude Code hook that detects a repeated identical tool call loop and a session cost ceiling from the transcript usage records"`: no repos found.

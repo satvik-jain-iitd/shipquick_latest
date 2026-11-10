@@ -1399,6 +1399,30 @@ Scenario: the manifest and the budget are honest
 ```
 Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).
 
+## Story #320 (A5a): the Bash hook blocks git hook bypasses
+```gherkin
+Scenario: a git commit or push that skips the hooks is blocked
+  Given a Bash tool call with "git commit --no-verify", "git push --no-verify" or "git -c core.hooksPath=... commit"
+  When the PreToolUse hook runs
+  Then it exits 2 and the reason starts with "git_guard: blocked" on stderr
+Scenario: a git config that redirects the hooks folder is blocked
+  Given a Bash tool call with "git config core.hooksPath .husky"
+  When the PreToolUse hook runs
+  Then it exits 2; a read such as "git config --get core.hooksPath" passes
+Scenario: a harmless command passes silently
+  Given "git status", "git push -n origin dev" or "ls -la"
+  When the PreToolUse hook runs
+  Then it exits 0 and prints nothing
+Scenario: the bypass text inside a quoted argument of another command passes
+  Given "echo \"git commit --no-verify\"" or "gh pr create --body \"core.hooksPath is not allowed\""
+  When the PreToolUse hook runs
+  Then it exits 0; a real bypass after "&&" in the same line is still blocked
+Scenario: a bypass hidden by a line continuation, an env var, or a long-option prefix is blocked
+  Given "git commit -m fix \\" then a new line "--no-verify", "GIT_CONFIG_PARAMETERS=... git commit", "git --config-env=core.hooksPath=X commit", "git commit --no-veri" or "git push --no-veri"
+  When the PreToolUse hook runs
+  Then it exits 2 with the reason on stderr
+```
+Tests: `tests/test_git_guard.py` (`test_bypass_is_blocked_with_reason` (eight cases added for the review round: continuation, env vars, --config-env, --no-veri), `test_harmless_command_passes_silently`, `test_bypass_text_inside_a_quoted_argument_passes`, `test_other_tools_and_broken_input_pass`, `test_hook_is_registered_for_bash_pre_tool_use`).
 ## Story #315: the loop and cost guard
 ```gherkin
 Scenario: four different calls are not a loop
