@@ -74,3 +74,77 @@ def test_s327_ci_job_is_warn_only_and_not_in_the_gate():
     assert "check_shortcuts.py" in ci
     gate = ci.split("  gate:", 1)[1]
     assert "shortcut-ledger" not in gate.split("steps:", 1)[0]
+
+
+# ---- review of #338: wrapped comments, string literals, a missing file, a second table ----
+import re  # noqa: E402
+
+FOLLOW_HEADER = "| Date | Follow-up | Why it is open | Owner | Status |\n|---|---|---|---|---|\n"
+
+
+def test_s327_a_wrapped_comment_is_joined_and_the_trigger_on_line_two_counts(tmp_path):
+    root = make_repo(tmp_path, {
+        "a.py": "# ponytail: reads block-style YAML by indent, one line per hit. A\n# flow-style file is never passed; swap for a parser if that matters.\nx = 1\n",
+        "b.js": "// shortcut: linear scan over the list. add an index\n// when the list passes 10000 rows.\nlet y = 1;\n",
+    })
+    out = run(root).stdout
+    lines = [ln for ln in out.splitlines() if ln.startswith(("a.py", "b.js"))]
+    assert len(lines) == 2, out
+    assert all(" ok " in ln for ln in lines), out
+    assert "swap for a parser if that matters" in lines[0] and "when the list passes 10000 rows" in lines[1]
+    assert "0 no-trigger" in out
+
+
+def test_s327_a_new_marker_on_the_next_line_is_its_own_comment(tmp_path):
+    root = make_repo(tmp_path, {"a.py": "# shortcut: one. add x when y matters.\n# shortcut: two without a way forward.\n"})
+    out = run(root).stdout
+    assert out.count("a.py:") == 2 and "1 no-trigger" in out, out
+
+
+def test_s327_a_marker_inside_a_string_is_not_a_comment_and_a_closer_cuts_the_text(tmp_path):
+    root = make_repo(tmp_path, {
+        "s.py": 'print("# shortcut: in a string")\nrows = ["    // ponytail: fixed sizes, wrap later.", "    public enum T {"]\n',
+        "p.html": "<html><!-- ponytail: inline styles. add a stylesheet when a second page needs it. --></html>\n",
+    })
+    out = run(root).stdout
+    assert "s.py" not in out, out
+    line = next(ln for ln in out.splitlines() if ln.startswith("p.html"))
+    assert "-->" not in line and "</html>" not in line and "when a second page needs it." in line, line
+
+
+def test_s327_write_without_a_follow_ups_file_says_so_and_writes_nothing(tmp_path):
+    root = make_repo(tmp_path, {"a.py": "# shortcut: x\n"})
+    r = run(root, "--write")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "docs/follow-ups.md is missing" in r.stdout
+    assert "Traceback" not in r.stderr and not (root / "docs" / "follow-ups.md").exists()
+
+
+def test_s327_rows_land_right_after_the_follow_ups_table_not_a_later_table(tmp_path):
+    fu = ("# Follow-ups\n\n" + FOLLOW_HEADER + "| 2026-11-01 | old row | why | me | open |\n\n"
+          "## Closed\n\n| Date | Item |\n|---|---|\n| 2026-10-01 | done thing |\n")
+    root = make_repo(tmp_path, {"a.py": "# shortcut: global lock.\n", "docs/follow-ups.md": fu})
+    assert run(root, "--write").returncode == 0
+    lines = (root / "docs" / "follow-ups.md").read_text(encoding="utf-8").splitlines()
+    new = next(i for i, ln in enumerate(lines) if "[sc:" in ln)
+    old = next(i for i, ln in enumerate(lines) if "old row" in ln)
+    closed = next(i for i, ln in enumerate(lines) if ln.startswith("## Closed"))
+    assert old < new < closed, lines
+
+
+def test_s327_a_follow_ups_file_without_the_header_row_is_refused_clearly(tmp_path):
+    root = make_repo(tmp_path, {"a.py": "# shortcut: global lock.\n", "docs/follow-ups.md": "# Follow-ups\n\nnothing here\n"})
+    before = (root / "docs" / "follow-ups.md").read_text(encoding="utf-8")
+    r = run(root, "--write")
+    assert r.returncode == 0 and "header row" in r.stdout, r.stdout
+    assert (root / "docs" / "follow-ups.md").read_text(encoding="utf-8") == before
+
+
+def test_s327_the_ci_job_cannot_block_a_merge_and_check_local_usage_names_it():
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    job = re.search(r"^  shortcut-ledger:\n(.*?)(?=^  [a-z][a-z-]*:\n|\Z)", ci, re.M | re.S).group(1)
+    assert "continue-on-error: true" in job
+    lines = (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8").splitlines()
+    usage = next(ln for ln in lines if ln.startswith("#   checks:"))
+    unknown = next(ln for ln in lines if "unknown check:" in ln)
+    assert "shortcuts" in usage and "shortcuts" in unknown

@@ -13,6 +13,8 @@ Usage:
   python3 scripts/check_shortcuts.py --write         also append one row per shortcut to docs/follow-ups.md
                                                      (a row already there, found by its [sc:...] key, is skipped)
   --root DIR   scan DIR instead of this repo (tests use a temp copy)
+A wrapped comment (`#` or `//` lines that follow) is joined before the trigger is checked; a marker inside a string
+literal (an odd number of quotes before it) is skipped; the text is cut at the first `*/` or `-->`.
 Skipped: tests/ and fixtures/ folders, vendored or built folders, markdown, and any file that is not UTF-8.
 """
 import argparse
@@ -52,12 +54,24 @@ def scan(root: Path):
             lines = (root / rel).read_text(encoding="utf-8").splitlines()
         except (UnicodeDecodeError, OSError):
             continue
-        for n, line in enumerate(lines, 1):
+        for idx, line in enumerate(lines):
             m = MARK.search(line)
             if not m:
                 continue
-            text = re.sub(r"\s*(\*/|-->)\s*$", "", m.group(2)).strip()
-            hits.append((rel, n, m.group(1), text, bool(TRIGGER.search(text))))
+            if line[:m.start()].count('"') % 2:   # an odd number of quotes before the marker: it sits in a string literal
+                continue
+            text = re.split(r"\*/|-->", m.group(2))[0].strip()   # cut at the first closer, wherever it is
+            leader = "//" if m.group(0).startswith("//") else m.group(0)[:1]
+            if leader in ("#", "//"):   # a wrapped comment: join the bare comment lines that follow
+                j = idx + 1
+                while j < len(lines):
+                    nxt = lines[j].strip()
+                    if not nxt.startswith(leader) or MARK.search(lines[j]):
+                        break
+                    text += " " + nxt[len(leader):].strip()
+                    j += 1
+                text = text.strip()
+            hits.append((rel, idx + 1, m.group(1), text, bool(TRIGGER.search(text))))
     return hits
 
 
@@ -67,8 +81,11 @@ def key_of(rel: str, text: str) -> str:
     return hashlib.sha1(f"{rel}|{norm}".encode("utf-8")).hexdigest()[:12]
 
 
-def write_rows(root: Path, hits) -> int:
+def write_rows(root: Path, hits):   # the row count, or None when the file cannot take rows (a message says why)
     fu = root / "docs" / "follow-ups.md"
+    if not fu.exists():
+        print("docs/follow-ups.md is missing: create it with the header row first, nothing written")
+        return None
     text = fu.read_text(encoding="utf-8")
     today = datetime.date.today().isoformat()
     rows, seen = [], set()
@@ -85,8 +102,13 @@ def write_rows(root: Path, hits) -> int:
     if not rows:
         return 0
     lines = text.split("\n")
-    table_ends = [i for i, ln in enumerate(lines) if ln.startswith("|")]
-    at = table_ends[-1] + 1 if table_ends else len(lines)
+    head = next((i for i, ln in enumerate(lines) if ln.startswith("| Date | Follow-up |")), None)
+    if head is None:
+        print("docs/follow-ups.md has no header row (| Date | Follow-up | ...): add it first, nothing written")
+        return None
+    at = head + 1
+    while at < len(lines) and lines[at].startswith("|"):   # right after the follow-ups table, never a later table
+        at += 1
     lines[at:at] = rows
     fu.write_text("\n".join(lines), encoding="utf-8")
     return len(rows)
@@ -105,7 +127,9 @@ def main(argv=None) -> int:
     bare = sum(1 for h in hits if not h[4])
     print(f"shortcut ledger: {len(hits)} comment(s), {bare} no-trigger")
     if args.write:
-        print(f"wrote {write_rows(root, hits)} row(s) to docs/follow-ups.md")
+        written = write_rows(root, hits)
+        if written is not None:
+            print(f"wrote {written} row(s) to docs/follow-ups.md")
     return 0
 
 

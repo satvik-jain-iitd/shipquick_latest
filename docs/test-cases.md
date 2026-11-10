@@ -1088,3 +1088,22 @@ Scenario: the decision is written down
   Then ADR-014 says a kit rule wording change must beat the current kit in a paired run, and experiments.md has a pending row for the bench
 ```
 Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
+
+## Story #327 review fixes: wrapped comments, string literals, the follow-ups file
+```gherkin
+Scenario: a wrapped comment is read whole
+  Given a # or // comment whose upgrade trigger sits on the next comment line
+  When the ledger scans it
+  Then it is listed once, tagged ok, with the full text; a new marker on the next line is its own comment
+Scenario: a marker in a string literal is not a comment
+  Given a line with an odd number of quotes before the marker, or a closer followed by markup
+  When the ledger scans it
+  Then the string is not listed, and the text stops at the first closer
+Scenario: --write is careful with docs/follow-ups.md
+  Given no follow-ups file, a file with no header row, or a second table below the follow-ups table
+  When --write runs
+  Then it prints one line and writes nothing for the first two, and the new rows land right after the follow-ups table for the third
+Scenario: the warn-only job cannot block a merge
+  Then the shortcut-ledger job has continue-on-error: true and check_local.sh usage names shortcuts
+```
+Tests: `tests/test_check_shortcuts.py` (`test_s327_a_wrapped_comment_*`, `test_s327_a_new_marker_*`, `test_s327_a_marker_inside_a_string_*`, `test_s327_write_without_*`, `test_s327_rows_land_right_after_*`, `test_s327_a_follow_ups_file_without_the_header_row_*`, `test_s327_the_ci_job_cannot_block_a_merge_*`).
