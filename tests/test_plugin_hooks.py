@@ -115,3 +115,82 @@ def test_drift_check_fails_when_a_rule_changes(tmp_path):
                           "--source", str(edited)], capture_output=True, text=True, cwd=ROOT)
     assert gen.returncode == 1
     assert "rules-dense.md" in gen.stdout + gen.stderr
+
+
+# ---- review of #345: the mode like mode.sh, the dense rules, the manifest, the ADR ----
+def git_repo(path):
+    subprocess.run(["git", "init", "-q", str(path)], check=True)
+    return path
+
+
+def hook_mode(cwd, extra_env=None, payload=None):
+    env = {**os.environ, "CLAUDE_PLUGIN_ROOT": str(PLUGIN), **(extra_env or {})}
+    p = subprocess.run([sys.executable, str(HOOKS / "session_start.py")], input=json.dumps(payload or {}),
+                       capture_output=True, text=True, cwd=cwd, env=env, timeout=10)
+    assert p.returncode == 0, p.stderr
+    return context_of(p)
+
+
+def test_the_mode_is_read_from_the_git_common_dir_like_mode_sh(tmp_path):
+    repo = git_repo(tmp_path / "repo")
+    (repo / ".git" / "shipquick-mode").write_text("auto\n")
+    assert "mode: auto" in hook_mode(repo)
+
+
+def test_a_tracked_mode_file_wins_over_the_common_dir_file(tmp_path):
+    repo = git_repo(tmp_path / "repo")
+    (repo / ".git" / "shipquick-mode").write_text("auto\n")
+    (repo / ".shipquick").mkdir()
+    (repo / ".shipquick" / "mode").write_text("semi\n")
+    assert "mode: semi" in hook_mode(repo)
+
+
+def test_the_mode_is_found_from_a_subfolder_and_a_worktree(tmp_path):
+    repo = git_repo(tmp_path / "repo")
+    subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@e.x", "commit", "-q",
+                    "--allow-empty", "-m", "x"], check=True)
+    (repo / ".git" / "shipquick-mode").write_text("manual\n")
+    sub = repo / "a" / "b"
+    sub.mkdir(parents=True)
+    assert "mode: manual" in hook_mode(sub)
+    wt = tmp_path / "wt"
+    subprocess.run(["git", "-C", str(repo), "worktree", "add", "-q", str(wt), "-b", "w"], check=True)
+    assert "mode: manual" in hook_mode(wt)      # every worktree shares the common dir
+
+
+def test_claude_project_dir_is_preferred_when_set(tmp_path):
+    repo = git_repo(tmp_path / "repo")
+    (repo / ".git" / "shipquick-mode").write_text("semi\n")
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    assert "mode: semi" in hook_mode(elsewhere, extra_env={"CLAUDE_PROJECT_DIR": str(repo)})
+
+
+def test_a_word_that_is_not_a_mode_reads_as_not_set(tmp_path):
+    repo = git_repo(tmp_path / "repo")
+    (repo / ".git" / "shipquick-mode").write_text("banana\n")
+    assert "mode: not set" in hook_mode(repo)
+
+
+def test_the_dense_rules_keep_the_instruction_each_rule_exists_for():
+    dense = (PLUGIN / "rules-dense.md").read_text(encoding="utf-8")
+    for must in ("end your reply with one fenced block",          # rule 19
+                 "an agent never runs set",                       # rule 0
+                 "The coder opens every PR",                      # rule 4
+                 "The author never reviews their own PR"):        # rule 30
+        assert must in dense, must
+
+
+def test_the_dense_text_is_still_short_enough_to_inject_every_session():
+    assert len((PLUGIN / "rules-dense.md").read_text(encoding="utf-8")) < 6000
+
+
+def test_the_session_matcher_covers_fork_and_the_manifest_names_an_author():
+    hooks = json.loads((HOOKS / "hooks.json").read_text())["hooks"]
+    assert "fork" in hooks["SessionStart"][0]["matcher"].split("|")
+    assert json.loads((PLUGIN / ".claude-plugin" / "plugin.json").read_text()).get("author")
+
+
+def test_adr_015_states_the_time_budget_honestly():
+    adr = (ROOT / "docs" / "decisions" / "ADR-015.md").read_text(encoding="utf-8")
+    assert "in-process" in adr and "whole-process" in adr and "interpreter" in adr and "200 ms" in adr

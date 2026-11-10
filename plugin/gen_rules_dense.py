@@ -19,20 +19,25 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "plugin" / "rules-dense.md"
 RULES = [0, 1, 4, 5, 12, 19, 20, 22, 26, 30]
-CAP = 260
+CAP = 650
 LINE = re.compile(r"^(\d+)\. (.*)$")
 
 
-# shortcut: a rule is cut at 260 characters at a sentence end, upgrade when a rule needs more room.
+# A rule is kept whole sentence by sentence until the next sentence would pass CAP characters. 650 keeps the last
+# instruction of every chosen rule today (rule 30 needs about 600). A test names one instruction per long rule, so a
+# rule that grows past the cap shows up as a red test, not as a silent cut. Upgrade to hand-written lines if the
+# whole text ever passes about 6000 characters.
 def dense(text):
     text = text.replace("**", "").replace("`", "")
-    for end in re.finditer(r"\.\s", text):
-        if 80 <= end.start() + 1 <= CAP:
-            text = text[:end.start() + 1]
+    out = ""
+    for sentence in re.split(r"(?<=[.!?])\s+", text):
+        joined = f"{out} {sentence}".strip()
+        if out and len(joined) > CAP:
             break
-    if len(text) > CAP:
-        text = text[:CAP].rsplit(" ", 1)[0] + " ..."
-    return text
+        out = joined
+    if len(out) > CAP:   # one sentence longer than the cap
+        out = out[:CAP].rsplit(" ", 1)[0] + " ..."
+    return out
 
 
 def build(source_text):

@@ -1105,3 +1105,16 @@ Scenario: the decision is written down
   Then ADR-014 says a kit rule wording change must beat the current kit in a paired run, and experiments.md has a pending row for the bench
 ```
 Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
+
+## Story #313 review fixes: the mode, the dense rules and the budget
+```gherkin
+Scenario: the hook reads the mode the way mode.sh does
+  Given a repo whose mode is in .git/shipquick-mode, or in a tracked .shipquick/mode, or in a worktree of that repo
+  When SessionStart runs from the repo, a subfolder or the worktree, or CLAUDE_PROJECT_DIR points at the repo
+  Then the context says the same mode as mode.sh get; the tracked file wins; a word that is not a mode reads as not set
+Scenario: the dense rules keep what each rule is for
+  Then the dense text keeps "end your reply with one fenced block", "an agent never runs set", "The coder opens every PR" and "The author never reviews their own PR", and stays under 6000 characters
+Scenario: the manifest and the budget are honest
+  Then SessionStart also matches fork, plugin.json names an author, and ADR-015 states the in-process and whole-process times
+```
+Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).

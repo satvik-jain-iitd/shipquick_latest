@@ -9,6 +9,8 @@ hook) borrowed from DietrichGebert/ponytail hooks/ponytail-subagent.js (MIT). Re
 docs/research/repo-radar.md, 10 Nov 2026, story #313.
 """
 import json
+import os
+import re
 import sys
 from pathlib import Path
 
@@ -24,12 +26,52 @@ def read_payload():
         return {}
 
 
-def current_mode(project_dir):
+MODES = ("manual", "semi", "auto")
+
+
+def _git_dirs(base):
+    """(top-level folder, git common dir) of the repo that holds base, or (None, None). Reads the .git entry the
+    way git does and starts no process: a .git folder is its own common dir; a .git file (a worktree) points at a
+    gitdir whose `commondir` file names the shared one. A git call here cost 50 to 320 ms; this costs under 1 ms."""
     try:
-        value = (Path(project_dir) / ".shipquick" / "mode").read_text(encoding="utf-8").strip()
-        return value or "not set"
+        here = Path(base).resolve()
+        for cur in (here, *here.parents):
+            entry = cur / ".git"
+            if entry.is_dir():
+                return cur, entry
+            if entry.is_file():
+                m = re.match(r"gitdir:\s*(.+)", entry.read_text(encoding="utf-8"))
+                if not m:
+                    return cur, None
+                gitdir = Path(m.group(1).strip())
+                gitdir = gitdir if gitdir.is_absolute() else cur / gitdir
+                pointer = gitdir / "commondir"
+                if pointer.is_file():
+                    common = Path(pointer.read_text(encoding="utf-8").strip())
+                    return cur, (common if common.is_absolute() else (gitdir / common).resolve())
+                return cur, gitdir
     except OSError:
-        return "not set"
+        pass
+    return None, None
+
+
+def current_mode(project_dir):
+    """The mode the way scripts/mode.sh get reads it: the tracked .shipquick/mode first, then the untracked
+    <git-common-dir>/shipquick-mode that every worktree shares. CLAUDE_PROJECT_DIR is preferred when set.
+    Anything that is not manual, semi or auto reads as not set."""
+    base = os.environ.get("CLAUDE_PROJECT_DIR") or project_dir
+    top, common = _git_dirs(base)
+    candidates = [(top or Path(base)) / ".shipquick" / "mode"]
+    if common:
+        candidates.append(common / "shipquick-mode")
+    for path in candidates:
+        if path.is_file():   # the first file that exists decides, as in mode.sh
+            try:
+                word = "".join(path.read_text(encoding="utf-8").split())
+            except OSError:
+                return "not set"
+            return word if word in MODES else "not set"
+    return "not set"
 
 
 def context_for(event, project_dir):
