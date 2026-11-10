@@ -71,6 +71,9 @@ def split_git_args(args):
         elif tok.startswith("--config-env="):
             configs.append(tok.split("=", 1)[1])
             i += 1
+        elif tok == "--config-env" and i + 1 < len(args):
+            configs.append(args[i + 1])
+            i += 2
         elif tok in GIT_VALUE_OPTIONS and i + 1 < len(args):
             i += 2
         elif tok.startswith("-"):

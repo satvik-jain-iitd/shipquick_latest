@@ -40,6 +40,7 @@ BLOCKED = [
     "GIT_CONFIG_PARAMETERS=\"'core.hooksPath=/dev/null'\" git commit -m fix",
     "GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m fix",
     "git --config-env=core.hooksPath=HOOKS_DIR commit -m fix",
+    "git --config-env core.hooksPath=HOOKS commit -m fix",
     "git commit --no-veri -m fix",
     "git commit --no-verif -m fix",
     "git push --no-veri origin dev",
