@@ -581,3 +581,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the idea only. ECC's pair of hooks (warn, then block) and the rule that a gate is a cost, not a quality win (GateGuard result in the study). No code copied.
 - Decision: build `plugin/hooks/guard.py` in stdlib Python, using `common.read_payload` from the plugin. Small and boring: one state file per session in a temp folder, prices in one dict.
 - Confidence that nothing fits better: 0.6 (the search is thin for hooks; the ECC hooks were read from the study, not from a clone in this run).
+## 11 Nov 2026, story #174 (XS): name a workflow file with zero jobs
+- Need: `scripts/check_timeouts.py` must name a workflow file that yields zero jobs, not pass it silently.
+- Run: `scout.py --need "lint GitHub Actions workflow files for jobs missing timeout-minutes, name files with zero jobs"`: no repos found. `gh search repos --topic=github-actions --limit 5` and `gh search repos "actionlint timeout-minutes" --limit 5`: nektos/act, go-gitea, sdras/awesome-actions, goreleaser. None checks timeout-minutes per job.
+- Read: none. No repo in the search fits a one-line change to this kit's own script.
+- Borrowed: nothing. The check is the kit's own stdlib script (story #154).
+- Decision: build from scratch, a three-line change in `scripts/check_timeouts.py`. Nothing found fits.
+- Confidence that nothing fits better: 0.8 (topic search is thin; the need is a bug in the kit's own check).

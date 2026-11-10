@@ -70,3 +70,12 @@ def test_s194_a_space_before_the_colon_still_counts():
 
 def test_s194_the_no_jobs_line_names_the_fix():
     assert "block style" in ct.NO_JOBS
+
+
+# Story #174: a workflow file with zero jobs (another indent style) is named, never passed silently.
+def test_s174_a_file_with_zero_jobs_is_named_in_the_output(tmp_path, capsys):
+    f = tmp_path / "indented.yml"
+    f.write_text("on: push\n    jobs:\n        build:\n            runs-on: ubuntu-latest\n", encoding="utf-8")
+    assert ct.main([str(f)]) == 0
+    out = capsys.readouterr().out
+    assert f"no jobs found in {f}" in out

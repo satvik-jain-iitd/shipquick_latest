@@ -1593,3 +1593,14 @@ Scenario: adopt.sh writes, keeps and validates the milestone
   When adopt.sh runs with --milestone D2, the caller has `milestone: D2`; a later run without the flag keeps it, once; a run with no flag and no line writes none; --milestone X9 is refused and the caller is untouched; an existing line that is quoted, lowercase, D7 or has a trailing comment is refused, not dropped
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
+
+## Story #174: a workflow file with zero jobs is named
+
+**S174.1 Zero jobs is named.**
+```gherkin
+Scenario: a workflow file in another indent style with no jobs is named in the output
+  Given a workflow file whose "jobs:" key is indented, so no job can be read
+  When check_timeouts.py checks that file
+  Then the output has a line "no jobs found in <file>"
+```
+Test: `tests/test_check_timeouts.py::test_s174_a_file_with_zero_jobs_is_named_in_the_output`
