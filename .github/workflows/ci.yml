@@ -481,11 +481,9 @@ jobs:
       - name: Run the snapshot tests on iPhone 16, iOS 18.5
         working-directory: ui/ios
         run: |
-          xcodebuild -list
-          # the test target is in the manifest only with SHIPQUICK_SNAPSHOTS set: the "-Package" scheme holds every target when Xcode makes one
-          scheme=$(xcodebuild -list -json | python3 -c 'import json,sys; s=json.load(sys.stdin)["workspace"]["schemes"]; print(next((x for x in s if x.endswith("-Package")), s[0]))')
-          echo "scheme: $scheme"
-          xcodebuild test -scheme "$scheme" -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
+          # SPM makes one scheme, the product's, and it runs the test target too (#375 review: xcodebuild -list -json is not
+          # clean JSON once Prefire is resolved, so the scheme is named, never parsed from xcodebuild output)
+          xcodebuild test -scheme ShipQuickUI -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
             -skipPackagePluginValidation -skipMacroValidation -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO -quiet
       - name: Upload the recorded reference images (record=true only)
         if: always() && inputs.record == true

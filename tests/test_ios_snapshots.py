@@ -65,6 +65,10 @@ def test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_
     assert re.search(r"^    timeout-minutes: \d+$", j, re.M)
     assert "xcode-select -s /Applications/Xcode_16.4.app" in j
     assert "xcodebuild test" in j and "platform=iOS Simulator,name=iPhone 16,OS=18.5" in j
+    # #375 review: SPM makes exactly one scheme, the product's, and xcodebuild -list -json prints a non-JSON line after
+    # the JSON once Prefire is resolved, so the job names the scheme and never parses xcodebuild output
+    assert "xcodebuild test -scheme ShipQuickUI " in j
+    assert "json.load" not in j
     assert "TEST_RUNNER_SNAPSHOT_TESTING_RECORD" in j
     assert "upload-artifact@" in j and "__Snapshots__" in j
     assert re.search(r"^  workflow_dispatch:\n    inputs:\n      record:", CI, re.M), "ci.yml has no record input"
