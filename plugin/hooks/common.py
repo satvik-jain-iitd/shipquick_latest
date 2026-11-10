@@ -2,7 +2,11 @@
 
 Every hook: read the JSON payload from stdin, print one JSON object, exit 0. On any error the hook
 prints nothing and exits 0, so it never blocks a session. The rules come from rules-dense.md,
-which scripts/gen_rules_dense.py writes from CLAUDE.md and CI checks for drift.
+which plugin/gen_rules_dense.py writes from CLAUDE.md and CI checks for drift.
+
+Hook layout (SessionStart + SubagentStart, hookSpecificOutput.additionalContext, one script per
+hook) borrowed from DietrichGebert/ponytail hooks/ponytail-subagent.js (MIT). Recorded in
+docs/research/repo-radar.md, 10 Nov 2026, story #313.
 """
 import json
 import sys
