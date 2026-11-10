@@ -19,7 +19,10 @@ try:
     payload = read_payload()
     file_path = (payload.get("tool_input") or {}).get("file_path") or ""
     base = os.environ.get("CLAUDE_PROJECT_DIR") or payload.get("cwd") or os.getcwd()
-    top, _ = _git_dirs(base)
+    # The edited file's own checkout is the root: a coder edits in a git worktree, and CLAUDE_PROJECT_DIR
+    # names the session's checkout (the main one), which would turn the worktree path into a non-match.
+    top = _git_dirs(Path(file_path).parent)[0] if file_path else None
+    top = top or _git_dirs(base)[0]
     root = Path(top or base).resolve()
     rel = None
     if file_path:
@@ -30,7 +33,7 @@ try:
     # A child reads the list it is judged by: the vendored ShipQuick copy. ShipQuick reads its own.
     vendored = root / "knowledge" / "shipquick_latest" / "scripts" / "protected_paths.txt"
     listed = vendored if vendored.is_file() else root / "scripts" / "protected_paths.txt"
-    if rel and listed.is_file() and current_mode(base) == "auto":
+    if rel and listed.is_file() and current_mode(str(root)) == "auto":
         for line in listed.read_text(encoding="utf-8").splitlines():
             pat = line.split("#", 1)[0].strip()
             if pat and fnmatch.fnmatchcase(rel, pat):

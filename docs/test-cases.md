@@ -1148,3 +1148,12 @@ Scenario: the warning is given as additional context to the model
   Then the hook output has hookSpecificOutput.additionalContext with the warning, hookEventName PreToolUse, and no permissionDecision
 ```
 Tests: `tests/test_protected_warn.py` (`test_a_child_with_the_vendored_list_gets_the_warning`, `test_the_warning_reaches_the_model_as_additional_context`).
+
+## Story #321 review fix 3 (PR #350): an edit in a git worktree
+```gherkin
+Scenario: an edit in a worktree is judged by the edited file's own checkout
+  Given a repo in auto mode with a worktree under .claude/worktrees/lane-x, and CLAUDE_PROJECT_DIR set to the main checkout
+  When an Edit targets <worktree>/scripts/review_merge.sh
+  Then the hook prints "protected path, owner merges: scripts/review_merge.sh" and exits 0
+```
+Tests: `tests/test_protected_warn.py` (`test_an_edit_in_a_worktree_warns_when_the_session_points_at_the_main_checkout`).
