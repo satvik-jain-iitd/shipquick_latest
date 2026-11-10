@@ -60,7 +60,7 @@ def test_s219_every_template_has_a_preview_for_prefire():
 
 def test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout():
     j = job("ui-ios-snapshots")
-    assert "needs: [ui-changes]" in j and "needs.ui-changes.outputs.ui == 'true'" in j
+    assert "needs: [ui-changes]" in j and "needs.ui-changes.outputs.ios == 'true'" in j  # #375 review: ios, not ui
     assert "runs-on: macos-15" in j
     assert re.search(r"^    timeout-minutes: \d+$", j, re.M)
     assert "xcode-select -s /Applications/Xcode_16.4.app" in j
@@ -104,3 +104,31 @@ def test_s219_the_reference_folder_holds_one_png_per_template_and_matrix_cell():
     assert len(expected) == 8 * len(TEMPLATES)
     have = {p.name for p in folder.glob("*.png")} if folder.is_dir() else set()
     assert have == expected, f"missing {sorted(expected - have)[:3]}..., extra {sorted(have - expected)[:3]}"
+
+
+def test_s219_the_snapshot_job_runs_only_when_ios_paths_change():
+    """#375 review: ui-changes.outputs.ui is also true for ui/android/** and tests/fixtures/**, so an Android-only PR
+    ran the 45-minute macOS job. The job now waits on its own `ios` output, and that grep names no Android path."""
+    changes = job("ui-changes")
+    assert re.search(r"^      ios: \$\{\{ steps\.diff\.outputs\.ios \}\}$", changes, re.M), "ui-changes has no ios output"
+    m = re.search(r"grep -qE '(\^\([^']*\))' <<< \"\$names\"; then echo \"ios=true\"", changes)
+    assert m, "ui-changes never writes ios=true from a grep over the changed names"
+    pattern = re.compile(m.group(1))
+    assert pattern.search("ui/ios/templates/ListTemplate.swift")
+    assert pattern.search("design/tokens.json")
+    assert not pattern.search("ui/android/templates/ListTemplate.kt")
+    assert not pattern.search("tests/fixtures/ios/Bad/BadScreen.swift")
+    j = job("ui-ios-snapshots")
+    assert "if: needs.ui-changes.outputs.ios == 'true'" in j
+    assert "needs.ui-changes.outputs.ui == 'true'" not in j
+
+
+def test_s219_the_doc_states_the_real_precision_of_the_compare():
+    """#375 review: the doc said "A changed pixel fails the job" while the Swift test compares at perceptualPrecision
+    0.98. The doc names the same number the Swift file sets, and never promises pixel-exact."""
+    swift = (TEST_DIR / "TemplateSnapshotTests.swift").read_text(encoding="utf-8")
+    precision = re.search(r"perceptualPrecision: ([0-9.]+)", swift).group(1)
+    doc = (IOS / "SNAPSHOTS.md").read_text(encoding="utf-8")
+    assert f"perceptualPrecision {precision}" in doc, f"the doc never names perceptualPrecision {precision}"
+    assert "TemplateSnapshotTests.swift" in doc
+    assert "changed pixel" not in doc.lower()

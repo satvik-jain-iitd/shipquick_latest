@@ -1,7 +1,10 @@
 # ui/ios snapshots: how the reference images are made and refreshed (story #219)
 
 Every screen template in `templates/` has a snapshot test. CI draws the template and compares the
-picture with a reference image in `ShipQuickUITests/__Snapshots__/`. A changed pixel fails the job.
+picture with a reference image in `ShipQuickUITests/__Snapshots__/`. The compare is not pixel-exact: it passes
+when the two images match within `perceptualPrecision 0.98`, set in `ShipQuickUITests/TemplateSnapshotTests.swift`.
+Anti-aliasing drift and a one-shade colour change pass. A moved, missing or recoloured element fails the job.
+Want pixel-exact? Set the precision to 1 there and record the references again.
 
 ## What is compared
 
@@ -20,7 +23,8 @@ env var `SHIPQUICK_SNAPSHOTS` is set. A child that depends on `ShipQuickUI` neve
 
 ## Where it runs
 
-Job `ui-ios-snapshots` in `.github/workflows/ci.yml`. It runs when `ui/**` or `tests/fixtures/**` changes.
+Job `ui-ios-snapshots` in `.github/workflows/ci.yml`. It runs only when `ui/ios/**`, `design/**`,
+`scripts/emit_tokens.py` or `ci.yml` itself changes. An Android-only or fixture-only PR skips it.
 Pins: `macos-15`, Xcode 16.4, simulator iPhone 16 on iOS 18.5, `timeout-minutes: 45`.
 The pins matter. Another simulator draws text a little differently, so the images are compared only on CI,
 and only on this exact simulator. Change a pin and the images must be recorded again.

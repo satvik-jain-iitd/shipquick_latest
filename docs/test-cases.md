@@ -1623,5 +1623,13 @@ Scenario: recorded reference images do not count toward pr-size (#375 review)
   Given 50 PNGs outside __Snapshots__ and one .txt inside it, pr-size counts 51 and fails
   Then the ci.yml pr-size job leaves out the same __Snapshots__/*.png files
   Tests: test_s219_reference_images_under_snapshots_do_not_count_toward_pr_size, test_s219_a_png_outside_snapshots_and_a_non_png_inside_still_count, test_s219_cis_pr_size_job_leaves_out_the_same_reference_images (tests/test_ci_must_have.py)
+Scenario: the snapshot job runs only when iOS paths change (#375 review, round 2)
+  Given ui-changes has an `ios` output written by a grep over the changed names
+  Then that grep matches ui/ios/** and design/** and does not match ui/android/** or tests/fixtures/**
+  And the job ui-ios-snapshots waits on needs.ui-changes.outputs.ios, not on `ui`
+  Test: test_s219_the_snapshot_job_runs_only_when_ios_paths_change
+Scenario: the doc states the real precision of the compare (#375 review, round 2)
+  Then ui/ios/SNAPSHOTS.md names `perceptualPrecision <n>` with the same n as TemplateSnapshotTests.swift, points to that file, and never says "changed pixel"
+  Test: test_s219_the_doc_states_the_real_precision_of_the_compare
 ```
 Tests: `tests/test_ios_snapshots.py`, `tests/test_ci_must_have.py` (the three pr-size ones). The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.

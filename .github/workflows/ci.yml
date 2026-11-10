@@ -303,6 +303,7 @@ jobs:
       contents: read
     outputs:
       ui: ${{ steps.diff.outputs.ui }}
+      ios: ${{ steps.diff.outputs.ios }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -315,16 +316,18 @@ jobs:
           BEFORE: ${{ github.event.before }}
         run: |
           if [ "$EVENT" = "pull_request" ]; then
-            git fetch -q origin "$BASE" || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
+            git fetch -q origin "$BASE" || { echo ui=true >> "$GITHUB_OUTPUT"; echo ios=true >> "$GITHUB_OUTPUT"; exit 0; }
             range="origin/$BASE...HEAD"
           elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
             range="$BEFORE..HEAD"
           else
-            echo "ui=true" >> "$GITHUB_OUTPUT"; exit 0   # first push of a branch: compile to be safe
+            echo "ui=true" >> "$GITHUB_OUTPUT"; echo "ios=true" >> "$GITHUB_OUTPUT"; exit 0   # first push of a branch: compile to be safe
           fi
           # Captured first: a failing git diff inside the `if` below would have written ui=false. --no-renames lists the old path of a move.
-          names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
+          names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; echo ios=true >> "$GITHUB_OUTPUT"; exit 0; }
           if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_tokens\.py|\.github/workflows/ci\.yml|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
+          # Story #219 (#375 review): the macOS snapshot job waits on `ios`, not on `ui`, so an Android-only or fixture-only PR never runs it.
+          if grep -qE '^(ui/ios/|design/|scripts/emit_tokens\.py|\.github/workflows/ci\.yml)' <<< "$names"; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
   ui-android-compile:
     # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
     # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
@@ -461,11 +464,12 @@ jobs:
           grep -q "warning:" "$RUNNER_TEMP/local.txt"
   ui-ios-snapshots:
     # Story #219: swift-snapshot-testing and Prefire compare every template with its reference images (light and dark,
-    # smallest and largest Dynamic Type, iPhone SE and Pro Max) on one pinned simulator. SHIPQUICK_SNAPSHOTS adds the test
+    # smallest and largest Dynamic Type, iPhone SE and Pro Max) on one pinned simulator. Runs only when ui/ios/**, design/**,
+    # scripts/emit_tokens.py or this file changes (ui-changes.outputs.ios), never for an Android-only PR. SHIPQUICK_SNAPSHOTS adds the test
     # target and its two packages to Package.swift; a child never resolves them. A workflow_dispatch run with record=true
     # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: needs.ui-changes.outputs.ios == 'true'
     runs-on: macos-15
     timeout-minutes: 45
     permissions:
