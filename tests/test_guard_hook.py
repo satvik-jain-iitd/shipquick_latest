@@ -174,3 +174,28 @@ def test_opus_is_priced_at_opus_list_not_sonnet(tmp_path):
     assert guard.RATES["opus"]["output"] == 75.0
     assert guard.rate_for("claude-opus-4-1") is guard.RATES["opus"]
     assert abs(guard.session_cost(str(t), {})[0] - 75.0) < 1e-9
+
+
+def test_six_identical_bash_calls_are_not_denied_by_the_loop(tmp_path):
+    # Red for review finding 1 (PR #347): the loop deny is for Edit and Write only. A CI poll that
+    # repeats one Bash command must warn in post, not get stopped in pre.
+    for _ in range(5):
+        run_guard("post", edit_call("s-bash", tool="Bash"), tmp_path)
+    sixth = {**edit_call("s-bash", tool="Bash"), "hook_event_name": "PreToolUse"}
+    assert run_guard("pre", sixth, tmp_path) == {}
+
+
+def test_six_identical_write_calls_are_still_denied_by_the_loop(tmp_path):
+    for _ in range(5):
+        run_guard("post", edit_call("s-write", tool="Write"), tmp_path)
+    sixth = {**edit_call("s-write", tool="Write"), "hook_event_name": "PreToolUse"}
+    assert LOOP_TEXT in deny_reason(run_guard("pre", sixth, tmp_path))
+
+
+def test_a_cost_warning_is_printed_once_per_dollar(tmp_path):
+    # Red for review finding 2 (PR #347): a $3 session warns on the first call, then stays quiet.
+    t = write_transcript(tmp_path / "once.jsonl", [sonnet_input(1)])  # $3
+    first = run_guard("post", {**edit_call("s-once"), "transcript_path": str(t)}, tmp_path)
+    second = run_guard("post", {**edit_call("s-once", n=1), "transcript_path": str(t)}, tmp_path)
+    assert "warn line" in json.dumps(first)
+    assert second == {}

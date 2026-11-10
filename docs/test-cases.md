@@ -1182,3 +1182,22 @@ Scenario: an opus output million costs the opus output rate
   Then the cost is 75 dollars, and rate_for picks the opus row
   Test: test_opus_is_priced_at_opus_list_not_sonnet
 ```
+
+## Story #315, PR #347 review fixes (round 2): loop deny for Edit and Write only, cost warning once per dollar
+```gherkin
+Scenario: six identical Bash calls are not denied by the loop
+  Given five identical Bash calls recorded in one session
+  When the PreToolUse guard runs on a sixth identical Bash call
+  Then nothing is printed, so the poll is allowed (post already warned on the fifth)
+  Test: test_six_identical_bash_calls_are_not_denied_by_the_loop
+Scenario: six identical Write calls are still denied by the loop
+  Given five identical Write calls recorded in one session
+  When the PreToolUse guard runs on a sixth identical Write call
+  Then the deny reason says "loop: the same call 5 times"
+  Test: test_six_identical_write_calls_are_still_denied_by_the_loop
+Scenario: a cost warning is printed once per dollar
+  Given a transcript that costs 3 dollars, and two PostToolUse calls in one session
+  When the guard runs on the first call, then on the second
+  Then the first prints the warn line, and the second prints nothing
+  Test: test_a_cost_warning_is_printed_once_per_dollar
+```

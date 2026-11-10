@@ -3,7 +3,8 @@
 `python3 guard.py post` (PostToolUse, every tool) records the call and warns when the last 5 calls
 were identical, or when the session cost is over the warn line.
 `python3 guard.py pre` (PreToolUse, Edit, Write and Bash) denies a call that would repeat the last 5
-identical calls, and any call while the session cost is over the block line.
+identical calls when the tool is Edit or Write (a Bash poll only warns, in post), and any call while
+the session cost is over the block line.
 
 Calls are identical when the tool name and the sha256 of the input JSON are the same. The cost is
 summed from the usage records of the transcript file (transcript_path in the hook payload).
@@ -30,6 +31,7 @@ CHUNK = 8 * 1024 * 1024   # shortcut: at most 8 MB of transcript is read per hoo
 DEFAULT_WARN = 2.0
 DEFAULT_BLOCK = 4.0
 LOOP_TEXT = "loop: the same call 5 times"
+LOOP_DENY_TOOLS = ("Edit", "Write")   # Bash polls (CI checks) repeat on purpose; they only warn in post
 
 
 def threshold(name, default):
@@ -159,7 +161,8 @@ def main(argv):
     calls = load_calls(state)
     transcript = payload.get("transcript_path")
     if event == "pre":
-        if len(calls) >= WINDOW and all(c == key for c in calls[-WINDOW:]):
+        looped = len(calls) >= WINDOW and all(c == key for c in calls[-WINDOW:])
+        if looped and payload.get("tool_name") in LOOP_DENY_TOOLS:
             emit("PreToolUse", "deny", f"{LOOP_TEXT} in a row. This call is stopped; change the input or the approach.")
             return
         cost, state = session_cost(transcript, state)
@@ -171,12 +174,14 @@ def main(argv):
         calls = (calls + [key])[-WINDOW:]
         save_state(path, {**state, "calls": calls})   # the call is recorded before the cost is read
         cost, state = session_cost(transcript, state)
-        save_state(path, {**state, "calls": calls})
         notes = []
         if is_loop(calls):
             notes.append(f"{LOOP_TEXT} in a row ({payload.get('tool_name') or 'tool'}).")
-        if cost > warn_at:
+        warned = state.get("warned")   # the last whole dollar the cost warning was printed at
+        if cost > warn_at and (warned is None or int(cost) > warned):
             notes.append(cost_line(cost, warn_at, block_at) + ".")
+            state["warned"] = int(cost)
+        save_state(path, {**state, "calls": calls})
         if notes:
             emit("PostToolUse", warning=" ".join(notes))
 
