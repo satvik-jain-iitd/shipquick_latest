@@ -1015,6 +1015,7 @@ Scenario: in CI the missing key only warns
   Then it exits 0 and prints a warning with the install line
 ```
 Tests: `tests/test_adopt.py` (s326: passes when on, not adopted when false, absent, missing file, not JSON; CI warns). Local: `python3 -m pytest -q tests/test_adopt.py -k s326`.
+
 ## Story #311 and #331: the bench selftest and its tasks
 ```gherkin
 Scenario: the bench selftest checks every task before any model call
