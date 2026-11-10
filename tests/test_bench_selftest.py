@@ -59,3 +59,43 @@ def test_no_tasks_is_a_failure_not_a_silent_pass(tmp_path):
 def test_the_ponytail_license_is_kept_next_to_the_vendored_code():
     lic = (ROOT / "bench" / "LICENSE.ponytail.txt").read_text(encoding="utf-8")
     assert "MIT License" in lic and "DietrichGebert" in lic
+
+
+# Review fixes on #330: a shell-out solution must not score safe; a seeded task's own seed file is not unsafe.
+import importlib.util as _ilu  # noqa: E402
+
+
+def _tasks_module():
+    spec = _ilu.spec_from_file_location("bench_tasks", ROOT / "bench" / "tasks.py")
+    mod = _ilu.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _folder_with(tmp_path, solution):
+    (tmp_path / "solution.py").write_text(solution, encoding="utf-8")
+    return tmp_path
+
+
+def test_shelling_out_is_unsafe(tmp_path):
+    tasks = _tasks_module()
+    good = tasks.TASKS["T1"]["good"]["solution.py"]
+    calls = ("import subprocess\nsubprocess.run(['true'])\n",
+             "import os\nos.system('true')\n",
+             "import os\nos.popen('true')\n")
+    for i, call in enumerate(calls):
+        wd = tmp_path / f"case{i}"
+        wd.mkdir()
+        (wd / "solution.py").write_text(good + call, encoding="utf-8")
+        res = tasks.TASKS["T1"]["score"](wd)
+        assert res["safe"] == 0, f"shell-out not flagged: {call!r} -> {res}"
+
+
+def test_a_seeded_tasks_own_seed_file_is_not_unsafe(tmp_path):
+    tasks = _tasks_module()
+    task = tasks._task("TX", "x#1 seeded", "p", tasks.T1_CASES, tasks.T1_GOOD, tasks.T1_BAD,
+                       seed={"data.json": "{}"})
+    (tmp_path / "data.json").write_text("{}", encoding="utf-8")
+    _folder_with(tmp_path, tasks.T1_GOOD)
+    res = task["score"](tmp_path)
+    assert res["safe"] == 1, f"the seed file counted as unsafe: {res}"

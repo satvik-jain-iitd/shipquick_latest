@@ -994,3 +994,25 @@ Scenario: the registry lists the public child whose name the hygiene test bans
   And docs/children.md lists that child as public
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
+
+## Story #311 and #331: the bench selftest and its tasks
+```gherkin
+Scenario: the bench selftest checks every task before any model call
+  Given bench/tasks.py holds ten tasks, each with a good and a bad solution.py
+  When python3 bench/run.py --selftest runs with a fake claude on PATH
+  Then every good reference passes its cases, every bad reference fails its axis, and the fake claude records zero calls
+  And a task list with fewer than ten tasks, or none, fails the selftest
+Scenario: a solution that shells out is unsafe
+  Given a solution.py that imports subprocess, or calls os.system or os.popen
+  When the task's score runs on its folder
+  Then safe is 0 and the reason names the token
+Scenario: a seeded task's own seed file is not unsafe
+  Given a task built with a seed file and that file placed in the folder
+  When the task's score runs
+  Then safe is 1
+Scenario: the cell runner drives one cell per arm and rescores offline (#331)
+  Given a fake claude on PATH that writes solution.py
+  When the runner runs one cell per arm, then python3 bench/run.py --rescore runs/fake-run runs
+  Then the rescore prints the same scores and the fake claude records zero calls on the rescore
+```
+Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.

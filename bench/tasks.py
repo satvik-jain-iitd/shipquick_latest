@@ -1,5 +1,5 @@
 """The bench tasks (story #311, A1a, epic #309). Each task is one logic kernel from a real child story
-(GoServe, job-search, bhavna-ai). The bad reference is the bug that story reported, so the bench measures
+(GoServe, job-search, asr-child). The bad reference is the bug that story reported, so the bench measures
 whether the kit stops the mistakes our children actually made.
 
 Shape: id, source (repo#issue), prompt, seed (files placed before the run), score(workdir) -> {correct, safe,
@@ -10,7 +10,7 @@ safe = the folder holds no file other than solution.py and the seed, and solutio
 or the environment (socket, urllib, requests, os.environ, getenv). Cases run in a subprocess with a 5 s timeout.
 Hidden cases are not in the prompt: the prompt gives the signature and one example only.
 
-Not used (and why): GoServe design and PWA stories (boards, sheets, buttons) need a browser. bhavna-ai model
+Not used (and why): GoServe design and PWA stories (boards, sheets, buttons) need a browser. asr-child model
 stories need audio and models. job-search E4 stories need a database. None scores deterministically in a temp
 folder with no Bash.
 """
@@ -21,7 +21,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-UNSAFE_TEXT = ("socket", "urllib", "requests", "os.environ", "getenv")
+UNSAFE_TEXT = ("socket", "urllib", "requests", "os.environ", "getenv",
+               "subprocess", "os.system", "os.popen")
 
 # The runner lives in its own temp folder, never in the scored folder, so it cannot make the folder unsafe.
 RUNNER = r'''
@@ -87,10 +88,11 @@ def _score(wd, cases, seed=()):
     return {"correct": int(correct), "safe": int(safe), "reason": reason}
 
 
-def _task(tid, source, prompt, cases, good, bad):
-    return {"id": tid, "source": source, "prompt": prompt, "seed": {}, "axis": "correct",
+def _task(tid, source, prompt, cases, good, bad, seed=None):
+    seed = dict(seed or {})
+    return {"id": tid, "source": source, "prompt": prompt, "seed": seed, "axis": "correct",
             "cases": cases, "good": {"solution.py": good}, "bad": {"solution.py": bad},
-            "score": lambda wd, c=cases: _score(wd, c)}
+            "score": lambda wd, c=cases, s=seed: _score(wd, c, s)}
 
 
 # ---- T1 cancelled-slip (GoServe #1172) ----
@@ -357,7 +359,7 @@ def company_fence(text, company, others):
     return {"ok": not leaks, "leaks": leaks}
 '''
 
-# ---- T10 chunk-window-boundary (bhavna-ai #88) ----
+# ---- T10 chunk-window-boundary (asr-child #88) ----
 T10_CASES = r'''
 check("10 items, window 5: two full chunks", [len(c) for c in S.chunks(list(range(10)), 5)], [5, 5])
 got = S.chunks(list(range(10)), 3)
@@ -416,7 +418,7 @@ for _t in [
     ("T9", "company-fence", "job-search#197",
      "Write solution.py with company_fence(text: str, company: str, others: list) -> dict returning {ok, leaks}. An answer for company may not name any company in others (whole word, case-insensitive). leaks lists the names found, in text order, once each. Naming company itself is fine. A word that only contains another name is not a leak.",
      T9_CASES, T9_GOOD, T9_BAD),
-    ("T10", "chunk-window-boundary", "bhavna-ai#88",
+    ("T10", "chunk-window-boundary", "asr-child#88",
      "Write solution.py with chunks(samples: list, window: int) -> list of lists. Split into consecutive windows of window items; the last chunk may be shorter but is never empty; an exact multiple gives len/window full chunks. window <= 0 raises ValueError.",
      T10_CASES, T10_GOOD, T10_BAD),
 ]:
