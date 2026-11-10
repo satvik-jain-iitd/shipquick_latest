@@ -88,6 +88,17 @@ def test_a_private_field_an_html_entity_and_an_id_selector_with_letters_are_not_
     assert cdl.check(diff_with_added("src/a.css", "#main-nav { display: flex }"), []) is None
 
 
+def test_a_story_reference_in_a_comment_is_not_a_hex_colour():
+    # PR #374 review: `// story #133` and `/* story #374 */` are references, not colours; a `#cafe = 1` field is not either
+    assert cdl.check(diff_with_added("src/a.ts", "export const x = 1;  // story #133"), []) is None
+    assert cdl.check(diff_with_added("src/a.css", "/* story #374 */ color: var(--c);"), []) is None
+    assert cdl.check(diff_with_added("src/a.css", "color: var(--c); /* was #abc, story #1234 */"), []) is None
+    assert cdl.check(diff_with_added("src/a.ts", "class A { #cafe = 1 }"), []) is None
+    # a literal outside the comment still fails, and `//` inside a url() is not a comment
+    assert cdl.check(diff_with_added("src/a.ts", "const c = '#abc';  // story #133"), [])
+    assert cdl.check(diff_with_added("src/a.css", "background: url(https://x.test/a.png) #abcdef;"), [])
+
+
 def test_line_numbers_follow_the_hunk_header_across_hunks():
     diff = (
         "diff --git a/s.css b/s.css\n--- a/s.css\n+++ b/s.css\n"
@@ -127,6 +138,18 @@ def test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it():
         gate = text.split("\n  gate:\n", 1)[1]
         assert re.search(r"needs: \[[^\]]*\bdesign-tokens\b", gate), name
         assert "design-tokens: ${{ needs.design-tokens.result }}" in gate, name
+
+
+def test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary():
+    # PR #374 review: stylelint resolves `extends` and `plugins` from the project's node_modules, so a child whose
+    # config extends stylelint-config-standard fails under bare npx; a config may also live in package.json
+    for text in [(ROOT / ".github" / "workflows" / n).read_text(encoding="utf-8") for n in ("ci.yml", "checks.yml")] + [
+        (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
+    ]:
+        job = text.split("check_design_literals.py", 1)[1].split("--report-needless-disables", 1)[0]
+        assert "npm ci --ignore-scripts" in job and "package-lock.json" in job
+        assert 0 < job.find("node_modules/.bin/stylelint") < job.find("npx --yes stylelint@16.26.1"), "local binary first, pinned npx as the fallback"
+        assert "package.json" in job and '"stylelint"' in job, "a config in package.json counts"
 
 
 def test_the_cli_reads_a_diff_file_and_exits_1_with_the_hits(tmp_path):

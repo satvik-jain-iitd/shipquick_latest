@@ -1609,8 +1609,17 @@ Scenario: only added lines of the named file types count, with the hunk's line n
   Given a removed line, a python, markdown or js file, a private field `this.#cafe`, an entity `&#dead;`, an id selector `#main-nav`, and two hunks
   Then none is a hit, and a hit in the second hunk carries that hunk's line number
   Test: test_a_removed_line_and_a_non_web_file_are_never_a_hit, test_a_private_field_an_html_entity_and_an_id_selector_with_letters_are_not_hex, test_line_numbers_follow_the_hunk_header_across_hunks
+Scenario: a story reference in a comment is not a hex colour (PR #374 review)
+  Given `// story #133` on a ts line, `/* story #374 */` on a css line, or a `#cafe = 1` class field
+  Then none is a hit; a literal outside the comment still fails, and `//` inside a `url(https://...)` is not a comment
+  Test: test_a_story_reference_in_a_comment_is_not_a_hex_colour
 Scenario: the check is wired and the allowlist is protected
-  Then scripts/design_token_files.txt is in scripts/protected_paths.txt, check_local.sh names design-tokens, ci.yml and checks.yml carry a design-tokens job (the script, then `npx --yes stylelint@16.26.1 --report-needless-disables` only when css changed) and both gates wait for it; the CLI reads a diff file and exits 1 with the hits
+  Then scripts/design_token_files.txt is in scripts/protected_paths.txt, check_local.sh names design-tokens, ci.yml and checks.yml carry a design-tokens job (the script, then stylelint with `--report-needless-disables` only when css changed) and both gates wait for it; the CLI reads a diff file and exits 1 with the hits
   Test: test_the_kit_allowlist_is_protected_and_check_local_names_the_check, test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it, test_the_cli_reads_a_diff_file_and_exits_1_with_the_hits
+Scenario: stylelint runs with the project's own dependencies (PR #374 review)
+  Given a child whose .stylelintrc.json extends `stylelint-config-standard`, or a `"stylelint"` key in package.json
+  When the design-tokens job (ci.yml, checks.yml) or check_local.sh design-tokens runs stylelint
+  Then it runs `npm ci --ignore-scripts` first when package-lock.json exists, uses `node_modules/.bin/stylelint` when present, and `npx --yes stylelint@16.26.1` only as the fallback
+  Test: test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary
 ```
 Tests: `tests/test_check_design_literals.py`.

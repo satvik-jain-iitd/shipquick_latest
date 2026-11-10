@@ -110,9 +110,14 @@ check_design_tokens() {   # story #133: the same two steps as the design-tokens 
   local css
   css=$(git diff --name-only --diff-filter=AMR "origin/$BASE...HEAD" -- '*.css')
   [ -z "$css" ] && { echo "skip stylelint: no css changed"; return 0; }
-  ls .stylelintrc* stylelint.config.* >/dev/null 2>&1 || { echo "skip stylelint: no stylelint config in the project"; return 0; }
+  ls .stylelintrc* stylelint.config.* >/dev/null 2>&1 || grep -q '"stylelint"' package.json 2>/dev/null \
+    || { echo "skip stylelint: no stylelint config in the project"; return 0; }
   command -v npx >/dev/null || { echo "skip stylelint: npx is not installed; CI still runs it"; return 0; }
-  echo "$css" | xargs npx --yes stylelint@16.26.1 --report-needless-disables
+  # PR #374 review: stylelint resolves `extends` and `plugins` from the project's node_modules
+  [ -f package-lock.json ] && npm ci --ignore-scripts --no-audit --no-fund
+  local sl
+  if [ -x node_modules/.bin/stylelint ]; then sl=node_modules/.bin/stylelint; else sl="npx --yes stylelint@16.26.1"; fi
+  echo "$css" | xargs $sl --report-needless-disables
   report stylelint $?
 }
 check_tdd() {   # story #319 (A15): the commit log stands in for the PR body before a push; CI reads the real body

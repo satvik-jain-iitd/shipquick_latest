@@ -20,9 +20,13 @@ HERE = Path(__file__).resolve().parent
 ALLOWLIST_NAME = "scripts/design_token_files.txt"
 WEB_EXT = re.compile(r"\.(css|ts|tsx|astro|vue|svelte)$")
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
-# `#` + 3, 4, 6 or 8 hex digits, not a private field (`this.#cafe`) or an HTML entity (`&#dead;`).
+# `#` + 3, 4, 6 or 8 hex digits, not a private field (`this.#cafe`, `{ #cafe = 1 }`) or an HTML entity (`&#dead;`).
 # shortcut: an id selector made only of hex letters (`#face {}`) is a false hit; rename it or allowlist the file.
-HEX = re.compile(r"(?<![\w&.])#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b")
+HEX = re.compile(r"(?<![\w&.])#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b(?!\s*=)")
+# PR #374 review: `// story #133` and `/* story #374 */` are references, not colours, so comment text is cut first.
+# shortcut: one line at a time, so a `/* ... */` that spans lines keeps its inner lines; `//` after `:` is kept
+# (a `url(https://...)`), which also keeps a `: // note` comment. Upgrade to a real tokenizer if a child hits either.
+COMMENT = re.compile(r"/\*.*?\*/|(?<!:)//.*$")
 FUNC = re.compile(r"\b(?:rgba?|hsla?)\(")
 # a font-family value that is not a token reference or a CSS keyword
 FONT_CSS = re.compile(r"font-family\s*:\s*(?!var\(|inherit\b|initial\b|unset\b|revert\b)\S")
@@ -65,7 +69,8 @@ def check(diff_text: str, allow: list[str]) -> str | None:
     for path, n, text in added_lines(diff_text):
         if not WEB_EXT.search(path) or any(fnmatch.fnmatchcase(path, g) for g in allow):
             continue
-        kinds = list(dict.fromkeys(k for k, rx in KINDS if rx.search(text)))
+        code = COMMENT.sub("", text)
+        kinds = list(dict.fromkeys(k for k, rx in KINDS if rx.search(code)))
         if kinds:
             hits.append(f"{path}:{n}: {', '.join(kinds)} literal: {text.strip()[:80]}")
     return None if not hits else FIX + "\n" + "\n".join(hits)
