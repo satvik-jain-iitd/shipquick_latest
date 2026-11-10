@@ -95,3 +95,19 @@ def test_a_map_failure_never_blocks_the_session(tmp_path):
                        text=True, cwd=tmp_path, timeout=10)
     assert p.returncode == 0
     assert "Radar first" in json.loads(p.stdout)["hookSpecificOutput"]["additionalContext"]
+
+
+# ---- review of #351: shell `function name {` and Kotlin enum/annotation/value/inline classes ----
+def test_a_shell_function_without_parentheses_is_listed(tmp_path):
+    write(tmp_path, "scripts/s.sh", "function plain_one {\n  echo a\n}\nfunction with_parens() {\n  echo b\n}\nplain_two() {\n  echo c\n}\n")
+    out = build_map(tmp_path)
+    assert "plain_one" in out and "with_parens" in out and "plain_two" in out
+
+
+def test_kotlin_enum_annotation_value_and_inline_classes_are_listed(tmp_path):
+    for folder, line in (("a", "enum class Color"), ("b", "annotation class Marker"), ("c", "value class Money"),
+                         ("d", "inline class Wrapped"), ("e", "data class Plain")):   # one per folder: the map caps names per folder
+        write(tmp_path, f"{folder}/k.kt", line + "\n")
+    out = build_map(tmp_path)
+    for name in ("Color", "Marker", "Money", "Wrapped", "Plain"):
+        assert name in out, name

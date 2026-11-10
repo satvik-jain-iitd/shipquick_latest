@@ -26,10 +26,10 @@ SKIP_FILE = re.compile(r"(^|/)(test_[^/]*|[^/]*(_test|\.test|\.spec)\.[A-Za-z]+)
 _PY = re.compile(r"^(?:async\s+)?(?:def|class)\s+([A-Za-z]\w*)", re.M)
 _JS = re.compile(r"^export\s+(?:default\s+)?(?:async\s+)?(?:function\*?|class|const|let|var|interface|type|enum)"
                  r"\s+([A-Za-z_$][\w$]*)", re.M)
-_SH = re.compile(r"^(?:function\s+)?([A-Za-z]\w*)\s*\(\)", re.M)
+_SH = re.compile(r"^(?:function\s+([A-Za-z]\w*)|([A-Za-z]\w*)\s*\(\))", re.M)
 _SWIFT = re.compile(r"^(?:(?:public|open|internal|final)\s+)*(?:class|struct|enum|protocol|func|actor)\s+"
                     r"([A-Za-z_]\w*)", re.M)
-_KT = re.compile(r"^(?:(?:public|private|internal|protected|data|sealed|abstract|open)\s+)*"
+_KT = re.compile(r"^(?:(?:public|private|internal|protected|data|sealed|abstract|open|enum|annotation|value|inline)\s+)*"
                  r"(?:fun|class|object|interface)\s+(?:<[^>]*>\s*)?(?:\w+\.)?([A-Za-z_]\w*)", re.M)
 PATTERNS = {".py": _PY, ".js": _JS, ".mjs": _JS, ".cjs": _JS, ".jsx": _JS, ".ts": _JS, ".tsx": _JS,
             ".sh": _SH, ".swift": _SWIFT, ".kt": _KT}
@@ -65,7 +65,7 @@ def _wanted(rel):
 def _names(text, ext):
     names = []
     for m in PATTERNS[ext].finditer(text):
-        name = m.group(1)
+        name = m.group(m.lastindex)
         if not name.startswith("_") and name not in names:
             names.append(name)
     return names
