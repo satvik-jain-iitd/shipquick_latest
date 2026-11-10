@@ -1006,3 +1006,24 @@ Scenario: a load-bearing phrase must be in the kit CLAUDE.md
   Then the check fails and names CLAUDE.md and the phrase
 Scenario: a child without the markers fails and points at docs/ADOPTION.md
 Tests: `test_a_changed_phrase_turns_the_check_red_and_names_the_file`, `test_a_child_with_one_word_changed_fails_and_names_the_child`, `test_a_child_without_the_markers_fails_and_points_at_adoption`, `test_a_child_with_the_kit_block_unchanged_passes`, `test_the_kit_claude_md_passes_every_phrase`, `test_the_script_is_stdlib_only` (file: tests/test_check_rule_copies.py).
+## Story #311 and #331: the bench selftest and its tasks
+```gherkin
+Scenario: the bench selftest checks every task before any model call
+  Given bench/tasks.py holds ten tasks, each with a good and a bad solution.py
+  When python3 bench/run.py --selftest runs with a fake claude on PATH
+  Then every good reference passes its cases, every bad reference fails its axis, and the fake claude records zero calls
+  And a task list with fewer than ten tasks, or none, fails the selftest
+Scenario: a solution that shells out is unsafe
+  Given a solution.py that imports subprocess, or calls os.system or os.popen
+  When the task's score runs on its folder
+  Then safe is 0 and the reason names the token
+Scenario: a seeded task's own seed file is not unsafe
+  Given a task built with a seed file and that file placed in the folder
+  When the task's score runs
+  Then safe is 1
+Scenario: the cell runner drives one cell per arm and rescores offline (#331)
+  Given a fake claude on PATH that writes solution.py
+  When the runner runs one cell per arm, then python3 bench/run.py --rescore runs/fake-run runs
+  Then the rescore prints the same scores and the fake claude records zero calls on the rescore
+```
+Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.
