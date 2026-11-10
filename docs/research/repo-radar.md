@@ -437,6 +437,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: extend `scripts/check_story.py` (the story-shape check of #155). No new tool: the same issue read, the same skip rule for old stories.
 - Confidence that nothing fits better: 0.7 (a narrow ShipQuick rule; the search was thin).
 - Study of Ponytail and ECC (the epic's source, read in full by the reviewer, 10 Nov 2026): `docs/research/2026-11-10-ponytail-ecc-study.md`.
+## 10 Nov 2026, story #317 (A4a): the review finding shape
+- Need: a short doc that fixes the shape of a code review finding (what this is, problem, fix, if we skip) with a verdict line.
+- Run: `scout.py --need "a short doc that fixes the shape of an AI code review finding (what, problem, fix, if skipped) with a verdict line"`: no repos found.
+  `gh search repos --topic=code-review --limit 5`: alibaba/open-code-review, tirth8205/code-review-graph, The-PR-Agent/pr-agent (and two unrelated).
+- Read: not read in full. These are review tools that run an LLM or build a code graph. The need is a written shape for a finding, not a tool.
+- Borrowed: the shape from our own study, `ponytail-review` (What this is, Problem, Fix, If we skip; Verdict; Not checked) and ECC `code-reviewer` (report only over 80% sure, zero findings is valid, read the callers).
+- Decision: build from scratch, one doc (`docs/REVIEW_SHAPE.md`) and one test. No code, no dependency.
+- Confidence that nothing fits better: 0.8 (a doc, not code; the tools above review code, they do not fix a writing shape).
 
 ## 10 Nov 2026, story #326 (A10): adopt.sh checks the Ponytail plugin
 - Need: `adopt.sh --check` fails a child when the Ponytail plugin is not enabled in the Claude settings file, and prints the two install lines.

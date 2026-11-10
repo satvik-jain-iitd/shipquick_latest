@@ -995,6 +995,17 @@ Scenario: the registry lists the public child whose name the hygiene test bans
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
 
+## Story #317: the review finding shape is written down
+```gherkin
+Scenario: every review finding has one fixed shape, linked from the team protocol
+  Given docs/REVIEW_SHAPE.md
+  When the test reads the doc and docs/TEAM_PROTOCOL.md
+  Then the doc names the four parts (What this is, Problem, Fix, If we skip)
+  And the doc ends a review with Verdict and Not checked
+  And the doc keeps the 80 percent, callers, shortcut and fresh-agent rules
+  And docs/TEAM_PROTOCOL.md links docs/REVIEW_SHAPE.md
+```
+Tests: `tests/test_review_shape.py` (s317). Local: `python3 -m pytest -q tests/test_review_shape.py`.
 ## Story #326: adopt.sh --check reads the Ponytail plugin switch
 ```gherkin
 Scenario: the Ponytail plugin is enabled in the Claude settings
@@ -1193,6 +1204,18 @@ Scenario: a task's seed files reach the cell folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
 
+## Story #317 review fixes: the verdict line and the fourth label
+```gherkin
+Scenario: a clean review still ends with a verdict
+  Given the review shape doc
+  When rule 5 says what a reviewer with zero findings writes
+  Then it names "Verdict: Ship." and "Not checked:" and never "Looks good. Ship."
+Scenario: the worked example uses the fixed fourth label
+  Given the review shape doc
+  When the worked example labels the fourth part
+  Then it writes "**If we skip:**", the same label as the list
+```
+Tests: `tests/test_review_shape.py` (`test_zero_findings_rule_does_not_skip_the_verdict_line`, `test_example_uses_the_same_fourth_label_as_the_list`).
 ## Story #323 (A8): the desk spend column and the Origin check
 ```gherkin
 Scenario: a fixture ledger renders in the desk state and the page
