@@ -995,6 +995,41 @@ Scenario: the registry lists the public child whose name the hygiene test bans
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
 
+## Plugin hooks: rules reach every session and subagent (story #313, A2)
+```gherkin
+Scenario: a SubagentStart hook injects the rules into a subagent
+  Given a SubagentStart payload on stdin with a project folder that holds .shipquick/mode "semi"
+  When the subagent hook runs
+  Then it exits 0 and prints hookSpecificOutput.additionalContext
+  And the context names "mode: semi" and rule 20 "Radar first"
+
+Scenario: a SessionStart hook prints the mode and the dense rules
+  Given a project folder with .shipquick/mode "auto"
+  When the session hook runs
+  Then the context names "mode: auto" and rule 30
+
+Scenario: a missing mode file still injects the rules
+  Given a project folder with no .shipquick folder
+  When the session hook runs
+  Then the context names "mode: not set" and still holds the rules
+
+Scenario: a bad payload never blocks a session
+  Given stdin holds text that is not JSON
+  When the subagent hook runs
+  Then it exits 0
+
+Scenario: a hook does its work under 200 ms
+  Given a warm run of the hook's own work
+  When it builds the context
+  Then it takes under 0.2 s
+
+Scenario: the dense rules file matches CLAUDE.md
+  Given plugin/rules-dense.md and CLAUDE.md
+  When plugin/gen_rules_dense.py --check runs
+  Then it exits 0
+  And a changed rule in CLAUDE.md makes it exit 1
+```
+Tests: `test_subagent_start_injects_the_same_rules`, `test_session_start_injects_rules_and_mode`, `test_missing_mode_file_still_injects_rules`, `test_bad_stdin_exits_zero_and_never_blocks`, `test_each_hook_is_under_200_ms`, `test_rules_file_matches_claude_md`, `test_drift_check_fails_when_a_rule_changes`. File: `tests/test_plugin_hooks.py`.
 ## Story #311 and #331: the bench selftest and its tasks
 ```gherkin
 Scenario: the bench selftest checks every task before any model call
@@ -1113,3 +1148,16 @@ Scenario: the decision is written down
   Then ADR-014 says a kit rule wording change must beat the current kit in a paired run, and experiments.md has a pending row for the bench
 ```
 Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
+
+## Story #313 review fixes: the mode, the dense rules and the budget
+```gherkin
+Scenario: the hook reads the mode the way mode.sh does
+  Given a repo whose mode is in .git/shipquick-mode, or in a tracked .shipquick/mode, or in a worktree of that repo
+  When SessionStart runs from the repo, a subfolder or the worktree, or CLAUDE_PROJECT_DIR points at the repo
+  Then the context says the same mode as mode.sh get; the tracked file wins; a word that is not a mode reads as not set
+Scenario: the dense rules keep what each rule is for
+  Then the dense text keeps "end your reply with one fenced block", "an agent never runs set", "The coder opens every PR" and "The author never reviews their own PR", and stays under 6000 characters
+Scenario: the manifest and the budget are honest
+  Then SessionStart also matches fork, plugin.json names an author, and ADR-015 states the in-process and whole-process times
+```
+Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).
