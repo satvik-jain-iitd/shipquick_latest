@@ -543,6 +543,12 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Confidence that nothing fits better: 0.7 (thin search; the stats are a few lines of stdlib).
 
 ---
+## 10 Nov 2026, story #322 (A5c): scratch markdown warning hook
+- Need: a PreToolUse Write hook that warns when a new NOTES, TODO, SCRATCH, DRAFT, WIP or TEMP markdown file appears outside docs/, .claude/ and .github/, and names the single-source file to use.
+- Run: `scout.py --need "warn when an agent writes a scratch markdown file (NOTES, TODO, SCRATCH, DRAFT, WIP, TEMP .md) outside docs, pointing to the single-source file"`: no repos found. `gh search repos --topic=claude-code-hooks --limit 5`: context-mode, Continuous-Claude-v3, Claude-Code-Quest, deja-vu, oh-my-agent. None is about scratch files.
+- Read: mksglu/context-mode, parcadei/Continuous-Claude-v3 and wesammustafa/Claude-Code-Quest READMEs (hook sections only). Each has hooks for other jobs (output size, ledgers, teaching). None blocks or warns on file names.
+- Decision: build from scratch, about 40 lines of stdlib Python in `plugin/hooks/scratch_md.py`, reusing `read_payload` from `plugin/hooks/common.py`. The hook registration is one new `PreToolUse` entry in `hooks.json`.
+- Confidence that nothing fits better: 0.8 (topic search is thin for this narrow job).
 ## 10 Nov 2026, story #321 (A5b): protected path edit warning
 - Need: a Claude Code PreToolUse hook on Edit and Write that warns when the edited file matches a glob in `scripts/protected_paths.txt`, only in auto mode, and never blocks.
 - Run: `scout.py --need "Claude Code PreToolUse hook that warns when an Edit or Write touches a protected path listed in a glob file"`: no repos found. `gh search repos --topic=claude-code-hook --limit 5`: five hook repos, none reads a glob list of protected paths (backthread/add-reasoning-to-prs writes PR text, ymonster/claude_encoding_guard guards file encoding, RainSunMe/cc-vision-hook describes images, nidhinjs/prompt-mini stops vague prompts, jeecgboot/skills is a skill pack). None fits.

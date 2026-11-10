@@ -1399,6 +1399,26 @@ Scenario: the manifest and the budget are honest
 ```
 Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).
 
+## Story #322, scratch markdown warning (A5c)
+```gherkin
+Scenario: a new scratch markdown file outside docs warns and names the single-source file
+  Given a Write to TODO-plan.md at the project root
+  When the PreToolUse hook runs
+  Then it prints a warning that names docs/follow-ups.md
+  And a Write to DRAFT-release.md names docs/plans/
+
+Scenario: a file outside the pattern, or a pattern file inside docs, .claude or .github, is silent
+  Given a Write to README.md, or to docs/NOTES-2026.md, or to a file in a docs/ subfolder that is a symlink into a vault
+  When the PreToolUse hook runs
+  Then it prints nothing and exits 0
+  And bad stdin exits 0 and prints nothing
+
+Scenario: a Write to a scratch file that already exists is silent (it is an edit, not a new file)
+  Given TODO.md is already on disk at the project root
+  When a Write targets TODO.md
+  Then the PreToolUse hook prints nothing and exits 0
+```
+Tests: `tests/test_scratch_md.py` (`test_a_new_todo_file_outside_docs_warns_and_names_follow_ups`, `test_a_draft_file_names_docs_plans`, `test_a_file_outside_the_pattern_is_silent`, `test_a_pattern_file_inside_docs_is_silent`, `test_a_pattern_file_inside_a_symlinked_docs_folder_is_silent`, `test_a_pattern_file_inside_claude_or_github_is_silent`, `test_bad_stdin_exits_zero_and_prints_nothing`, `test_a_write_to_an_existing_todo_file_is_silent`, `test_the_hook_is_registered_for_write_before_use`). Local: `python3 -m pytest -q tests/test_scratch_md.py`.
 ## Story #321 (A5b): the protected path warning
 ```gherkin
 Scenario: editing a protected path in auto mode warns the coder
