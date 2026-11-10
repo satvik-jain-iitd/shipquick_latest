@@ -427,3 +427,4 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: none to read; the search gave no repo that checks story issues.
 - Decision: extend `scripts/check_story.py` (the story-shape check of #155). No new tool: the same issue read, the same skip rule for old stories.
 - Confidence that nothing fits better: 0.7 (a narrow ShipQuick rule; the search was thin).
+- Study of Ponytail and ECC (the epic's source, read in full by the reviewer, 10 Nov 2026): `docs/research/2026-11-10-ponytail-ecc-study.md`.
