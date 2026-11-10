@@ -1168,3 +1168,17 @@ Scenario: the hooks file registers the guard
   Then PostToolUse runs guard.py post for every tool, and PreToolUse runs guard.py pre for Edit, Write and Bash
 ```
 Tests: `tests/test_guard_hook.py` (`test_five_identical_calls_warn_loop`, `test_a_sixth_identical_call_is_denied_before_it_runs`, `test_over_the_block_line_denies_edit_before_it_runs`, `test_cost_is_priced_per_model_and_per_token_class`, and the other tests in that file).
+
+## Story #315, PR #347 review fixes: offset read and opus price
+```gherkin
+Scenario: a grown transcript is read only from the saved offset
+  Given a transcript that cost 3 dollars on the first call, then grows by one 3 dollar record, and its first bytes change in place
+  When the PostToolUse guard runs on the second call
+  Then the warning says "$6.00", so the old bytes are not counted again
+  Test: test_a_grown_transcript_is_read_from_the_saved_offset
+Scenario: an opus output million costs the opus output rate
+  Given a transcript with one claude-opus-4-1 record of 1,000,000 output tokens
+  When the cost is read
+  Then the cost is 75 dollars, and rate_for picks the opus row
+  Test: test_opus_is_priced_at_opus_list_not_sonnet
+```

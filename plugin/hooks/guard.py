@@ -18,12 +18,15 @@ from pathlib import Path
 
 from common import read_payload
 
-# shortcut: list prices typed here in dollars per million tokens, checked by hand once a year, upgrade to a pricing file when more models are used. Unknown models price as sonnet, the higher guess.
+# shortcut: list prices typed here in dollars per million tokens, checked by hand once a year, upgrade to a pricing file when more models are used. Unknown models price as sonnet.
 RATES = {
     "haiku": {"input": 1.0, "output": 5.0, "cache_write": 1.25, "cache_read": 0.10},
     "sonnet": {"input": 3.0, "output": 15.0, "cache_write": 3.75, "cache_read": 0.30},
+    "opus": {"input": 15.0, "output": 75.0, "cache_write": 18.75, "cache_read": 1.5},
 }
 WINDOW = 5
+SEEN = 20      # message ids kept for the duplicate check; a repeated line sits next to its first one
+CHUNK = 8 * 1024 * 1024   # shortcut: at most 8 MB of transcript is read per hook call, the rest on later calls; upgrade to a cost file when a session passes several hundred MB
 DEFAULT_WARN = 2.0
 DEFAULT_BLOCK = 4.0
 LOOP_TEXT = "loop: the same call 5 times"
@@ -44,20 +47,39 @@ def _number(usage, key):
 
 
 def rate_for(model):
-    return RATES["haiku"] if "haiku" in str(model or "").lower() else RATES["sonnet"]
+    name = str(model or "").lower()
+    for family in ("opus", "haiku"):
+        if family in name:
+            return RATES[family]
+    return RATES["sonnet"]
 
 
-def session_cost(transcript_path):
-    """Dollars spent so far in the transcript. The whole file is read on every call."""
-    # shortcut: the whole transcript is read on every tool call, upgrade to a byte offset when a transcript passes a few MB.
+def session_cost(transcript_path, state):
+    """(dollars, state). Reads only the whole lines after the saved offset, at most CHUNK bytes per call.
+    The state keeps the offset, the running total and the last message ids, so the file is never re-read."""
+    state = dict(state or {})
     if not transcript_path:
-        return 0.0
+        return 0.0, state
     try:
-        lines = Path(transcript_path).read_text(encoding="utf-8", errors="replace").splitlines()
-    except OSError:
-        return 0.0
-    total, seen = 0.0, set()
-    for line in lines:
+        size = os.path.getsize(transcript_path)
+        offset = int(state.get("offset") or 0)
+        total = float(state.get("total") or 0.0)
+        seen = list(state.get("seen") or [])
+        if offset > size:   # the transcript was cut or replaced: count it again from the start
+            offset, total, seen = 0, 0.0, []
+        with open(transcript_path, "rb") as f:
+            f.seek(offset)
+            data = f.read(min(CHUNK, size - offset))
+    except (OSError, ValueError, TypeError):
+        return 0.0, state
+    nl = data.rfind(b"\n")
+    if nl >= 0:
+        end = nl + 1
+    elif len(data) == CHUNK:   # one line longer than the chunk: skip it
+        end = CHUNK
+    else:                      # the last line is still being written: wait for its newline
+        end = 0
+    for line in data[:end].splitlines():
         try:
             msg = json.loads(line).get("message")
         except (ValueError, AttributeError):
@@ -67,12 +89,14 @@ def session_cost(transcript_path):
         msg_id = msg.get("id")
         if msg_id and msg_id in seen:   # one API reply can be written as several lines with the same usage
             continue
-        seen.add(msg_id)
+        if msg_id:
+            seen.append(msg_id)
         u, r = msg["usage"], rate_for(msg.get("model"))
         total += (_number(u, "input_tokens") * r["input"] + _number(u, "output_tokens") * r["output"]
                   + _number(u, "cache_creation_input_tokens") * r["cache_write"]
                   + _number(u, "cache_read_input_tokens") * r["cache_read"]) / 1_000_000
-    return total
+    state.update({"offset": offset + end, "total": total, "seen": seen[-SEEN:]})
+    return total, state
 
 
 def call_key(payload):
@@ -86,17 +110,22 @@ def state_path(session):
     return folder / f"{safe}.json"
 
 
-def load_calls(path):
+def load_state(path):
     try:
-        calls = json.loads(path.read_text(encoding="utf-8")).get("calls")
-    except (OSError, ValueError, AttributeError):
-        return []
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def load_calls(state):
+    calls = state.get("calls")
     return [c for c in calls if isinstance(c, str)] if isinstance(calls, list) else []
 
 
-def save_calls(path, calls):
+def save_state(path, state):
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"calls": calls[-WINDOW:]}), encoding="utf-8")
+    path.write_text(json.dumps({**state, "calls": load_calls(state)[-WINDOW:]}), encoding="utf-8")
 
 
 def is_loop(calls):
@@ -126,17 +155,23 @@ def main(argv):
     key = call_key(payload)
     warn_at = threshold("SHIPQUICK_COST_WARN", DEFAULT_WARN)
     block_at = threshold("SHIPQUICK_COST_BLOCK", DEFAULT_BLOCK)
-    calls = load_calls(path)
-    cost = session_cost(payload.get("transcript_path"))
+    state = load_state(path)
+    calls = load_calls(state)
+    transcript = payload.get("transcript_path")
     if event == "pre":
         if len(calls) >= WINDOW and all(c == key for c in calls[-WINDOW:]):
             emit("PreToolUse", "deny", f"{LOOP_TEXT} in a row. This call is stopped; change the input or the approach.")
-        elif cost > block_at:
+            return
+        cost, state = session_cost(transcript, state)
+        save_state(path, {**state, "calls": calls})
+        if cost > block_at:
             emit("PreToolUse", "deny", f"{cost_line(cost, warn_at, block_at)}. This call is stopped.")
         return
     if event == "post":
-        calls = calls + [key]
-        save_calls(path, calls)
+        calls = (calls + [key])[-WINDOW:]
+        save_state(path, {**state, "calls": calls})   # the call is recorded before the cost is read
+        cost, state = session_cost(transcript, state)
+        save_state(path, {**state, "calls": calls})
         notes = []
         if is_loop(calls):
             notes.append(f"{LOOP_TEXT} in a row ({payload.get('tool_name') or 'tool'}).")

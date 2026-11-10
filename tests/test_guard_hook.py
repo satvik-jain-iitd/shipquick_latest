@@ -134,7 +134,7 @@ def test_cost_is_priced_per_model_and_per_token_class(tmp_path):
     sonnet_cache = ("claude-sonnet-4-5", {**ZERO_USAGE, "cache_read_input_tokens": 1_000_000})
     t = write_transcript(tmp_path / "rates.jsonl", [haiku_out, sonnet_cache])
     expected = guard.RATES["haiku"]["output"] + guard.RATES["sonnet"]["cache_read"]
-    assert abs(guard.session_cost(str(t)) - expected) < 1e-9
+    assert abs(guard.session_cost(str(t), {})[0] - expected) < 1e-9
     assert guard.RATES["haiku"]["output"] > guard.RATES["haiku"]["input"]
 
 
@@ -148,3 +148,29 @@ def test_a_bad_threshold_falls_back_to_the_default(tmp_path):
     out = run_guard("post", {**edit_call("s-bad"), "transcript_path": str(t)}, tmp_path,
                     {"SHIPQUICK_COST_WARN": "two dollars"})
     assert "warn line" in json.dumps(out)
+
+
+def test_a_grown_transcript_is_read_from_the_saved_offset(tmp_path):
+    # Red for review finding 1 (PR #347): the second call must read only the new bytes. The first
+    # bytes are rewritten to a bigger number of the same length; a full re-read would count them again.
+    t = write_transcript(tmp_path / "grow.jsonl", [sonnet_input(1)])  # $3
+    env = {"SHIPQUICK_COST_WARN": "1", "SHIPQUICK_COST_BLOCK": "100"}
+    run_guard("post", {**edit_call("s-grow"), "transcript_path": str(t)}, tmp_path, env)
+    extra = write_transcript(tmp_path / "extra.jsonl", [sonnet_input(1)]).read_text(encoding="utf-8")
+    t.write_text(t.read_text(encoding="utf-8").replace('"input_tokens": 1000000', '"input_tokens": 2000000', 1)
+                 + extra, encoding="utf-8")
+    out = run_guard("post", {**edit_call("s-grow", n=1), "transcript_path": str(t)}, tmp_path, env)
+    assert "$6.00" in json.dumps(out)   # $3 saved from call one, plus $3 of new bytes; a re-read gives $9.00
+
+
+def test_opus_is_priced_at_opus_list_not_sonnet(tmp_path):
+    # Red for review finding 2 (PR #347): an opus output million costs the opus output rate, $75.
+    sys.path.insert(0, str(HOOKS))
+    try:
+        import guard
+    finally:
+        sys.path.remove(str(HOOKS))
+    t = write_transcript(tmp_path / "opus.jsonl", [("claude-opus-4-1", {**ZERO_USAGE, "output_tokens": 1_000_000})])
+    assert guard.RATES["opus"]["output"] == 75.0
+    assert guard.rate_for("claude-opus-4-1") is guard.RATES["opus"]
+    assert abs(guard.session_cost(str(t), {})[0] - 75.0) < 1e-9
