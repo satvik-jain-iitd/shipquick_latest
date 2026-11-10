@@ -1051,3 +1051,24 @@ Scenario: a task's seed files reach the cell folder
   Then the fake claude finds that file in its working folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
+
+## Story #318 (A4b): the review shape gate
+```gherkin
+Scenario: an approval with no Verdict line is refused
+  Given a pull request approved by the reviewer account on the latest commit
+  When scripts/review_merge.sh runs in auto mode and the approving review has no line starting Verdict:
+  Then it refuses, names the Verdict: line, and merges nothing
+Scenario: an approval with no Not checked line is refused
+  Given the same approval with a Verdict: line but no line starting Not checked:
+  When scripts/review_merge.sh runs
+  Then it refuses, names the Not checked: line, and merges nothing
+Scenario: the words inside a sentence do not count as the line
+  Given an approval whose body says "Verdict: approve" inside a sentence
+  When scripts/review_merge.sh runs
+  Then it refuses, because no line starts with Verdict:
+Scenario: an approval with both lines merges
+  Given an approval with a Verdict: line and a Not checked: line
+  When scripts/review_merge.sh runs
+  Then it merges once
+```
+Tests: `tests/test_review_merge.py` (`test_s318_an_approval_without_a_verdict_line_refuses`, `test_s318_an_approval_without_a_not_checked_line_refuses`, `test_s318_the_words_inside_a_sentence_are_not_the_line`, `test_s318_an_approval_with_both_lines_merges`).
