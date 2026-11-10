@@ -88,3 +88,19 @@ def test_s219_the_doc_tells_how_references_are_recorded_and_refreshed():
         assert word in text, word
     readme = (IOS / "README.md").read_text(encoding="utf-8")
     assert "SNAPSHOTS.md" in readme
+
+
+def test_s219_the_reference_folder_holds_one_png_per_template_and_matrix_cell():
+    """#375 review: the references are recorded on CI and committed; swift-snapshot-testing names each one
+    test<Template>.<named>.png under __Snapshots__/<test file name>/."""
+    folder = SNAPSHOTS / "TemplateSnapshotTests"
+    expected = {
+        f"test{t}.{scheme}-{size}-{device}.png"
+        for t in TEMPLATES
+        for scheme in ("light", "dark")
+        for size in ("xs", "ax5")
+        for device in ("se", "promax")
+    }
+    assert len(expected) == 8 * len(TEMPLATES)
+    have = {p.name for p in folder.glob("*.png")} if folder.is_dir() else set()
+    assert have == expected, f"missing {sorted(expected - have)[:3]}..., extra {sorted(have - expected)[:3]}"

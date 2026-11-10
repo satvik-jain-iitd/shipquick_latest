@@ -1612,5 +1612,16 @@ Scenario: the reference images are a protected path
 Scenario: the doc tells how references are recorded and refreshed
   Then ui/ios/SNAPSHOTS.md names record, workflow_dispatch, gh run download, __Snapshots__, protected, Xcode 16.4 and iOS 18.5, and the README points to it
   Test: test_s219_the_doc_tells_how_references_are_recorded_and_refreshed
+Scenario: the reference folder holds one PNG per template and matrix cell (#375 review)
+  Then ui/ios/ShipQuickUITests/__Snapshots__/TemplateSnapshotTests/ holds exactly test<Template>.<light|dark>-<xs|ax5>-<se|promax>.png for every template, 40 in all
+  Test: test_s219_the_reference_folder_holds_one_png_per_template_and_matrix_cell
+Scenario: CI names the scheme and never parses xcodebuild output (#375 review)
+  Then the job runs `xcodebuild test -scheme ShipQuickUI` and has no json.load
+  Test: test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout
+Scenario: recorded reference images do not count toward pr-size (#375 review)
+  Given 10 text files and 45 PNGs under a __Snapshots__/ folder, pr-size counts 10 and passes
+  Given 50 PNGs outside __Snapshots__ and one .txt inside it, pr-size counts 51 and fails
+  Then the ci.yml pr-size job leaves out the same __Snapshots__/*.png files
+  Tests: test_s219_reference_images_under_snapshots_do_not_count_toward_pr_size, test_s219_a_png_outside_snapshots_and_a_non_png_inside_still_count, test_s219_cis_pr_size_job_leaves_out_the_same_reference_images (tests/test_ci_must_have.py)
 ```
-Tests: `tests/test_ios_snapshots.py`. The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.
+Tests: `tests/test_ios_snapshots.py`, `tests/test_ci_must_have.py` (the three pr-size ones). The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.

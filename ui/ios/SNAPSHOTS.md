@@ -14,7 +14,7 @@ picture with a reference image in `ShipQuickUITests/__Snapshots__/`. A changed p
 | Device | iPhone SE, iPhone Pro Max |
 
 The images are drawn at scale 1, so each PNG stays far under the 500 KB commit limit.
-Prefire adds one more test per `#Preview` in `templates/`. Its images sit in `__Snapshots__/PreviewTests/`.
+Prefire adds one more test per `#Preview` in `templates/`. Its images sit in `__Snapshots__/PreviewTests.generated/`.
 Both use `swift-snapshot-testing`. The two packages are test-only: `Package.swift` adds them only when the
 env var `SHIPQUICK_SNAPSHOTS` is set. A child that depends on `ShipQuickUI` never downloads them.
 
@@ -39,6 +39,7 @@ Do this on a branch, the first time and after any wanted change to a template.
 6. Push. The normal CI run now compares against the new images and must be green.
 
 The folder `ui/ios/ShipQuickUITests/__Snapshots__/*` is a protected path (`scripts/protected_paths.txt`).
+The images do not count toward the 50-file PR limit (`docs/PR_RULES.md` section 2): they are looked at, not read.
 A PR that changes an image is a design change: the owner merges it himself, in every mode.
 
 ## Read a failure
