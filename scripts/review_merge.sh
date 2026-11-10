@@ -81,6 +81,12 @@ reviewer_account=$(jq -r --arg revs "$reviewers" --arg author "$author" --arg he
 ' <<<"$json")
 [ -n "$reviewer_account" ] || refuse "not approved by a reviewer account (other than the author, $author) on the latest commit"
 
+# story #318 (A4b): the approving review must say what it decided and what it did not check. Both are whole lines.
+approval_body=$(jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
+  '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" | tr -d '\r')
+grep -q '^Verdict:' <<<"$approval_body" || refuse "the approving review has no \`Verdict:\` line"
+grep -q '^Not checked:' <<<"$approval_body" || refuse "the approving review has no \`Not checked:\` line"
+
 # story #139 (ADR-011): maker and checker are different SESSIONS, not only different accounts. Opt-in:
 # only when roles.yml lists reviewer_sessions. The approving review names its session; that session must
 # not appear in any non-merge commit's Built-by: trailer (merge commits are exempt, ADR-011).
