@@ -1593,3 +1593,21 @@ Scenario: adopt.sh writes, keeps and validates the milestone
   When adopt.sh runs with --milestone D2, the caller has `milestone: D2`; a later run without the flag keeps it, once; a run with no flag and no line writes none; --milestone X9 is refused and the caller is untouched; an existing line that is quoted, lowercase, D7 or has a trailing comment is refused, not dropped
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
+
+## Story #223: the Android Button topic follows M3 exactly
+```gherkin
+Scenario: the Android Button topic shows only M3 parameters and the five M3 buttons
+  Given the Button doc and contract in ui/components/Button
+  When the android topic is built
+  Then every prop row is a Compose Material 3 Button parameter (tests/fixtures/m3_button.json, from Google's page), onClick, enabled and content are among them, and Button, FilledTonalButton, ElevatedButton, OutlinedButton and TextButton are named
+  Test: test_s223_the_android_button_topic_shows_only_m3_parameters_and_the_five_m3_buttons
+Scenario: a web prop in core is caught as not M3
+  Given a contract with `variant` in core
+  When the android topic is built
+  Then the M3 check names `variant`
+  Test: test_s223_a_web_prop_in_core_is_caught_as_not_m3
+Scenario: the web props stay in the web doc as webOnly
+  Then the Button doc still lists label, variant, size, isDisabled and isLoading, and the contract has each under webOnly with a reason
+  Test: test_s223_the_web_props_stay_in_the_web_doc_as_web_only
+```
+Tests: `tests/test_ui_topics.py::test_s223_the_android_button_topic_shows_only_m3_parameters_and_the_five_m3_buttons`, `test_s223_a_web_prop_in_core_is_caught_as_not_m3`, `test_s223_the_web_props_stay_in_the_web_doc_as_web_only`; `tests/test_ui_cli.py::test_s183_topics_are_generated_from_the_s2_docs_and_are_current` now asserts the web variant enum is absent from the Android topic.

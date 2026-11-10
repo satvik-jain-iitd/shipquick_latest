@@ -35,6 +35,8 @@ export default {
     {"name": "isDisabled", "type": "boolean", "description": "Greys the button out and ignores presses.", "default": "false"},
     {"name": "isLoading", "type": "boolean", "description": "Shows a spinner and ignores presses until the action ends.", "default": "false"},
     {"name": "onClick", "type": "() => void", "description": "Runs when the user presses the button."},
+    {"name": "enabled", "type": "boolean", "description": "False greys the button out and ignores presses.", "default": "true", "platform": "android"},
+    {"name": "content", "type": "@Composable RowScope.() -> Unit", "description": "What sits inside the button: a Text, with an Icon before it when needed.", "required": true, "platform": "android"},
     {"name": "type", "type": "'button' | 'submit' | 'reset'", "description": "The HTML button type. Web only.", "default": "'button'"}
   ],
   "platformApi": {
