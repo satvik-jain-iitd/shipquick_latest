@@ -3,7 +3,7 @@
 # Usage: scripts/check_local.sh [check ...]
 #   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments design-tokens story tdd shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
-#   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint via npx on changed css, only when npx and a stylelint config exist
+#   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
 #   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
 #   shortcuts (story #327): warn only, prints the count of shortcut:/ponytail: comments; runs after the checks when no argument is given
@@ -107,17 +107,7 @@ check_design_tokens() {   # story #133: the same two steps as the design-tokens 
   have_base design-tokens || return 0
   python3 "$HERE/check_design_literals.py" --base "origin/$BASE"
   report design-tokens $?
-  local css
-  css=$(git diff --name-only --diff-filter=AMR "origin/$BASE...HEAD" -- '*.css')
-  [ -z "$css" ] && { echo "skip stylelint: no css changed"; return 0; }
-  ls .stylelintrc* stylelint.config.* >/dev/null 2>&1 || grep -q '"stylelint"' package.json 2>/dev/null \
-    || { echo "skip stylelint: no stylelint config in the project"; return 0; }
-  command -v npx >/dev/null || { echo "skip stylelint: npx is not installed; CI still runs it"; return 0; }
-  # PR #374 review: stylelint resolves `extends` and `plugins` from the project's node_modules
-  [ -f package-lock.json ] && npm ci --ignore-scripts --no-audit --no-fund
-  local sl
-  if [ -x node_modules/.bin/stylelint ]; then sl=node_modules/.bin/stylelint; else sl="npx --yes stylelint@16.26.1"; fi
-  echo "$css" | xargs $sl --report-needless-disables
+  bash "$HERE/run_stylelint_changed.sh" "origin/$BASE"
   report stylelint $?
 }
 check_tdd() {   # story #319 (A15): the commit log stands in for the PR body before a push; CI reads the real body

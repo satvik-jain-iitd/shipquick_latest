@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import check_design_literals as cdl  # noqa: E402
 
 SCRIPT = ROOT / "scripts" / "check_design_literals.py"
+STYLELINT = ROOT / "scripts" / "run_stylelint_changed.sh"
 
 
 def diff_with_added(path, *lines, start=7):
@@ -99,6 +100,25 @@ def test_a_story_reference_in_a_comment_is_not_a_hex_colour():
     assert cdl.check(diff_with_added("src/a.css", "background: url(https://x.test/a.png) #abcdef;"), [])
 
 
+def test_a_protocol_relative_url_in_css_does_not_hide_a_hex():
+    # PR #374 review round 2: `//` is never a comment in CSS, so a protocol-relative url() must not cut the line
+    assert cdl.check(diff_with_added("src/a.css", "background: url(//cdn.example/a.png) #ff0000;"), [])
+    assert cdl.check(diff_with_added("src/a.css", "background: url('//cdn.example/a.png') #ff0000;"), [])
+    assert cdl.check(diff_with_added("src/a.css", "/* old: #ff0000 */ color: var(--c);"), []) is None
+    assert cdl.check(diff_with_added("src/a.ts", "const u = '//cdn.example';  // #abc"), []) is None
+
+
+def test_the_font_shorthand_is_a_font_family_literal():
+    # PR #374 review round 2: `font:` sets the family too, so it is checked like `font-family:`
+    assert "font-family" in (cdl.check(diff_with_added("src/a.css", "font: 16px/1.5 'Inter', sans-serif;"), []) or "")
+    assert "font-family" in (cdl.check(diff_with_added("src/a.css", "font: 1rem Inter;"), []) or "")
+    assert "font-family" in (cdl.check(diff_with_added("src/A.tsx", "style={{ font: '16px Inter' }}"), []) or "")
+    assert cdl.check(diff_with_added("src/a.css", "font: 1rem var(--font-body);"), []) is None
+    assert cdl.check(diff_with_added("src/a.css", "font: inherit;"), []) is None
+    assert cdl.check(diff_with_added("src/a.css", "font-size: 1rem; font-weight: 600;"), []) is None
+    assert cdl.check(diff_with_added("src/A.tsx", "style={{ font: theme.fonts.body }}"), []) is None
+
+
 def test_line_numbers_follow_the_hunk_header_across_hunks():
     diff = (
         "diff --git a/s.css b/s.css\n--- a/s.css\n+++ b/s.css\n"
@@ -132,24 +152,62 @@ def test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it():
         assert "\n  design-tokens:\n" in text, name
         job = re.split(r"\n  [a-z][a-z-]*:\n", text.split("\n  design-tokens:\n", 1)[1], maxsplit=1)[0]
         assert "check_design_literals.py" in job, name
-        # stylelint only when a css file changed, pinned, needless disables reported, no committed dependency
-        assert "npx --yes stylelint@16.26.1" in job and "--report-needless-disables" in job, name
-        assert "no css changed" in job, name
+        # PR #374 review round 2: the stylelint step lives once, in scripts/run_stylelint_changed.sh, called by both jobs
+        assert "run_stylelint_changed.sh" in job, name
         gate = text.split("\n  gate:\n", 1)[1]
         assert re.search(r"needs: \[[^\]]*\bdesign-tokens\b", gate), name
         assert "design-tokens: ${{ needs.design-tokens.result }}" in gate, name
+    assert "run_stylelint_changed.sh" in (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
+    # stylelint only when a css file changed, pinned, needless disables reported, no committed dependency
+    script = STYLELINT.read_text(encoding="utf-8")
+    assert "npx --yes stylelint@16.26.1" in script and "--report-needless-disables" in script and "no css changed" in script
 
 
 def test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary():
     # PR #374 review: stylelint resolves `extends` and `plugins` from the project's node_modules, so a child whose
-    # config extends stylelint-config-standard fails under bare npx; a config may also live in package.json
-    for text in [(ROOT / ".github" / "workflows" / n).read_text(encoding="utf-8") for n in ("ci.yml", "checks.yml")] + [
-        (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
-    ]:
-        job = text.split("check_design_literals.py", 1)[1].split("--report-needless-disables", 1)[0]
-        assert "npm ci --ignore-scripts" in job and "package-lock.json" in job
-        assert 0 < job.find("node_modules/.bin/stylelint") < job.find("npx --yes stylelint@16.26.1"), "local binary first, pinned npx as the fallback"
-        assert "package.json" in job and '"stylelint"' in job, "a config in package.json counts"
+    # config extends stylelint-config-standard fails under bare npx; a config may also live in package.json.
+    # Round 2: `npm ci` wipes node_modules first, so it runs only when the local binary is missing (check_local.sh
+    # runs on a dev's own checkout before every push).
+    script = STYLELINT.read_text(encoding="utf-8")
+    assert "npm ci --ignore-scripts" in script and "package-lock.json" in script
+    assert 0 < script.find("-x node_modules/.bin/stylelint") < script.find("npm ci --ignore-scripts"), "install only when the binary is missing"
+    assert script.find("node_modules/.bin/stylelint") < script.find("npx --yes stylelint@16.26.1"), "local binary first, pinned npx as the fallback"
+    assert "package.json" in script and '"stylelint"' in script, "a config in package.json counts"
+    assert "scripts/run_stylelint_changed.sh" in (ROOT / "scripts" / "protected_paths.txt").read_text(encoding="utf-8").splitlines()
+
+
+def git(cwd, *args):
+    return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t.test", *args], cwd=cwd, capture_output=True, text=True, check=True).stdout.strip()
+
+
+def test_stylelint_runs_from_the_package_root_of_a_web_subfolder(tmp_path):
+    # PR #374 review round 2: a child with web/package.json and web/.stylelintrc.json (Android and iOS beside it)
+    # must get stylelint on web/*.css, from that folder, with that folder's binary; never `skip stylelint`
+    web = tmp_path / "web"
+    (web / "node_modules" / ".bin").mkdir(parents=True)
+    (web / "package.json").write_text('{"name": "web"}', encoding="utf-8")
+    (web / ".stylelintrc.json").write_text("{}", encoding="utf-8")
+    (web / "package-lock.json").write_text("not a real lockfile: npm ci must not run", encoding="utf-8")
+    fake = web / "node_modules" / ".bin" / "stylelint"
+    fake.write_text("#!/bin/sh\necho \"fake stylelint in $(basename \"$PWD\"): $*\"\n", encoding="utf-8")
+    fake.chmod(0o755)
+    (tmp_path / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    (tmp_path / "android" / "app").mkdir(parents=True)
+    (tmp_path / "android" / "app" / "x.css").write_text("a {}\n", encoding="utf-8")   # no package root: skipped, named
+    git(tmp_path, "init", "-q", "-b", "main")
+    git(tmp_path, "add", "-A")
+    git(tmp_path, "commit", "-q", "-m", "base")
+    base = git(tmp_path, "rev-parse", "HEAD")
+    (web / "a.css").write_text("a { color: var(--c) }\n", encoding="utf-8")
+    git(tmp_path, "add", "-A")
+    git(tmp_path, "commit", "-q", "-m", "css")
+    r = subprocess.run(["bash", str(STYLELINT), base, str(tmp_path)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "skip stylelint" not in r.stdout, r.stdout
+    assert "fake stylelint in web: --report-needless-disables a.css" in r.stdout, r.stdout + r.stderr
+    # no css changed at all: the old skip line, exit 0
+    r = subprocess.run(["bash", str(STYLELINT), "HEAD", str(tmp_path)], capture_output=True, text=True)
+    assert r.returncode == 0 and "skip stylelint: no css changed" in r.stdout
 
 
 def test_the_cli_reads_a_diff_file_and_exits_1_with_the_hits(tmp_path):

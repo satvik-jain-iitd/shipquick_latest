@@ -1621,5 +1621,18 @@ Scenario: stylelint runs with the project's own dependencies (PR #374 review)
   When the design-tokens job (ci.yml, checks.yml) or check_local.sh design-tokens runs stylelint
   Then it runs `npm ci --ignore-scripts` first when package-lock.json exists, uses `node_modules/.bin/stylelint` when present, and `npx --yes stylelint@16.26.1` only as the fallback
   Test: test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary
+Scenario: a protocol-relative url in css does not hide a hex (PR #374 review round 2)
+  Given `background: url(//cdn.example/a.png) #ff0000;` or the quoted `url('//...')` form on an added css line
+  Then it is a hex hit: `//` is never a comment in css, only `/* */` is cut there; a ts line still loses its `//` comment
+  Test: test_a_protocol_relative_url_in_css_does_not_hide_a_hex
+Scenario: the font shorthand is a font-family literal (PR #374 review round 2)
+  Given `font: 16px/1.5 'Inter', sans-serif;` or `font: 1rem Inter;` on a css line, or `style={{ font: '16px Inter' }}` on a tsx line
+  Then each is a font-family hit; `font: 1rem var(--font-body)`, `font: inherit`, `font-size`/`font-weight` and the tsx `font: theme.fonts.body` pass
+  Test: test_the_font_shorthand_is_a_font_family_literal
+Scenario: stylelint runs once, per package root, and installs only when the binary is missing (PR #374 review round 2)
+  Given a child whose web app sits in `web/` (web/package.json, web/.stylelintrc.json, a lockfile, Android beside it) and a changed `web/a.css`
+  When ci.yml, checks.yml or check_local.sh design-tokens calls `scripts/run_stylelint_changed.sh <base> [repo]`
+  Then it never prints `skip stylelint` for that file: it runs web's own `node_modules/.bin/stylelint` from `web/` on `a.css`, runs `npm ci` only when that binary is missing, names a folder with css but no config in its skip line, and the script is a protected path
+  Test: test_stylelint_runs_from_the_package_root_of_a_web_subfolder, test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary, test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it
 ```
 Tests: `tests/test_check_design_literals.py`.

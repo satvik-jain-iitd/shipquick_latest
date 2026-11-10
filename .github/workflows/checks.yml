@@ -135,17 +135,10 @@ jobs:
           BASE="${{ github.base_ref }}"
           git -C project fetch origin "$BASE"
           python3 .shipquick/scripts/check_design_literals.py --base "origin/$BASE" --repo project
-      - name: stylelint on changed CSS, needless disables reported (story #133; the project's own stylelint, pinned npx as the fallback)
-        working-directory: project
+      - name: stylelint on changed CSS, needless disables reported (story #133; run_stylelint_changed.sh: per package root, the project's own stylelint, pinned npx as the fallback)
         run: |
           BASE="${{ github.base_ref }}"
-          CSS=$(git diff --name-only --diff-filter=AMR "origin/$BASE...HEAD" -- '*.css')
-          if [ -z "$CSS" ]; then echo "skip stylelint: no css changed"; exit 0; fi
-          if ! ls .stylelintrc* stylelint.config.* >/dev/null 2>&1 && ! grep -q '"stylelint"' package.json 2>/dev/null; then echo "skip stylelint: no stylelint config in the project"; exit 0; fi
-          # PR #374 review: stylelint resolves `extends` and `plugins` from the project's node_modules
-          if [ -f package-lock.json ]; then npm ci --ignore-scripts --no-audit --no-fund; fi
-          if [ -x node_modules/.bin/stylelint ]; then SL=node_modules/.bin/stylelint; else SL="npx --yes stylelint@16.26.1"; fi
-          echo "$CSS" | xargs $SL --report-needless-disables
+          bash .shipquick/scripts/run_stylelint_changed.sh "origin/$BASE" project
   roles:
     runs-on: ubuntu-latest
     timeout-minutes: 10

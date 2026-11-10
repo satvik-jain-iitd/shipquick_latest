@@ -27,12 +27,20 @@ HEX = re.compile(r"(?<![\w&.])#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8}
 # shortcut: one line at a time, so a `/* ... */` that spans lines keeps its inner lines; `//` after `:` is kept
 # (a `url(https://...)`), which also keeps a `: // note` comment. Upgrade to a real tokenizer if a child hits either.
 COMMENT = re.compile(r"/\*.*?\*/|(?<!:)//.*$")
+# PR #374 review round 2: `//` is never a comment in CSS (`url(//cdn...)` is a protocol-relative URL), so a .css line
+# loses only its `/* */` comments.
+BLOCK_COMMENT = re.compile(r"/\*.*?\*/")
 FUNC = re.compile(r"\b(?:rgba?|hsla?)\(")
 # a font-family value that is not a token reference or a CSS keyword
 FONT_CSS = re.compile(r"font-family\s*:\s*(?!var\(|inherit\b|initial\b|unset\b|revert\b)\S")
-FONT_TS = re.compile(r"\bfontFamily\s*:\s*['\"`]")   # the TSX inline-style twin: a string, not `theme.fonts.body`
+# PR #374 review round 2: the `font:` shorthand sets the family too. In CSS any value that is not a keyword or a token
+# fails; in TS only a quoted string fails (`font: theme.fonts.body` is a token reference), see FONT_TS.
+# shortcut: CSS-only, so a bare `font: 16px Inter;` inside a TSX template literal passes; quote it or lint the .css.
+FONT_SHORTHAND = re.compile(r"\bfont\s*:\s*(?!inherit\b|initial\b|unset\b|revert\b)(?![^;]*var\()\S")
+FONT_TS = re.compile(r"\b(?:fontFamily|font)\s*:\s*['\"`]")   # the TSX inline-style twin: a string, not `theme.fonts.body`
 TAILWIND_FONT = re.compile(r"\bfont-\[")           # `font-['Inter']`; `bg-[#...]` and `text-[rgb(...)]` hit HEX and FUNC
 KINDS = (("hex", HEX), ("rgb/hsl", FUNC), ("font-family", FONT_CSS), ("font-family", FONT_TS), ("tailwind font", TAILWIND_FONT))
+CSS_KINDS = (("font-family", FONT_SHORTHAND),)
 FIX = ("design literal(s) on added lines. Use a token (var(--x), theme.x, a Tailwind token class), "
        f"or list a real token file in {ALLOWLIST_NAME}:")
 
@@ -69,8 +77,9 @@ def check(diff_text: str, allow: list[str]) -> str | None:
     for path, n, text in added_lines(diff_text):
         if not WEB_EXT.search(path) or any(fnmatch.fnmatchcase(path, g) for g in allow):
             continue
-        code = COMMENT.sub("", text)
-        kinds = list(dict.fromkeys(k for k, rx in KINDS if rx.search(code)))
+        css = path.endswith(".css")
+        code = (BLOCK_COMMENT if css else COMMENT).sub("", text)
+        kinds = list(dict.fromkeys(k for k, rx in KINDS + (CSS_KINDS if css else ()) if rx.search(code)))
         if kinds:
             hits.append(f"{path}:{n}: {', '.join(kinds)} literal: {text.strip()[:80]}")
     return None if not hits else FIX + "\n" + "\n".join(hits)
