@@ -1063,6 +1063,30 @@ Scenario: the cell runner drives one cell per arm and rescores offline (#331)
 ```
 Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.
 
+## Story #325 (A7): workflow security lint
+```gherkin
+Scenario: a pull_request_target or workflow_run workflow that checks out the PR head fails
+  Given a workflow whose on: names pull_request_target, with an actions/checkout step whose ref is github.event.pull_request.head.sha
+  When check_workflow_security.py runs on it
+  Then it exits 1 and names the file and the line of the ref
+Scenario: an npm install without --ignore-scripts fails
+  Given a run line with npm ci --no-audit
+  When check_workflow_security.py runs on it
+  Then it exits 1 and names the file and the line
+Scenario: a clean workflow passes
+  Given a pull_request_target workflow whose checkout takes the base, and a run that joins lines with a backslash and has npm ci --ignore-scripts
+  When check_workflow_security.py runs on it
+  Then it exits 0
+Scenario: a plain pull_request checkout of the head is normal
+  Given a workflow triggered by pull_request only
+  When check_workflow_security.py runs on it
+  Then it exits 0
+Scenario: the repo's own workflows pass the check
+  Given .github/workflows in this repo
+  When check_workflow_security.py runs with no argument
+  Then it exits 0
+```
+Tests: `tests/test_check_workflow_security.py` (s325). CI: job `workflow-security` in ci.yml. Local: `bash scripts/check_local.sh workflow-security`.
 ## Story #319 (A15): the TDD evidence check
 ```gherkin
 Scenario: a PR that changes code with no Red section fails
@@ -1172,6 +1196,22 @@ Scenario: the decision is written down
 ```
 Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
 
+## Story #325 review fixes: three wrong answers of the workflow lint
+```gherkin
+Scenario: a later step with a head ref is not blamed on a clean checkout
+  Given on has a schedule cron list or a list form, and a clean checkout, then a paths-filter step with a head ref
+  When the lint runs
+  Then it exits 0, and a real head checkout after a cron list still fails
+Scenario: every install carries its own flag
+  Given npm ci --ignore-scripts && npm install, or a cd chain with a second npm ci
+  When the lint runs
+  Then it exits 1 and names the line; installs that each carry the flag pass
+Scenario: a folded block is one command
+  Given run: > with npm ci on one line and --ignore-scripts on the next
+  When the lint runs
+  Then it exits 0, while a literal | block still checks each line
+```
+Tests: `tests/test_check_workflow_security.py` (`test_s325_a_later_step_with_a_head_ref_is_not_blamed_on_a_clean_checkout`, `test_s325_the_flag_must_sit_on_each_install_command`, `test_s325_a_folded_block_joins_its_lines_with_a_space`, `test_s325_check_local_usage_and_unknown_list_name_workflow_security`).
 ## Story #313 review fixes: the mode, the dense rules and the budget
 ```gherkin
 Scenario: the hook reads the mode the way mode.sh does
