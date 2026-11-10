@@ -994,3 +994,15 @@ Scenario: the registry lists the public child whose name the hygiene test bans
   And docs/children.md lists that child as public
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
+
+## Story #317: the review finding shape is written down
+```gherkin
+Scenario: every review finding has one fixed shape, linked from the team protocol
+  Given docs/REVIEW_SHAPE.md
+  When the test reads the doc and docs/TEAM_PROTOCOL.md
+  Then the doc names the four parts (What this is, Problem, Fix, If we skip)
+  And the doc ends a review with Verdict and Not checked
+  And the doc keeps the 80 percent, callers, shortcut and fresh-agent rules
+  And docs/TEAM_PROTOCOL.md links docs/REVIEW_SHAPE.md
+```
+Tests: `tests/test_review_shape.py` (s317). Local: `python3 -m pytest -q tests/test_review_shape.py`.
