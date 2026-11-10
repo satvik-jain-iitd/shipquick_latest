@@ -1016,3 +1016,36 @@ Scenario: the cell runner drives one cell per arm and rescores offline (#331)
   Then the rescore prints the same scores and the fake claude records zero calls on the rescore
 ```
 Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.
+
+## Story #319 (A15): the TDD evidence check
+```gherkin
+Scenario: a PR that changes code with no Red section fails
+  Given a feature branch that adds scripts/widget.py
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 1 and names the missing "## Red" section
+Scenario: a Red section naming a test file in the diff passes
+  Given the same branch also adds tests/test_widget.py
+  When the PR body has "## Red" naming tests/test_widget.py
+  Then check_tdd.py exits 0 with "tdd OK"
+Scenario: a Red section naming a test not in the diff fails
+  Given the branch does not change tests/test_widget.py
+  When the PR body names tests/test_widget.py under "## Red"
+  Then check_tdd.py exits 1 and says the file is not in the PR diff
+Scenario: a Red section that names no test fails
+  Given a code PR whose "## Red" section has no test path
+  When check_tdd.py reads the body
+  Then it exits 1 and says the section names no test
+Scenario: a test file deleted in the diff is not evidence
+  Given the branch deletes tests/test_widget.py
+  When the PR body names it under "## Red"
+  Then check_tdd.py exits 1
+Scenario: docs-only PRs need no Red section
+  Given a branch that changes only docs/*.md, pm/ or a .txt file
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 0 and says it is exempt
+Scenario: a promotion into main and a back-merge from main are exempt
+  Given a PR from dev into main, or from main into dev, with code changed
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 0 and says it is exempt
+```
+Tests: `test_s319_a_code_pr_whose_body_has_no_red_section_fails`, `test_s319_a_red_section_naming_a_test_file_in_the_diff_passes`, `test_s319_a_red_section_naming_a_test_not_in_the_diff_fails`, `test_s319_a_red_section_that_names_no_test_fails`, `test_s319_a_test_file_deleted_in_the_diff_is_not_evidence`, `test_s319_a_docs_only_pr_is_exempt_and_needs_no_red_section`, `test_s319_a_dev_into_main_promotion_is_exempt`, `test_s319_a_main_into_dev_back_merge_is_exempt`, `test_s319_a_feature_pr_into_dev_is_not_exempt`, `test_s319_a_pytest_node_id_names_its_file`, `test_s319_ci_has_a_tdd_job_on_every_pr_and_the_gate_waits_for_it`, `test_s319_check_local_runs_the_tdd_check`.

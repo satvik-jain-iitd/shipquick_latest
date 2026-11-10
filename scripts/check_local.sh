@@ -97,6 +97,16 @@ check_story() {
   rm -f "$tmp"
   report story "$rc"
 }
+check_tdd() {   # story #319 (A15): the commit log stands in for the PR body before a push; CI reads the real body
+  have_base tdd || return 0
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  python3 "$HERE/check_tdd.py" --body-file "$tmp" --base "origin/$BASE" --base-branch "$BASE" --head-branch "$(git rev-parse --abbrev-ref HEAD)"
+  rc=$?
+  rm -f "$tmp"
+  report tdd "$rc"
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   gitleaks git --no-banner --no-color --redact --verbose .
@@ -109,7 +119,7 @@ check_secrets_staged() {
 }
 
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story tdd secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
@@ -126,7 +136,8 @@ for c in "${checks[@]}"; do
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
     story) check_story ;;
-    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
+    tdd) check_tdd ;;
+    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story tdd secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"
