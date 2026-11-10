@@ -79,3 +79,35 @@ def test_the_hook_is_registered_on_pretooluse_edit_and_write():
     entry = hooks["PreToolUse"][0]
     assert entry["matcher"] == "Edit|Write"
     assert "protected_warn.py" in entry["hooks"][0]["command"]
+
+
+def make_child_repo(tmp_path, mode):
+    """A child project: ShipQuick vendored under knowledge/shipquick_latest, no root copy of the list."""
+    repo = tmp_path / "child"
+    vendored = repo / "knowledge" / "shipquick_latest" / "scripts"
+    vendored.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    shutil.copy(ROOT / "scripts" / "protected_paths.txt", vendored / "protected_paths.txt")
+    (repo / ".shipquick").mkdir()
+    (repo / ".shipquick" / "mode").write_text(mode + "\n")
+    return repo
+
+
+def test_a_child_with_the_vendored_list_gets_the_warning(tmp_path):
+    # Red for review finding 1 (PR #350): the hook read only root scripts/, so a child never warned.
+    repo = make_child_repo(tmp_path, "auto")
+    p = run_hook(repo, repo / ".github" / "workflows" / "ci.yml")
+    assert p.returncode == 0, p.stderr
+    assert WARN + ".github/workflows/ci.yml" in p.stdout
+
+
+def test_the_warning_reaches_the_model_as_additional_context(tmp_path):
+    # Red for review finding 2 (PR #350): systemMessage shows only in the UI, never to the model.
+    repo = make_repo(tmp_path, "auto")
+    p = run_hook(repo, repo / "scripts" / "review_merge.sh")
+    assert p.returncode == 0, p.stderr
+    out = json.loads(p.stdout)
+    hso = out["hookSpecificOutput"]
+    assert hso["hookEventName"] == "PreToolUse"
+    assert WARN + "scripts/review_merge.sh" in hso["additionalContext"]
+    assert "permissionDecision" not in hso

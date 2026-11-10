@@ -1136,3 +1136,15 @@ Scenario: the hook never blocks
   Then the hook exits 0 with no output
 ```
 Tests: `tests/test_protected_warn.py` (`test_editing_a_listed_path_in_auto_mode_prints_the_warning`, `test_a_glob_line_matches_a_nested_path`, `test_an_unlisted_path_prints_nothing`, `test_a_listed_path_in_manual_mode_prints_nothing`, `test_a_file_outside_the_repo_prints_nothing`, `test_bad_stdin_exits_zero_and_never_blocks`, `test_the_hook_is_registered_on_pretooluse_edit_and_write`).
+
+## Story #321 review fixes (PR #350): the warning reaches a child and the model
+```gherkin
+Scenario: a child project with the vendored list gets the warning
+  Given a child repo in auto mode whose knowledge/shipquick_latest/scripts/protected_paths.txt lists .github/workflows/*
+  When an Edit targets .github/workflows/ci.yml
+  Then the hook prints "protected path, owner merges: .github/workflows/ci.yml" and exits 0
+Scenario: the warning is given as additional context to the model
+  Given a listed path in auto mode
+  Then the hook output has hookSpecificOutput.additionalContext with the warning, hookEventName PreToolUse, and no permissionDecision
+```
+Tests: `tests/test_protected_warn.py` (`test_a_child_with_the_vendored_list_gets_the_warning`, `test_the_warning_reaches_the_model_as_additional_context`).

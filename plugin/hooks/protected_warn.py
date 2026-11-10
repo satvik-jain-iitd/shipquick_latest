@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """PreToolUse (Edit|Write): warn when a protected path is edited in auto mode (story #321, A5b).
 
-Reads scripts/protected_paths.txt, the list review_merge.sh refuses in auto mode, and matches the
+Reads the protected-paths list that review_merge.sh judges by in auto mode (the vendored copy under
+knowledge/shipquick_latest in a child, else scripts/ in ShipQuick), and matches the
 edited file with the same glob rule (bash [[ == ]]: `*` crosses `/`). Prints a warning only in auto
 mode; it never blocks, and any error prints nothing. Exit 0 always.
 """
@@ -26,13 +27,17 @@ try:
             rel = Path(file_path).resolve().relative_to(root).as_posix()
         except ValueError:
             rel = None   # outside this repo: nothing to warn about
-    listed = root / "scripts" / "protected_paths.txt"
-    # shortcut: reads the project's own list only; a child that vendors ShipQuick gets no warning until it is adopted (add the knowledge/shipquick_latest path when that matters)
+    # A child reads the list it is judged by: the vendored ShipQuick copy. ShipQuick reads its own.
+    vendored = root / "knowledge" / "shipquick_latest" / "scripts" / "protected_paths.txt"
+    listed = vendored if vendored.is_file() else root / "scripts" / "protected_paths.txt"
     if rel and listed.is_file() and current_mode(base) == "auto":
         for line in listed.read_text(encoding="utf-8").splitlines():
             pat = line.split("#", 1)[0].strip()
             if pat and fnmatch.fnmatchcase(rel, pat):
-                print(json.dumps({"systemMessage": "protected path, owner merges: " + rel}))
+                msg = "protected path, owner merges: " + rel
+                # additionalContext reaches the model; systemMessage shows only in the UI. No permissionDecision: never blocks.
+                print(json.dumps({"systemMessage": msg, "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse", "additionalContext": msg}}))
                 break
 except Exception:
     pass
