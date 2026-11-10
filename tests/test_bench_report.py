@@ -80,4 +80,4 @@ def test_the_decision_record_and_the_experiments_row_exist():
     adr = (ROOT / "docs" / "decisions" / "ADR-014.md").read_text(encoding="utf-8")
     assert "paired run" in adr and "kit rule" in adr.lower()
     exp = (ROOT / "docs" / "research" / "experiments.md").read_text(encoding="utf-8")
-    assert "pending" in exp and "bench" in exp.lower()
+    assert "bench" in exp.lower() and "#312" in exp  # the row exists; its status word may change

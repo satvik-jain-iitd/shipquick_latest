@@ -84,6 +84,27 @@ The ruleset pins the gate to the GitHub Actions app (`integration_id: 15368`). W
 
 A private repo on GitHub Free cannot enforce rulesets or branch protection. Such a child needs a paid plan, or it stays "gate not required".
 
+## Rule copies in a child (story #316)
+
+The kit's rules (CLAUDE.md, rule 0 to the last rule) are copied into each child's CLAUDE.md. The copy must match the kit byte for byte, once line endings and outer blank lines are ignored. A check (`scripts/check_rule_copies.py --child project/CLAUDE.md`, job `rule-copies` in `checks.yml`) fails the PR when it does not.
+
+The child marks the copy with two lines, one above and one below the rules, each on its own line and each exactly once:
+
+```text
+<!-- shipquick-rules:start -->
+0. **Mode** (owner, 26 Oct 2026). ...
+...the kit rules, unchanged, from rule 0 to the end of the kit CLAUDE.md...
+<!-- shipquick-rules:end -->
+```
+
+`scripts/adopt.sh` writes this block for you and rewrites it on every run, so a pin bump refreshes the copy. Run `adopt.sh` again after you bump the ShipQuick pin. What sits outside the two lines is yours and is never touched. If the lines are broken (one missing, or in the wrong order), `adopt.sh` stops before it writes anything and says so.
+
+Where the copy lives: the check reads `CLAUDE.md` from the branch the PR touches. A rule-24 child keeps its rules on its kit branch, not on `main`, so for a PR into another branch the `rule-copies` job reads `CLAUDE.md` from the caller's `kit_branch`, the same way the `roles` job reads `roles.yml`.
+
+The check also confirms that 11 load-bearing phrases are in the kit. They are listed at the top of `scripts/check_rule_copies.py`. Rule 33 is restated in the `shipquick-feedback` skill, so its phrase must be in both `CLAUDE.md` and `skills/shipquick-feedback/SKILL.md`.
+
+A child without the two marker lines fails the `rule-copies` job. To fix it, run `bash knowledge/shipquick_latest/scripts/adopt.sh .` and push again.
+
 ## UI lint in a child (story #185)
 
 A child refuses hand-drawn UI with lint. The kit ships the configs. Wiring them in is story #187, not this one.

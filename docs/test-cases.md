@@ -995,6 +995,49 @@ Scenario: the registry lists the public child whose name the hygiene test bans
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
 
+## Story #317: the review finding shape is written down
+```gherkin
+Scenario: every review finding has one fixed shape, linked from the team protocol
+  Given docs/REVIEW_SHAPE.md
+  When the test reads the doc and docs/TEAM_PROTOCOL.md
+  Then the doc names the four parts (What this is, Problem, Fix, If we skip)
+  And the doc ends a review with Verdict and Not checked
+  And the doc keeps the 80 percent, callers, shortcut and fresh-agent rules
+  And docs/TEAM_PROTOCOL.md links docs/REVIEW_SHAPE.md
+```
+Tests: `tests/test_review_shape.py` (s317). Local: `python3 -m pytest -q tests/test_review_shape.py`.
+## Story #326: adopt.sh --check reads the Ponytail plugin switch
+```gherkin
+Scenario: the Ponytail plugin is enabled in the Claude settings
+  Given the child is adopted and its submodule pin matches
+  And enabledPlugins["ponytail@ponytail"] is true in the settings file
+  When adopt.sh --check runs
+  Then it exits 0 and prints no Ponytail line
+
+Scenario: the Ponytail plugin is off, or its key is missing or the file is not JSON
+  Given the settings file has ponytail@ponytail false, no such key, a missing file, or invalid JSON
+  When adopt.sh --check runs outside CI
+  Then it exits 1 with "not adopted"
+  And it prints "/plugin marketplace add dietrichgebert/ponytail" and "/plugin install ponytail@ponytail"
+
+Scenario: in CI the missing key only warns
+  Given CI is set (a runner has no settings file)
+  When adopt.sh --check runs with the Ponytail key off
+  Then it exits 0 and prints a warning with the install line
+```
+Tests: `tests/test_adopt.py` (s326: passes when on, not adopted when false, absent, missing file, not JSON; CI warns). Local: `python3 -m pytest -q tests/test_adopt.py -k s326`.
+
+## Story #316: the kit rule copies are canaried (A3)
+Scenario: a child's copy of the kit rules must match the kit
+  Given a child CLAUDE.md with the kit rule block between the shipquick-rules markers
+  When the block differs from the kit CLAUDE.md by one word
+  Then the check fails and names the child file
+Scenario: a load-bearing phrase must be in the kit CLAUDE.md
+  Given the kit CLAUDE.md with "Radar first" changed
+  When check_rule_copies.py runs
+  Then the check fails and names CLAUDE.md and the phrase
+Scenario: a child without the markers fails and points at docs/ADOPTION.md
+Tests: `test_a_changed_phrase_turns_the_check_red_and_names_the_file`, `test_a_child_with_one_word_changed_fails_and_names_the_child`, `test_a_child_without_the_markers_fails_and_points_at_adoption`, `test_a_child_with_the_kit_block_unchanged_passes`, `test_the_kit_claude_md_passes_every_phrase`, `test_the_script_is_stdlib_only` (file: tests/test_check_rule_copies.py).
 ## Plugin hooks: rules reach every session and subagent (story #313, A2)
 ```gherkin
 Scenario: a SubagentStart hook injects the rules into a subagent
@@ -1052,6 +1095,80 @@ Scenario: the cell runner drives one cell per arm and rescores offline (#331)
 ```
 Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.
 
+## Story #327: the shortcut ledger (A11)
+```gherkin
+Scenario: the ledger lists every shortcut and tags only the one with no upgrade trigger
+  Given a tracked source file with one shortcut that names "add a dict index when the list passes 10000 rows" and one with "global lock for every write"
+  When python3 scripts/check_shortcuts.py runs on that repo
+  Then both comments are listed and only the second is tagged no-trigger
+  And tests/, vendored and markdown files are not listed
+Scenario: --write logs each shortcut once and never edits an old row
+  Given docs/follow-ups.md holds one old row
+  When python3 scripts/check_shortcuts.py --write runs twice
+  Then the first run appends one row per shortcut after the old row
+  And the second run adds nothing
+Scenario: check_local warns with the count and the CI job never gates
+  Given scripts/check_local.sh and .github/workflows/ci.yml
+  When the shortcut check is wired in
+  Then check_local prints the count as a warning and the shortcut-ledger job is not in the gate needs
+```
+Tests: `test_s327_one_good_and_one_no_trigger_comment_are_listed_and_only_the_second_is_tagged`, `test_s327_write_appends_one_row_per_shortcut_once_and_never_edits_old_rows`, `test_s327_the_real_repo_scan_runs_and_prints_the_count`, `test_s327_check_local_warns_with_the_count_and_never_fails`, `test_s327_ci_job_is_warn_only_and_not_in_the_gate`.
+## Story #325 (A7): workflow security lint
+```gherkin
+Scenario: a pull_request_target or workflow_run workflow that checks out the PR head fails
+  Given a workflow whose on: names pull_request_target, with an actions/checkout step whose ref is github.event.pull_request.head.sha
+  When check_workflow_security.py runs on it
+  Then it exits 1 and names the file and the line of the ref
+Scenario: an npm install without --ignore-scripts fails
+  Given a run line with npm ci --no-audit
+  When check_workflow_security.py runs on it
+  Then it exits 1 and names the file and the line
+Scenario: a clean workflow passes
+  Given a pull_request_target workflow whose checkout takes the base, and a run that joins lines with a backslash and has npm ci --ignore-scripts
+  When check_workflow_security.py runs on it
+  Then it exits 0
+Scenario: a plain pull_request checkout of the head is normal
+  Given a workflow triggered by pull_request only
+  When check_workflow_security.py runs on it
+  Then it exits 0
+Scenario: the repo's own workflows pass the check
+  Given .github/workflows in this repo
+  When check_workflow_security.py runs with no argument
+  Then it exits 0
+```
+Tests: `tests/test_check_workflow_security.py` (s325). CI: job `workflow-security` in ci.yml. Local: `bash scripts/check_local.sh workflow-security`.
+## Story #319 (A15): the TDD evidence check
+```gherkin
+Scenario: a PR that changes code with no Red section fails
+  Given a feature branch that adds scripts/widget.py
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 1 and names the missing "## Red" section
+Scenario: a Red section naming a test file in the diff passes
+  Given the same branch also adds tests/test_widget.py
+  When the PR body has "## Red" naming tests/test_widget.py
+  Then check_tdd.py exits 0 with "tdd OK"
+Scenario: a Red section naming a test not in the diff fails
+  Given the branch does not change tests/test_widget.py
+  When the PR body names tests/test_widget.py under "## Red"
+  Then check_tdd.py exits 1 and says the file is not in the PR diff
+Scenario: a Red section that names no test fails
+  Given a code PR whose "## Red" section has no test path
+  When check_tdd.py reads the body
+  Then it exits 1 and says the section names no test
+Scenario: a test file deleted in the diff is not evidence
+  Given the branch deletes tests/test_widget.py
+  When the PR body names it under "## Red"
+  Then check_tdd.py exits 1
+Scenario: docs-only PRs need no Red section
+  Given a branch that changes only docs/*.md, pm/ or a .txt file
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 0 and says it is exempt
+Scenario: a promotion into main and a back-merge from main are exempt
+  Given a PR from dev into main, or from main into dev, with code changed
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 0 and says it is exempt
+```
+Tests: `test_s319_a_code_pr_whose_body_has_no_red_section_fails`, `test_s319_a_red_section_naming_a_test_file_in_the_diff_passes`, `test_s319_a_red_section_naming_a_test_not_in_the_diff_fails`, `test_s319_a_red_section_that_names_no_test_fails`, `test_s319_a_test_file_deleted_in_the_diff_is_not_evidence`, `test_s319_a_docs_only_pr_is_exempt_and_needs_no_red_section`, `test_s319_a_dev_into_main_promotion_is_exempt`, `test_s319_a_main_into_dev_back_merge_is_exempt`, `test_s319_a_feature_pr_into_dev_is_not_exempt`, `test_s319_a_pytest_node_id_names_its_file`, `test_s319_ci_has_a_tdd_job_on_every_pr_and_the_gate_waits_for_it`, `test_s319_check_local_runs_the_tdd_check`.
 ## Story #331: the bench cell runner and offline rescore
 ```gherkin
 Scenario: one cell per arm runs with the real flags and the rules only in the kit arm
@@ -1087,6 +1204,115 @@ Scenario: a task's seed files reach the cell folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
 
+## Story #317 review fixes: the verdict line and the fourth label
+```gherkin
+Scenario: a clean review still ends with a verdict
+  Given the review shape doc
+  When rule 5 says what a reviewer with zero findings writes
+  Then it names "Verdict: Ship." and "Not checked:" and never "Looks good. Ship."
+Scenario: the worked example uses the fixed fourth label
+  Given the review shape doc
+  When the worked example labels the fourth part
+  Then it writes "**If we skip:**", the same label as the list
+```
+Tests: `tests/test_review_shape.py` (`test_zero_findings_rule_does_not_skip_the_verdict_line`, `test_example_uses_the_same_fourth_label_as_the_list`).
+## Story #323 (A8): the desk spend column and the Origin check
+```gherkin
+Scenario: a fixture ledger renders in the desk state and the page
+  Given a ponytail ledger CSV with two task rows
+  When the desk state is read
+  Then /api/state.json lists both rows under spend with totals
+  And the page has a Spend section
+Scenario: a missing ledger is an empty section, not an error
+  Given no ledger file for the project
+  When the desk state is read
+  Then spend is an empty list with the note "no ledger" and error is empty
+Scenario: a cross-origin API request gets 403
+  Given the desk server on 127.0.0.1
+  When /api/state.json is requested with an Origin that is not the server's own
+  Then the answer is 403, and a request with no Origin or the own origin is served
+Scenario: a real ledger header renders its names, tokens and reuse
+  Given a ponytail band CSV with the upstream header (name, tokens_total, reuse_pct, tests)
+  When the desk state is read
+  Then each row shows its name, its tokens, its reuse percent and its tests label
+  And a row with no name shows its key
+Scenario: the ledger file name follows the writer's rule
+  Given a repo folder named "my repo (1)"
+  When the default ledger path is built
+  Then the file is my_repo__1_.csv
+Scenario: the ledger folder follows XDG_CONFIG_HOME like the writer
+  Given XDG_CONFIG_HOME is set to /tmp/xdgtest
+  When the default ledger path is built
+  Then the file is under /tmp/xdgtest/ponytail/band
+Scenario: the ledger file name uses the ASCII rule of the writer
+  Given a repo folder named "café"
+  When the default ledger path is built
+  Then the file is caf_.csv
+Scenario: an unreadable ledger keeps the rest of the desk
+  Given a ledger with "n/a" in cost_usd
+  When /api/state.json is requested
+  Then the answer is 200, spend has no rows and a "ledger unreadable" note
+  And waiting and roadmap are still filled
+```
+Tests: `tests/test_desk.py` (`SpendLedger`, `SpendInServer`, `OriginCheck`; new: `test_real_ledger_header_is_read_row_by_row_with_totals`, `test_row_without_a_name_uses_the_key_as_task`, `test_band_path_uses_the_same_name_rule_as_the_ponytail_writer`, `test_unreadable_ledger_keeps_the_other_sections`, `test_band_path_follows_xdg_config_home_like_the_writer`, `test_band_name_rule_is_ascii_like_the_javascript_writer`).
+## Story #328 (A13): rules split by path, spike
+```gherkin
+Scenario: the path-scoped rules finding is written with its source
+  Given the Claude Code docs page on memory and rules
+  When the spike is recorded
+  Then docs/research/experiments.md has a 10 Nov 2026 row for #328 that cites https://code.claude.com/docs/en/memory and says pending test
+  And the #328 row in the ponytail study cites the same URL
+  And the #328 experiments row has five cells like the header, with Result in the Result column and Decision in the Decision column
+  And every test in tests/test_rules_by_path_spike.py is named in this file
+```
+Tests: `tests/test_rules_by_path_spike.py` (`test_a13_experiments_row_exists_with_docs_url`, `test_a13_study_adapt_row_cites_the_docs_url`, `test_a13_experiments_row_has_five_cells_like_the_header`, `test_a13_result_and_decision_sit_in_their_own_columns`, `test_a13_every_test_in_this_file_is_listed_in_test_cases`).
+## Story #324 (A6): the release gate
+```gherkin
+Scenario: a release with a green gate on HEAD is tagged and pushed
+  Given release notes whose first line names the tag, and a gate check that is SUCCESS on HEAD
+  When scripts/release.sh vX.Y.Z runs
+  Then an annotated tag points at HEAD and is pushed to origin
+Scenario: a dry run prints the plan and tags nothing
+  Given the same release
+  When scripts/release.sh vX.Y.Z --dry-run runs
+  Then it prints what it would do and no tag exists locally or on origin
+Scenario: each missing condition refuses and tags nothing
+  Given one of: no notes file, a notes version line that is not the tag, a tag already local, a tag already on origin, no gate check, a failed gate, a gate still running, a green gate only on an older commit
+  When scripts/release.sh vX.Y.Z runs
+  Then it exits non-zero naming the condition and creates no tag
+Scenario: a version that is not vX.Y.Z is refused before any gh call
+  When scripts/release.sh v1.2 runs
+  Then it exits non-zero and gh is never called
+```
+Tests: `tests/test_release.py` (13 tests, `test_s324_*`).
+## Story #316 review fixes: the child's copy, adopt.sh and the skill
+```gherkin
+Scenario: a rule-24 child's rules are read from its kit branch
+  Given a child whose rules live on its kit branch and a PR into another branch
+  When the rule-copies job runs
+  Then it reads CLAUDE.md from the caller's kit_branch, like the roles job, and checks out the skills folder too
+Scenario: adopt.sh writes and refreshes the rule block
+  Given a new child, or a child with its own CLAUDE.md and no markers
+  When adopt.sh runs
+  Then the block sits between the two markers, check_rule_copies.py --child passes, and the child's own lines stay
+  And a hand change inside the markers is restored on the next run, and broken markers stop the run before anything is written
+Scenario: the skill that restates rule 33 is watched
+  Given a kit copy where the phrase at least three "Why" lines is changed in the skill
+  When check_rule_copies.py runs
+  Then it exits 1 and names skills/shipquick-feedback/SKILL.md
+```
+Tests: `tests/test_adopt.py` (`test_s316_*`), `tests/test_check_rule_copies.py` (`test_s316_*`), `tests/test_checks_workflow.py` (`test_s316_rule_copies_reads_the_child_claude_md_from_the_kit_branch`).
+## Story #319 review fixes: Dependabot, the local check and the template
+```gherkin
+Scenario: a Dependabot PR is not blocked by the tdd job
+  Given the weekly Dependabot PR that changes only workflow files
+  When the tdd job runs
+  Then it prints "Dependabot: tdd exempt" and exits 0 before the check, like team-block
+Scenario: a coder learns where the Red section goes before the first push
+  Given check_local.sh, COMMIT_GUIDELINES.md and the PR template
+  Then the usage line names tdd, the header and the guidelines say the Red section is in a commit body before a push, and the template has a Red section above Test Output
+```
+Tests: `tests/test_check_tdd.py` (`test_s319_dependabot_is_exempt_in_the_tdd_job_like_team_block`, `test_s319_check_local_usage_and_header_name_tdd`, `test_s319_commit_guidelines_say_a_code_branch_carries_a_red_line`, `test_s319_the_pr_template_has_a_red_section_above_test_output`).
 ## Story #312: the bench report (dry parts)
 ```gherkin
 Scenario: the run says where it put the folder
@@ -1106,6 +1332,40 @@ Scenario: the decision is written down
 ```
 Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
 
+## Story #327 review fixes: wrapped comments, string literals, the follow-ups file
+```gherkin
+Scenario: a wrapped comment is read whole
+  Given a # or // comment whose upgrade trigger sits on the next comment line
+  When the ledger scans it
+  Then it is listed once, tagged ok, with the full text; a new marker on the next line is its own comment
+Scenario: a marker in a string literal is not a comment
+  Given a line with an odd number of quotes before the marker, or a closer followed by markup
+  When the ledger scans it
+  Then the string is not listed, and the text stops at the first closer
+Scenario: --write is careful with docs/follow-ups.md
+  Given no follow-ups file, a file with no header row, or a second table below the follow-ups table
+  When --write runs
+  Then it prints one line and writes nothing for the first two, and the new rows land right after the follow-ups table for the third
+Scenario: the warn-only job cannot block a merge
+  Then the shortcut-ledger job has continue-on-error: true and check_local.sh usage names shortcuts
+```
+Tests: `tests/test_check_shortcuts.py` (`test_s327_a_wrapped_comment_*`, `test_s327_a_new_marker_*`, `test_s327_a_marker_inside_a_string_*`, `test_s327_write_without_*`, `test_s327_rows_land_right_after_*`, `test_s327_a_follow_ups_file_without_the_header_row_*`, `test_s327_the_ci_job_cannot_block_a_merge_*`).
+## Story #325 review fixes: three wrong answers of the workflow lint
+```gherkin
+Scenario: a later step with a head ref is not blamed on a clean checkout
+  Given on has a schedule cron list or a list form, and a clean checkout, then a paths-filter step with a head ref
+  When the lint runs
+  Then it exits 0, and a real head checkout after a cron list still fails
+Scenario: every install carries its own flag
+  Given npm ci --ignore-scripts && npm install, or a cd chain with a second npm ci
+  When the lint runs
+  Then it exits 1 and names the line; installs that each carry the flag pass
+Scenario: a folded block is one command
+  Given run: > with npm ci on one line and --ignore-scripts on the next
+  When the lint runs
+  Then it exits 0, while a literal | block still checks each line
+```
+Tests: `tests/test_check_workflow_security.py` (`test_s325_a_later_step_with_a_head_ref_is_not_blamed_on_a_clean_checkout`, `test_s325_the_flag_must_sit_on_each_install_command`, `test_s325_a_folded_block_joins_its_lines_with_a_space`, `test_s325_check_local_usage_and_unknown_list_name_workflow_security`).
 ## Story #313 review fixes: the mode, the dense rules and the budget
 ```gherkin
 Scenario: the hook reads the mode the way mode.sh does
@@ -1140,3 +1400,85 @@ Scenario: the SessionStart hook appends the map, and a failed map never blocks
   When the project folder is missing, the hook still prints the rules and exits 0
 ```
 Tests: `tests/test_codebase_map.py` (`test_names_come_from_each_language_and_private_ones_are_left_out`, `test_tests_vendored_and_hidden_folders_are_skipped`, `test_scripts_and_plugin_are_listed_first`, `test_the_map_stays_within_the_budget_and_says_what_it_left_out`, `test_the_map_of_this_repo_lists_scripts_within_budget`, `test_session_start_appends_the_map_to_the_rules`, `test_a_map_failure_never_blocks_the_session`, `test_a_folder_with_no_source_gives_an_empty_map`, `test_a_shell_function_without_parentheses_is_listed`, `test_kotlin_enum_annotation_value_and_inline_classes_are_listed`).
+## Story #315: the loop and cost guard
+```gherkin
+Scenario: four different calls are not a loop
+  Given four Edit calls with four different inputs in one session
+  When the PostToolUse guard runs after each
+  Then nothing is printed
+Scenario: five identical calls warn loop, and a sixth is denied before it runs
+  Given five identical Edit calls recorded in one session
+  When the PostToolUse guard runs on the fifth, and the PreToolUse guard runs on a sixth identical call
+  Then the fifth prints "loop: the same call 5 times" and the sixth gets a deny with the same text
+Scenario: a different call breaks the streak
+  Given five identical calls, then a call with another input
+  When the PreToolUse guard runs on the other call
+  Then nothing is printed, so the call is allowed
+Scenario: the same input on another tool is not a loop
+  Given calls alternating Edit and Write, then a Bash call with the same input
+  When the PostToolUse guard runs on the Bash call
+  Then no loop warning is printed
+Scenario: under the warn line prints nothing
+  Given a transcript whose usage costs 0.50 dollars
+  When the PostToolUse guard runs
+  Then nothing is printed
+Scenario: over the warn line warns about cost
+  Given a transcript whose usage costs 6 dollars and the block line is set to 100
+  When the PostToolUse guard runs
+  Then the warning says "cost:" and "warn line", and no deny is given
+Scenario: over the block line denies Edit, Write and Bash before they run
+  Given a transcript whose usage costs 6 dollars
+  When the PreToolUse guard runs on an Edit call
+  Then the deny reason says "cost:" and "block line"
+Scenario: the block line comes from the environment
+  Given SHIPQUICK_COST_BLOCK is 2.5 and a transcript that costs 3 dollars
+  When the PreToolUse guard runs
+  Then the call is denied with "block line"
+Scenario: cost is priced per model and per token class
+  Given one Haiku output million tokens and one Sonnet cache-read million tokens
+  Then session_cost is the Haiku output price plus the Sonnet cache-read price
+Scenario: a missing transcript costs nothing and never blocks
+  Given a transcript path that does not exist
+  When the PreToolUse guard runs
+  Then nothing is printed
+Scenario: a bad threshold falls back to the default
+  Given SHIPQUICK_COST_WARN is "two dollars" and a transcript that costs 3 dollars
+  When the PostToolUse guard runs
+  Then the warning names the warn line at the default 2 dollars
+Scenario: the hooks file registers the guard
+  Then PostToolUse runs guard.py post for every tool, and PreToolUse runs guard.py pre for Edit, Write and Bash
+```
+Tests: `tests/test_guard_hook.py` (`test_five_identical_calls_warn_loop`, `test_a_sixth_identical_call_is_denied_before_it_runs`, `test_over_the_block_line_denies_edit_before_it_runs`, `test_cost_is_priced_per_model_and_per_token_class`, and the other tests in that file).
+
+## Story #315, PR #347 review fixes: offset read and opus price
+```gherkin
+Scenario: a grown transcript is read only from the saved offset
+  Given a transcript that cost 3 dollars on the first call, then grows by one 3 dollar record, and its first bytes change in place
+  When the PostToolUse guard runs on the second call
+  Then the warning says "$6.00", so the old bytes are not counted again
+  Test: test_a_grown_transcript_is_read_from_the_saved_offset
+Scenario: an opus output million costs the opus output rate
+  Given a transcript with one claude-opus-4-1 record of 1,000,000 output tokens
+  When the cost is read
+  Then the cost is 75 dollars, and rate_for picks the opus row
+  Test: test_opus_is_priced_at_opus_list_not_sonnet
+```
+
+## Story #315, PR #347 review fixes (round 2): loop deny for Edit and Write only, cost warning once per dollar
+```gherkin
+Scenario: six identical Bash calls are not denied by the loop
+  Given five identical Bash calls recorded in one session
+  When the PreToolUse guard runs on a sixth identical Bash call
+  Then nothing is printed, so the poll is allowed (post already warned on the fifth)
+  Test: test_six_identical_bash_calls_are_not_denied_by_the_loop
+Scenario: six identical Write calls are still denied by the loop
+  Given five identical Write calls recorded in one session
+  When the PreToolUse guard runs on a sixth identical Write call
+  Then the deny reason says "loop: the same call 5 times"
+  Test: test_six_identical_write_calls_are_still_denied_by_the_loop
+Scenario: a cost warning is printed once per dollar
+  Given a transcript that costs 3 dollars, and two PostToolUse calls in one session
+  When the guard runs on the first call, then on the second
+  Then the first prints the warn line, and the second prints nothing
+  Test: test_a_cost_warning_is_printed_once_per_dollar
+```
