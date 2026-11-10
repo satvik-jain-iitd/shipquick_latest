@@ -74,11 +74,13 @@ def current_mode(project_dir):
     return "not set"
 
 
-def context_for(event, project_dir):
+def context_for(event, project_dir, extra=""):
     rules = RULES_FILE.read_text(encoding="utf-8")
     text = f"ShipQuick mode: {current_mode(project_dir)}\n\n{rules}"
+    if extra:  # the codebase map (story #314), SessionStart only
+        text += f"\n\n{extra}"
     return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}}
 
 
-def emit(event, project_dir):
-    print(json.dumps(context_for(event, project_dir)))
+def emit(event, project_dir, extra=""):
+    print(json.dumps(context_for(event, project_dir, extra)))

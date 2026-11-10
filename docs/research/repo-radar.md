@@ -541,6 +541,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: ponytail `benchmarks/agentic/compare.py` and `run.py` (study clone, read only): per-task median, a sign test over pairs, no bootstrap and no geometric mean.
 - Decision: write `bench/report.py` (stdlib: `statistics`, `random` with a fixed seed). Borrow the idea of per-task medians; the ratio, geometric mean and bootstrap are not in ponytail.
 - Confidence that nothing fits better: 0.7 (thin search; the stats are a few lines of stdlib).
+## 10 Nov 2026, story #314 (A9): codebase map at session start
+- Need: a short map of top-level functions and classes per folder, inside a 2,000 character budget, that the SessionStart hook appends to the context.
+- Run: `scout.py --need "codebase map of top-level functions and classes per folder for an LLM session start, within a character budget"`: no repos found.
+  `gh search repos --topic=codebase-map`: no results. `gh search repos --topic=repo-map`: ten hits, none is a stdlib script that prints names per folder. Closest: `glincker/stacklit` (Go binary, tree-sitter, writes `stacklit.json`), `Houseofmvps/codesight` (npx package, 30 framework detectors, MCP tools), `fredrikolis/annotated-tree` (Rust, a one-line annotation per file that the team must write).
+- Read: the top 3 READMEs. stacklit: one Go binary, a committed JSON index, needs a Go or npx install and tree-sitter. codesight: a large npm package with MCP tools and framework detectors, far more than a budgeted name list. annotated-tree: needs every file to carry a hand-written annotation. None runs as a plain script in the hook, with no install, under a character budget.
+- Borrowed: the whole method from ponytail `hooks/ponytail-map.js` (MIT, commit 96608e0, study clone, read only): one line per folder, a regex per language, skip tests and vendored code, shared folders first, the budget. Ported to stdlib Python as `plugin/hooks/map.py`. Dropped: the Go, Ruby, Rust and JVM patterns (the kit needs py, js/ts, sh, swift, kt), the `export { }` list pattern, and the `util|lib` path boost (the spec puts scripts/ and plugin/ first).
+- Decision: adopt the idea and port it. No package added. The SessionStart script calls it inside a try block, so a failed map leaves the rules intact.
+- Confidence that nothing fits better: 0.75 (the search was thin; the three close hits solve a bigger problem).
 
 ---
 ## 10 Nov 2026, story #322 (A5c): scratch markdown warning hook

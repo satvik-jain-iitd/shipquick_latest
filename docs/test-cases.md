@@ -1399,6 +1399,27 @@ Scenario: the manifest and the budget are honest
 ```
 Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).
 
+## Story #314 (A9): the codebase map at session start
+```gherkin
+Scenario: the map names the functions and classes of each folder
+  Given a folder with Python, shell, TypeScript, Swift and Kotlin source
+  When the map is built
+  Then each folder line lists its top-level names, and names that start with an underscore are left out
+Scenario: tests, vendored and hidden folders are skipped
+  Given tests/, node_modules/, knowledge/ and a dot folder with source
+  When the map is built
+  Then none of their names appear
+Scenario: scripts and plugin come first, and the budget holds
+  Given many folders and scripts/ and plugin/ among them
+  When the map is built
+  Then scripts/ and plugin/ are the first lines, the text is at most 2000 characters and it says how many folders it left out
+Scenario: shell functions without parentheses and Kotlin enum, annotation, value and inline classes are listed
+  Then `function name {`, `enum class`, `annotation class`, `value class` and `inline class` names appear in the map
+Scenario: the SessionStart hook appends the map, and a failed map never blocks
+  When SessionStart runs in a project, the context holds the map after the rules
+  When the project folder is missing, the hook still prints the rules and exits 0
+```
+Tests: `tests/test_codebase_map.py` (`test_names_come_from_each_language_and_private_ones_are_left_out`, `test_tests_vendored_and_hidden_folders_are_skipped`, `test_scripts_and_plugin_are_listed_first`, `test_the_map_stays_within_the_budget_and_says_what_it_left_out`, `test_the_map_of_this_repo_lists_scripts_within_budget`, `test_session_start_appends_the_map_to_the_rules`, `test_a_map_failure_never_blocks_the_session`, `test_a_folder_with_no_source_gives_an_empty_map`, `test_a_shell_function_without_parentheses_is_listed`, `test_kotlin_enum_annotation_value_and_inline_classes_are_listed`).
 ## Story #322, scratch markdown warning (A5c)
 ```gherkin
 Scenario: a new scratch markdown file outside docs warns and names the single-source file
