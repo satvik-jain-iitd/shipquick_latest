@@ -145,6 +145,26 @@ jobs:
           git fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
+  design-tokens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: No colour or font literal on an added web style line (story #133)
+        run: |
+          BASE="${{ github.base_ref }}"
+          git fetch origin "$BASE"
+          python3 scripts/check_design_literals.py --base "origin/$BASE"
+      - name: stylelint on changed CSS, needless disables reported (story #133; npx, no committed dependency)
+        run: |
+          BASE="${{ github.base_ref }}"
+          CSS=$(git diff --name-only --diff-filter=AMR "origin/$BASE...HEAD" -- '*.css')
+          if [ -z "$CSS" ]; then echo "skip stylelint: no css changed"; exit 0; fi
+          if ! ls .stylelintrc* stylelint.config.* >/dev/null 2>&1; then echo "skip stylelint: no stylelint config in the project"; exit 0; fi
+          echo "$CSS" | xargs npx --yes stylelint@16.26.1 --report-needless-disables
   shortcut-ledger:
     continue-on-error: true   # warn only: a crash here must not block a merge (review_merge.sh refuses any non-SUCCESS check)
     runs-on: ubuntu-latest
@@ -551,7 +571,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, workflow-security, test, tdd]
+    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, design-tokens, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
       - name: Check all job results
@@ -562,6 +582,7 @@ jobs:
           echo "pr-size: ${{ needs.pr-size.result }}"
           echo "frontend-design: ${{ needs.frontend-design.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
+          echo "design-tokens: ${{ needs.design-tokens.result }}"
           echo "roles: ${{ needs.roles.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"

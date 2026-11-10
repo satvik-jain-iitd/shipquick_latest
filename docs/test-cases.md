@@ -1593,3 +1593,24 @@ Scenario: adopt.sh writes, keeps and validates the milestone
   When adopt.sh runs with --milestone D2, the caller has `milestone: D2`; a later run without the flag keeps it, once; a run with no flag and no line writes none; --milestone X9 is refused and the caller is untouched; an existing line that is quoted, lowercase, D7 or has a trailing comment is refused, not dropped
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
+
+## Story #133 (S5w): design literals on added web lines
+```gherkin
+Scenario: a colour or font literal on an added web style line fails with the file and the line
+  Given a diff that adds `color: #ff0033;` to a css file, `rgb(...)`/`rgba(...)` to a tsx inline style, `hsl(...)` to a vue, svelte or astro file, `font-family: 'Inter'` to css, `fontFamily: "Inter"` to tsx, or `bg-[#1e293b]` / `font-['Inter']` Tailwind classes
+  When check_design_literals.py reads the diff
+  Then it exits 1 and names `path:line` and the literal kind for every hit
+  Test: test_a_hex_colour_in_added_css_fails_with_file_and_line, test_rgb_and_rgba_in_added_tsx_inline_style_fail, test_hsl_in_added_vue_svelte_and_astro_fails, test_a_font_family_literal_fails_in_css_and_in_tsx, test_a_tailwind_arbitrary_colour_or_font_fails
+Scenario: token references, keywords and a token file in the allowlist pass
+  Given `var(--color-primary)`, `font-family: inherit`, `theme.fonts.body` and a Tailwind token class, or a hex in a file that matches a glob in scripts/design_token_files.txt
+  Then the check prints "no design literals on added lines" and exits 0
+  Test: test_token_references_and_keywords_pass, test_a_token_file_in_the_allowlist_passes, test_the_allowlist_file_reads_globs_and_skips_comments_and_blanks
+Scenario: only added lines of the named file types count, with the hunk's line numbers
+  Given a removed line, a python, markdown or js file, a private field `this.#cafe`, an entity `&#dead;`, an id selector `#main-nav`, and two hunks
+  Then none is a hit, and a hit in the second hunk carries that hunk's line number
+  Test: test_a_removed_line_and_a_non_web_file_are_never_a_hit, test_a_private_field_an_html_entity_and_an_id_selector_with_letters_are_not_hex, test_line_numbers_follow_the_hunk_header_across_hunks
+Scenario: the check is wired and the allowlist is protected
+  Then scripts/design_token_files.txt is in scripts/protected_paths.txt, check_local.sh names design-tokens, ci.yml and checks.yml carry a design-tokens job (the script, then `npx --yes stylelint@16.26.1 --report-needless-disables` only when css changed) and both gates wait for it; the CLI reads a diff file and exits 1 with the hits
+  Test: test_the_kit_allowlist_is_protected_and_check_local_names_the_check, test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it, test_the_cli_reads_a_diff_file_and_exits_1_with_the_hits
+```
+Tests: `tests/test_check_design_literals.py`.
