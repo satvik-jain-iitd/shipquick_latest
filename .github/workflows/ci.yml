@@ -112,9 +112,11 @@ jobs:
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
           # Moved files are not new review surface, so renames do not count.
-          COUNT=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 !~ /^R/' | wc -l | tr -d ' ')
+          # Story #219: recorded reference images (__Snapshots__/*.png) are looked at, not read, so they do not count either.
+          COUNT=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 !~ /^R/ && $2 !~ /__Snapshots__\/.*\.png$/' | wc -l | tr -d ' ')
           RENAMES=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 ~ /^R/' | wc -l | tr -d ' ')
-          echo "Counted files: $COUNT (ignoring $RENAMES renames)"
+          IMAGES=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 !~ /^R/ && $2 ~ /__Snapshots__\/.*\.png$/' | wc -l | tr -d ' ')
+          echo "Counted files: $COUNT (ignoring $RENAMES renames and $IMAGES __Snapshots__/*.png reference images)"
           if [ "$COUNT" -gt 50 ]; then
             echo "PR too large ($COUNT files, max 50, excluding renames). Split it."
             exit 1

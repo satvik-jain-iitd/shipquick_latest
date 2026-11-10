@@ -16,6 +16,7 @@ The coder opens every PR, feature to dev and dev to main. The reviewer never ope
 
 - Max 50 files.
 - Moved files (renames) do not count. Only added and changed files count.
+- Recorded reference images (`__Snapshots__/*.png`, story #219) do not count. They are looked at, not read, and their folder is a protected path, so the owner merges a change to them anyway.
 - Target about 400 lines changed.
 - Bigger than that means split it.
 

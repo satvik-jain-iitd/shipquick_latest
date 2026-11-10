@@ -65,8 +65,9 @@ check_pr_size() {
       release/*) echo "skip pr-size: a release branch into main aggregates already-reviewed dev commits, not new review surface"; report pr-size 0; return 0 ;;
     esac
   fi
-  n=$(changed | wc -l | tr -d ' ')
-  echo "Counted files: $n (max 50, renames ignored)"
+  # story #219: recorded reference images (__Snapshots__/*.png) are looked at, not read, so they are not review surface
+  n=$(changed | grep -vE '__Snapshots__/.*\.png$' | wc -l | tr -d ' ')
+  echo "Counted files: $n (max 50, renames and __Snapshots__/*.png reference images ignored)"
   [ "$n" -le 50 ]; report pr-size $?
 }
 check_frontend_design() {
