@@ -76,9 +76,8 @@ def test_bad_stdin_exits_zero_and_never_blocks(tmp_path):
 
 def test_the_hook_is_registered_on_pretooluse_edit_and_write():
     hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text())["hooks"]
-    entry = hooks["PreToolUse"][0]
+    entry = next(e for e in hooks["PreToolUse"] if "protected_warn.py" in e["hooks"][0]["command"])
     assert entry["matcher"] == "Edit|Write"
-    assert "protected_warn.py" in entry["hooks"][0]["command"]
 
 
 def make_child_repo(tmp_path, mode):

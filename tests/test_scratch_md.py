@@ -73,6 +73,5 @@ def test_bad_stdin_exits_zero_and_prints_nothing(tmp_path):
 
 def test_the_hook_is_registered_for_write_before_use():
     hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text())["hooks"]
-    pre = hooks["PreToolUse"]
-    assert pre[0]["matcher"] == "Write"
-    assert "scratch_md.py" in pre[0]["hooks"][0]["command"]
+    entry = next(e for e in hooks["PreToolUse"] if "scratch_md.py" in e["hooks"][0]["command"])
+    assert entry["matcher"] == "Write"
