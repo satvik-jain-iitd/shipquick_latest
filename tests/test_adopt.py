@@ -667,3 +667,21 @@ def test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_drop
         assert r.returncode != 0, bad
         assert "milestone" in (r.stdout + r.stderr) and bad.split(": ", 1)[1].split(" #")[0].strip('"') in (r.stdout + r.stderr), bad
         assert path.read_text(encoding="utf-8") == text, bad              # nothing was written
+
+
+# ---- story #175: the story job needs `issues: read` from the caller ----
+def test_s175_the_written_caller_grants_issues_read(child):
+    adopt(child)
+    call = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    assert "issues: read" in call
+
+
+def test_s175_check_reports_a_caller_without_issues_read(child, gh):
+    with_origin(child)
+    adopt(child)
+    add_fake_submodule(child, HEAD)
+    call = child / ".github" / "workflows" / "shipquick-call.yml"
+    call.write_text("\n".join(l for l in call.read_text(encoding="utf-8").splitlines() if "issues: read" not in l) + "\n", encoding="utf-8")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1, r.stdout
+    assert "not adopted" in r.stdout and "issues: read" in r.stdout

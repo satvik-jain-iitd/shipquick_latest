@@ -17,6 +17,7 @@
 #   Adopted means: .github/workflows/shipquick-call.yml is pinned to the exact commit the
 #   knowledge/shipquick_latest submodule is at, and .pre-commit-config.yaml carries the ShipQuick hooks,
 #   and (story #260) `shipquick-checks / gate` is a required check on the default branch (read with gh).
+#   Story #175: the caller must also grant `issues: read`, or the story job cannot read the linked stories.
 #   A normal run prints the one command that makes it required; adopt.sh never runs it.
 #   Story #326: --check also needs enabledPlugins["ponytail@ponytail"] true in ~/.claude/settings.json (or $SHIPQUICK_CLAUDE_SETTINGS);
 #   when it is not, the two install lines are printed and the verdict is not adopted. With CI set it only warns.
@@ -137,6 +138,11 @@ if [ -n "$check_mode" ]; then
       echo "not adopted: shipquick-call.yml is pinned to $pinned, the submodule $at is at $sub_sha (run: bash $HERE/adopt.sh $child)"
       ok=0
     fi
+  fi
+  # story #175: the story job reads the linked issues, so the caller must grant issues: read (any permissions block counts).
+  if [ -f "$call" ] && ! grep -qE '^[[:space:]]+issues:[[:space:]]*read[[:space:]]*$' "$call"; then
+    echo "not adopted: shipquick-call.yml grants no issues: read, so the story job cannot read the linked stories (run: bash $HERE/adopt.sh $child)"
+    ok=0
   fi
   if [ "$kref" = HEAD ]; then hooks="$(cat "$child/.pre-commit-config.yaml" 2>/dev/null || true)"
   else hooks="$(git -C "$child" show "$kref:.pre-commit-config.yaml" 2>/dev/null || true)"; fi
