@@ -212,6 +212,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check every component doc matches its contract (story #182)
         run: python3 scripts/check_ui_docs.py --root ui/components
+  ui-registry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Every custom component has the owner's recorded yes (story #186)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_component_request.py --repo "$GITHUB_REPOSITORY"
   ui-cli:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -496,7 +505,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, test]
     if: always()
     steps:
       - name: Check all job results
@@ -511,6 +520,7 @@ jobs:
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"
           echo "freeze: ${{ needs.freeze.result }}"
           echo "ui-docs: ${{ needs.ui-docs.result }}"
+          echo "ui-registry: ${{ needs.ui-registry.result }}"
           echo "ui-cli: ${{ needs.ui-cli.result }}"
           echo "ui-changes: ${{ needs.ui-changes.result }}"
           echo "ui-android-compile: ${{ needs.ui-android-compile.result }}"

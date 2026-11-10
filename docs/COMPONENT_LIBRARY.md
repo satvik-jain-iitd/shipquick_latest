@@ -53,7 +53,7 @@ child  -> bumps the library pin, then the screen uses it
 
 The coder writes the issue body, so an `Owner yes:` line in the body never counts.
 Only an issue comment by a reviewer account counts, plus the `component-approved` label added by a reviewer account.
-No approved comment and label, no build. Story S8 (#186) reads exactly that, and fails a custom component without it.
+No approved comment and label, no build. `scripts/check_component_request.py` (story S8, #186) reads exactly that. Every custom component is a row in `ui/registry.json` (`name`, `platform`, `base`, `request`, `twin`). CI job `ui-registry` fails a row whose request issue lacks the label or the comment, both by a reviewer account. It also prints a parity report: components that exist on one platform only (a report, never a fail).
 
 ## What "never hand-write" means
 
