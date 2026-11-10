@@ -12,6 +12,20 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-10
+Tag `v0.11.0`, "the kit measures itself and enforces at runtime". Notes: `docs/RELEASE_NOTES_v0.11.0.md`.
+
+### Added
+- Hook plugin: mode and rules at session and subagent start, codebase map, protected-path warning, scratch markdown warning, git bypass block, loop and cost guard (#313, #314, #315, #320, #321, #322).
+- CI checks: rule-copy canary (#316), TDD evidence (#319), workflow security lint (#325), shortcut ledger, warn only (#327); all also in `check_local.sh`.
+- Bench: selftest harness, ten tasks, cell runner, report (#311, #331, #312; the live run was cancelled by the owner).
+- Review finding shape and a Verdict and Not checked gate (#317, #318); `Done when:` line for user stories (#310).
+- Component-request gate and parity report (#186); `adopt.sh --platforms` (#187); `adopt.sh --check` reads the Ponytail switch (#326).
+- ShipQuick Desk, localhost server and page (#307) with a spend column (#323); `scripts/release.sh` (#324); path-scoped rules spike (#328).
+
+### Changed
+- `checks.yml` gains the `rule-copies` and `component-registry` jobs, both in the gate. `adopt.sh` writes the kit rule block into a child's `CLAUDE.md`.
+
 ## [0.10.0] - 2026-11-09
 Tag `v0.10.0`, "every library entry is documented". Notes: `docs/RELEASE_NOTES_v0.10.0.md`.
 
