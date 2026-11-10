@@ -1615,3 +1615,21 @@ Scenario: a node:test file counts as the red test
   Test: tests/test_check_tdd.py::test_s81_a_node_test_file_in_the_red_section_passes
 ```
 Tests: `roadmap/ported.test.js` (28, prefix `S1`), `roadmap/golden.test.js` (10, prefix `golden:` plus the runner check), `tests/test_check_tdd.py::test_s81_a_node_test_file_in_the_red_section_passes`.
+
+## Story #82 (epic #80, S1): roadmap data, times, parent, milestones, Needs
+```gherkin
+Scenario: the model carries the data fields
+  Given the golden fixture roadmap/fixtures/golden-issues.json (milestones with due dates, parents, P labels, Needs lines, doing label events, a Started line)
+  When the JS builds its model from the same answer
+  Then every story's milestone, prio, needs, blockedBy, started and cycleMin equal the golden captured from the reference
+Scenario: Needs lines become numbers
+  Given a body with `Needs: #23` and `Needs: #26` lines under a Needs heading
+  Then story.needs is [23, 26] and a story with no line has []
+Scenario: the start time has a fallback
+  Given a closed story with no doing label and a `Started: 2026-10-25T04:00:00Z (estimated)` line
+  Then cycleMin is close minus that time; a doing label wins over the line; no label and no line, or a line that is not a UTC time, gives null
+Scenario: a blocker is an open story
+  Given a story that needs a closed story and an issue number that is not a story
+  Then needs lists both and blockedBy lists neither
+```
+Tests: `roadmap/golden.test.js` (`golden: every story has the same milestone, priority, Needs, blockers, start time and cycle minutes`), `roadmap/ported.test.js` (`S1 Needs lines become numbers`, `S1 a Started line gives the start when there is no doing label`, `S1 the doing label wins over a Started line`, `S1 no label and no line means no cycle time, and a bad line is ignored`).

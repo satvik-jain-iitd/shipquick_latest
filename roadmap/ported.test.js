@@ -119,7 +119,7 @@ test('S1 stories without a ready or blocked label are older work and stay out of
   assert.ok(sec(html2, 'older').includes('Story old open, no plan labels'));
 });
 
-test('S1 Needs lines become numbers', later('#82', 'story.needs'), () => {
+test('S1 Needs lines become numbers', () => {
   const by = byNumber(model2);
   assert.deepEqual(by[27].needs, [23, 26]);
   assert.deepEqual(by[26].needs, []);
@@ -225,15 +225,15 @@ const cycle = (o = {}) => {
   return byNumber(build([issue(9, 'Epic E9: Plan v2', { labels: ['epic'], body: '## Business\nOne plan.' }), i], []))[40].cycleMin;
 };
 
-test('S1 a Started line gives the start when there is no doing label', later('#82', 'the Started: fallback'), () => {
+test('S1 a Started line gives the start when there is no doing label', () => {
   assert.equal(cycle({ bodyExtra: 'Started: 2026-10-25T04:00:00Z (estimated)' }), 120);
 });
 
-test('S1 the doing label wins over a Started line', later('#82', 'the Started: fallback'), () => {
+test('S1 the doing label wins over a Started line', () => {
   assert.equal(cycle({ doingAt: '2026-10-25T05:15:00Z', bodyExtra: 'Started: 2026-10-25T04:00:00Z (estimated)' }), 45);
 });
 
-test('S1 no label and no line means no cycle time, and a bad line is ignored', later('#82', 'the Started: fallback'), () => {
+test('S1 no label and no line means no cycle time, and a bad line is ignored', () => {
   assert.equal(cycle(), null);
   assert.equal(cycle({ bodyExtra: 'Started: yesterday' }), null);
   assert.equal(cycle({ bodyExtra: 'Not started: 2026-10-25T04:00:00Z' }), null);   // only a line that begins with Started:

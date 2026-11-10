@@ -26,6 +26,12 @@ function epicOf(issue) {
   return m ? Number(m[1]) : null;
 }
 const prFor = (n, prs) => prs.find(p => p.title.includes('(#' + n + ')') || new RegExp('^[\\w-]+/' + n + '-').test(p.headRefName || ''));
+// Story #82: the data behind the time, order and dependency views (docs/LIVE_ROADMAP.md). Labels P0..P9 give the priority; `Needs: #n, #m` lines
+// give the dependencies; the start is the first `doing` label time, or a `Started: <UTC time>` line in the body when the label was never set.
+const prioOf = (labels) => { const p = labels.map(l => /^P(\d)$/.exec(l)).filter(Boolean).map(m => Number(m[1])); return p.length ? Math.min(...p) : null; };
+const needsOf = (body) => (String(body || '').match(/^Needs:.*$/gm) || []).flatMap(l => [...l.matchAll(/#(\d+)/g)].map(m => Number(m[1])));
+const startOf = (issue) => { const m = /^Started:\s*(\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d)?Z)/m.exec(issue.body || ''); return issue.doingAt || (m ? m[1] : null); };
+const minutes = (from, to) => from && to ? Math.round((new Date(to) - new Date(from)) / 60000) : null;
 function column(issue, pr) {
   if (issue.state === 'CLOSED') return 'Done';
   if (!pr) return issue.labels.includes('doing') ? 'Doing' : 'To do';
@@ -36,9 +42,12 @@ function column(issue, pr) {
 // The page's data: epics in number order, stories with their epic, column, sentence and pull request.
 function build(issues, prs) {
   const epics = issues.filter(i => i.labels.includes('epic')).sort((a, b) => a.number - b.number);
-  const stories = issues.filter(i => i.labels.includes('story') || i.labels.includes('user-story')).sort((a, b) => a.number - b.number).map(i => {
-    const pr = prFor(i.number, prs) || null, sentence = businessLine(i.body);
-    return { number: i.number, title: i.title, epic: epicOf(i), state: i.state, closedAt: i.closedAt, pr, column: column(i, pr), raw: sentence || i.title, text: plain(sentence || i.title), needsWords: !sentence };
+  const isStory = (i) => i.labels.includes('story') || i.labels.includes('user-story');
+  const open = new Set(issues.filter(i => isStory(i) && i.state !== 'CLOSED').map(i => i.number));   // a Needs number is a blocker only while it is an open story
+  const stories = issues.filter(isStory).sort((a, b) => a.number - b.number).map(i => {
+    const pr = prFor(i.number, prs) || null, sentence = businessLine(i.body), needs = needsOf(i.body), started = startOf(i);
+    return { number: i.number, title: i.title, epic: epicOf(i), state: i.state, createdAt: i.createdAt || null, closedAt: i.closedAt, pr, column: column(i, pr), raw: sentence || i.title, text: plain(sentence || i.title), needsWords: !sentence,
+      milestone: i.milestone ? i.milestone.title : null, prio: prioOf(i.labels), needs, blockedBy: needs.filter(n => open.has(n)), started, cycleMin: minutes(started, i.closedAt) };
   });
   return { epics: epics.map(e => ({ number: e.number, title: plain(e.title.replace(/^(Epic|Feature):?\s*(E\d+:?)?\s*/i, '')), state: e.state })), stories };
 }
@@ -49,7 +58,10 @@ function fromGraphql(resp) {
   const r = resp.data.repository;
   return {
     truncated: !!((r.issues.pageInfo || {}).hasNextPage || (r.pullRequests.pageInfo || {}).hasNextPage),
-    issues: r.issues.nodes.map(n => ({ ...n, labels: n.labels.nodes.map(l => l.name) })),
+    issues: r.issues.nodes.map(n => {
+      const doing = ((n.timelineItems || {}).nodes || []).filter(t => (t.label || {}).name === 'doing').map(t => t.createdAt).sort();   // the first time the label went on
+      return { ...n, labels: n.labels.nodes.map(l => l.name), doingAt: doing[0] || null };
+    }),
     prs: r.pullRequests.nodes.map(p => {
       const roll = (((p.commits.nodes[0] || {}).commit || {}).statusCheckRollup || {}).state;
       return { number: p.number, title: p.title, headRefName: p.headRefName, isDraft: p.isDraft, checks: roll ? [{ conclusion: roll }] : [] };

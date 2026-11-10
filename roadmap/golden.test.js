@@ -28,7 +28,7 @@ test('golden: every story has the same epic, column, words and pull request', ()
   assert.deepEqual(model.stories.map(s => ({ ...pick(s, keys), pr: s.pr ? s.pr.number : null })), want.stories.map(s => pick(s, keys.concat('pr'))));
 });
 
-test('golden: every story has the same milestone, priority, Needs, blockers, start time and cycle minutes', later('#82', 'read milestone, labels, Needs lines and the doing time into the model'), () => {
+test('golden: every story has the same milestone, priority, Needs, blockers, start time and cycle minutes', () => {
   const keys = ['number', 'milestone', 'prio', 'needs', 'blockedBy', 'started', 'cycleMin'];
   assert.deepEqual(model.stories.map(s => pick(s, keys)), want.stories.map(s => pick(s, keys)));
 });
