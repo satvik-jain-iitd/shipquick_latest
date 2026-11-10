@@ -145,6 +145,35 @@ jobs:
           git fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
+  shortcut-ledger:
+    continue-on-error: true   # warn only: a crash here must not block a merge (review_merge.sh refuses any non-SUCCESS check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Shortcut ledger, warn only (story #327): never fails the build, not in the gate
+        run: python3 scripts/check_shortcuts.py
+  tdd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      BASE_REF: ${{ github.base_ref }}
+      HEAD_REF: ${{ github.head_ref }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: A PR that changes code names the test it saw fail, and that test is in the diff (story #319)
+        run: |
+          case "$PR_AUTHOR" in
+            dependabot\[bot\]|app/dependabot) echo "Dependabot: tdd exempt"; exit 0 ;;
+          esac
+          git fetch origin "$BASE_REF"
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          python3 scripts/check_tdd.py --body-file "$RUNNER_TEMP/pr-body.md" --base "origin/$BASE_REF" --base-branch "$BASE_REF" --head-branch "$HEAD_REF"
   roles:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -472,6 +501,15 @@ jobs:
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
+  workflow-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: No pull_request_target or workflow_run checks out the PR head, and every npm install skips scripts (story #325)
+        run: python3 scripts/check_workflow_security.py
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -513,7 +551,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
       - name: Check all job results
@@ -538,7 +576,9 @@ jobs:
           echo "ui-ios-lint: ${{ needs.ui-ios-lint.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
+          echo "workflow-security: ${{ needs.workflow-security.result }}"
           echo "test: ${{ needs.test.result }}"
+          echo "tdd: ${{ needs.tdd.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"
             exit 1
