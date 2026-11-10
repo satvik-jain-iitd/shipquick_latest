@@ -541,3 +541,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: ponytail `benchmarks/agentic/compare.py` and `run.py` (study clone, read only): per-task median, a sign test over pairs, no bootstrap and no geometric mean.
 - Decision: write `bench/report.py` (stdlib: `statistics`, `random` with a fixed seed). Borrow the idea of per-task medians; the ratio, geometric mean and bootstrap are not in ponytail.
 - Confidence that nothing fits better: 0.7 (thin search; the stats are a few lines of stdlib).
+
+---
+## 10 Nov 2026, story #315 (A12): cost and loop guard
+- Need: a Claude Code hook that warns on five identical tool calls in a row and warns or denies when the session cost (from the transcript usage records) is over a line.
+- Run: `scout.py --need "Claude Code hook that detects a repeated identical tool call loop and a session cost ceiling from the transcript usage records"`: no repos found.
+  `gh search repos --topic=claude-code-hooks`, `--topic=claude-code-cost`, `--topic=agent-loop-detection`: context-mode (mksglu/context-mode, tool output and cost), Continuous-Claude-v3 (parcadei, hooks and ledgers), oh-my-agent (first-fluke, budgets and retry limits), claude-cost-monitor and cctally (usage dashboards, no hook).
+- Read: the READMEs of parcadei/Continuous-Claude-v3, mksglu/context-mode and first-fluke/oh-my-agent, searched for loop, cost, budget and repeat (a keyword pass, not a full read). None ships a per-call loop check or a cost deny in a hook. Study of ECC `context-monitor` and `cost-warn` (the source named in the epic): `docs/research/2026-11-10-ponytail-ecc-study.md`.
+- Borrowed: the idea only. ECC's pair of hooks (warn, then block) and the rule that a gate is a cost, not a quality win (GateGuard result in the study). No code copied.
+- Decision: build `plugin/hooks/guard.py` in stdlib Python, using `common.read_payload` from the plugin. Small and boring: one state file per session in a temp folder, prices in one dict.
+- Confidence that nothing fits better: 0.6 (the search is thin for hooks; the ECC hooks were read from the study, not from a clone in this run).
