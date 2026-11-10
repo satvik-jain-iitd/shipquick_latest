@@ -97,6 +97,7 @@ check_story() {
   rm -f "$tmp"
   report story "$rc"
 }
+check_workflow_security() { python3 "$HERE/check_workflow_security.py"; report workflow-security $?; }   # story #325
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   gitleaks git --no-banner --no-color --redact --verbose .
@@ -109,7 +110,7 @@ check_secrets_staged() {
 }
 
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story workflow-security secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
@@ -126,6 +127,7 @@ for c in "${checks[@]}"; do
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
     story) check_story ;;
+    workflow-security) check_workflow_security ;;
     *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
   esac
 done

@@ -464,6 +464,15 @@ jobs:
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
+  workflow-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: No pull_request_target or workflow_run checks out the PR head, and every npm install skips scripts (story #325)
+        run: python3 scripts/check_workflow_security.py
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -505,7 +514,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, workflow-security, test]
     if: always()
     steps:
       - name: Check all job results
@@ -529,6 +538,7 @@ jobs:
           echo "ui-ios-lint: ${{ needs.ui-ios-lint.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
+          echo "workflow-security: ${{ needs.workflow-security.result }}"
           echo "test: ${{ needs.test.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"

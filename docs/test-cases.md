@@ -1016,3 +1016,28 @@ Scenario: the cell runner drives one cell per arm and rescores offline (#331)
   Then the rescore prints the same scores and the fake claude records zero calls on the rescore
 ```
 Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.
+
+## Story #325 (A7): workflow security lint
+```gherkin
+Scenario: a pull_request_target or workflow_run workflow that checks out the PR head fails
+  Given a workflow whose on: names pull_request_target, with an actions/checkout step whose ref is github.event.pull_request.head.sha
+  When check_workflow_security.py runs on it
+  Then it exits 1 and names the file and the line of the ref
+Scenario: an npm install without --ignore-scripts fails
+  Given a run line with npm ci --no-audit
+  When check_workflow_security.py runs on it
+  Then it exits 1 and names the file and the line
+Scenario: a clean workflow passes
+  Given a pull_request_target workflow whose checkout takes the base, and a run that joins lines with a backslash and has npm ci --ignore-scripts
+  When check_workflow_security.py runs on it
+  Then it exits 0
+Scenario: a plain pull_request checkout of the head is normal
+  Given a workflow triggered by pull_request only
+  When check_workflow_security.py runs on it
+  Then it exits 0
+Scenario: the repo's own workflows pass the check
+  Given .github/workflows in this repo
+  When check_workflow_security.py runs with no argument
+  Then it exits 0
+```
+Tests: `tests/test_check_workflow_security.py` (s325). CI: job `workflow-security` in ci.yml. Local: `bash scripts/check_local.sh workflow-security`.
