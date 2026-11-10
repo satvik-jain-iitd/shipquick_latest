@@ -21,10 +21,10 @@ CONFIG_READ_OPTIONS = {"--get", "--get-all", "--get-regexp", "--get-urlmatch", "
 
 
 def tokens_of(command):
-    # shortcut: newlines become separators by a text swap; a shell heredoc or a line continuation
-    # is not parsed. Upgrade to a real shell parser when a bypass gets through.
+    # shortcut: a line continuation is joined first, then newlines become separators by a text swap;
+    # a shell heredoc is not parsed. Upgrade to a real shell parser when a bypass gets through.
     try:
-        lex = shlex.shlex(command.replace("\n", " ; "), posix=True, punctuation_chars=True)
+        lex = shlex.shlex(command.replace("\\\n", " ").replace("\n", " ; "), posix=True, punctuation_chars=True)
         lex.whitespace_split = True
         return list(lex)
     except ValueError:
@@ -45,13 +45,18 @@ def segments_of(tokens):
 
 
 def git_args_of(seg):
-    """The words after `git` when the segment starts with a git call (after VAR=value prefixes), else None."""
+    """(words after `git`, VAR=value prefixes) when the segment starts with a git call, else (None, None)."""
     i = 0
     while i < len(seg) and "=" in seg[i] and not seg[i].startswith("-"):
         i += 1
     if i >= len(seg) or os.path.basename(seg[i]) != "git":
-        return None
-    return seg[i + 1:]
+        return None, None
+    return seg[i + 1:], seg[:i]
+
+
+def is_no_verify(tok):
+    # git accepts any unambiguous prefix of a long option; 6+ chars skips the ambiguous "--no-".
+    return len(tok) >= 6 and "--no-verify".startswith(tok)
 
 
 def split_git_args(args):
@@ -63,6 +68,9 @@ def split_git_args(args):
         if tok == "-c" and i + 1 < len(args):
             configs.append(args[i + 1])
             i += 2
+        elif tok.startswith("--config-env="):
+            configs.append(tok.split("=", 1)[1])
+            i += 1
         elif tok in GIT_VALUE_OPTIONS and i + 1 < len(args):
             i += 2
         elif tok.startswith("-"):
@@ -78,15 +86,17 @@ def is_hooks_redirect(setting):
 
 def block_reason(command):
     for seg in segments_of(tokens_of(command)):
-        args = git_args_of(seg)
+        args, prefixes = git_args_of(seg)
         if args is None:
             continue
+        if any("core.hookspath" in t.lower() for t in prefixes):
+            return "GIT_CONFIG_* env vars move the hooks folder"
         configs, sub, rest = split_git_args(args)
         if any(is_hooks_redirect(c) for c in configs):
             return "git -c core.hooksPath moves the hooks folder"
-        if sub == "commit" and ("--no-verify" in rest or "-n" in rest):
+        if sub == "commit" and (any(is_no_verify(t) for t in rest) or "-n" in rest):
             return "git commit --no-verify skips the pre-commit hooks"
-        if sub == "push" and "--no-verify" in rest:
+        if sub == "push" and any(is_no_verify(t) for t in rest):
             return "git push --no-verify skips the pre-push hook"
         if sub == "config" and not CONFIG_READ_OPTIONS.intersection(rest):
             if any(is_hooks_redirect(t) for t in rest if not t.startswith("-")):

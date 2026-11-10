@@ -1137,5 +1137,9 @@ Scenario: the bypass text inside a quoted argument of another command passes
   Given "echo \"git commit --no-verify\"" or "gh pr create --body \"core.hooksPath is not allowed\""
   When the PreToolUse hook runs
   Then it exits 0; a real bypass after "&&" in the same line is still blocked
+Scenario: a bypass hidden by a line continuation, an env var, or a long-option prefix is blocked
+  Given "git commit -m fix \\" then a new line "--no-verify", "GIT_CONFIG_PARAMETERS=... git commit", "git --config-env=core.hooksPath=X commit", "git commit --no-veri" or "git push --no-veri"
+  When the PreToolUse hook runs
+  Then it exits 2 with the reason on stderr
 ```
-Tests: `tests/test_git_guard.py` (`test_bypass_is_blocked_with_reason`, `test_harmless_command_passes_silently`, `test_bypass_text_inside_a_quoted_argument_passes`, `test_other_tools_and_broken_input_pass`, `test_hook_is_registered_for_bash_pre_tool_use`).
+Tests: `tests/test_git_guard.py` (`test_bypass_is_blocked_with_reason` (eight cases added for the review round: continuation, env vars, --config-env, --no-veri), `test_harmless_command_passes_silently`, `test_bypass_text_inside_a_quoted_argument_passes`, `test_other_tools_and_broken_input_pass`, `test_hook_is_registered_for_bash_pre_tool_use`).
