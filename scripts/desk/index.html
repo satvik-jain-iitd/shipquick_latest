@@ -82,6 +82,11 @@ h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 700; }
     <div class="stack" id="switches"></div>
   </section>
 
+  <section class="card" aria-labelledby="s">
+    <h2 id="s">Spend</h2>
+    <div class="stack" id="spend"></div>
+  </section>
+
   <section class="card" aria-labelledby="r">
     <h2 id="r">Roadmap</h2>
     <div class="stack" id="roadmap"></div>
@@ -149,6 +154,17 @@ h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 700; }
       row(el("span", "", "Freeze"), el("span", "", sw.freeze || "Off")),
       row(el("span", "", "Dev link"), el("span", "", sw.dev_link || "not set"))
     ], "No switches.");
+
+    var sp = data.spend || {};
+    var spendNodes = (sp.rows || []).map(function (r) {
+      return row(el("p", "item", r.task || "(no name)"),
+        el("span", "", "$" + Number(r.cost).toFixed(2)));
+    });
+    if (sp.totals) {
+      spendNodes.push(el("p", "time", "Total $" + Number(sp.totals.cost).toFixed(2) + " · " +
+        Math.round(sp.totals.tokens) + " tokens · " + Math.round(sp.totals.agent_minutes) + " agent min"));
+    }
+    fill("spend", spendNodes, "No ledger yet: " + (sp.note || "nothing recorded") + ".");
 
     fill("roadmap", (data.roadmap || []).map(function (i) {
       return el("p", "item", "#" + i.number + " " + i.title);

@@ -995,6 +995,49 @@ Scenario: the registry lists the public child whose name the hygiene test bans
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
 
+## Story #317: the review finding shape is written down
+```gherkin
+Scenario: every review finding has one fixed shape, linked from the team protocol
+  Given docs/REVIEW_SHAPE.md
+  When the test reads the doc and docs/TEAM_PROTOCOL.md
+  Then the doc names the four parts (What this is, Problem, Fix, If we skip)
+  And the doc ends a review with Verdict and Not checked
+  And the doc keeps the 80 percent, callers, shortcut and fresh-agent rules
+  And docs/TEAM_PROTOCOL.md links docs/REVIEW_SHAPE.md
+```
+Tests: `tests/test_review_shape.py` (s317). Local: `python3 -m pytest -q tests/test_review_shape.py`.
+## Story #326: adopt.sh --check reads the Ponytail plugin switch
+```gherkin
+Scenario: the Ponytail plugin is enabled in the Claude settings
+  Given the child is adopted and its submodule pin matches
+  And enabledPlugins["ponytail@ponytail"] is true in the settings file
+  When adopt.sh --check runs
+  Then it exits 0 and prints no Ponytail line
+
+Scenario: the Ponytail plugin is off, or its key is missing or the file is not JSON
+  Given the settings file has ponytail@ponytail false, no such key, a missing file, or invalid JSON
+  When adopt.sh --check runs outside CI
+  Then it exits 1 with "not adopted"
+  And it prints "/plugin marketplace add dietrichgebert/ponytail" and "/plugin install ponytail@ponytail"
+
+Scenario: in CI the missing key only warns
+  Given CI is set (a runner has no settings file)
+  When adopt.sh --check runs with the Ponytail key off
+  Then it exits 0 and prints a warning with the install line
+```
+Tests: `tests/test_adopt.py` (s326: passes when on, not adopted when false, absent, missing file, not JSON; CI warns). Local: `python3 -m pytest -q tests/test_adopt.py -k s326`.
+
+## Story #316: the kit rule copies are canaried (A3)
+Scenario: a child's copy of the kit rules must match the kit
+  Given a child CLAUDE.md with the kit rule block between the shipquick-rules markers
+  When the block differs from the kit CLAUDE.md by one word
+  Then the check fails and names the child file
+Scenario: a load-bearing phrase must be in the kit CLAUDE.md
+  Given the kit CLAUDE.md with "Radar first" changed
+  When check_rule_copies.py runs
+  Then the check fails and names CLAUDE.md and the phrase
+Scenario: a child without the markers fails and points at docs/ADOPTION.md
+Tests: `test_a_changed_phrase_turns_the_check_red_and_names_the_file`, `test_a_child_with_one_word_changed_fails_and_names_the_child`, `test_a_child_without_the_markers_fails_and_points_at_adoption`, `test_a_child_with_the_kit_block_unchanged_passes`, `test_the_kit_claude_md_passes_every_phrase`, `test_the_script_is_stdlib_only` (file: tests/test_check_rule_copies.py).
 ## Plugin hooks: rules reach every session and subagent (story #313, A2)
 ```gherkin
 Scenario: a SubagentStart hook injects the rules into a subagent
@@ -1052,6 +1095,24 @@ Scenario: the cell runner drives one cell per arm and rescores offline (#331)
 ```
 Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.
 
+## Story #327: the shortcut ledger (A11)
+```gherkin
+Scenario: the ledger lists every shortcut and tags only the one with no upgrade trigger
+  Given a tracked source file with one shortcut that names "add a dict index when the list passes 10000 rows" and one with "global lock for every write"
+  When python3 scripts/check_shortcuts.py runs on that repo
+  Then both comments are listed and only the second is tagged no-trigger
+  And tests/, vendored and markdown files are not listed
+Scenario: --write logs each shortcut once and never edits an old row
+  Given docs/follow-ups.md holds one old row
+  When python3 scripts/check_shortcuts.py --write runs twice
+  Then the first run appends one row per shortcut after the old row
+  And the second run adds nothing
+Scenario: check_local warns with the count and the CI job never gates
+  Given scripts/check_local.sh and .github/workflows/ci.yml
+  When the shortcut check is wired in
+  Then check_local prints the count as a warning and the shortcut-ledger job is not in the gate needs
+```
+Tests: `test_s327_one_good_and_one_no_trigger_comment_are_listed_and_only_the_second_is_tagged`, `test_s327_write_appends_one_row_per_shortcut_once_and_never_edits_old_rows`, `test_s327_the_real_repo_scan_runs_and_prints_the_count`, `test_s327_check_local_warns_with_the_count_and_never_fails`, `test_s327_ci_job_is_warn_only_and_not_in_the_gate`.
 ## Story #325 (A7): workflow security lint
 ```gherkin
 Scenario: a pull_request_target or workflow_run workflow that checks out the PR head fails
@@ -1163,6 +1224,104 @@ Scenario: an approval with both lines merges
   Then it merges once
 ```
 Tests: `tests/test_review_merge.py` (`test_s318_an_approval_without_a_verdict_line_refuses`, `test_s318_an_approval_without_a_not_checked_line_refuses`, `test_s318_the_words_inside_a_sentence_are_not_the_line`, `test_s318_an_approval_with_both_lines_merges`).
+## Story #317 review fixes: the verdict line and the fourth label
+```gherkin
+Scenario: a clean review still ends with a verdict
+  Given the review shape doc
+  When rule 5 says what a reviewer with zero findings writes
+  Then it names "Verdict: Ship." and "Not checked:" and never "Looks good. Ship."
+Scenario: the worked example uses the fixed fourth label
+  Given the review shape doc
+  When the worked example labels the fourth part
+  Then it writes "**If we skip:**", the same label as the list
+```
+Tests: `tests/test_review_shape.py` (`test_zero_findings_rule_does_not_skip_the_verdict_line`, `test_example_uses_the_same_fourth_label_as_the_list`).
+## Story #323 (A8): the desk spend column and the Origin check
+```gherkin
+Scenario: a fixture ledger renders in the desk state and the page
+  Given a ponytail ledger CSV with two task rows
+  When the desk state is read
+  Then /api/state.json lists both rows under spend with totals
+  And the page has a Spend section
+Scenario: a missing ledger is an empty section, not an error
+  Given no ledger file for the project
+  When the desk state is read
+  Then spend is an empty list with the note "no ledger" and error is empty
+Scenario: a cross-origin API request gets 403
+  Given the desk server on 127.0.0.1
+  When /api/state.json is requested with an Origin that is not the server's own
+  Then the answer is 403, and a request with no Origin or the own origin is served
+Scenario: a real ledger header renders its names, tokens and reuse
+  Given a ponytail band CSV with the upstream header (name, tokens_total, reuse_pct, tests)
+  When the desk state is read
+  Then each row shows its name, its tokens, its reuse percent and its tests label
+  And a row with no name shows its key
+Scenario: the ledger file name follows the writer's rule
+  Given a repo folder named "my repo (1)"
+  When the default ledger path is built
+  Then the file is my_repo__1_.csv
+Scenario: the ledger folder follows XDG_CONFIG_HOME like the writer
+  Given XDG_CONFIG_HOME is set to /tmp/xdgtest
+  When the default ledger path is built
+  Then the file is under /tmp/xdgtest/ponytail/band
+Scenario: the ledger file name uses the ASCII rule of the writer
+  Given a repo folder named "café"
+  When the default ledger path is built
+  Then the file is caf_.csv
+Scenario: an unreadable ledger keeps the rest of the desk
+  Given a ledger with "n/a" in cost_usd
+  When /api/state.json is requested
+  Then the answer is 200, spend has no rows and a "ledger unreadable" note
+  And waiting and roadmap are still filled
+```
+Tests: `tests/test_desk.py` (`SpendLedger`, `SpendInServer`, `OriginCheck`; new: `test_real_ledger_header_is_read_row_by_row_with_totals`, `test_row_without_a_name_uses_the_key_as_task`, `test_band_path_uses_the_same_name_rule_as_the_ponytail_writer`, `test_unreadable_ledger_keeps_the_other_sections`, `test_band_path_follows_xdg_config_home_like_the_writer`, `test_band_name_rule_is_ascii_like_the_javascript_writer`).
+## Story #328 (A13): rules split by path, spike
+```gherkin
+Scenario: the path-scoped rules finding is written with its source
+  Given the Claude Code docs page on memory and rules
+  When the spike is recorded
+  Then docs/research/experiments.md has a 10 Nov 2026 row for #328 that cites https://code.claude.com/docs/en/memory and says pending test
+  And the #328 row in the ponytail study cites the same URL
+  And the #328 experiments row has five cells like the header, with Result in the Result column and Decision in the Decision column
+  And every test in tests/test_rules_by_path_spike.py is named in this file
+```
+Tests: `tests/test_rules_by_path_spike.py` (`test_a13_experiments_row_exists_with_docs_url`, `test_a13_study_adapt_row_cites_the_docs_url`, `test_a13_experiments_row_has_five_cells_like_the_header`, `test_a13_result_and_decision_sit_in_their_own_columns`, `test_a13_every_test_in_this_file_is_listed_in_test_cases`).
+## Story #324 (A6): the release gate
+```gherkin
+Scenario: a release with a green gate on HEAD is tagged and pushed
+  Given release notes whose first line names the tag, and a gate check that is SUCCESS on HEAD
+  When scripts/release.sh vX.Y.Z runs
+  Then an annotated tag points at HEAD and is pushed to origin
+Scenario: a dry run prints the plan and tags nothing
+  Given the same release
+  When scripts/release.sh vX.Y.Z --dry-run runs
+  Then it prints what it would do and no tag exists locally or on origin
+Scenario: each missing condition refuses and tags nothing
+  Given one of: no notes file, a notes version line that is not the tag, a tag already local, a tag already on origin, no gate check, a failed gate, a gate still running, a green gate only on an older commit
+  When scripts/release.sh vX.Y.Z runs
+  Then it exits non-zero naming the condition and creates no tag
+Scenario: a version that is not vX.Y.Z is refused before any gh call
+  When scripts/release.sh v1.2 runs
+  Then it exits non-zero and gh is never called
+```
+Tests: `tests/test_release.py` (13 tests, `test_s324_*`).
+## Story #316 review fixes: the child's copy, adopt.sh and the skill
+```gherkin
+Scenario: a rule-24 child's rules are read from its kit branch
+  Given a child whose rules live on its kit branch and a PR into another branch
+  When the rule-copies job runs
+  Then it reads CLAUDE.md from the caller's kit_branch, like the roles job, and checks out the skills folder too
+Scenario: adopt.sh writes and refreshes the rule block
+  Given a new child, or a child with its own CLAUDE.md and no markers
+  When adopt.sh runs
+  Then the block sits between the two markers, check_rule_copies.py --child passes, and the child's own lines stay
+  And a hand change inside the markers is restored on the next run, and broken markers stop the run before anything is written
+Scenario: the skill that restates rule 33 is watched
+  Given a kit copy where the phrase at least three "Why" lines is changed in the skill
+  When check_rule_copies.py runs
+  Then it exits 1 and names skills/shipquick-feedback/SKILL.md
+```
+Tests: `tests/test_adopt.py` (`test_s316_*`), `tests/test_check_rule_copies.py` (`test_s316_*`), `tests/test_checks_workflow.py` (`test_s316_rule_copies_reads_the_child_claude_md_from_the_kit_branch`).
 ## Story #319 review fixes: Dependabot, the local check and the template
 ```gherkin
 Scenario: a Dependabot PR is not blocked by the tdd job
@@ -1193,6 +1352,24 @@ Scenario: the decision is written down
 ```
 Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
 
+## Story #327 review fixes: wrapped comments, string literals, the follow-ups file
+```gherkin
+Scenario: a wrapped comment is read whole
+  Given a # or // comment whose upgrade trigger sits on the next comment line
+  When the ledger scans it
+  Then it is listed once, tagged ok, with the full text; a new marker on the next line is its own comment
+Scenario: a marker in a string literal is not a comment
+  Given a line with an odd number of quotes before the marker, or a closer followed by markup
+  When the ledger scans it
+  Then the string is not listed, and the text stops at the first closer
+Scenario: --write is careful with docs/follow-ups.md
+  Given no follow-ups file, a file with no header row, or a second table below the follow-ups table
+  When --write runs
+  Then it prints one line and writes nothing for the first two, and the new rows land right after the follow-ups table for the third
+Scenario: the warn-only job cannot block a merge
+  Then the shortcut-ledger job has continue-on-error: true and check_local.sh usage names shortcuts
+```
+Tests: `tests/test_check_shortcuts.py` (`test_s327_a_wrapped_comment_*`, `test_s327_a_new_marker_*`, `test_s327_a_marker_inside_a_string_*`, `test_s327_write_without_*`, `test_s327_rows_land_right_after_*`, `test_s327_a_follow_ups_file_without_the_header_row_*`, `test_s327_the_ci_job_cannot_block_a_merge_*`).
 ## Story #325 review fixes: three wrong answers of the workflow lint
 ```gherkin
 Scenario: a later step with a head ref is not blamed on a clean checkout
