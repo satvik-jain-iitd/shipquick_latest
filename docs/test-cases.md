@@ -1080,3 +1080,21 @@ Scenario: the skill that restates rule 33 is watched
   Then it exits 1 and names skills/shipquick-feedback/SKILL.md
 ```
 Tests: `tests/test_adopt.py` (`test_s316_*`), `tests/test_check_rule_copies.py` (`test_s316_*`), `tests/test_checks_workflow.py` (`test_s316_rule_copies_reads_the_child_claude_md_from_the_kit_branch`).
+## Story #312: the bench report (dry parts)
+```gherkin
+Scenario: the run says where it put the folder
+  Given a finished bench --run
+  When it ends
+  Then its last line is "run folder: <the folder>"
+Scenario: cell numbers come from the claude JSON and survive a rescore
+  Given a fake claude that prints cost, output tokens and turns
+  When the run finishes and then --rescore runs
+  Then results.json holds those numbers and the lines of code of solution.py, before and after
+Scenario: the report compares the arms task by task
+  Given results for two tasks, two arms and three runs each
+  When bench/report.py runs
+  Then each task ratio is the kit median over the no-kit median, the table shows their geometric mean and a 95% bootstrap interval, and a metric nobody recorded shows n/a
+Scenario: the decision is written down
+  Then ADR-014 says a kit rule wording change must beat the current kit in a paired run, and experiments.md has a pending row for the bench
+```
+Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
