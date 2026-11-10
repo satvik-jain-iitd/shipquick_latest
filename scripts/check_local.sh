@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage commits pr-size frontend-design disable-comments story secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments story secrets secrets-staged   (no argument = all but secrets-staged)
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
@@ -128,7 +128,7 @@ for c in "${checks[@]}"; do
     disable-comments) check_disable_comments ;;
     story) check_story ;;
     workflow-security) check_workflow_security ;;
-    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"

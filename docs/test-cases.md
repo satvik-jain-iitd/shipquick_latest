@@ -1094,3 +1094,20 @@ Scenario: the decision is written down
   Then ADR-014 says a kit rule wording change must beat the current kit in a paired run, and experiments.md has a pending row for the bench
 ```
 Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
+
+## Story #325 review fixes: three wrong answers of the workflow lint
+```gherkin
+Scenario: a later step with a head ref is not blamed on a clean checkout
+  Given on has a schedule cron list or a list form, and a clean checkout, then a paths-filter step with a head ref
+  When the lint runs
+  Then it exits 0, and a real head checkout after a cron list still fails
+Scenario: every install carries its own flag
+  Given npm ci --ignore-scripts && npm install, or a cd chain with a second npm ci
+  When the lint runs
+  Then it exits 1 and names the line; installs that each carry the flag pass
+Scenario: a folded block is one command
+  Given run: > with npm ci on one line and --ignore-scripts on the next
+  When the lint runs
+  Then it exits 0, while a literal | block still checks each line
+```
+Tests: `tests/test_check_workflow_security.py` (`test_s325_a_later_step_with_a_head_ref_is_not_blamed_on_a_clean_checkout`, `test_s325_the_flag_must_sit_on_each_install_command`, `test_s325_a_folded_block_joins_its_lines_with_a_space`, `test_s325_check_local_usage_and_unknown_list_name_workflow_security`).

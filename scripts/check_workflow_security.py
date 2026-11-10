@@ -4,7 +4,8 @@ Two rules for .github/workflows/*.yml:
   1. A workflow triggered by pull_request_target or workflow_run must not check out the PR head: an
      actions/checkout step with a ref or repository that names github.head_ref, pull_request.head.* or
      workflow_run.head_* fails. (Checking out the base, or no ref, is fine.)
-  2. Every npm ci, npm install (or npm i) run command needs --ignore-scripts on the same command.
+  2. Every npm ci, npm install (or npm i) run command needs --ignore-scripts on the same command (a line is
+     split at &&, ||, ; and | first). A folded `>` block is one command; a literal `|` block is one per line.
 
 Usage: python3 scripts/check_workflow_security.py [file or folder ...]   (default: .github/workflows)
 Exit 0 and "workflow security OK", or exit 1 with one `FAIL <file>:<line>: <problem>` line per finding.
@@ -56,10 +57,10 @@ def is_risky(lines: list[str]) -> bool:
 
 
 def step_span(lines: list[str], i: int) -> range:
-    """The lines of the step that holds line i: from its list dash to the next line at or left of that dash."""
+    """The lines of the step that holds line i: from its list dash (the line's own dash counts) to the next line at or left of that dash."""
     key_col = indent_of(lines[i])
     start = i
-    while start > 0 and not (LIST_ITEM.match(lines[start]) and indent_of(lines[start]) < key_col):
+    while start > 0 and not (LIST_ITEM.match(lines[start]) and indent_of(lines[start]) <= key_col):
         start -= 1
     if LIST_ITEM.match(lines[start]):
         dash = indent_of(lines[start])
@@ -99,6 +100,11 @@ def run_commands(lines: list[str]):
                 pairs.append((j + 1, lines[j].strip()))
                 j += 1
             i = j
+            if value[:1] == ">":   # YAML folds a > block: its lines are one command, joined with a space
+                kept = [(n, t) for n, t in pairs if t and not t.startswith("#")]
+                if kept:
+                    yield kept[0][0], " ".join(t for _, t in kept)
+                continue
         else:
             pairs, i = [(i + 1, value)], i + 1
         pending, first = "", None
@@ -121,9 +127,11 @@ def check_file(path: Path) -> list[str]:
     if is_risky(lines):
         for num, ref in head_checkouts(lines):
             problems.append(f"{path}:{num}: checks out the PR head ({ref}) in a pull_request_target or workflow_run workflow; check out the base, or drop the ref")
-    for num, cmd in run_commands(lines):
-        if NPM_INSTALL.search(cmd) and "--ignore-scripts" not in cmd:
-            problems.append(f"{path}:{num}: `{cmd}` runs install scripts; add --ignore-scripts (ADR-012)")
+    for num, line_cmd in run_commands(lines):
+        for cmd in re.split(r"&&|\|\||;|\|", line_cmd):   # the flag must sit on the same command as the install
+            cmd = cmd.strip()
+            if NPM_INSTALL.search(cmd) and "--ignore-scripts" not in cmd:
+                problems.append(f"{path}:{num}: `{cmd}` runs install scripts; add --ignore-scripts (ADR-012)")
     return problems
 
 
