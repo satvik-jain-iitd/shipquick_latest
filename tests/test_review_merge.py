@@ -647,10 +647,14 @@ def test_s180_claude_md_is_a_protected_path(env):
 SCREENS = "welcome | / | 412x915 | welcome\n"
 
 
+# Story #318: every approval carries the Verdict and Not checked lines; these helpers add them to the body under test.
+VERDICT_LINES = "Verdict: approve\nNot checked: nothing\n"
+
+
 def design_pr(review_body):
     pr = good()
     pr["body"] = "Design board: Production / C1 Welcome\nApproved: 2026-11-08\nRender: https://github.com/o/r/actions/runs/1\n\nCloses #67\n"
-    pr["reviews"] = [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": review_body}]
+    pr["reviews"] = [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": VERDICT_LINES + review_body}]
     return pr
 
 
@@ -685,7 +689,7 @@ SESSION_ROLES = ("coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\
 
 def session_pr(review_body, *built_by, stub_dir):
     pr = good()
-    pr["reviews"][0]["body"] = review_body
+    pr["reviews"][0]["body"] = VERDICT_LINES + review_body
     (stub_dir / "commits.json").write_text(json.dumps(
         [{"commit": {"message": f"feat: x\n\nBuilt-by: {s}\n"}} for s in built_by]), encoding="utf-8")
     return pr
