@@ -1608,5 +1608,13 @@ Scenario: --check accepts a caller that grants issues: write (review of #370)
   Given a correctly pinned child whose caller says `issues: write` instead of `issues: read`
   When adopt.sh --check runs
   Then it exits 0 and says nothing about issues: read, since write lets the story job read issues
+Scenario: --check accepts a caller with `permissions: read-all` (review of #370, round 2)
+  Given a correctly pinned child whose caller's permissions block is the one line `permissions: read-all`
+  When adopt.sh --check runs
+  Then it exits 0 and says nothing about issues: read, since read-all grants issues: read too
+Scenario: --check accepts an `issues: read` line with a trailing comment (review of #370, round 2)
+  Given a correctly pinned child whose caller says `issues: read   # the story job reads the linked stories`
+  When adopt.sh --check runs
+  Then it exits 0 and says nothing about issues: read
 ```
-Tests: `tests/test_checks_workflow.py::test_s175_checks_yml_has_a_story_job_that_runs_check_story_with_issues_read`, `test_s175_the_gate_needs_the_story_job_and_echoes_its_result`, `tests/test_adopt.py::test_s175_the_written_caller_grants_issues_read`, `test_s175_check_reports_a_caller_without_issues_read`, `test_s175_check_accepts_a_caller_that_grants_issues_write`.
+Tests: `tests/test_checks_workflow.py::test_s175_checks_yml_has_a_story_job_that_runs_check_story_with_issues_read`, `test_s175_the_gate_needs_the_story_job_and_echoes_its_result`, `tests/test_adopt.py::test_s175_the_written_caller_grants_issues_read`, `test_s175_check_reports_a_caller_without_issues_read`, `test_s175_check_accepts_a_caller_that_grants_issues_write`, `test_s175_check_accepts_a_caller_with_permissions_read_all`, `test_s175_check_accepts_an_issues_read_line_with_a_trailing_comment`.
