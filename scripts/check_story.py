@@ -19,7 +19,7 @@ INLINE = re.compile(r"^[\s>*_-]*who does it[*_]*\s*:[*_]*\s*(.*)$", re.I | re.M)
 HEADING = re.compile(r"^#+\s*who does it\s*:?\s*\n+(?!#)(.*)$", re.I | re.M)
 RULE_DATE = "2026-11-09"   # stories made before the rule (story #155) are skipped, never failed
 DONE_RULE_DATE = "2026-11-10"   # story #310 (A0): a story made before this has no Done when check
-DONE_WHEN = re.compile(r"^[\s>*_-]*done when[*_]*[ \t]*:[*_]*[ \t]*(\S.*)$", re.I | re.M)   # [ \t], never \s: a newline must not be read as the value
+DONE_WHEN = re.compile(r"^[\s>*_-]*done when[*_]*[ \t]*:[*_]*[ \t]*([^\s*_].*)$", re.I | re.M)   # [ \t] not \s: a newline is no value; the value starts with a letter, not markup
 DONE_HEADING = re.compile(r"^#+\s*done when\s*:?\s*$", re.I | re.M)
 BIG_SIZES = {"size:M", "size:L", "size:XL"}
 SHAPE ="write `Who does it: <actor>, <app or screen>, <how often>`, for example `Who does it: the admin, admin app City screen, twice a month`"
@@ -52,7 +52,7 @@ def check_done_when(body: str) -> str | None:
     """A user story says how to know it is done, in one runnable or visible line (story #310, A0)."""
     m = DONE_WHEN.search(body)
     if m:
-        return None if not empty_value(m.group(1).strip()) else _done_why()
+        return None if not empty_value(m.group(1).strip().rstrip("*_").strip()) else _done_why()
     h = DONE_HEADING.search(body)
     if h:
         for line in body[h.end():].split("\n"):

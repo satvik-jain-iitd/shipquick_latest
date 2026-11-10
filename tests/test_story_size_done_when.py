@@ -121,3 +121,12 @@ def test_claude_md_rule_18_carries_the_qa_split_and_the_reviewer_rerun():
     line = next(l for l in rules.splitlines() if l.startswith("18. "))
     assert "The QA session breaks work down; the coder runs on Haiku for XS and S" in line
     assert "the reviewer reruns the Done when line before merge" in line
+
+
+# review of #329 (qa): a bold label with no value must not take a `*` from the markup as the value
+def test_a_bold_done_when_with_no_value_before_a_heading_fails():
+    assert cs.check_done_when("**Done when:**\r\n\r\n## Notes\r\nfoo")
+
+
+def test_a_bold_done_when_with_a_value_passes():
+    assert cs.check_done_when(f"{WHO}\n\n**Done when:** make test passes\n") is None
