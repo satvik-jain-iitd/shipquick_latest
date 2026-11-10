@@ -14,6 +14,7 @@ text is kept in bench/LICENSE.ponytail.txt. The task list is bench/tasks.py.
 import argparse
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -75,14 +76,37 @@ def run_cell(tid, arm, model, run_no, out_dir: Path, claude: str, timeout: int, 
             proc.wait()
             se.write(f"\n[KILLED after {timeout}s timeout]".encode())
     cell_meta = {"name": name, "arm": arm, "model": model, "run": run_no, "task": tid,
-                 "killed": killed, "returncode": proc.returncode, "seconds": round(time.monotonic() - t0, 1)}
+                 "killed": killed, "returncode": proc.returncode, "seconds": round(time.monotonic() - t0, 1),
+                 **read_metrics(cell / "claude.json")}
     (cell / "cell.json").write_text(json.dumps(cell_meta, indent=2), encoding="utf-8")
     return {**cell_meta, **score_work(tid, work)}
 
 
+def read_metrics(path: Path) -> dict:
+    """Cost, output tokens and turns from claude's JSON. A field that is not there is None, never 0."""
+    none = {"cost_usd": None, "output_tokens": None, "turns": None}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return none
+    if isinstance(data, list):   # a verbose run is a list of events; the result event is the last dict
+        data = next((d for d in reversed(data) if isinstance(d, dict) and d.get("type") == "result"), {})
+    if not isinstance(data, dict):
+        return none
+    usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
+    return {"cost_usd": data.get("total_cost_usd"), "output_tokens": usage.get("output_tokens"),
+            "turns": data.get("num_turns")}
+
+
 def score_work(tid, work: Path) -> dict:
     r = tasks_module().TASKS[tid]["score"](work)
-    return {"correct": r["correct"], "safe": r["safe"], "reason": r["reason"]}
+    sol = work / "solution.py"
+    text = sol.read_text(encoding="utf-8") if sol.exists() else ""
+    # shortcut: a test counts when solution.py has a `def test_` or a top-level assert; no test files are
+    # allowed in the folder (extra files are unsafe). Upgrade when a task seeds a test file.
+    return {"correct": r["correct"], "safe": r["safe"], "reason": r["reason"],
+            "loc": len([ln for ln in text.splitlines() if ln.strip()]),
+            "has_test": bool(re.search(r"^\s*def test_|^assert ", text, re.M))}
 
 
 def tasks_module():
@@ -212,6 +236,7 @@ def main(argv=None) -> int:
                  "Use a folder outside any repo, or leave --out off for a temp folder")
     rules_text = Path(a.kit_rules).read_text(encoding="utf-8")
     run_all(task_ids, arms, models, a.runs, a.workers, a.timeout, out, rules_text)
+    print(f"run folder: {out}")
     return 0
 
 
