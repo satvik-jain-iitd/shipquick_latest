@@ -19,10 +19,15 @@ INLINE = re.compile(r"^[\s>*_-]*who does it[*_]*\s*:[*_]*\s*(.*)$", re.I | re.M)
 HEADING = re.compile(r"^#+\s*who does it\s*:?\s*\n+(?!#)(.*)$", re.I | re.M)
 RULE_DATE = "2026-11-09"   # stories made before the rule (story #155) are skipped, never failed
 DONE_RULE_DATE = "2026-11-10"   # story #310 (A0): a story made before this has no Done when check
-DONE_WHEN = re.compile(r"^[\s>*_-]*done when[*_]*\s*:[*_]*\s*(\S.*)$", re.I | re.M)
+DONE_WHEN = re.compile(r"^[\s>*_-]*done when[*_]*[ \t]*:[*_]*[ \t]*(\S.*)$", re.I | re.M)   # [ \t], never \s: a newline must not be read as the value
 DONE_HEADING = re.compile(r"^#+\s*done when\s*:?\s*$", re.I | re.M)
 BIG_SIZES = {"size:M", "size:L", "size:XL"}
 SHAPE ="write `Who does it: <actor>, <app or screen>, <how often>`, for example `Who does it: the admin, admin app City screen, twice a month`"
+
+
+def empty_value(value: str) -> bool:
+    """No answer: nothing, a placeholder in angle brackets, or the form's `_No response_` (one helper for every field)."""
+    return not value or "<" in value or value.lower() == "_no response_"
 
 
 def check(body: str) -> str | None:
@@ -38,23 +43,27 @@ def check(body: str) -> str | None:
             more.append(line.strip())
         value = " ".join([value, *more]).strip()
     parts = [p for p in (s.strip() for s in value.split(",")) if p]
-    if not value or "<" in value or value.lower() == "_no response_" or len(parts) < 3:
+    if empty_value(value) or len(parts) < 3:
         return f"`Who does it:` must name the actor, the app or screen, and how often ({SHAPE}); found: {value!r}"
     return None
 
 
 def check_done_when(body: str) -> str | None:
     """A user story says how to know it is done, in one runnable or visible line (story #310, A0)."""
-    if DONE_WHEN.search(body):
-        return None
-    m = DONE_HEADING.search(body)
+    m = DONE_WHEN.search(body)
     if m:
-        rest = body[m.end():].split("\n")
-        for line in rest:
+        return None if not empty_value(m.group(1).strip()) else _done_why()
+    h = DONE_HEADING.search(body)
+    if h:
+        for line in body[h.end():].split("\n"):
             if line.lstrip().startswith("#"):   # the next section ends the Done when section
                 break
             if line.strip():
-                return None
+                return None if not empty_value(line.strip()) else _done_why()
+    return _done_why()
+
+
+def _done_why() -> str:
     return "the story has no `Done when:` line: write one runnable or visible condition, for example `Done when: python3 -m unittest tests.test_desk is green.`"
 
 

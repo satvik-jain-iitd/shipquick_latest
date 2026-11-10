@@ -91,3 +91,33 @@ def test_claude_md_rule_18_says_xs_or_s_only():
     rules = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
     line = next(l for l in rules.splitlines() if l.startswith("18. "))
     assert "XS, S" in line or "XS or S" in line
+
+
+# review of #329 (qa): an empty Done when line must not read the next heading, and placeholders are no answer
+def test_an_empty_inline_done_when_followed_by_a_heading_fails():
+    why = cs.check_done_when(f"{WHO}\n\nDone when:\n\n## Scenarios\n- x\n")
+    assert why and "Done when" in why
+
+
+def test_a_placeholder_or_no_response_under_the_heading_fails():
+    assert cs.check_done_when(f"{WHO}\n\n## Done when\n_No response_\n")
+    assert cs.check_done_when(f"{WHO}\n\n## Done when\n<one runnable condition>\n")
+
+
+def test_a_placeholder_or_no_response_inline_fails():
+    assert cs.check_done_when(f"{WHO}\n\nDone when: _No response_\n")
+    assert cs.check_done_when(f"{WHO}\n\nDone when: <one runnable condition>\n")
+
+
+def test_the_story_form_has_a_required_done_when_field():
+    form = (ROOT / ".github" / "ISSUE_TEMPLATE" / "user-story.yml").read_text(encoding="utf-8")
+    block = form.split("label: Done when", 1)
+    assert len(block) == 2, "no Done when field in the story form"
+    assert "required: true" in block[1].split("- type:", 1)[0]
+
+
+def test_claude_md_rule_18_carries_the_qa_split_and_the_reviewer_rerun():
+    rules = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    line = next(l for l in rules.splitlines() if l.startswith("18. "))
+    assert "The QA session breaks work down; the coder runs on Haiku for XS and S" in line
+    assert "the reviewer reruns the Done when line before merge" in line
