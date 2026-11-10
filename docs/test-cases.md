@@ -1193,6 +1193,36 @@ Scenario: a task's seed files reach the cell folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
 
+## Story #328 (A13): rules split by path, spike
+```gherkin
+Scenario: the path-scoped rules finding is written with its source
+  Given the Claude Code docs page on memory and rules
+  When the spike is recorded
+  Then docs/research/experiments.md has a 10 Nov 2026 row for #328 that cites https://code.claude.com/docs/en/memory and says pending test
+  And the #328 row in the ponytail study cites the same URL
+  And the #328 experiments row has five cells like the header, with Result in the Result column and Decision in the Decision column
+  And every test in tests/test_rules_by_path_spike.py is named in this file
+```
+Tests: `tests/test_rules_by_path_spike.py` (`test_a13_experiments_row_exists_with_docs_url`, `test_a13_study_adapt_row_cites_the_docs_url`, `test_a13_experiments_row_has_five_cells_like_the_header`, `test_a13_result_and_decision_sit_in_their_own_columns`, `test_a13_every_test_in_this_file_is_listed_in_test_cases`).
+## Story #324 (A6): the release gate
+```gherkin
+Scenario: a release with a green gate on HEAD is tagged and pushed
+  Given release notes whose first line names the tag, and a gate check that is SUCCESS on HEAD
+  When scripts/release.sh vX.Y.Z runs
+  Then an annotated tag points at HEAD and is pushed to origin
+Scenario: a dry run prints the plan and tags nothing
+  Given the same release
+  When scripts/release.sh vX.Y.Z --dry-run runs
+  Then it prints what it would do and no tag exists locally or on origin
+Scenario: each missing condition refuses and tags nothing
+  Given one of: no notes file, a notes version line that is not the tag, a tag already local, a tag already on origin, no gate check, a failed gate, a gate still running, a green gate only on an older commit
+  When scripts/release.sh vX.Y.Z runs
+  Then it exits non-zero naming the condition and creates no tag
+Scenario: a version that is not vX.Y.Z is refused before any gh call
+  When scripts/release.sh v1.2 runs
+  Then it exits non-zero and gh is never called
+```
+Tests: `tests/test_release.py` (13 tests, `test_s324_*`).
 ## Story #316 review fixes: the child's copy, adopt.sh and the skill
 ```gherkin
 Scenario: a rule-24 child's rules are read from its kit branch
