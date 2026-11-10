@@ -1016,3 +1016,22 @@ Scenario: the cell runner drives one cell per arm and rescores offline (#331)
   Then the rescore prints the same scores and the fake claude records zero calls on the rescore
 ```
 Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.
+
+## Story #327: the shortcut ledger (A11)
+```gherkin
+Scenario: the ledger lists every shortcut and tags only the one with no upgrade trigger
+  Given a tracked source file with one shortcut that names "add a dict index when the list passes 10000 rows" and one with "global lock for every write"
+  When python3 scripts/check_shortcuts.py runs on that repo
+  Then both comments are listed and only the second is tagged no-trigger
+  And tests/, vendored and markdown files are not listed
+Scenario: --write logs each shortcut once and never edits an old row
+  Given docs/follow-ups.md holds one old row
+  When python3 scripts/check_shortcuts.py --write runs twice
+  Then the first run appends one row per shortcut after the old row
+  And the second run adds nothing
+Scenario: check_local warns with the count and the CI job never gates
+  Given scripts/check_local.sh and .github/workflows/ci.yml
+  When the shortcut check is wired in
+  Then check_local prints the count as a warning and the shortcut-ledger job is not in the gate needs
+```
+Tests: `test_s327_one_good_and_one_no_trigger_comment_are_listed_and_only_the_second_is_tagged`, `test_s327_write_appends_one_row_per_shortcut_once_and_never_edits_old_rows`, `test_s327_the_real_repo_scan_runs_and_prints_the_count`, `test_s327_check_local_warns_with_the_count_and_never_fails`, `test_s327_ci_job_is_warn_only_and_not_in_the_gate`.

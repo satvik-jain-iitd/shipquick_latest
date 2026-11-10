@@ -3,6 +3,7 @@
 # Usage: scripts/check_local.sh [check ...]
 #   checks: sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage commits pr-size frontend-design disable-comments story secrets secrets-staged   (no argument = all but secrets-staged)
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
+#   shortcuts (story #327): warn only, prints the count of shortcut:/ponytail: comments; runs after the checks when no argument is given
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
 #   secrets    the whole history (push); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
@@ -108,6 +109,9 @@ check_secrets_staged() {
   report secrets-staged $?
 }
 
+check_shortcuts() {   # story #327: warn only, never sets failed
+  echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
+}
 checks=("$@")
 [ $# -eq 0 ] && checks=(sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets)
 for c in "${checks[@]}"; do
@@ -126,8 +130,10 @@ for c in "${checks[@]}"; do
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
     story) check_story ;;
+    shortcuts) check_shortcuts ;;
     *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
   esac
 done
+[ $# -eq 0 ] && check_shortcuts
 [ "$failed" -eq 0 ] && echo "check_local: all passed"
 exit "$failed"

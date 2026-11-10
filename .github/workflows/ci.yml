@@ -137,6 +137,13 @@ jobs:
           git fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
+  shortcut-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Shortcut ledger, warn only (story #327): never fails the build, not in the gate
+        run: python3 scripts/check_shortcuts.py
   roles:
     runs-on: ubuntu-latest
     timeout-minutes: 10
