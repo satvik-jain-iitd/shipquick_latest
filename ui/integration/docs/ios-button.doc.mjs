@@ -97,6 +97,7 @@ export default {
             "buttonStyle: `.buttonStyle(_:)`, iOS 13.0. Apple: \"Sets the style for buttons within this view to a button style with a custom appearance and standard interaction behavior.\"",
             "buttonBorderShape: `.buttonBorderShape(_:)`, iOS 15.0. Apple: \"Sets the border shape for buttons in this view.\"",
             "buttonRepeatBehavior: `.buttonRepeatBehavior(_:)`, iOS 17.0. Apple: \"Sets whether buttons in this view should repeatedly trigger their actions on prolonged interactions.\"",
+            "ButtonBorderShape: iOS 15.0. Apple: \"A shape used to draw a button’s border.\"",
             "ButtonStyleConfiguration.Label: iOS 13.0. Apple: \"A type-erased label of a button.\"",
             "DefaultButtonLabel: iOS 26.0. Apple: \"The default label to use for a button.\"",
             "DefaultNewDocumentButtonLabel: iOS 27.0. Apple: \"The default label used for a new document button.\"",

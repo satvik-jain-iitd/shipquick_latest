@@ -28,6 +28,7 @@ export default {
   },
   "platformApi": {
     "ios": {
+      "family": "web-view",
       "variants": [
         {"name": "webViewBackForwardNavigationGestures", "note": "`.webViewBackForwardNavigationGestures(_:)`, iOS 26.0. Apple: \"Determines whether horizontal swipe gestures trigger backward and forward page navigation.\""},
         {"name": "webViewContentBackground", "note": "`.webViewContentBackground(_:)`, iOS 26.0. Apple: \"Specifies the visibility of the webpage’s natural background color within this view.\""},

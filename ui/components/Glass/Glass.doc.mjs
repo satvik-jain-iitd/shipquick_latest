@@ -22,6 +22,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "Glass",
       "variants": [
         {"name": "GlassEffectContainer", "note": "iOS 26.0. Apple: \"A view that combines multiple Liquid Glass shapes into a single shape that can morph individual shapes into one another.\""},
         {"name": "glassEffect", "note": "`.glassEffect(_:in:)`, iOS 26.0. Apple: \"Applies the Liquid Glass effect to a view.\""},

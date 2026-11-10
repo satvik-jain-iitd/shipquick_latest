@@ -24,6 +24,7 @@ export default {
   "props": [],
   "platformApi": {
     "ios": {
+      "family": "State modifiers",
       "variants": [
         {"name": "anchorPreference", "note": "`.anchorPreference(key:value:transform:)`, iOS 13.0. Apple: \"Sets a value for the specified preference key, the value is a function of a geometry value tied to the current coordinate space, allowing readers of the value to convert the geometry to their local coordinates.\""},
         {"name": "backgroundPreferenceValue", "note": "`.backgroundPreferenceValue(_:_:)`, iOS 13.0. Apple: \"Reads the specified preference value from the view, using it to produce a second view that is applied as the background of the original view.\""},

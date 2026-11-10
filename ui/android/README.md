@@ -26,7 +26,10 @@ The full list of 30 parts, counted from Google's page, is `docs/research/android
 4. Colours and type come from `MaterialTheme`. Your theme fills it from `design/tokens.json`.
 
 The templates name the spacing tokens in a comment (16dp is `spacing.md`, 24dp is `spacing.lg`).
-They are not compiled yet. A Gradle build comes with stories S6 and S7, when the owner installs the tools.
+CI compiles them (story #217, job `ui-android-compile`, only when `ui/**` changes). The build files here pin
+Gradle 8.14.3, AGP 8.13.2, Kotlin 2.2.21 and Compose BOM 2025.10.00 (material3 1.4.0). It compiles `templates/`
+and `proof/ApiProof.kt`, which `scripts/ui_proof.py` writes from the contracts: it calls every component with every
+prop its contract names. CI compiles only; it runs nothing. Nothing is built on the owner's Mac.
 Using this folder as a Gradle build with `includeBuild("knowledge/shipquick_latest/ui/android")` is story S9.
 
 ## What is checked now
@@ -36,7 +39,16 @@ Using this folder as a Gradle build with `includeBuild("knowledge/shipquick_late
   Google's icon set `androidx.compose.material.icons`, and the Kotlin stdlib. Anything else fails, Material 2 too.
 - Banned patterns fail: `Canvas(`, `drawBehind`, `drawWithContent`, `Color(`, `.background(Color.`,
   `GenericShape`, `RoundedCornerShape(`, and a custom `Shape` class.
-- `clickable`, `selectable`, `toggleable` and `verticalScroll` stay allowed. Google's own patterns use them.
+- `clickable`, `selectable`, `toggleable` and `verticalScroll` stay allowed. Google's own patterns use them. `no_fake_button` (Konsist) refuses `clickable` on a `Box`, `Row`, `Column`, `Spacer`, `Text`, `Icon` or `Image`. Limit: it reads one level of parentheses in one call; a deeper or multi-line call can slip past, and the reviewer reads for that.
 - A call to an experimental M3 part (like `TopAppBar`) needs `@OptIn(ExperimentalMaterial3Api::class)`.
 - The step flow: the filled button comes last, and the screen uses `imePadding()`.
+Lint takes over this job in a child (story #185): `lint/detekt.yml` (local, warnings), `lint/detekt-ci.yml` (CI, errors)
+and `lint/UiRulesKonsistTest.kt`. `tests/test_ui_lint.py` keeps them in step with the bans above. See `docs/ADOPTION.md`.
 Lint takes over this job in story S7.
+
+## The theme (story #184)
+
+`theme/Theme.kt` is written by `python3 scripts/emit_tokens.py` from `design/tokens.json`. Do not edit it.
+It holds `ShipQuickTheme` (Material 3 colours light and dark, type and shapes), and the constants `ShipQuickSpacing`,
+`ShipQuickMotion`, `ShipQuickHaptics` and `ShipQuickTouchTarget`. Brand colours reach an app only through this theme.
+CI compiles it with the templates.

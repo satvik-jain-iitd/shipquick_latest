@@ -8,7 +8,7 @@
 #   roadmap.json                        a stub (title, vision) only if you have none; yours is never overwritten
 #   .claude/commands/mode.md            the /mode command
 #   .pre-commit-config.yaml             the check_local.sh hooks, only if you have none (it prints the hook to add if yours lacks them)
-#   CLAUDE.md                           the one pointer line to the protocol; a new file starts from docs/CLAUDE.project.template.md, yours keeps every line
+#   CLAUDE.md                           the one pointer line to the protocol, and the kit rule block between the shipquick-rules markers (rewritten on every run); a new file starts from docs/CLAUDE.project.template.md, yours keeps every line outside the markers
 #   .shipquick/roles.yml                 which accounts may code, review, and own this project (story #140), only if you have none
 # --coder/--reviewer <acct[,acct]> --owner <acct>: fill .shipquick/roles.yml on first adoption. With none
 #   of these and no roles.yml yet, adopt.sh writes nothing for it and tells you to rerun with the flags or
@@ -18,6 +18,8 @@
 #   knowledge/shipquick_latest submodule is at, and .pre-commit-config.yaml carries the ShipQuick hooks,
 #   and (story #260) `shipquick-checks / gate` is a required check on the default branch (read with gh).
 #   A normal run prints the one command that makes it required; adopt.sh never runs it.
+#   Story #326: --check also needs enabledPlugins["ponytail@ponytail"] true in ~/.claude/settings.json (or $SHIPQUICK_CLAUDE_SETTINGS);
+#   when it is not, the two install lines are printed and the verdict is not adopted. With CI set it only warns.
 # --kit-branch <b> (story #225, rule-24 children): writes `kit_branch: <b>` into shipquick-call.yml. The checks
 #   then read the submodule pin, .pre-commit-config.yaml and .shipquick/roles.yml from branch <b>, so `main` can
 #   carry only the caller. --check reads `kit_branch:` from the caller and prints one verdict per branch.
@@ -25,13 +27,14 @@
 set -eu
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQ="$(cd "$HERE/.." && pwd -P)"
-usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
-child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""
+usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--platforms android,ios[,web]] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
+child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""; platforms=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --ref) [ -n "${2:-}" ] || usage; ref="$2"; shift 2 ;;
     --kit-branch) [ -n "${2:-}" ] || usage; kit="$2"; shift 2 ;;
     --check) check_mode=1; shift ;;
+    --platforms) [ -n "${2:-}" ] || usage; platforms="$2"; shift 2 ;;
     --coder) [ -n "${2:-}" ] || usage; coder="$2"; shift 2 ;;
     --reviewer) [ -n "${2:-}" ] || usage; reviewer="$2"; shift 2 ;;
     --owner) [ -n "${2:-}" ] || usage; owner_acct="$2"; shift 2 ;;
@@ -44,6 +47,25 @@ done
 child="$(cd "$child" && pwd -P)"
 top="$(git -C "$child" rev-parse --show-toplevel 2>/dev/null)" || { echo "adopt.sh: $child is not a git repository" >&2; exit 2; }
 [ "$(cd "$top" && pwd -P)" = "$child" ] || { echo "adopt.sh: run it on the root of the repository ($top)" >&2; exit 2; }
+
+# story #187 (S9): --platforms android,ios[,web] wires the child to the kit's UI libraries (ADR-012). Checked before anything is written.
+SNIP="ui/platforms"
+rel="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$SQ" "$child")"
+plat_list=""
+if [ -n "$platforms" ]; then
+  for p in $(printf '%s' "$platforms" | tr ',' ' '); do
+    case "$p" in android|ios|web) plat_list="$plat_list $p" ;; *) echo "adopt.sh: unknown platform '$p' (use android, ios or web)" >&2; exit 2 ;; esac
+  done
+  plat_csv="$(echo $plat_list | tr ' ' ',')"
+fi
+platform_files() {   # the files one --platforms run writes, one per line
+  for p in $plat_list; do case "$p" in
+    android) printf '%s\n' "$SNIP/android-settings.snippet.kts" "$SNIP/lint/detekt.yml" "$SNIP/lint/detekt-ci.yml" "$SNIP/lint/UiRulesKonsistTest.kt" ;;
+    ios) printf '%s\n' "$SNIP/ios-package.snippet.swift" "$SNIP/lint/swiftlint.yml" ;;
+    web) printf '%s\n' "$SNIP/web-astryx.md" ;;
+  esac; done
+  [ -z "$plat_list" ] || printf '%s\n' "$SNIP/PROTECTED.txt" "$SNIP/KIT_PIN"
+}
 
 if [ -n "$kit" ]; then
   why="$(printf 'kit_branch: %s\n' "$kit" | python3 "$HERE/kit_branch.py" parse)" || { echo "adopt.sh: $why" >&2; exit 2; }
@@ -110,6 +132,35 @@ if [ -n "$check_mode" ]; then
     echo "not adopted: .pre-commit-config.yaml$([ "$kref" = HEAD ] || echo " $at") has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
     ok=0
   fi
+  if [ -n "$plat_list" ]; then
+    miss=""
+    while read -r f; do [ -f "$child/$f" ] || miss="$miss $f"; done < <(platform_files)
+    if [ -n "$miss" ]; then
+      echo "platforms: not ready, missing:$miss (run: bash $rel/scripts/adopt.sh $child --platforms $platforms)"; ok=0
+    else
+      # the pin is the caller's shipquick_ref (no submodule needed for this line)
+      call_pin="$(sed -n 's/^[[:space:]]*shipquick_ref:[[:space:]]*//p' "$call" 2>/dev/null | head -1 | tr -d "[:space:]'\"")"
+      if [ "$(tr -d '[:space:]' < "$child/$SNIP/KIT_PIN")" != "$call_pin" ] || [ -z "$call_pin" ]; then
+        echo "platforms: not ready, $SNIP/KIT_PIN is not the pinned kit commit ${call_pin:-(no pin)} (run: bash $rel/scripts/adopt.sh $child --platforms $platforms)"; ok=0
+      else
+        echo "platforms: OK $plat_csv"
+      fi
+    fi
+  fi
+  # story #326 (A10): the Ponytail plugin must be on in the Claude settings. CI has no settings file, so there it only warns.
+  # shortcut: reads only enabledPlugins["ponytail@ponytail"], not the plugin's own install state; upgrade when Claude Code exposes one.
+  ponytail_settings="${SHIPQUICK_CLAUDE_SETTINGS:-$HOME/.claude/settings.json}"
+  if ! python3 -c 'import json,sys
+try:
+    on = json.load(open(sys.argv[1], encoding="utf-8")).get("enabledPlugins", {}).get("ponytail@ponytail") is True
+except (OSError, ValueError, AttributeError):
+    on = False
+sys.exit(0 if on else 1)' "$ponytail_settings"; then
+    if [ -n "${CI:-}" ]; then echo "warning: the Ponytail plugin is not enabled in $ponytail_settings (CI has no settings file, so the check still passes)"
+    else echo "not adopted: the Ponytail plugin is not enabled in $ponytail_settings"; ok=0; fi
+    echo "  /plugin marketplace add dietrichgebert/ponytail"
+    echo "  /plugin install ponytail@ponytail"
+  fi
   if [ "$ok" = 1 ]; then
     if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, pre-commit hooks present"
     else
@@ -133,6 +184,16 @@ put() {
   elif cmp -s "$tmp/new" "$dest"; then echo "unchanged $rel"
   else cp "$tmp/new" "$dest"; echo "updated   $rel"; fi
 }
+
+# 0. broken shipquick-rules markers in the child's CLAUDE.md stop the run before anything is written (story #316).
+if [ -f "$child/CLAUDE.md" ] && ! python3 - "$child/CLAUDE.md" <<'PYEOF'
+import sys
+S, E = "<!-- shipquick-rules:start -->", "<!-- shipquick-rules:end -->"
+t = open(sys.argv[1], encoding="utf-8").read()
+ok = (t.count(S) == 0 and t.count(E) == 0) or (t.count(S) == 1 and t.count(E) == 1 and t.index(S) < t.index(E))
+sys.exit(0 if ok else 1)
+PYEOF
+then echo "adopt.sh: CLAUDE.md has broken shipquick-rules markers (one start line above one end line, or neither). Nothing was written. Fix it by hand and run again." >&2; exit 2; fi
 
 # 1. .gitattributes: keep the child's lines, add ours once
 { [ -f "$child/.gitattributes" ] && cat "$child/.gitattributes"; true; } > "$tmp/attrs"
@@ -220,7 +281,6 @@ else
 fi
 
 # 5. the pre-commit hooks
-rel="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$SQ" "$child")"
 hooks="  - repo: local
     hooks:
       - id: check-local
@@ -263,6 +323,27 @@ else
   awk -v ptr="Protocol: $ptr" 'NR==1 && /^#/ {print; print ""; print ptr; next} NR==1 {print ptr; print ""} {print}' "$child/CLAUDE.md" | put CLAUDE.md
 fi
 
+# 6b. the kit rule block between the markers (story #316). Written on every run, so a pin bump refreshes the copy.
+# What sits outside the markers is the child's own. Broken markers stop the run and change nothing.
+if ! python3 - "$SQ/CLAUDE.md" "$child/CLAUDE.md" > "$tmp/claude-rules" <<'PYEOF'
+import sys
+START, END = "<!-- shipquick-rules:start -->", "<!-- shipquick-rules:end -->"
+kit = open(sys.argv[1], encoding="utf-8").read().replace("\r\n", "\n").splitlines()
+first = next(i for i, line in enumerate(kit) if line.startswith("0. "))
+block = "\n".join(kit[first:]).strip()
+text = open(sys.argv[2], encoding="utf-8").read().replace("\r\n", "\n")
+if text.count(START) == 0 and text.count(END) == 0:
+    sys.stdout.write(text.rstrip("\n") + "\n\n" + START + "\n\n" + block + "\n\n" + END + "\n")
+elif text.count(START) == 1 and text.count(END) == 1 and text.index(START) < text.index(END):
+    head, rest = text.split(START, 1)
+    tail = rest.split(END, 1)[1]
+    sys.stdout.write(head + START + "\n\n" + block + "\n\n" + END + tail)
+else:
+    sys.exit(1)
+PYEOF
+then echo "adopt.sh: CLAUDE.md has broken shipquick-rules markers (one start line above one end line, or neither). Fix it by hand and run again." >&2; exit 2; fi
+put CLAUDE.md < "$tmp/claude-rules"
+
 # 7. .shipquick/roles.yml: which accounts may code, review, and who owns this project (story #140)
 if [ -e "$child/.shipquick/roles.yml" ]; then
   echo "kept      .shipquick/roles.yml (yours)"
@@ -278,6 +359,23 @@ elif [ -n "$coder" ] && [ -n "$reviewer" ] && [ -n "$owner_acct" ]; then
   } | put .shipquick/roles.yml
 else
   echo "note: .shipquick/roles.yml not written -- rerun with --coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>, or fill it by hand. CI's roles job and scripts/review_merge.sh both refuse to merge until it exists."
+fi
+
+# 8. story #187 (S9): the platform wiring. Snippets point into the kit (no new submodule); the lint configs are copied for the child's CI.
+if [ -n "$plat_list" ]; then
+  for p in $plat_list; do case "$p" in
+    android)
+      printf '%s\n' '// ShipQuick (story S9): add this line in settings.gradle.kts, inside the settings block.' 'includeBuild("knowledge/shipquick_latest/ui/android")' | put "$SNIP/android-settings.snippet.kts"
+      for f in detekt.yml detekt-ci.yml UiRulesKonsistTest.kt; do cat "$SQ/ui/android/lint/$f" | put "$SNIP/lint/$f"; done ;;
+    ios)
+      printf '%s\n' '// ShipQuick (story S9): add this line to the dependencies of your Package.swift.' '.package(path: "knowledge/shipquick_latest/ui/ios")' | put "$SNIP/ios-package.snippet.swift"
+      cat "$SQ/ui/ios/lint/swiftlint.yml" | put "$SNIP/lint/swiftlint.yml" ;;
+    web)
+      printf '%s\n' '# Web (Astryx)' '' 'The kit runs Astryx in CI only: a job runs `npm ci --ignore-scripts` in `knowledge/shipquick_latest/ui/tool`, then:' '' '    bash knowledge/shipquick_latest/scripts/ui.sh init' '' 'Nothing installs on a Mac (owner rule 21).' | put "$SNIP/web-astryx.md" ;;
+  esac; done
+  printf '%s\n' '# Paths a child should protect: a PR may not loosen its own lint (the child adds these to its own protected list).' 'ui/platforms/lint/*' '.swiftlint.yml' 'detekt*.yml' 'ui/platforms/KIT_PIN' | put "$SNIP/PROTECTED.txt"
+  printf '%s\n' "$sha" | put "$SNIP/KIT_PIN"
+  echo "ui: run once in CI, not on this Mac: bash $rel/scripts/ui.sh init (after npm ci --ignore-scripts in $rel/ui/tool)"
 fi
 
 echo "Next: look at git status, commit these files, and merge them into the default branch (scheduled and issue runs start only from there)."

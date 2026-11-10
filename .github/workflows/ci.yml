@@ -80,6 +80,14 @@ jobs:
             exit 1
           fi
           echo "Commit messages OK"
+  rule-copies:
+    # Story #316 (A3): the kit's rule phrases are present and no drift in the kit CLAUDE.md phrases (rule 29).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the load-bearing rule phrases are in the kit CLAUDE.md (story #316)
+        run: python3 scripts/check_rule_copies.py
   pr-size:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -137,6 +145,35 @@ jobs:
           git fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
+  shortcut-ledger:
+    continue-on-error: true   # warn only: a crash here must not block a merge (review_merge.sh refuses any non-SUCCESS check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Shortcut ledger, warn only (story #327): never fails the build, not in the gate
+        run: python3 scripts/check_shortcuts.py
+  tdd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      BASE_REF: ${{ github.base_ref }}
+      HEAD_REF: ${{ github.head_ref }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: A PR that changes code names the test it saw fail, and that test is in the diff (story #319)
+        run: |
+          case "$PR_AUTHOR" in
+            dependabot\[bot\]|app/dependabot) echo "Dependabot: tdd exempt"; exit 0 ;;
+          esac
+          git fetch origin "$BASE_REF"
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          python3 scripts/check_tdd.py --body-file "$RUNNER_TEMP/pr-body.md" --base "origin/$BASE_REF" --base-branch "$BASE_REF" --head-branch "$HEAD_REF"
   roles:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -212,6 +249,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check every component doc matches its contract (story #182)
         run: python3 scripts/check_ui_docs.py --root ui/components
+  ui-registry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Every custom component has the owner's recorded yes (story #186)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_component_request.py --repo "$GITHUB_REPOSITORY"
   ui-cli:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -219,6 +265,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native topics are current with the component docs (story #183)
         run: python3 scripts/ui_topics.py --check
+      - name: The compile proofs are current with the contracts (story #217)
+        run: python3 scripts/ui_proof.py --check
+      - name: The theme files are current with design/tokens.json (story #184)
+        run: python3 scripts/emit_tokens.py --check
       - name: Set up Node (the pinned Astryx CLI needs 22.13 or newer)
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -236,6 +286,171 @@ jobs:
           bash scripts/ui.sh doctor integration validate shipquick-ui
           bash scripts/ui.sh docs android-button --dense | grep -q "androidx.compose.material3.Button"
           bash scripts/ui.sh docs ios-button --json | grep -q '"type": "docs.detail"'
+  ui-changes:
+    # Story #217: the two compile jobs below run only when ui/** changes. A skipped job is not a failure,
+    # so the gate still passes on a PR that does not touch ui/.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      ui: ${{ steps.diff.outputs.ui }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Did ui/** change?
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            git fetch -q origin "$BASE" || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
+            range="origin/$BASE...HEAD"
+          elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            range="$BEFORE..HEAD"
+          else
+            echo "ui=true" >> "$GITHUB_OUTPUT"; exit 0   # first push of a branch: compile to be safe
+          fi
+          # Captured first: a failing git diff inside the `if` below would have written ui=false. --no-renames lists the old path of a move.
+          names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
+          if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_tokens\.py|\.github/workflows/ci\.yml|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
+  ui-android-compile:
+    # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
+    # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch Gradle, check it against distributionSha256Sum, and put it on PATH
+        # The version and the sum both come from ui/android/gradle/wrapper/gradle-wrapper.properties. sha256sum -c fails
+        # the job when the zip is not the one the sum names; nothing downloads Gradle behind this check.
+        run: |
+          props=ui/android/gradle/wrapper/gradle-wrapper.properties
+          sum=$(sed -n 's/^distributionSha256Sum=//p' "$props")
+          ver=$(sed -n 's#.*gradle-\([0-9.]*\)-bin\.zip#\1#p' "$props")
+          curl -sSfL -o "$RUNNER_TEMP/gradle.zip" "https://services.gradle.org/distributions/gradle-$ver-bin.zip"
+          echo "$sum  $RUNNER_TEMP/gradle.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-$ver/bin" >> "$GITHUB_PATH"
+      - name: Compile the templates and the proof
+        working-directory: ui/android
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+        run: gradle --no-daemon --stacktrace compileDebugKotlin
+  ui-ios-compile:
+    # Story #217: compile every template and the generated proof/ApiProof.swift for iOS. Compile only.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Pin Xcode 16.4
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app
+          xcodebuild -version
+      - name: Compile the templates and the proof for iOS
+        working-directory: ui/ios
+        run: xcodebuild -scheme ShipQuickUI -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+  ui-android-lint:
+    # Story #185: detekt (ForbiddenImport) and Konsist refuse hand-drawn UI. The good fixture screen must pass and the
+    # bad one must fail with every rule named. detekt 1.23.8, Konsist 0.17.3, Gradle from the pin in ui/android. CI only.
+    # Gradle checks every downloaded jar and pom against tests/fixtures/android/gradle/verification-metadata.xml; a missing or wrong sum fails the build.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FIX: tests/fixtures/android
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch Gradle, check it against distributionSha256Sum, and put it on PATH
+        run: |
+          props=ui/android/gradle/wrapper/gradle-wrapper.properties
+          sum=$(sed -n 's/^distributionSha256Sum=//p' "$props")
+          ver=$(sed -n 's#.*gradle-\([0-9.]*\)-bin\.zip#\1#p' "$props")
+          curl -sSfL -o "$RUNNER_TEMP/gradle.zip" "https://services.gradle.org/distributions/gradle-$ver-bin.zip"
+          echo "$sum  $RUNNER_TEMP/gradle.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-$ver/bin" >> "$GITHUB_PATH"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+      - name: The good screen passes detekt and Konsist (CI tier)
+        run: gradle --no-daemon --stacktrace -p "$FIX" detekt test -Ptier=ci -PuiDir=src/good
+      - name: The bad screen fails detekt, and the report names every forbidden import
+        run: |
+          if gradle --no-daemon -p "$FIX" detekt -Ptier=ci -PuiDir=src/bad > "$RUNNER_TEMP/detekt-bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/detekt-bad.txt"; echo "::error::the bad screen passed detekt"; exit 1
+          fi
+          cat "$RUNNER_TEMP/detekt-bad.txt"
+          missing=0
+          grep -q ForbiddenImport "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::rule ForbiddenImport is not named"; missing=1; }
+          for imp in $(sed -nE "s/^      - '(.*)'$/\1/p" ui/android/lint/detekt.yml) androidx.compose.material.Button com.google.android.material.button.MaterialButton android.widget.Button com.example.fancyui.FancyChip; do
+            grep -qF "$imp" "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::import not reported: $imp"; missing=1; }
+          done
+          grep -qF 'The import `androidx.compose.ui.draw` has been forbidden' "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::the wildcard import androidx.compose.ui.draw.* is not reported"; missing=1; }
+          exit $missing
+      - name: The bad screen fails Konsist, one named test per rule
+        run: |
+          if gradle --no-daemon -p "$FIX" test -Ptier=ci -PuiDir=src/bad > "$RUNNER_TEMP/konsist-bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/konsist-bad.txt"; echo "::error::the bad screen passed Konsist"; exit 1
+          fi
+          tail -60 "$RUNNER_TEMP/konsist-bad.txt"
+          xml=$(tr -d '\n' < "$FIX"/build/test-results/test/TEST-UiRulesKonsistTest.xml)
+          missing=0
+          for rule in $(sed -nE 's/.*fun ([a-z_]+)\(\).*/\1/p' ui/android/lint/UiRulesKonsistTest.kt); do
+            if grep -qE "testcase name=\"$rule\(\)\"[^>]*>[^<]*<failure" <<< "$xml"; then echo "failed as wanted: $rule"; else echo "::error::rule did not fail: $rule"; missing=1; fi
+          done
+          exit $missing
+      - name: The local tier warns and does not fail
+        run: |
+          gradle --no-daemon -p "$FIX" detekt -PuiDir=src/bad | tee "$RUNNER_TEMP/detekt-local.txt"
+          grep -q ForbiddenImport "$RUNNER_TEMP/detekt-local.txt"
+  ui-ios-lint:
+    # Story #185: SwiftLint custom_rules refuse hand-drawn UI. The good fixture screen must pass `--strict` and the bad one
+    # must fail with every rule id named. SwiftLint 0.65.1 from its release page, checked against the pinned SHA-256. CI only.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch SwiftLint 0.65.1 and check it against the pinned SHA-256
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/swiftlint.zip" https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip
+          echo "c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0  $RUNNER_TEMP/swiftlint.zip" | shasum -a 256 -c -
+          mkdir "$RUNNER_TEMP/swiftlint"
+          unzip -q "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/swiftlint"
+          echo "$RUNNER_TEMP/swiftlint" >> "$GITHUB_PATH"
+      - name: The good screen passes in strict mode (CI tier)
+        run: swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Good
+      - name: The bad screen fails in strict mode, and the report names every rule
+        run: |
+          if swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad > "$RUNNER_TEMP/bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/bad.txt"; echo "::error::the bad screen passed SwiftLint"; exit 1
+          fi
+          cat "$RUNNER_TEMP/bad.txt"
+          missing=0
+          for rule in $(sed -nE 's/^  ([a-z_]+):$/\1/p' ui/ios/lint/swiftlint.yml); do
+            if grep -qF "($rule)" "$RUNNER_TEMP/bad.txt"; then echo "reported as wanted: $rule"; else echo "::error::rule not reported: $rule"; missing=1; fi
+          done
+          exit $missing
+      - name: The local tier warns and does not fail
+        run: |
+          swiftlint lint --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad | tee "$RUNNER_TEMP/local.txt"
+          grep -q "warning:" "$RUNNER_TEMP/local.txt"
   secret-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -286,6 +501,15 @@ jobs:
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
+  workflow-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: No pull_request_target or workflow_run checks out the PR head, and every npm install skips scripts (story #325)
+        run: python3 scripts/check_workflow_security.py
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -327,13 +551,14 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
       - name: Check all job results
         run: |
           echo "pre-commit: ${{ needs.pre-commit.result }}"
           echo "commit-msg: ${{ needs.commit-msg.result }}"
+          echo "rule-copies: ${{ needs.rule-copies.result }}"
           echo "pr-size: ${{ needs.pr-size.result }}"
           echo "frontend-design: ${{ needs.frontend-design.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
@@ -342,10 +567,18 @@ jobs:
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"
           echo "freeze: ${{ needs.freeze.result }}"
           echo "ui-docs: ${{ needs.ui-docs.result }}"
+          echo "ui-registry: ${{ needs.ui-registry.result }}"
           echo "ui-cli: ${{ needs.ui-cli.result }}"
+          echo "ui-changes: ${{ needs.ui-changes.result }}"
+          echo "ui-android-compile: ${{ needs.ui-android-compile.result }}"
+          echo "ui-ios-compile: ${{ needs.ui-ios-compile.result }}"
+          echo "ui-android-lint: ${{ needs.ui-android-lint.result }}"
+          echo "ui-ios-lint: ${{ needs.ui-ios-lint.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
+          echo "workflow-security: ${{ needs.workflow-security.result }}"
           echo "test: ${{ needs.test.result }}"
+          echo "tdd: ${{ needs.tdd.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"
             exit 1

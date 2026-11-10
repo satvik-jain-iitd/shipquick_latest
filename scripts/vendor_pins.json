@@ -1,0 +1,13 @@
+{
+  "note": "Story #242. The Gradle pins the vendor backup keeps. The material3 version must match docs/research/android-m3-api.md (vendor_backup.py --plan checks it).",
+  "repos": [
+    "https://dl.google.com/dl/android/maven2",
+    "https://repo.maven.apache.org/maven2"
+  ],
+  "bom": "androidx.compose:compose-bom:2025.10.00",
+  "roots": [
+    "androidx.compose.material3:material3",
+    "androidx.compose.material:material-icons-core"
+  ],
+  "material3": "1.4.0"
+}

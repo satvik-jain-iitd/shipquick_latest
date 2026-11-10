@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks ui-docs ui-topics ui-coverage commits pr-size frontend-design disable-comments story secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments story tdd shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
+#   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
+#   shortcuts (story #327): warn only, prints the count of shortcut:/ponytail: comments; runs after the checks when no argument is given
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
 #   secrets    the whole history (push); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
@@ -38,8 +41,12 @@ check_markers() {
   fi
 }
 check_md_blocks() { python3 "$HERE/check_md_blocks.py"; report md-blocks $?; }
+check_rule_copies() { python3 "$HERE/check_rule_copies.py"; report rule-copies $?; }   # story #316
+check_ui_registry() { [ -f ui/registry.json ] || return 0; python3 "$HERE/check_component_request.py"; report ui-registry $?; }   # story #186
 check_ui_docs() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_docs.py" --root ui/components; report ui-docs $?; }   # story #182
 check_ui_topics() { [ -d ui/integration ] || return 0; python3 "$HERE/ui_topics.py" --check; report ui-topics $?; }   # story #183
+check_ui_tokens() { [ -f design/tokens.json ] || return 0; python3 "$HERE/emit_tokens.py" --check; report ui-tokens $?; }   # story #184
+check_ui_proof() { [ -d ui/components ] || return 0; python3 "$HERE/ui_proof.py" --check; report ui-proof $?; }   # story #217
 check_ui_coverage() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_coverage.py" --strict-api; report ui-coverage $?; }   # stories #216, #231; web part skips without ui/tool/node_modules
 check_timeouts() { [ -d .github/workflows ] || return 0; python3 "$HERE/check_timeouts.py" .github/workflows; report timeouts $?; }
 check_commits() {
@@ -94,6 +101,17 @@ check_story() {
   rm -f "$tmp"
   report story "$rc"
 }
+check_workflow_security() { python3 "$HERE/check_workflow_security.py"; report workflow-security $?; }   # story #325
+check_tdd() {   # story #319 (A15): the commit log stands in for the PR body before a push; CI reads the real body
+  have_base tdd || return 0
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  python3 "$HERE/check_tdd.py" --body-file "$tmp" --base "origin/$BASE" --base-branch "$BASE" --head-branch "$(git rev-parse --abbrev-ref HEAD)"
+  rc=$?
+  rm -f "$tmp"
+  report tdd "$rc"
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   gitleaks git --no-banner --no-color --redact --verbose .
@@ -105,14 +123,21 @@ check_secrets_staged() {
   report secrets-staged $?
 }
 
+check_shortcuts() {   # story #327: warn only, never sets failed
+  echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
+}
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story tdd workflow-security secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
     md-blocks) check_md_blocks ;;
+    rule-copies) check_rule_copies ;;
     ui-docs) check_ui_docs ;;
+    ui-registry) check_ui_registry ;;
     ui-topics) check_ui_topics ;;
+    ui-proof) check_ui_proof ;;
+    ui-tokens) check_ui_tokens ;;
     ui-coverage) check_ui_coverage ;;
     timeouts) check_timeouts ;;
     secrets-staged) check_secrets_staged ;;
@@ -120,8 +145,12 @@ for c in "${checks[@]}"; do
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
     story) check_story ;;
-    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
+    shortcuts) check_shortcuts ;;
+    workflow-security) check_workflow_security ;;
+    tdd) check_tdd ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments story tdd shortcuts secrets secrets-staged)"; exit 2 ;;
   esac
 done
+[ $# -eq 0 ] && check_shortcuts
 [ "$failed" -eq 0 ] && echo "check_local: all passed"
 exit "$failed"

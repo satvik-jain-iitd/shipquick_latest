@@ -143,6 +143,7 @@ export default {
   ],
   "platformApi": {
     "ios": {
+      "family": "Search modifiers",
       "variants": [
         {"name": "searchable", "note": "`.searchable(text:placement:prompt:)`, iOS 16.0. Apple: \"Marks this view as searchable, which configures the display of a search field.\""},
         {"name": "searchCompletion", "note": "`.searchCompletion(_:)`, iOS 15.0. Apple: \"Associates a fully formed string with the value of this view when used as a search suggestion.\""},

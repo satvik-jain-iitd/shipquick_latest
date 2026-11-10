@@ -261,11 +261,73 @@ jobs:
           persist-credentials: false
       - name: Check Dev link / Production link are filled past D0 (story #120)
         run: bash .shipquick/scripts/check_environments.sh --claude-md project/CLAUDE.md --milestone D1
+  component-registry:
+    # Story #186: every custom component in the child's ui/registry.json has the owner's recorded yes, read live from the issue.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      issues: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          persist-credentials: false
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Every custom component has the owner's recorded yes (story #186)
+        run: cd project && python3 ../.shipquick/scripts/check_component_request.py --registry ui/registry.json --roles .shipquick/roles.yml
+  rule-copies:
+    # Story #316 (A3): the child's CLAUDE.md carries the kit rule block unchanged, and the kit's phrases are present.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          persist-credentials: false
+      - name: Check out the ShipQuick rules and scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: |
+            scripts
+            skills
+            CLAUDE.md
+          persist-credentials: false
+      - name: The child's rule block matches the kit and the kit phrases are present (story #316)
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          child_file=project/CLAUDE.md
+          # a rule-24 child keeps its rules on its kit branch; a PR into another branch reads them from there (as the roles job does).
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo (the caller's kit_branch)."; exit 1; }
+            ref="origin/$KIT_BRANCH"
+            git -C project show "$ref:CLAUDE.md" > "$RUNNER_TEMP/CLAUDE.md" 2>/dev/null || { echo "no CLAUDE.md on kit branch $KIT_BRANCH. Run adopt.sh there to write it."; exit 1; }
+            child_file="$RUNNER_TEMP/CLAUDE.md"
+          fi
+          python3 .shipquick/scripts/check_rule_copies.py --child "$child_file"
   gate:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [adoption, disable-comments, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments]
+    needs: [adoption, disable-comments, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies]
     if: always()
     steps:
       - name: Check all job results (story #131 -- review_merge.sh requires this exact check to be SUCCESS)
@@ -278,6 +340,8 @@ jobs:
           echo "uat-on-main: ${{ needs.uat-on-main.result }}"
           echo "freeze-on-main: ${{ needs.freeze-on-main.result }}"
           echo "environments: ${{ needs.environments.result }}"
+          echo "component-registry: ${{ needs.component-registry.result }}"
+          echo "rule-copies: ${{ needs.rule-copies.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"
             exit 1
