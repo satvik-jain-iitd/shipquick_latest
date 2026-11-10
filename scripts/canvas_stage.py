@@ -191,7 +191,7 @@ def design_system_board(rows, tint, th):
         for r in sorted((r for r in rows if r.get("platform") == plat), key=lambda r: str(r.get("name", ""))):
             name = str(r.get("name", "?"))
             status = r.get("status") or (f"twin #{r['twin']}" if r.get("twin") else "no twin yet")   # the parity report's own words
-            doc = r.get("doc") or f"ui/components/{name}/{name}.doc.mjs"   # shortcut: the kit's doc convention, give "doc" in the row when it lives elsewhere
+            doc = r.get("doc") or f"ui/components/{name}/{name}.doc.mjs"   # shortcut: the kit's doc convention is assumed, add a "doc" field to the row when the doc lives elsewhere
             text = f"{status} · {doc}"
             body.append(f'  <p style="position: absolute; left: {x}px; top: {y}px; width: {LEARN_COL}px; margin: 0; font-size: 22px; line-height: 1.4;">'
                         f'<b>{esc(name)}</b> on {esc(str(r.get("base", "?")))}<br>{esc(text)}</p>')
