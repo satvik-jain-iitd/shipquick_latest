@@ -994,3 +994,15 @@ Scenario: the registry lists the public child whose name the hygiene test bans
   And docs/children.md lists that child as public
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
+
+## Story #316: the kit rule copies are canaried (A3)
+Scenario: a child's copy of the kit rules must match the kit
+  Given a child CLAUDE.md with the kit rule block between the shipquick-rules markers
+  When the block differs from the kit CLAUDE.md by one word
+  Then the check fails and names the child file
+Scenario: a load-bearing phrase must be in the kit CLAUDE.md
+  Given the kit CLAUDE.md with "Radar first" changed
+  When check_rule_copies.py runs
+  Then the check fails and names CLAUDE.md and the phrase
+Scenario: a child without the markers fails and points at docs/ADOPTION.md
+Tests: `test_a_changed_phrase_turns_the_check_red_and_names_the_file`, `test_a_child_with_one_word_changed_fails_and_names_the_child`, `test_a_child_without_the_markers_fails_and_points_at_adoption`, `test_a_child_with_the_kit_block_unchanged_passes`, `test_the_kit_claude_md_passes_every_phrase`, `test_the_script_is_stdlib_only` (file: tests/test_check_rule_copies.py).

@@ -84,6 +84,23 @@ The ruleset pins the gate to the GitHub Actions app (`integration_id: 15368`). W
 
 A private repo on GitHub Free cannot enforce rulesets or branch protection. Such a child needs a paid plan, or it stays "gate not required".
 
+## Rule copies in a child (story #316)
+
+The kit's rules (CLAUDE.md, rule 0 to the last rule) are copied into each child's CLAUDE.md. The copy must match the kit byte for byte, once line endings and outer blank lines are ignored. A check (`scripts/check_rule_copies.py --child project/CLAUDE.md`, job `rule-copies` in `checks.yml`) fails the PR when it does not.
+
+The child marks the copy with two lines, one above and one below the rules, each on its own line and each exactly once:
+
+```text
+<!-- shipquick-rules:start -->
+0. **Mode** (owner, 26 Oct 2026). ...
+...the kit rules, unchanged, from rule 0 to the end of the kit CLAUDE.md...
+<!-- shipquick-rules:end -->
+```
+
+The check also confirms that 10 load-bearing phrases are in the kit CLAUDE.md. Those phrases are listed at the top of `scripts/check_rule_copies.py`.
+
+A child without the two marker lines fails the `rule-copies` job. To fix it, copy the kit rules from `knowledge/shipquick_latest/CLAUDE.md` between the two lines, then push again.
+
 ## UI lint in a child (story #185)
 
 A child refuses hand-drawn UI with lint. The kit ships the configs. Wiring them in is story #187, not this one.
