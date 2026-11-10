@@ -995,6 +995,41 @@ Scenario: the registry lists the public child whose name the hygiene test bans
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
 
+## Plugin hooks: rules reach every session and subagent (story #313, A2)
+```gherkin
+Scenario: a SubagentStart hook injects the rules into a subagent
+  Given a SubagentStart payload on stdin with a project folder that holds .shipquick/mode "semi"
+  When the subagent hook runs
+  Then it exits 0 and prints hookSpecificOutput.additionalContext
+  And the context names "mode: semi" and rule 20 "Radar first"
+
+Scenario: a SessionStart hook prints the mode and the dense rules
+  Given a project folder with .shipquick/mode "auto"
+  When the session hook runs
+  Then the context names "mode: auto" and rule 30
+
+Scenario: a missing mode file still injects the rules
+  Given a project folder with no .shipquick folder
+  When the session hook runs
+  Then the context names "mode: not set" and still holds the rules
+
+Scenario: a bad payload never blocks a session
+  Given stdin holds text that is not JSON
+  When the subagent hook runs
+  Then it exits 0
+
+Scenario: a hook does its work under 200 ms
+  Given a warm run of the hook's own work
+  When it builds the context
+  Then it takes under 0.2 s
+
+Scenario: the dense rules file matches CLAUDE.md
+  Given plugin/rules-dense.md and CLAUDE.md
+  When plugin/gen_rules_dense.py --check runs
+  Then it exits 0
+  And a changed rule in CLAUDE.md makes it exit 1
+```
+Tests: `test_subagent_start_injects_the_same_rules`, `test_session_start_injects_rules_and_mode`, `test_missing_mode_file_still_injects_rules`, `test_bad_stdin_exits_zero_and_never_blocks`, `test_each_hook_is_under_200_ms`, `test_rules_file_matches_claude_md`, `test_drift_check_fails_when_a_rule_changes`. File: `tests/test_plugin_hooks.py`.
 ## Story #311 and #331: the bench selftest and its tasks
 ```gherkin
 Scenario: the bench selftest checks every task before any model call
@@ -1017,6 +1052,38 @@ Scenario: the cell runner drives one cell per arm and rescores offline (#331)
 ```
 Tests: `tests/test_bench_selftest.py` (`test_selftest_*`, `test_shelling_out_is_unsafe`, `test_a_seeded_tasks_own_seed_file_is_not_unsafe`); #331 has none yet.
 
+## Story #319 (A15): the TDD evidence check
+```gherkin
+Scenario: a PR that changes code with no Red section fails
+  Given a feature branch that adds scripts/widget.py
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 1 and names the missing "## Red" section
+Scenario: a Red section naming a test file in the diff passes
+  Given the same branch also adds tests/test_widget.py
+  When the PR body has "## Red" naming tests/test_widget.py
+  Then check_tdd.py exits 0 with "tdd OK"
+Scenario: a Red section naming a test not in the diff fails
+  Given the branch does not change tests/test_widget.py
+  When the PR body names tests/test_widget.py under "## Red"
+  Then check_tdd.py exits 1 and says the file is not in the PR diff
+Scenario: a Red section that names no test fails
+  Given a code PR whose "## Red" section has no test path
+  When check_tdd.py reads the body
+  Then it exits 1 and says the section names no test
+Scenario: a test file deleted in the diff is not evidence
+  Given the branch deletes tests/test_widget.py
+  When the PR body names it under "## Red"
+  Then check_tdd.py exits 1
+Scenario: docs-only PRs need no Red section
+  Given a branch that changes only docs/*.md, pm/ or a .txt file
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 0 and says it is exempt
+Scenario: a promotion into main and a back-merge from main are exempt
+  Given a PR from dev into main, or from main into dev, with code changed
+  When the PR body has no "## Red" heading
+  Then check_tdd.py exits 0 and says it is exempt
+```
+Tests: `test_s319_a_code_pr_whose_body_has_no_red_section_fails`, `test_s319_a_red_section_naming_a_test_file_in_the_diff_passes`, `test_s319_a_red_section_naming_a_test_not_in_the_diff_fails`, `test_s319_a_red_section_that_names_no_test_fails`, `test_s319_a_test_file_deleted_in_the_diff_is_not_evidence`, `test_s319_a_docs_only_pr_is_exempt_and_needs_no_red_section`, `test_s319_a_dev_into_main_promotion_is_exempt`, `test_s319_a_main_into_dev_back_merge_is_exempt`, `test_s319_a_feature_pr_into_dev_is_not_exempt`, `test_s319_a_pytest_node_id_names_its_file`, `test_s319_ci_has_a_tdd_job_on_every_pr_and_the_gate_waits_for_it`, `test_s319_check_local_runs_the_tdd_check`.
 ## Story #331: the bench cell runner and offline rescore
 ```gherkin
 Scenario: one cell per arm runs with the real flags and the rules only in the kit arm
@@ -1063,3 +1130,45 @@ Scenario: the path-scoped rules finding is written with its source
   And every test in tests/test_rules_by_path_spike.py is named in this file
 ```
 Tests: `tests/test_rules_by_path_spike.py` (`test_a13_experiments_row_exists_with_docs_url`, `test_a13_study_adapt_row_cites_the_docs_url`, `test_a13_experiments_row_has_five_cells_like_the_header`, `test_a13_result_and_decision_sit_in_their_own_columns`, `test_a13_every_test_in_this_file_is_listed_in_test_cases`).
+## Story #319 review fixes: Dependabot, the local check and the template
+```gherkin
+Scenario: a Dependabot PR is not blocked by the tdd job
+  Given the weekly Dependabot PR that changes only workflow files
+  When the tdd job runs
+  Then it prints "Dependabot: tdd exempt" and exits 0 before the check, like team-block
+Scenario: a coder learns where the Red section goes before the first push
+  Given check_local.sh, COMMIT_GUIDELINES.md and the PR template
+  Then the usage line names tdd, the header and the guidelines say the Red section is in a commit body before a push, and the template has a Red section above Test Output
+```
+Tests: `tests/test_check_tdd.py` (`test_s319_dependabot_is_exempt_in_the_tdd_job_like_team_block`, `test_s319_check_local_usage_and_header_name_tdd`, `test_s319_commit_guidelines_say_a_code_branch_carries_a_red_line`, `test_s319_the_pr_template_has_a_red_section_above_test_output`).
+## Story #312: the bench report (dry parts)
+```gherkin
+Scenario: the run says where it put the folder
+  Given a finished bench --run
+  When it ends
+  Then its last line is "run folder: <the folder>"
+Scenario: cell numbers come from the claude JSON and survive a rescore
+  Given a fake claude that prints cost, output tokens and turns
+  When the run finishes and then --rescore runs
+  Then results.json holds those numbers and the lines of code of solution.py, before and after
+Scenario: the report compares the arms task by task
+  Given results for two tasks, two arms and three runs each
+  When bench/report.py runs
+  Then each task ratio is the kit median over the no-kit median, the table shows their geometric mean and a 95% bootstrap interval, and a metric nobody recorded shows n/a
+Scenario: the decision is written down
+  Then ADR-014 says a kit rule wording change must beat the current kit in a paired run, and experiments.md has a pending row for the bench
+```
+Tests: `tests/test_bench_report.py`, `tests/test_bench_runner.py` (`test_run_prints_the_run_folder_last`, `test_cell_metrics_come_from_the_claude_json_and_the_solution`).
+
+## Story #313 review fixes: the mode, the dense rules and the budget
+```gherkin
+Scenario: the hook reads the mode the way mode.sh does
+  Given a repo whose mode is in .git/shipquick-mode, or in a tracked .shipquick/mode, or in a worktree of that repo
+  When SessionStart runs from the repo, a subfolder or the worktree, or CLAUDE_PROJECT_DIR points at the repo
+  Then the context says the same mode as mode.sh get; the tracked file wins; a word that is not a mode reads as not set
+Scenario: the dense rules keep what each rule is for
+  Then the dense text keeps "end your reply with one fenced block", "an agent never runs set", "The coder opens every PR" and "The author never reviews their own PR", and stays under 6000 characters
+Scenario: the manifest and the budget are honest
+  Then SessionStart also matches fork, plugin.json names an author, and ADR-015 states the in-process and whole-process times
+```
+Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).
