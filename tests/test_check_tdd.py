@@ -133,3 +133,44 @@ def test_s319_ci_has_a_tdd_job_on_every_pr_and_the_gate_waits_for_it():
 def test_s319_check_local_runs_the_tdd_check():
     text = (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
     assert "tdd)" in text and "check_tdd.py" in text
+
+
+# ---- review of #336 ----
+import re  # noqa: E402
+
+
+def _tdd_job():
+    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    m = re.search(r"^  tdd:\n(.*?)(?=^  [a-z][a-z-]*:\n|\Z)", text, re.M | re.S)
+    assert m, "no tdd job in ci.yml"
+    return m.group(1)
+
+
+def test_s319_dependabot_is_exempt_in_the_tdd_job_like_team_block():
+    job = _tdd_job()
+    assert "PR_AUTHOR: ${{ github.event.pull_request.user.login }}" in job
+    assert 'case "$PR_AUTHOR" in' in job
+    assert r"dependabot\[bot\]|app/dependabot" in job
+    # the exemption comes before the check runs
+    assert job.index('case "$PR_AUTHOR"') < job.index("check_tdd.py")
+
+
+def test_s319_check_local_usage_and_header_name_tdd():
+    lines = (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8").splitlines()
+    usage = next(ln for ln in lines if ln.startswith("#   checks:"))
+    assert " tdd " in usage + " ", usage
+    header = "\n".join(ln for ln in lines[:15] if ln.startswith("#"))
+    assert "tdd (story #319):" in header
+    assert "commit body" in header and "## Red" in header
+
+
+def test_s319_commit_guidelines_say_a_code_branch_carries_a_red_line():
+    text = (ROOT / "COMMIT_GUIDELINES.md").read_text(encoding="utf-8")
+    assert "## Red" in text and "commit body" in text
+
+
+def test_s319_the_pr_template_has_a_red_section_above_test_output():
+    text = (ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md").read_text(encoding="utf-8")
+    assert "## Red" in text and "## Test Output" in text
+    assert text.index("## Red") < text.index("## Test Output")
+    assert "tests/test_widget.py::test_widget_rejects_empty" in text

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage commits pr-size frontend-design disable-comments story secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage commits pr-size frontend-design disable-comments story tdd secrets secrets-staged   (no argument = all but secrets-staged)
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
+#   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
 #   secrets    the whole history (push); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks

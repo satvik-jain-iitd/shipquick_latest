@@ -10,6 +10,10 @@
 
 -
 
+## Red
+
+- (the test file you saw fail first, for example `tests/test_widget.py::test_widget_rejects_empty`; a docs-only PR can skip this)
+
 ## Test Output
 
 ```

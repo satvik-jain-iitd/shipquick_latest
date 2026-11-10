@@ -1083,3 +1083,15 @@ Scenario: a task's seed files reach the cell folder
   Then the fake claude finds that file in its working folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
+
+## Story #319 review fixes: Dependabot, the local check and the template
+```gherkin
+Scenario: a Dependabot PR is not blocked by the tdd job
+  Given the weekly Dependabot PR that changes only workflow files
+  When the tdd job runs
+  Then it prints "Dependabot: tdd exempt" and exits 0 before the check, like team-block
+Scenario: a coder learns where the Red section goes before the first push
+  Given check_local.sh, COMMIT_GUIDELINES.md and the PR template
+  Then the usage line names tdd, the header and the guidelines say the Red section is in a commit body before a push, and the template has a Red section above Test Output
+```
+Tests: `tests/test_check_tdd.py` (`test_s319_dependabot_is_exempt_in_the_tdd_job_like_team_block`, `test_s319_check_local_usage_and_header_name_tdd`, `test_s319_commit_guidelines_say_a_code_branch_carries_a_red_line`, `test_s319_the_pr_template_has_a_red_section_above_test_output`).
