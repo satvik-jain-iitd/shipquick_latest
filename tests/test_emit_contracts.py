@@ -48,6 +48,18 @@ def components_with(tmp_path, contracts):
     return root
 
 
+def test_s222_the_committed_structs_are_current_with_the_contracts():
+    assert emit_contracts.main(["--check"]) == 0
+
+
+def test_s222_every_contract_has_a_struct_file():
+    contracts = sorted(p.parent.name for p in SRC.glob("*/*.contract.json"))
+    assert len(contracts) > 50
+    files = {p.name for p in OUT.glob("*.swift")}
+    for name in contracts:
+        assert f"{emit_contracts.pascal(name)}.swift" in files, name
+
+
 def test_s222_every_committed_struct_is_current_with_its_contract():
     """Each committed struct file is a fresh render of its contract; none is stale, none has lost its contract."""
     files = emit_contracts.render(SRC)
