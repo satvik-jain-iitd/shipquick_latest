@@ -25,13 +25,14 @@
 set -eu
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQ="$(cd "$HERE/.." && pwd -P)"
-usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
-child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""
+usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--platforms android,ios[,web]] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
+child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""; platforms=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --ref) [ -n "${2:-}" ] || usage; ref="$2"; shift 2 ;;
     --kit-branch) [ -n "${2:-}" ] || usage; kit="$2"; shift 2 ;;
     --check) check_mode=1; shift ;;
+    --platforms) [ -n "${2:-}" ] || usage; platforms="$2"; shift 2 ;;
     --coder) [ -n "${2:-}" ] || usage; coder="$2"; shift 2 ;;
     --reviewer) [ -n "${2:-}" ] || usage; reviewer="$2"; shift 2 ;;
     --owner) [ -n "${2:-}" ] || usage; owner_acct="$2"; shift 2 ;;
@@ -44,6 +45,25 @@ done
 child="$(cd "$child" && pwd -P)"
 top="$(git -C "$child" rev-parse --show-toplevel 2>/dev/null)" || { echo "adopt.sh: $child is not a git repository" >&2; exit 2; }
 [ "$(cd "$top" && pwd -P)" = "$child" ] || { echo "adopt.sh: run it on the root of the repository ($top)" >&2; exit 2; }
+
+# story #187 (S9): --platforms android,ios[,web] wires the child to the kit's UI libraries (ADR-012). Checked before anything is written.
+SNIP="ui/platforms"
+rel="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$SQ" "$child")"
+plat_list=""
+if [ -n "$platforms" ]; then
+  for p in $(printf '%s' "$platforms" | tr ',' ' '); do
+    case "$p" in android|ios|web) plat_list="$plat_list $p" ;; *) echo "adopt.sh: unknown platform '$p' (use android, ios or web)" >&2; exit 2 ;; esac
+  done
+  plat_csv="$(echo $plat_list | tr ' ' ',')"
+fi
+platform_files() {   # the files one --platforms run writes, one per line
+  for p in $plat_list; do case "$p" in
+    android) printf '%s\n' "$SNIP/android-settings.snippet.kts" "$SNIP/lint/detekt.yml" "$SNIP/lint/detekt-ci.yml" "$SNIP/lint/UiRulesKonsistTest.kt" ;;
+    ios) printf '%s\n' "$SNIP/ios-package.snippet.swift" "$SNIP/lint/swiftlint.yml" ;;
+    web) printf '%s\n' "$SNIP/web-astryx.md" ;;
+  esac; done
+  [ -z "$plat_list" ] || printf '%s\n' "$SNIP/PROTECTED.txt" "$SNIP/KIT_PIN"
+}
 
 if [ -n "$kit" ]; then
   why="$(printf 'kit_branch: %s\n' "$kit" | python3 "$HERE/kit_branch.py" parse)" || { echo "adopt.sh: $why" >&2; exit 2; }
@@ -109,6 +129,21 @@ if [ -n "$check_mode" ]; then
   if ! printf '%s' "$hooks" | grep -q "check_local.sh"; then
     echo "not adopted: .pre-commit-config.yaml$([ "$kref" = HEAD ] || echo " $at") has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
     ok=0
+  fi
+  if [ -n "$plat_list" ]; then
+    miss=""
+    while read -r f; do [ -f "$child/$f" ] || miss="$miss $f"; done < <(platform_files)
+    if [ -n "$miss" ]; then
+      echo "platforms: not ready, missing:$miss (run: bash $rel/scripts/adopt.sh $child --platforms $platforms)"; ok=0
+    else
+      # the pin is the caller's shipquick_ref (no submodule needed for this line)
+      call_pin="$(sed -n 's/^[[:space:]]*shipquick_ref:[[:space:]]*//p' "$call" 2>/dev/null | head -1 | tr -d "[:space:]'\"")"
+      if [ "$(tr -d '[:space:]' < "$child/$SNIP/KIT_PIN")" != "$call_pin" ] || [ -z "$call_pin" ]; then
+        echo "platforms: not ready, $SNIP/KIT_PIN is not the pinned kit commit ${call_pin:-(no pin)} (run: bash $rel/scripts/adopt.sh $child --platforms $platforms)"; ok=0
+      else
+        echo "platforms: OK $plat_csv"
+      fi
+    fi
   fi
   if [ "$ok" = 1 ]; then
     if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, pre-commit hooks present"
@@ -220,7 +255,6 @@ else
 fi
 
 # 5. the pre-commit hooks
-rel="$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$SQ" "$child")"
 hooks="  - repo: local
     hooks:
       - id: check-local
@@ -278,6 +312,23 @@ elif [ -n "$coder" ] && [ -n "$reviewer" ] && [ -n "$owner_acct" ]; then
   } | put .shipquick/roles.yml
 else
   echo "note: .shipquick/roles.yml not written -- rerun with --coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>, or fill it by hand. CI's roles job and scripts/review_merge.sh both refuse to merge until it exists."
+fi
+
+# 8. story #187 (S9): the platform wiring. Snippets point into the kit (no new submodule); the lint configs are copied for the child's CI.
+if [ -n "$plat_list" ]; then
+  for p in $plat_list; do case "$p" in
+    android)
+      printf '%s\n' '// ShipQuick (story S9): add this line in settings.gradle.kts, inside the settings block.' 'includeBuild("knowledge/shipquick_latest/ui/android")' | put "$SNIP/android-settings.snippet.kts"
+      for f in detekt.yml detekt-ci.yml UiRulesKonsistTest.kt; do cat "$SQ/ui/android/lint/$f" | put "$SNIP/lint/$f"; done ;;
+    ios)
+      printf '%s\n' '// ShipQuick (story S9): add this line to the dependencies of your Package.swift.' '.package(path: "knowledge/shipquick_latest/ui/ios")' | put "$SNIP/ios-package.snippet.swift"
+      cat "$SQ/ui/ios/lint/swiftlint.yml" | put "$SNIP/lint/swiftlint.yml" ;;
+    web)
+      printf '%s\n' '# Web (Astryx)' '' 'The kit runs Astryx in CI only: a job runs `npm ci --ignore-scripts` in `knowledge/shipquick_latest/ui/tool`, then:' '' '    bash knowledge/shipquick_latest/scripts/ui.sh init' '' 'Nothing installs on a Mac (owner rule 21).' | put "$SNIP/web-astryx.md" ;;
+  esac; done
+  printf '%s\n' '# Paths a child should protect: a PR may not loosen its own lint (the child adds these to its own protected list).' 'ui/platforms/lint/*' '.swiftlint.yml' 'detekt*.yml' 'ui/platforms/KIT_PIN' | put "$SNIP/PROTECTED.txt"
+  printf '%s\n' "$sha" | put "$SNIP/KIT_PIN"
+  echo "ui: run once in CI, not on this Mac: bash $rel/scripts/ui.sh init (after npm ci --ignore-scripts in $rel/ui/tool)"
 fi
 
 echo "Next: look at git status, commit these files, and merge them into the default branch (scheduled and issue runs start only from there)."
