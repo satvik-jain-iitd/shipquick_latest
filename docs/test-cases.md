@@ -994,3 +994,24 @@ Scenario: the registry lists the public child whose name the hygiene test bans
   And docs/children.md lists that child as public
 ```
 Tests: `test_only_the_children_registry_is_exempt`, `test_the_exemption_is_one_file_not_a_folder`, `test_the_registry_lists_the_public_child_that_the_ban_hid`.
+
+## Story #326: adopt.sh --check reads the Ponytail plugin switch
+```gherkin
+Scenario: the Ponytail plugin is enabled in the Claude settings
+  Given the child is adopted and its submodule pin matches
+  And enabledPlugins["ponytail@ponytail"] is true in the settings file
+  When adopt.sh --check runs
+  Then it exits 0 and prints no Ponytail line
+
+Scenario: the Ponytail plugin is off, or its key is missing or the file is not JSON
+  Given the settings file has ponytail@ponytail false, no such key, a missing file, or invalid JSON
+  When adopt.sh --check runs outside CI
+  Then it exits 1 with "not adopted"
+  And it prints "/plugin marketplace add dietrichgebert/ponytail" and "/plugin install ponytail@ponytail"
+
+Scenario: in CI the missing key only warns
+  Given CI is set (a runner has no settings file)
+  When adopt.sh --check runs with the Ponytail key off
+  Then it exits 0 and prints a warning with the install line
+```
+Tests: `tests/test_adopt.py` (s326: passes when on, not adopted when false, absent, missing file, not JSON; CI warns). Local: `python3 -m pytest -q tests/test_adopt.py -k s326`.
