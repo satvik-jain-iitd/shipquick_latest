@@ -47,3 +47,12 @@ def test_a13_study_adapt_row_cites_the_docs_url():
     rows = [line for line in STUDY.splitlines() if line.startswith("| Rules split by path")]
     assert rows, "the Adapt table row for #328 is missing"
     assert DOCS_URL in rows[0], "the #328 Adapt row must cite the Claude Code docs URL"
+
+
+def test_a13_every_test_in_this_file_is_listed_in_test_cases():
+    import re
+
+    names = re.findall(r"^def (test_\w+)", Path(__file__).read_text(encoding="utf-8"), re.M)
+    cases = (ROOT / "docs" / "test-cases.md").read_text(encoding="utf-8")
+    missing = [n for n in names if f"`{n}`" not in cases]
+    assert not missing, f"tests not listed in docs/test-cases.md (rule 5): {missing}"

@@ -1059,5 +1059,7 @@ Scenario: the path-scoped rules finding is written with its source
   When the spike is recorded
   Then docs/research/experiments.md has a 10 Nov 2026 row for #328 that cites https://code.claude.com/docs/en/memory and says pending test
   And the #328 row in the ponytail study cites the same URL
+  And the #328 experiments row has five cells like the header, with Result in the Result column and Decision in the Decision column
+  And every test in tests/test_rules_by_path_spike.py is named in this file
 ```
-Tests: `tests/test_rules_by_path_spike.py` (`test_a13_experiments_row_exists_with_docs_url`, `test_a13_study_adapt_row_cites_the_docs_url`).
+Tests: `tests/test_rules_by_path_spike.py` (`test_a13_experiments_row_exists_with_docs_url`, `test_a13_study_adapt_row_cites_the_docs_url`, `test_a13_experiments_row_has_five_cells_like_the_header`, `test_a13_result_and_decision_sit_in_their_own_columns`, `test_a13_every_test_in_this_file_is_listed_in_test_cases`).
