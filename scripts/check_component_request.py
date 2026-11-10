@@ -38,30 +38,35 @@ def repo_name(runner=subprocess.run):
     return out.stdout.strip()
 
 
-def _valid_yes(body, today):
+def _valid_yes(body, created_at):
+    """The written date is at most 14 days before the comment was made (counted from its created_at, never from
+    the day CI runs), and at most one day after it (UTC created_at, IST written date)."""
     m = YES.fullmatch((body or "").strip())
-    if not m:
+    if not m or not created_at:
         return False
     try:
         day = datetime.date.fromisoformat(m.group(1))
+        made = datetime.date.fromisoformat(created_at[:10])
     except ValueError:
         return False
-    age = (today - day).days
-    return 0 <= age <= MAX_AGE_DAYS and len(m.group(2).split()) >= 3
+    age = (made - day).days
+    return -1 <= age <= MAX_AGE_DAYS and len(m.group(2).split()) >= 3
 
 
-def check_row(row, fetch, reviewers, today):
+def check_row(row, fetch, reviewers):
     """None when approved, else why not."""
     n = row.get("request")
     name = f"{row.get('name', '?')} ({row.get('platform', '?')})"
     if not isinstance(n, int):
         return f"{name}: no `request` issue number in the registry row"
     data = fetch(n)
+    if str(row.get("name", "")).lower() not in (data.get("title") or "").lower():
+        return f"{name}: request issue #{n} title must name the component `{row.get('name')}`"
     last = [e for e in data.get("events", []) if (e.get("label") or {}).get("name") == LABEL and e.get("event") in ("labeled", "unlabeled")]
     labeled = bool(last) and last[-1]["event"] == "labeled" \
         and ((last[-1].get("actor") or {}).get("login") in reviewers) \
         and any((l or {}).get("name") == LABEL for l in data.get("labels", []))
-    said = any(((c.get("user") or {}).get("login") in reviewers) and _valid_yes(c.get("body"), today)
+    said = any(((c.get("user") or {}).get("login") in reviewers) and _valid_yes(c.get("body"), c.get("created_at"))
                and c.get("created_at") == c.get("updated_at") for c in data.get("comments", []))
     missing = []
     if not labeled:
@@ -93,11 +98,10 @@ def gh_fetch(repo):
     return fetch
 
 
-def run(registry, reviewers, fetch, today=None):
-    today = today or datetime.date.today()
+def run(registry, reviewers, fetch):
     registry = Path(registry)
     rows = json.loads(registry.read_text(encoding="utf-8")).get("components", []) if registry.exists() else []
-    bad = [w for w in (check_row(r, fetch, reviewers, today) for r in rows) if w]
+    bad = [w for w in (check_row(r, fetch, reviewers) for r in rows) if w]
     for w in bad:
         print(f"FAIL {w}")
     for name, plats in parity(rows).items():
