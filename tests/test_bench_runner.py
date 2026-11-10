@@ -19,7 +19,7 @@ if os.environ.get("FAKE_MODE") == "hang":
     time.sleep(60)
 with open("solution.py", "w") as f:
     f.write(open(os.environ["FAKE_SOLUTION"]).read())
-print(json.dumps({{"type": "result", "result": "done"}}))
+print(os.environ.get("FAKE_RESULT") or json.dumps({{"type": "result", "result": "done"}}))
 """
 
 
@@ -159,3 +159,33 @@ def test_seed_files_are_written_into_the_cell_folder(tmp_path):
     assert p.returncode == 0, p.stdout + p.stderr
     calls = _calls(tmp_path)
     assert len(calls) == 1 and "data.txt" in calls[0]["files"], calls
+
+
+def test_run_prints_the_run_folder_last(tmp_path):
+    bindir = _fake_bin(tmp_path)
+    out = tmp_path / "run"
+    p = subprocess.run([sys.executable, str(BENCH), "--run", "--tasks", "T1", "--arms", "no-kit",
+                        "--models", "haiku", "--runs", "1", "--out", str(out)],
+                       capture_output=True, text=True, env=_env(tmp_path, bindir, _good_t1()), timeout=120)
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert p.stdout.strip().splitlines()[-1] == f"run folder: {out.resolve()}"
+
+
+def test_cell_metrics_come_from_the_claude_json_and_the_solution(tmp_path):
+    bindir = _fake_bin(tmp_path)
+    out = tmp_path / "run"
+    env = _env(tmp_path, bindir, _good_t1())
+    env["FAKE_RESULT"] = json.dumps({"type": "result", "total_cost_usd": 0.0123, "num_turns": 4,
+                                     "usage": {"output_tokens": 321}})
+    subprocess.run([sys.executable, str(BENCH), "--run", "--tasks", "T1", "--arms", "no-kit",
+                    "--models", "haiku", "--runs", "1", "--out", str(out)],
+                   capture_output=True, text=True, env=env, timeout=120, check=True)
+    r = json.loads((out / "results.json").read_text())["results"][0]
+    assert (r["cost_usd"], r["output_tokens"], r["turns"]) == (0.0123, 321, 4)
+    assert r["loc"] == len([ln for ln in _good_t1().splitlines() if ln.strip()])
+    assert r["has_test"] is False
+    # a rescore keeps the numbers that only the live run knew
+    subprocess.run([sys.executable, str(BENCH), "--rescore", str(out)], capture_output=True, text=True,
+                   env=env, timeout=120, check=True)
+    r2 = json.loads((out / "results.json").read_text())["results"][0]
+    assert (r2["cost_usd"], r2["output_tokens"], r2["turns"], r2["loc"]) == (0.0123, 321, 4, r["loc"])
