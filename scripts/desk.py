@@ -7,6 +7,7 @@ Usage: python3 scripts/desk.py [--port 8765]
 import argparse
 import csv
 import json
+import re
 import subprocess
 import threading
 import time
@@ -85,28 +86,30 @@ def read_switches(repo_dir):
 
 def default_band_path(repo_dir):
     # The Ponytail ledger for this project: one CSV per repo folder name, written on this Mac.
-    return Path.home() / ".config" / "ponytail" / "band" / (Path(repo_dir).name + ".csv")
+    name = re.sub(r"[^\w.-]", "_", Path(repo_dir).name)
+    return Path.home() / ".config" / "ponytail" / "band" / (name + ".csv")
 
 
 def read_spend(path):
-    """Cost per task from the Ponytail ledger. A missing file is an empty section, never an error.
+    """Cost per task from the Ponytail ledger (its band CSV). A missing file is an empty section, never an error.
 
-    Columns: task, cost_usd, tokens, agent_minutes, reuse, tests_per_task (an assumption: the ledger header was not found on this Mac).
+    Columns read: name (fallback key), cost_usd, tokens_total, agent_minutes, reuse_pct (percent), tests (a label such as
+    "3 passed", "1 failed", "stale" or "not run"). Header as the upstream writer prints it.
     """
     path = Path(path)
     if not path.exists():
         return {"rows": [], "note": "no ledger"}
     rows = []
-    # shortcut: a bad number in one cell stops the read (float raises), no per-row skip; add the skip when the ledger has bad rows.
+    # shortcut: one bad number in any cell drops the whole Spend card (gather catches it); add a per-row skip when a real ledger has bad rows.
     with path.open(encoding="utf-8", newline="") as f:
         for r in csv.DictReader(f):
             rows.append({
-                "task": (r.get("task") or "").strip(),
+                "task": (r.get("name") or r.get("key") or "").strip(),
                 "cost": float(r.get("cost_usd") or 0),
-                "tokens": float(r.get("tokens") or 0),
+                "tokens": float(r.get("tokens_total") or 0),
                 "agent_minutes": float(r.get("agent_minutes") or 0),
-                "reuse": float(r.get("reuse") or 0),
-                "tests_per_task": float(r.get("tests_per_task") or 0),
+                "reuse": float(r.get("reuse_pct") or 0),
+                "tests": (r.get("tests") or "").strip() or "not run",
             })
     totals = {k: sum(r[k] for r in rows) for k in ("cost", "tokens", "agent_minutes")}
     return {"rows": rows, "totals": totals}
@@ -114,6 +117,10 @@ def read_spend(path):
 
 def gather(run, repo_dir, now, band=None):
     errors, waiting, roadmap = [], [], []
+    try:
+        spend = read_spend(band or default_band_path(repo_dir))
+    except (ValueError, OSError, csv.Error) as e:
+        spend = {"rows": [], "note": "ledger unreadable: %s" % e}
     try:
         prs = json.loads(run(["pr", "list", "--state", "open", "--limit", "50",
                               "--json", "number,title,isDraft,url,statusCheckRollup"]))
@@ -137,7 +144,7 @@ def gather(run, repo_dir, now, band=None):
         "decided": read_trace(repo_dir),
         "switches": read_switches(repo_dir),
         "roadmap": roadmap,
-        "spend": read_spend(band or default_band_path(repo_dir)),
+        "spend": spend,
         "error": "; ".join(errors) or None,
         "stale": False,
     }

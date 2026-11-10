@@ -167,9 +167,10 @@ class ParseArgs(unittest.TestCase):
 
 
 LEDGER = (
-    "task,cost_usd,tokens,agent_minutes,reuse,tests_per_task\n"
-    "A8,0.42,120000,14,0.5,3\n"
-    "A6,1.10,300000,31,0.25,2\n"
+    "key,started,project,name,cost_usd,turns,agent_minutes,tokens_total,tokens_output,reuse_pct,reused,new,"
+    "callers_open,tests,level,model\n"
+    "abc,2026-11-10 14:00,shipquick_latest,A8 desk spend,0.42,12,14.0,120000,8000,50,2,2,0,3 passed,full,claude-haiku-5-5\n"
+    "def,2026-11-10 15:00,shipquick_latest,A6 sheets,1.10,30,31.0,300000,20000,25,1,3,1,1 failed,full,claude-haiku-5-5\n"
 )
 
 
@@ -178,18 +179,31 @@ class SpendLedger(unittest.TestCase):
         spend = desk.read_spend(Path(tempfile.gettempdir()) / "desk-test-no-such-band.csv")
         self.assertEqual(spend, {"rows": [], "note": "no ledger"})
 
-    def test_fixture_csv_is_read_row_by_row_with_totals(self):
+    def test_real_ledger_header_is_read_row_by_row_with_totals(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "x.csv"
             path.write_text(LEDGER, encoding="utf-8")
             spend = desk.read_spend(path)
         self.assertEqual(len(spend["rows"]), 2)
-        self.assertEqual(spend["rows"][0], {"task": "A8", "cost": 0.42, "tokens": 120000.0,
-                                            "agent_minutes": 14.0, "reuse": 0.5, "tests_per_task": 3.0})
+        self.assertEqual(spend["rows"][0], {"task": "A8 desk spend", "cost": 0.42, "tokens": 120000.0,
+                                            "agent_minutes": 14.0, "reuse": 50.0, "tests": "3 passed"})
+        self.assertEqual(spend["rows"][1]["tests"], "1 failed")
         self.assertAlmostEqual(spend["totals"]["cost"], 1.52)
         self.assertEqual(spend["totals"]["tokens"], 420000.0)
         self.assertEqual(spend["totals"]["agent_minutes"], 45.0)
         self.assertNotIn("note", spend)
+
+    def test_row_without_a_name_uses_the_key_as_task(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "x.csv"
+            path.write_text(LEDGER.replace("abc,2026-11-10 14:00,shipquick_latest,A8 desk spend",
+                                           "abc,2026-11-10 14:00,shipquick_latest,"), encoding="utf-8")
+            spend = desk.read_spend(path)
+        self.assertEqual(spend["rows"][0]["task"], "abc")
+
+    def test_band_path_uses_the_same_name_rule_as_the_ponytail_writer(self):
+        self.assertEqual(desk.default_band_path("/x/my repo (1)").name, "my_repo__1_.csv")
+        self.assertEqual(desk.default_band_path("/x/shipquick_latest").name, "shipquick_latest.csv")
 
 
 class SpendInServer(ServerCase):
@@ -200,13 +214,27 @@ class SpendInServer(ServerCase):
             self.start(fake_runner([]), band=band)
             data = json.loads(self.get("/api/state.json")[2])
         self.assertIsNone(data["error"])
-        self.assertEqual([r["task"] for r in data["spend"]["rows"]], ["A8", "A6"])
+        self.assertEqual([r["task"] for r in data["spend"]["rows"]], ["A8 desk spend", "A6 sheets"])
 
     def test_state_json_without_a_ledger_has_no_error(self):
         self.start(fake_runner([]))
         data = json.loads(self.get("/api/state.json")[2])
         self.assertEqual(data["spend"], {"rows": [], "note": "no ledger"})
         self.assertIsNone(data["error"])
+
+    def test_unreadable_ledger_keeps_the_other_sections(self):
+        bad = LEDGER.replace("0.42", "n/a")
+        with tempfile.TemporaryDirectory() as tmp:
+            band = Path(tmp) / "x.csv"
+            band.write_text(bad, encoding="utf-8")
+            self.start(fake_runner([]), band=band)
+            code, _, body = self.get("/api/state.json")
+        self.assertEqual(code, 200)
+        data = json.loads(body)
+        self.assertEqual(data["spend"]["rows"], [])
+        self.assertIn("ledger unreadable", data["spend"]["note"])
+        self.assertEqual(data["waiting"][0]["number"], 101)
+        self.assertEqual(data["roadmap"][0]["title"], "ShipQuick Desk")
 
     def test_page_has_a_spend_section(self):
         self.start(fake_runner([]))
