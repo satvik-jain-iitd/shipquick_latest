@@ -194,3 +194,26 @@ def test_the_session_matcher_covers_fork_and_the_manifest_names_an_author():
 def test_adr_015_states_the_time_budget_honestly():
     adr = (ROOT / "docs" / "decisions" / "ADR-015.md").read_text(encoding="utf-8")
     assert "in-process" in adr and "whole-process" in adr and "interpreter" in adr and "200 ms" in adr
+
+
+# ---- epic #309 close-out: a merged hooks.json can hold a repeated key that json.load hides ----
+def duplicate_keys(text):
+    seen = []
+
+    def hook(pairs):
+        keys = [k for k, _ in pairs]
+        seen.extend(k for k in set(keys) if keys.count(k) > 1)
+        return dict(pairs)
+
+    json.loads(text, object_pairs_hook=hook)
+    return seen
+
+
+def test_the_duplicate_key_detector_sees_what_json_load_hides():
+    text = '{"hooks": {"PreToolUse": [1], "SessionStart": [2], "PreToolUse": [3]}}'
+    assert json.loads(text)["hooks"]["PreToolUse"] == [3]      # json.load keeps the last, silently
+    assert duplicate_keys(text) == ["PreToolUse"]
+
+
+def test_hooks_json_has_no_duplicate_keys_at_any_level():
+    assert duplicate_keys((HOOKS / "hooks.json").read_text()) == []
