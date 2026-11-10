@@ -1625,3 +1625,21 @@ Scenario: check_local.sh and CI run the check (stack layer 4)
   Test: test_s222_check_local_and_ci_run_the_check
 ```
 Tests: `tests/test_emit_contracts.py`. The story landed as a four-layer stack (rule 23, max 50 files a PR); each layer carries the test it turns green.
+
+## Story #215: shared props live in the contract core
+```gherkin
+Scenario: a prop with the same spec on android and ios and an empty core fails
+  Given a made-up contract with `content` under platforms.android and platforms.ios, same spec, and an empty core
+  When check_ui_docs.py runs
+  Then it exits 1 and names the prop and core
+  Test: test_s215_a_prop_with_the_same_spec_on_android_and_ios_and_an_empty_core_fails
+Scenario: the shared prop moved into core passes
+  Test: test_s215_the_shared_prop_moved_into_core_passes
+Scenario: the same name with a different spec per platform stays put
+  Given `value` as a number on android and a Binding<Double> on ios
+  Then the check passes, because one core type cannot hold both
+  Test: test_s215_the_same_name_with_a_different_spec_per_platform_stays_put
+Scenario: no kit contract repeats a shared prop under both platforms
+  Test: test_s215_no_kit_contract_repeats_a_shared_prop_under_both_platforms
+```
+Tests: `tests/test_check_ui_docs.py`.

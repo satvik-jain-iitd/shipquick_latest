@@ -590,3 +590,12 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: Astryx's shape and type map (`<Name>Props`, `String` enum per enum prop, `(...) -> Void` with `@escaping`, content slots not stored, Swift keyword backticks), written in Python; no code copied (`ui/UPSTREAM.md`).
 - Decision: build `scripts/emit_contracts.py` beside `ui_proof.py` and `emit_tokens.py`, which already read the contracts and already have the `--check` drift pattern. Stdlib only, no Node at check time.
 - Confidence that nothing fits better: 0.8 (quicktype would need Node in the Python check path and does not know our contract fields).
+
+## 11 Nov 2026, story #215: shared props move into the contract core
+- Need: a lint rule in the existing stdlib contract checker that fails when a prop with the same name and spec sits under both `platforms.android` and `platforms.ios` instead of in `core`.
+- Run: `scout.py --need "lint a cross-platform component contract so a prop shared by android and ios lives in core"`: no repos found.
+  `gh search repos --topic=design-tokens --limit 5`: VoltAgent/awesome-design-md (a list), chakra-ui/panda (CSS-in-JS), Shopify/polaris-react-archive (archived), system-ui/theme-ui (React themes), Manavarya09/design-extract (token extraction).
+- Read: the READMEs of Manavarya09/design-extract, chakra-ui/panda and system-ui/theme-ui (tier C, first lines). None checks a per-platform prop contract.
+- Borrowed: the core-versus-platform split from Astryx `packages/native` (already in `ui/schema/contract/types.ts`); the check is a few lines in `scripts/check_ui_docs.py`, beside the other contract rules.
+- Decision: add the rule to `check_ui_docs.py`; no new script. Nothing found fits.
+- Confidence that nothing fits better: 0.85 (the rule is specific to this kit's contract shape).
