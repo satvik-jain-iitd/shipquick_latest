@@ -20,5 +20,5 @@ klickbae8yt-star/job-search private
 # bhavna-ai: public, base `dev`. Bump PR bhavna-ai#130 (re-pinned 10 Nov 2026 to v0.11.1, f66e41a, milestone D0, roles.yml added, test job has a timeout). Next: owner reviews and merges, runs the printed ruleset command, then promotes to `main`.
 # This file is the one file the hygiene test lets hold that name (tests/test_repo_hygiene.py, owner, 9 Nov 2026).
 satvik-jain-iitd/bhavna-ai
-# Miraya: private and empty on GitHub; the local repo has a caller but was never pushed (9 Nov 2026). Owner, 10 Nov 2026: not yet; `operations/` holds client data (16 tracked files match), so nothing is pushed. Next: nothing until the owner decides how to push a clean branch.
+# Miraya: private. Pushed by the owner on 10 Nov 2026 as a clean orphan root without history: `operations/` (client data, 16 tracked files) and `.beads/` are not in it and are in `.gitignore`; Telegram chat and user ids in the n8n exports are redacted. Bump PR Miraya#1 (pin v0.11.1, f66e41a, milestone D0, roles.yml klickbae8yt-star / satvik-jain-iitd) to `dev`. Next: review and merge it, run the printed ruleset command (a private Free repo may not enforce it), then promote `dev` to `main`.
 satvik-jain-iitd/Miraya private
