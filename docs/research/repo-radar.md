@@ -543,6 +543,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Confidence that nothing fits better: 0.7 (thin search; the stats are a few lines of stdlib).
 
 ---
+## 10 Nov 2026, story #321 (A5b): protected path edit warning
+- Need: a Claude Code PreToolUse hook on Edit and Write that warns when the edited file matches a glob in `scripts/protected_paths.txt`, only in auto mode, and never blocks.
+- Run: `scout.py --need "Claude Code PreToolUse hook that warns when an Edit or Write touches a protected path listed in a glob file"`: no repos found. `gh search repos --topic=claude-code-hook --limit 5`: five hook repos, none reads a glob list of protected paths (backthread/add-reasoning-to-prs writes PR text, ymonster/claude_encoding_guard guards file encoding, RainSunMe/cc-vision-hook describes images, nidhinjs/prompt-mini stops vague prompts, jeecgboot/skills is a skill pack). None fits.
+- Read: the top hits' READMEs (tier C, their own claims). The fit is judged on what each does, not on stars.
+- Borrowed: the hook layout already in this plugin (stdin JSON, exit 0, one script per hook, `common.py` for the mode and the git folder) from story #313. The glob rule is the one `scripts/review_merge.sh` uses (bash `[[ == ]]`, mapped to `fnmatch`).
+- Decision: build from scratch as `plugin/hooks/protected_warn.py`, a small script on top of `common.py`. Nothing found fits.
+- Confidence that nothing fits: 0.8 (the topic search is thin; the need is specific to this kit's own list).
 ## 10 Nov 2026, story #320 (A5a): block `--no-verify` and `core.hooksPath` in a Bash hook
 - Need: a PreToolUse Bash hook that stops `git commit --no-verify`, `git push --no-verify` and `core.hooksPath` redirects, with no outside tool.
 - Run: `scout.py --need "PreToolUse hook that blocks git commands with --no-verify or core.hooksPath"`: no repos found.

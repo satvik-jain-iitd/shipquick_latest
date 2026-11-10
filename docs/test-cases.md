@@ -1399,6 +1399,44 @@ Scenario: the manifest and the budget are honest
 ```
 Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).
 
+## Story #321 (A5b): the protected path warning
+```gherkin
+Scenario: editing a protected path in auto mode warns the coder
+  Given a repo in auto mode whose scripts/protected_paths.txt lists scripts/review_merge.sh
+  When an Edit or Write targets scripts/review_merge.sh, or a file under .github/workflows/
+  Then the hook prints "protected path, owner merges: <path>" and exits 0
+Scenario: an unlisted path prints nothing
+  When an Edit targets src/app.py
+  Then the hook prints nothing and exits 0
+Scenario: manual mode and files outside the repo print nothing
+  Given the same listed path in manual mode, or a file outside the repo
+  Then the hook prints nothing and exits 0
+Scenario: the hook never blocks
+  Given input that is not JSON
+  Then the hook exits 0 with no output
+```
+Tests: `tests/test_protected_warn.py` (`test_editing_a_listed_path_in_auto_mode_prints_the_warning`, `test_a_glob_line_matches_a_nested_path`, `test_an_unlisted_path_prints_nothing`, `test_a_listed_path_in_manual_mode_prints_nothing`, `test_a_file_outside_the_repo_prints_nothing`, `test_bad_stdin_exits_zero_and_never_blocks`, `test_the_hook_is_registered_on_pretooluse_edit_and_write`).
+
+## Story #321 review fixes (PR #350): the warning reaches a child and the model
+```gherkin
+Scenario: a child project with the vendored list gets the warning
+  Given a child repo in auto mode whose knowledge/shipquick_latest/scripts/protected_paths.txt lists .github/workflows/*
+  When an Edit targets .github/workflows/ci.yml
+  Then the hook prints "protected path, owner merges: .github/workflows/ci.yml" and exits 0
+Scenario: the warning is given as additional context to the model
+  Given a listed path in auto mode
+  Then the hook output has hookSpecificOutput.additionalContext with the warning, hookEventName PreToolUse, and no permissionDecision
+```
+Tests: `tests/test_protected_warn.py` (`test_a_child_with_the_vendored_list_gets_the_warning`, `test_the_warning_reaches_the_model_as_additional_context`).
+
+## Story #321 review fix 3 (PR #350): an edit in a git worktree
+```gherkin
+Scenario: an edit in a worktree is judged by the edited file's own checkout
+  Given a repo in auto mode with a worktree under .claude/worktrees/lane-x, and CLAUDE_PROJECT_DIR set to the main checkout
+  When an Edit targets <worktree>/scripts/review_merge.sh
+  Then the hook prints "protected path, owner merges: scripts/review_merge.sh" and exits 0
+```
+Tests: `tests/test_protected_warn.py` (`test_an_edit_in_a_worktree_warns_when_the_session_points_at_the_main_checkout`).
 ## Story #320 (A5a): the Bash hook blocks git hook bypasses
 ```gherkin
 Scenario: a git commit or push that skips the hooks is blocked
