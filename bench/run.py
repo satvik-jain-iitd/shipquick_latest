@@ -21,7 +21,6 @@ import sys
 import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -58,6 +57,8 @@ def run_cell(tid, arm, model, run_no, out_dir: Path, claude: str, timeout: int, 
     cell = out_dir / name
     work = cell / "work"
     work.mkdir(parents=True, exist_ok=True)
+    for fn, content in tasks_module().TASKS[tid].get("seed", {}).items():
+        _write(work / fn, content)
     cmd = [claude, "-p", tasks_module().TASKS[tid]["prompt"], "--model", MODELS[model], *BASE_FLAGS]
     if rules:
         cmd += ["--append-system-prompt", rules]
@@ -87,6 +88,24 @@ def score_work(tid, work: Path) -> dict:
 def tasks_module():
     import tasks
     return tasks
+
+
+def default_out() -> Path:
+    """A fresh folder in the system temp dir, outside any repo."""
+    return Path(tempfile.mkdtemp(prefix="shipquick-bench-"))
+
+
+def inside_git(path: Path) -> bool:
+    """True when path, or its nearest existing parent, is in a git work tree. --setting-sources project,local
+    would then load that repo's .claude settings into every arm, so a run folder must never be there."""
+    anc = path
+    while not anc.exists() and anc != anc.parent:
+        anc = anc.parent
+    try:
+        r = subprocess.run(["git", "-C", str(anc), "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+    except OSError:
+        return False
+    return r.returncode == 0
 
 
 def run_all(task_ids, arms, models, runs, workers, timeout, out_dir: Path, rules_text: str) -> list:
@@ -187,9 +206,12 @@ def main(argv=None) -> int:
     for m in models:
         if m not in MODELS:
             ap.error(f"unknown model {m}; models are {', '.join(MODELS)}")
-    out = Path(a.out) if a.out else HERE / "runs" / datetime.now().strftime("%Y%m%d-%H%M%S")
+    out = Path(a.out).resolve() if a.out else default_out()
+    if inside_git(out):
+        ap.error(f"--out {out} is inside a git work tree: the project settings there would load into every arm. "
+                 "Use a folder outside any repo, or leave --out off for a temp folder")
     rules_text = Path(a.kit_rules).read_text(encoding="utf-8")
-    run_all(task_ids, arms, models, a.runs, a.workers, a.timeout, out.resolve(), rules_text)
+    run_all(task_ids, arms, models, a.runs, a.workers, a.timeout, out, rules_text)
     return 0
 
 

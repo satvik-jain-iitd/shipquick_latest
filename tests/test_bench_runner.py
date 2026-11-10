@@ -12,7 +12,7 @@ BENCH = ROOT / "bench" / "run.py"
 FAKE = """#!{py}
 import json, os, sys, time
 with open(os.environ["FAKE_LOG"], "a") as f:
-    f.write(json.dumps({{"argv": sys.argv[1:], "cwd": os.getcwd(),
+    f.write(json.dumps({{"argv": sys.argv[1:], "cwd": os.getcwd(), "files": sorted(os.listdir(".")),
                          "env": {{k: os.environ.get(k, "") for k in
                                   ("CLAUDE_CODE_DISABLE_CLAUDE_MDS", "CLAUDE_CODE_DISABLE_AUTO_MEMORY")}}}}) + "\\n")
 if os.environ.get("FAKE_MODE") == "hang":
@@ -113,3 +113,49 @@ def test_unknown_task_or_arm_is_refused(tmp_path):
                            capture_output=True, text=True, env=_env(tmp_path, bindir, _good_t1()), timeout=120)
         assert p.returncode != 0, extra
     assert _calls(tmp_path) == []
+
+
+def test_an_out_folder_inside_a_git_repo_is_refused_with_no_call(tmp_path):
+    """A run folder inside a repo would let --setting-sources project,local load that repo's settings into
+    the no-kit arm (review of #332)."""
+    bindir = _fake_bin(tmp_path)
+    inside = ROOT / "bench" / "runs-refused-test"
+    try:
+        p = subprocess.run([sys.executable, str(BENCH), "--run", "--tasks", "T1", "--arms", "no-kit",
+                            "--models", "haiku", "--runs", "1", "--out", str(inside)],
+                           capture_output=True, text=True, env=_env(tmp_path, bindir, _good_t1()), timeout=120)
+        assert p.returncode != 0, p.stdout
+        assert "git" in (p.stdout + p.stderr).lower()
+        assert _calls(tmp_path) == []
+        assert not inside.exists(), "the refused run folder was still created"
+    finally:
+        if inside.exists():
+            import shutil
+            shutil.rmtree(inside)
+
+
+def test_the_default_out_folder_is_outside_any_repo(tmp_path):
+    sys.path.insert(0, str(ROOT / "bench"))
+    import importlib
+    run = importlib.import_module("run")
+    d = run.default_out()
+    top = subprocess.run(["git", "-C", str(d.parent), "rev-parse", "--show-toplevel"],
+                         capture_output=True, text=True)
+    assert top.returncode != 0, f"default out {d} is inside the repo {top.stdout.strip()}"
+
+
+def test_seed_files_are_written_into_the_cell_folder(tmp_path):
+    bindir = _fake_bin(tmp_path)
+    env = _env(tmp_path, bindir, _good_t1())
+    code = (
+        "import sys, importlib; sys.path.insert(0, %r); run = importlib.import_module('run'); "
+        "t = run.tasks_module(); "
+        "t.TASKS['TS'] = {'prompt': 'p', 'seed': {'data.txt': 'hello'}, 'good': {}, 'bad': {}, 'axis': 'correct', "
+        "'score': lambda wd: {'correct': 1, 'safe': 1, 'reason': 'x'}}; "
+        "import shutil; from pathlib import Path; "
+        "run.run_cell('TS', 'no-kit', 'haiku', 1, Path(%r), shutil.which('claude'), 20, None)"
+    ) % (str(ROOT / "bench"), str(tmp_path / "seedrun"))
+    p = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env, timeout=120)
+    assert p.returncode == 0, p.stdout + p.stderr
+    calls = _calls(tmp_path)
+    assert len(calls) == 1 and "data.txt" in calls[0]["files"], calls

@@ -1037,3 +1037,17 @@ Scenario: an unknown task, arm or model is refused before any call
   Then it exits non-zero and the fake claude is never called
 ```
 Tests: `tests/test_bench_runner.py` (4 tests).
+
+## Story #331 review fixes: the run folder and the seed
+```gherkin
+Scenario: a run folder inside a git repo is refused
+  Given a fake claude on PATH
+  When bench/run.py --run gets an --out inside a git work tree
+  Then it exits non-zero naming git, creates no folder, and the fake claude is never called
+  And without --out the folder is a fresh temp dir outside any repo
+Scenario: a task's seed files reach the cell folder
+  Given a task with a one-file seed
+  When its cell runs
+  Then the fake claude finds that file in its working folder
+```
+Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
