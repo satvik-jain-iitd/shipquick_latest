@@ -12,6 +12,13 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-11-10
+Tag `v0.11.1`, "a child sets its milestone". Notes: `docs/RELEASE_NOTES_v0.11.1.md`.
+
+### Added
+- `checks.yml` input `milestone` (default `D1`) for the `environments` job; `adopt.sh --milestone D0..D6` writes it into the child's caller and refuses a malformed existing line (#357, PR #358).
+- Children bump notes (#356).
+
 ## [0.11.0] - 2026-11-10
 Tag `v0.11.0`, "the kit measures itself and enforces at runtime". Notes: `docs/RELEASE_NOTES_v0.11.0.md`.
 

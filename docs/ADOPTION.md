@@ -50,17 +50,11 @@ Write it with `bash knowledge/shipquick_latest/scripts/adopt.sh . --kit-branch d
 
 If you run `adopt.sh` again without `--kit-branch`, it keeps the kit branch your caller already names.
 
-What changes when `kit_branch` is set:
-- The adoption job reads the submodule pin and `.pre-commit-config.yaml` from the kit branch.
-- The roles job reads `.shipquick/roles.yml` from the kit branch. So does `scripts/review_merge.sh` in auto mode.
-- A job that runs on the kit branch itself still reads its own commit. So a PR that moves the pin is checked against its own change.
-- The rule-37 check still runs. The pin must be merged into ShipQuick `dev` or `main`, or be a tag.
-- `adopt.sh . --check` prints one line for the caller's branch and one for the kit branch.
-- The daily scan also checks the kit branch: the submodule there must match the caller's pin, and the hooks must be there.
+## The milestone (story #357)
 
-What stays the same:
-- With no `kit_branch`, everything works as before.
-- A release freeze still lives on `main` (`.shipquick/freeze`). `freeze.sh` writes it there.
+The `environments` job needs a filled `Dev link:` and `Production link:` in the project's `CLAUDE.md` once the project is past D0. It reads the project's milestone from the caller: `milestone: D2` under `shipquick_ref:` in `shipquick-call.yml`.
+A caller with no `milestone:` line means unknown, so the gate keeps today's behaviour (D1: both links needed). `D0` is the only way to opt out: a project that has deployed nothing yet writes `adopt.sh . --milestone D0`.
+`--milestone` takes D0 to D6; anything else is refused before a file is written. A run without the flag keeps the caller's own line, and refuses a `milestone:` line that is not exactly `milestone: D<n>` instead of dropping it.
 
 ## The gate must be a required check (story #260)
 
