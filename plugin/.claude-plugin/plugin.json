@@ -1,0 +1,9 @@
+{
+  "name": "shipquick",
+  "version": "0.1.0",
+  "description": "ShipQuick runtime rules: the mode and the load-bearing rules reach every session and every subagent.",
+  "author": {
+    "name": "ShipQuick"
+  },
+  "license": "MIT"
+}
