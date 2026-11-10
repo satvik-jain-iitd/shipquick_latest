@@ -629,3 +629,41 @@ def test_s316_broken_markers_stop_adopt_and_leave_the_file_alone(child):
     assert r.returncode != 0
     assert "markers" in (r.stdout + r.stderr)
     assert (child / "CLAUDE.md").read_bytes() == before
+
+
+# ---- story #357: the child's milestone is a caller input, written by adopt.sh --milestone ----
+CALL_FILE = ".github/workflows/shipquick-call.yml"
+
+
+def milestone_lines(child):
+    return [l for l in (child / CALL_FILE).read_text(encoding="utf-8").splitlines() if l.strip().startswith("milestone:")]
+
+
+def test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused(child):
+    r = adopt(child, "--milestone", "D2")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert milestone_lines(child) == ["      milestone: D2"]
+    assert adopt(child).returncode == 0                                   # a later run keeps the caller's own line, once
+    assert milestone_lines(child) == ["      milestone: D2"]
+    before = (child / CALL_FILE).read_bytes()
+    bad = adopt(child, "--milestone", "X9")
+    assert bad.returncode != 0 and "milestone" in (bad.stdout + bad.stderr)
+    assert (child / CALL_FILE).read_bytes() == before                     # refused before anything is written
+
+
+def test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone(child):
+    assert adopt(child).returncode == 0
+    assert milestone_lines(child) == []                                   # absence stays absence: the workflow default applies
+
+
+def test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped(child):
+    assert adopt(child, "--milestone", "D2").returncode == 0
+    path = child / CALL_FILE
+    for bad in ('milestone: "D2"', "milestone: d2", "milestone: D7", "milestone: D2 # later"):
+        text = "\n".join(("      " + bad) if l.strip().startswith("milestone:") else l
+                         for l in path.read_text(encoding="utf-8").splitlines()) + "\n"
+        path.write_text(text, encoding="utf-8")
+        r = adopt(child)
+        assert r.returncode != 0, bad
+        assert "milestone" in (r.stdout + r.stderr) and bad.split(": ", 1)[1].split(" #")[0].strip('"') in (r.stdout + r.stderr), bad
+        assert path.read_text(encoding="utf-8") == text, bad              # nothing was written

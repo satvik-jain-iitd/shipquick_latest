@@ -24,6 +24,13 @@ on:
           (the default) means the branch the job runs on.
         type: string
         default: ''
+      milestone:
+        description: >-
+          Story #357: the project's current milestone, D0 to D6. From D1 on, the environments job needs a
+          filled Dev link and Production link in CLAUDE.md; D0 exempts a project that has deployed nothing yet.
+          A caller with no `milestone:` line means unknown, so it keeps today's gate (D1).
+        type: string
+        default: D1
 
 permissions:
   contents: read
@@ -260,7 +267,9 @@ jobs:
           sparse-checkout: scripts
           persist-credentials: false
       - name: Check Dev link / Production link are filled past D0 (story #120)
-        run: bash .shipquick/scripts/check_environments.sh --claude-md project/CLAUDE.md --milestone D1
+        env:
+          MILESTONE: ${{ inputs.milestone }}
+        run: bash .shipquick/scripts/check_environments.sh --claude-md project/CLAUDE.md --milestone "$MILESTONE"
   component-registry:
     # Story #186: every custom component in the child's ui/registry.json has the owner's recorded yes, read live from the issue.
     runs-on: ubuntu-latest
