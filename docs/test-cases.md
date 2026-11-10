@@ -1132,5 +1132,10 @@ Scenario: a file outside the pattern, or a pattern file inside docs, .claude or 
   When the PreToolUse hook runs
   Then it prints nothing and exits 0
   And bad stdin exits 0 and prints nothing
+
+Scenario: a Write to a scratch file that already exists is silent (it is an edit, not a new file)
+  Given TODO.md is already on disk at the project root
+  When a Write targets TODO.md
+  Then the PreToolUse hook prints nothing and exits 0
 ```
-Tests: `tests/test_scratch_md.py` (`test_a_new_todo_file_outside_docs_warns_and_names_follow_ups`, `test_a_draft_file_names_docs_plans`, `test_a_file_outside_the_pattern_is_silent`, `test_a_pattern_file_inside_docs_is_silent`, `test_a_pattern_file_inside_claude_or_github_is_silent`, `test_bad_stdin_exits_zero_and_prints_nothing`, `test_the_hook_is_registered_for_write_before_use`). Local: `python3 -m pytest -q tests/test_scratch_md.py`.
+Tests: `tests/test_scratch_md.py` (`test_a_new_todo_file_outside_docs_warns_and_names_follow_ups`, `test_a_draft_file_names_docs_plans`, `test_a_file_outside_the_pattern_is_silent`, `test_a_pattern_file_inside_docs_is_silent`, `test_a_pattern_file_inside_claude_or_github_is_silent`, `test_bad_stdin_exits_zero_and_prints_nothing`, `test_a_write_to_an_existing_todo_file_is_silent`, `test_the_hook_is_registered_for_write_before_use`). Local: `python3 -m pytest -q tests/test_scratch_md.py`.

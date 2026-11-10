@@ -20,6 +20,8 @@ def target_for(file_path, cwd):
     name = path.name.upper()
     if path.suffix.lower() != ".md" or not name.startswith(PREFIXES):
         return ""
+    if (path if path.is_absolute() else Path(cwd) / path).exists():
+        return ""  # an existing file is an edit, not a new scratch file
     try:
         rel = path.resolve().relative_to(Path(cwd).resolve())
     except (ValueError, OSError):

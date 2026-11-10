@@ -38,6 +38,11 @@ def test_a_draft_file_names_docs_plans(tmp_path):
     assert "docs/plans/" in warning_of(run_write(tmp_path / "DRAFT-release.md", tmp_path))
 
 
+def test_a_write_to_an_existing_todo_file_is_silent(tmp_path):
+    (tmp_path / "TODO.md").write_text("- [ ] keep\n", encoding="utf-8")
+    assert run_write(tmp_path / "TODO.md", tmp_path) == ""
+
+
 def test_a_file_outside_the_pattern_is_silent(tmp_path):
     assert run_write(tmp_path / "README.md", tmp_path) == ""
     assert run_write(tmp_path / "src" / "notes_parser.py", tmp_path) == ""
