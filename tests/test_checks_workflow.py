@@ -110,3 +110,19 @@ def test_s225_the_roles_job_says_clearly_when_the_kit_branch_or_its_roles_yml_is
     section = CHECKS.split("\n  roles:\n", 1)[1].split("\n  team-block:", 1)[0]
     assert "kit branch $KIT_BRANCH not found" in section
     assert "no .shipquick/roles.yml on kit branch $KIT_BRANCH" in section
+
+
+# ---- review of #335: a rule-24 child keeps its rules on its kit branch ----
+def _job_block(text, name):
+    m = re.search(r"^  " + re.escape(name) + r":\n(.*?)(?=^  [a-z][a-z-]*:\n|\Z)", text, re.M | re.S)
+    assert m, f"job {name} not found"
+    return m.group(1)
+
+
+def test_s316_rule_copies_reads_the_child_claude_md_from_the_kit_branch():
+    text = (Path(__file__).resolve().parent.parent / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
+    job = _job_block(text, "rule-copies")
+    assert "KIT_BRANCH: ${{ inputs.kit_branch }}" in job
+    assert "TARGET: ${{ github.base_ref }}" in job
+    assert 'git -C project show "$ref:CLAUDE.md"' in job
+    assert "skills" in job.split("sparse-checkout:", 1)[1], "the phrase check needs the skills folder"
