@@ -428,3 +428,12 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the idea of a stdlib Python server bound to 127.0.0.1 (from dashgit `server.py`). Our roadmap engine is reused as is: `roadmap/roadmap.js` and `roadmap/query.graphql`.
 - Verdict: nothing fits the need (one repo, decisions waiting, roadmap). Build from scratch, small, on top of the existing roadmap engine.
 - Confidence that nothing fits: 0.8. Test: the design doc's Option A and B each get a spike; if a tool turns up that covers one repo's decisions, swap the page only.
+
+## 10 Nov 2026, story #310 (A0): the Done when line and the size warning
+- Need: fail a user story issue with no `Done when:` line, and warn on size M, L or XL labels.
+- Run: `scout.py --need "fail a GitHub user story issue with no Done when line and warn on size M L XL labels"`: no repos found.
+  `gh search repos "github issue template size story checker"`: no fit for a check on an existing issue label set.
+- Read: none to read; the search gave no repo that checks story issues.
+- Decision: extend `scripts/check_story.py` (the story-shape check of #155). No new tool: the same issue read, the same skip rule for old stories.
+- Confidence that nothing fits better: 0.7 (a narrow ShipQuick rule; the search was thin).
+- Study of Ponytail and ECC (the epic's source, read in full by the reviewer, 10 Nov 2026): `docs/research/2026-11-10-ponytail-ecc-study.md`.
