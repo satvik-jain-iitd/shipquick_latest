@@ -13,8 +13,16 @@ HEAD = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=Tru
 CALL = "satvik-jain-iitd/shipquick_latest/.github/workflows/roadmap.yml"
 
 
-def adopt(child, *args, env=None):
-    return subprocess.run(["bash", str(ADOPT), str(child), *args], capture_output=True, text=True, env=env)
+PONYTAIL_ON = ROOT / "tests/fixtures/adopt/settings-ponytail-on.json"   # story #326: the settings file every test uses unless it says otherwise
+
+
+def adopt(child, *args, env=None, settings=None, ci=False):
+    e = dict(os.environ if env is None else env)
+    e["SHIPQUICK_CLAUDE_SETTINGS"] = str(settings or PONYTAIL_ON)
+    e.pop("CI", None)   # a real CI runner sets CI; a test sets it on purpose with ci=True
+    if ci:
+        e["CI"] = "1"
+    return subprocess.run(["bash", str(ADOPT), str(child), *args], capture_output=True, text=True, env=e)
 
 
 def snapshot(child):
@@ -514,6 +522,62 @@ def test_s260_a_403_on_the_rules_read_fails_as_cannot_read_not_as_gate_not_requi
     (gh.stub / "rules.403").write_text("", encoding="utf-8")
     r = gate_run(child, gh, protection=PROTECTED)
     assert r.returncode == 1 and "cannot read rules (403/404)" in r.stdout and "gate not required" not in r.stdout
+
+
+# ---- story #326 (A10): adopt.sh --check reads the Ponytail plugin switch in the Claude settings file ----
+PONYTAIL_OFF = ROOT / "tests/fixtures/adopt/settings-no-ponytail.json"
+PONYTAIL_INSTALL = ["/plugin marketplace add dietrichgebert/ponytail", "/plugin install ponytail@ponytail"]
+
+
+def adopted_with_origin(child, gh):
+    with_origin(child)   # story #260: the gate is read from GitHub, through the stub gh
+    adopt(child, env=gh)
+    add_fake_submodule(child, HEAD)
+    return child
+
+
+def test_s326_check_passes_when_the_ponytail_plugin_is_enabled(child, gh):
+    adopted_with_origin(child, gh)
+    r = adopt(child, "--check", env=gh, settings=PONYTAIL_ON)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "adopted" in r.stdout.lower() and "ponytail" not in r.stdout.lower()
+
+
+def test_s326_check_says_not_adopted_and_prints_both_install_lines_when_the_key_is_false(child, gh):
+    adopted_with_origin(child, gh)
+    r = adopt(child, "--check", env=gh, settings=PONYTAIL_OFF)
+    assert r.returncode == 1 and "not adopted" in r.stdout.lower(), r.stdout
+    for line in PONYTAIL_INSTALL:
+        assert line in r.stdout
+
+
+def test_s326_check_says_not_adopted_when_the_key_is_absent(child, gh, tmp_path):
+    adopted_with_origin(child, gh)
+    settings = tmp_path / "settings.json"
+    settings.write_text('{"enabledPlugins": {"caveman@caveman": true}}', encoding="utf-8")
+    r = adopt(child, "--check", env=gh, settings=settings)
+    assert r.returncode == 1 and "not adopted" in r.stdout.lower() and PONYTAIL_INSTALL[1] in r.stdout
+
+
+def test_s326_check_says_not_adopted_when_there_is_no_settings_file(child, gh, tmp_path):
+    adopted_with_origin(child, gh)
+    r = adopt(child, "--check", env=gh, settings=tmp_path / "no-such-settings.json")
+    assert r.returncode == 1 and "not adopted" in r.stdout.lower() and PONYTAIL_INSTALL[0] in r.stdout
+
+
+def test_s326_check_says_not_adopted_when_the_settings_file_is_not_json(child, gh, tmp_path):
+    adopted_with_origin(child, gh)
+    settings = tmp_path / "settings.json"
+    settings.write_text("{ not json", encoding="utf-8")
+    r = adopt(child, "--check", env=gh, settings=settings)
+    assert r.returncode == 1 and PONYTAIL_INSTALL[1] in r.stdout
+
+
+def test_s326_in_ci_a_missing_ponytail_key_only_warns_and_the_check_passes(child, gh):
+    adopted_with_origin(child, gh)
+    r = adopt(child, "--check", env=gh, settings=PONYTAIL_OFF, ci=True)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "warning" in r.stdout.lower() and PONYTAIL_INSTALL[1] in r.stdout
 
 
 # ---- review of #335: adopt.sh writes and refreshes the kit rule block between the markers ----

@@ -438,6 +438,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Confidence that nothing fits better: 0.7 (a narrow ShipQuick rule; the search was thin).
 - Study of Ponytail and ECC (the epic's source, read in full by the reviewer, 10 Nov 2026): `docs/research/2026-11-10-ponytail-ecc-study.md`.
 
+## 10 Nov 2026, story #326 (A10): adopt.sh checks the Ponytail plugin
+- Need: `adopt.sh --check` fails a child when the Ponytail plugin is not enabled in the Claude settings file, and prints the two install lines.
+- Run: `scout.py --need "adopt script checks a Claude Code plugin is enabled in the user settings file and prints install lines"`: no repos found.
+  `gh search repos --topic=claude-code-plugin --limit 5`: DietrichGebert/ponytail (the plugin itself), thedotmack/claude-mem, career-ops-hq/career-ops, and three unrelated skill repos.
+- Read: the top 3 READMEs. Ponytail: the lazy-dev rules plugin, with install by `/plugin marketplace add` and `/plugin install`. claude-mem: a memory plugin, no settings check of its own. career-ops: a job-search agent that can run as a plugin. None checks another repo's plugin switch.
+- Borrowed: the install lines, taken from the Ponytail install docs (the plugin's own text). The settings key name is the one Claude Code writes (`enabledPlugins`), as read from our own `~/.claude/settings.json`.
+- Decision: extend `scripts/adopt.sh --check` with about 12 lines (a `python3 -c` JSON read, the same style as the kit_branch parser). No new tool, no new dependency.
+- Confidence that nothing fits better: 0.85 (the check is one key in one file; a plugin would only add a second source of truth).
 ## 10 Nov 2026, story #316 (A3): rule-copy canary
 - Need: fail a check when a child's copy of the kit rule block drifts from the kit CLAUDE.md, or when a load-bearing phrase is missing from the kit rule file.
 - Run: `scout.py --need "fail a CI check when a copied rule block in a child CLAUDE.md drifts from the kit rules or a load-bearing phrase is missing from a rule file"` found no repos. `gh search repos --topic=rule-drift` and `--topic=prompt-lint` gave only prompt linters (ravikiranpagidi/prompt-lint-py, MIT, a static analyzer for prompt templates, not a copy check). `gh search repos "instruction file drift check CLAUDE.md"` gave `lzy02712-spec/agents-md-drift` (stale paths, npm scripts and size in AGENTS.md) and `petrkindlmann/agents-md-action` (required H2 sections, and a terso emit drift check for per-agent files).

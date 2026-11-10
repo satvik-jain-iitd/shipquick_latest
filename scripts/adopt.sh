@@ -18,6 +18,8 @@
 #   knowledge/shipquick_latest submodule is at, and .pre-commit-config.yaml carries the ShipQuick hooks,
 #   and (story #260) `shipquick-checks / gate` is a required check on the default branch (read with gh).
 #   A normal run prints the one command that makes it required; adopt.sh never runs it.
+#   Story #326: --check also needs enabledPlugins["ponytail@ponytail"] true in ~/.claude/settings.json (or $SHIPQUICK_CLAUDE_SETTINGS);
+#   when it is not, the two install lines are printed and the verdict is not adopted. With CI set it only warns.
 # --kit-branch <b> (story #225, rule-24 children): writes `kit_branch: <b>` into shipquick-call.yml. The checks
 #   then read the submodule pin, .pre-commit-config.yaml and .shipquick/roles.yml from branch <b>, so `main` can
 #   carry only the caller. --check reads `kit_branch:` from the caller and prints one verdict per branch.
@@ -144,6 +146,20 @@ if [ -n "$check_mode" ]; then
         echo "platforms: OK $plat_csv"
       fi
     fi
+  fi
+  # story #326 (A10): the Ponytail plugin must be on in the Claude settings. CI has no settings file, so there it only warns.
+  # shortcut: reads only enabledPlugins["ponytail@ponytail"], not the plugin's own install state; upgrade when Claude Code exposes one.
+  ponytail_settings="${SHIPQUICK_CLAUDE_SETTINGS:-$HOME/.claude/settings.json}"
+  if ! python3 -c 'import json,sys
+try:
+    on = json.load(open(sys.argv[1], encoding="utf-8")).get("enabledPlugins", {}).get("ponytail@ponytail") is True
+except (OSError, ValueError, AttributeError):
+    on = False
+sys.exit(0 if on else 1)' "$ponytail_settings"; then
+    if [ -n "${CI:-}" ]; then echo "warning: the Ponytail plugin is not enabled in $ponytail_settings (CI has no settings file, so the check still passes)"
+    else echo "not adopted: the Ponytail plugin is not enabled in $ponytail_settings"; ok=0; fi
+    echo "  /plugin marketplace add dietrichgebert/ponytail"
+    echo "  /plugin install ponytail@ponytail"
   fi
   if [ "$ok" = 1 ]; then
     if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, pre-commit hooks present"
