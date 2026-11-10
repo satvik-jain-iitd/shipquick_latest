@@ -338,5 +338,71 @@ class Publish(unittest.TestCase):
         self.assertEqual(code, 0)
 
 
+REGISTRY = {"components": [   # fixture values only: made-up component names and issue numbers
+    {"name": "Stepper", "platform": "android", "base": "Slider", "request": 12, "twin": 13, "doc": "ui/components/Stepper/Stepper.doc.mjs"},
+    {"name": "Stepper", "platform": "ios", "base": "Slider", "request": 13, "twin": 12, "status": "building"},
+    {"name": "RatingRow", "platform": "android", "base": "Row", "request": 20}]}
+
+
+class DesignSystem(unittest.TestCase):
+    """Story #188: a Design system board, made from the registry, right after the Design learnings board."""
+
+    def setUp(self):
+        self.d = tempfile.TemporaryDirectory(); root = Path(self.d.name)
+        self.reg = root / "registry.json"; self.reg.write_text(json.dumps(REGISTRY))
+        self.c = canvas(["A.dc.html", "B.dc.html", "C.dc.html", "D.dc.html"])
+        self.m = manifest([[{"id": "1a", "title": "1a", "boards": ["A.dc.html", "B.dc.html"], "notes": []}],
+                           [{"id": "2a", "title": "2a", "boards": ["C.dc.html"], "notes": []}],
+                           [{"id": "3a", "title": "3a", "boards": ["D.dc.html"], "notes": []}]])
+        self.m["layout"] = "columns"; self.m["registry"] = str(self.reg)
+        self.m["sections"].append({"id": "learnings", "title": "Section 4 · Design learnings", "purpose": "p", "prefix": "LEARNINGS",
+                                   "tint": "sage", "rows": [], "learnings": LEARN})
+
+    def tearDown(self): self.d.cleanup()
+
+    def test_S34_the_registry_renders_a_board_with_every_component_row_under_its_platform_right_after_learnings(self):
+        new, files, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, [])
+        html = files["project/design-system.dc.html"]
+        for head in ("Android", "iOS"): self.assertIn(head, html)
+        for word in ("Stepper", "RatingRow", "Slider", "ui/components/Stepper/Stepper.doc.mjs", "building", "twin #13", "no twin yet"): self.assertIn(word, html)
+        self.assertEqual(html.count("<b>Stepper</b>"), 2)   # one row per platform
+        self.assertEqual(html.count("ui/components/Stepper/Stepper.doc.mjs"), 2)   # the doc path given on android, the default on ios
+        self.assertIn("color: #263528", html)      # ink on the fill, the same 4.5:1 the theme checks
+        self.assertGreaterEqual(cs.contrast("#263528", cs.tile_fill(TINTS["sage"])), 4.5)
+        ds, learn = new["boards"]["design-system.dc.html"], new["boards"]["design-learnings.dc.html"]
+        self.assertEqual(ds["y"], learn["y"]); self.assertGreater(ds["x"], learn["x"] + learn["w"])   # the same row, right after it
+        s4 = new["boards"]["bg/section-4-1.dc.html"]
+        self.assertTrue(cs.inside(cs.box(ds["x"], ds["y"], ds["w"], ds["h"], "d"), cs.box(s4["x"], s4["y"], s4["w"], s4["h"], "s4"), cs.PAD - 1))
+        self.assertTrue(ds["title"].startswith("LEARNINGS · "))
+        self.assertEqual(cs.check_existing(new), [])
+
+    def test_S35_a_missing_registry_or_an_unknown_platform_is_a_problem_and_no_registry_key_means_no_board(self):
+        self.m["registry"] = str(self.reg.with_name("gone.json"))
+        self.assertTrue(any("gone.json" in p for p in cs.layout(self.c, self.m)[2]))
+        self.reg.write_text(json.dumps({"components": REGISTRY["components"] + [{"name": "Grid", "platform": "web", "base": "Box", "request": 30}]}))
+        self.m["registry"] = str(self.reg)
+        self.assertTrue(any("Grid" in p and "web" in p for p in cs.layout(self.c, self.m)[2]))
+        self.m.pop("registry")
+        new, files, problems = cs.layout(self.c, self.m)
+        self.assertEqual(problems, []); self.assertNotIn("project/design-system.dc.html", files); self.assertNotIn("design-system.dc.html", new["boards"])
+
+    def test_S36_check_fails_naming_a_stale_design_system_board_until_apply_regenerates_it(self):
+        import io, contextlib
+        root = Path(self.d.name); (root / "project").mkdir(); (root / "project" / "canvas.json").write_text(json.dumps(self.c))
+        mp = root / "m.json"; mp.write_text(json.dumps(self.m))
+        def run(flag):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out): code = cs.main(["--manifest", str(mp), "--canvas", str(root), flag])
+            return code, out.getvalue()
+        self.assertEqual(run("--apply")[0], 0)
+        self.assertEqual(run("--check")[0], 0)
+        self.reg.write_text(json.dumps({"components": REGISTRY["components"][:1]}))   # the registry changed, the board did not
+        code, out = run("--check")
+        self.assertEqual(code, 1); self.assertIn("STALE project/design-system.dc.html", out)
+        self.assertEqual(run("--apply")[0], 0)
+        self.assertEqual(run("--check")[0], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
