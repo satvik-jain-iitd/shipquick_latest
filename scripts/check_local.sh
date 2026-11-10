@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments story tdd shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments story tdd shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
 #   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
@@ -47,6 +47,7 @@ check_ui_docs() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_docs
 check_ui_topics() { [ -d ui/integration ] || return 0; python3 "$HERE/ui_topics.py" --check; report ui-topics $?; }   # story #183
 check_ui_tokens() { [ -f design/tokens.json ] || return 0; python3 "$HERE/emit_tokens.py" --check; report ui-tokens $?; }   # story #184
 check_ui_proof() { [ -d ui/components ] || return 0; python3 "$HERE/ui_proof.py" --check; report ui-proof $?; }   # story #217
+check_ui_contracts() { [ -d ui/components ] || return 0; python3 "$HERE/emit_contracts.py" --check; report ui-contracts $?; }   # story #222
 check_ui_coverage() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_coverage.py" --strict-api; report ui-coverage $?; }   # stories #216, #231; web part skips without ui/tool/node_modules
 check_timeouts() { [ -d .github/workflows ] || return 0; python3 "$HERE/check_timeouts.py" .github/workflows; report timeouts $?; }
 check_commits() {
@@ -127,7 +128,7 @@ check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story tdd workflow-security secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story tdd workflow-security secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
@@ -137,6 +138,7 @@ for c in "${checks[@]}"; do
     ui-registry) check_ui_registry ;;
     ui-topics) check_ui_topics ;;
     ui-proof) check_ui_proof ;;
+    ui-contracts) check_ui_contracts ;;
     ui-tokens) check_ui_tokens ;;
     ui-coverage) check_ui_coverage ;;
     timeouts) check_timeouts ;;
@@ -148,7 +150,7 @@ for c in "${checks[@]}"; do
     shortcuts) check_shortcuts ;;
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments story tdd shortcuts secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments story tdd shortcuts secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts

@@ -1593,3 +1593,29 @@ Scenario: adopt.sh writes, keeps and validates the milestone
   When adopt.sh runs with --milestone D2, the caller has `milestone: D2`; a later run without the flag keeps it, once; a run with no flag and no line writes none; --milestone X9 is refused and the caller is untouched; an existing line that is quoted, lowercase, D7 or has a trailing comment is refused, not dropped
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
+
+## Story #222: generated Swift contract structs for ui/components
+```gherkin
+Scenario: every prop kind maps to a Swift type
+  Given a made-up contract with string, number, boolean, enum, fn, content, array and named props, one web-only prop and one sameMeaning
+  When the generator renders it
+  Then the file holds `<Name>Props` with typed fields, a nested String enum, `(() -> Void)?` for an optional callback, `@escaping` on a required one, a backticked `in`, the generic placeholder replaced and named in a comment, the content slot and the web-only prop in comments, and no Android prop
+  Test: test_s222_every_prop_kind_maps_to_a_swift_type
+Scenario: the folder names the struct when two contracts share an inner name
+  Given two component folders whose contracts both carry the same inner `name`
+  When the generator renders them
+  Then each struct and its nested enums take the folder's name, and the inner name sits in a comment
+  Test: test_s222_the_folder_names_the_struct_when_two_contracts_share_an_inner_name
+Scenario: a record becomes a nested struct and an unknown kind fails by name
+  Test: test_s222_a_record_type_becomes_a_nested_struct_and_an_unknown_kind_fails_by_name
+Scenario: a renamed contract field fails --check and names the struct file
+  Given the kit's contracts and structs copied to a temp folder, and `label` renamed to `title` in one contract
+  When `--check` runs
+  Then it exits 1 and prints that struct file; after a regenerate the new field is there and `--check` exits 0
+  Test: test_s222_a_renamed_contract_field_fails_check_and_names_the_struct_file
+Scenario: a removed contract leaves a stale struct that --check names and a regenerate removes
+  Test: test_s222_a_removed_contract_leaves_a_stale_struct_that_check_names
+Scenario: the committed structs are current, every contract has one, and check_local.sh and CI run the check
+  Tests: test_s222_the_committed_structs_are_current_with_the_contracts, test_s222_every_contract_has_a_struct_file, test_s222_check_local_and_ci_run_the_check
+```
+Tests: `tests/test_emit_contracts.py`.
