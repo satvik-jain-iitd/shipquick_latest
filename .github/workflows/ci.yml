@@ -3,6 +3,12 @@ on:
   push:
     branches: [dev, main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      record:
+        description: "Story #219: record new iOS reference images and upload them as the artifact ios-snapshots (ui/ios/SNAPSHOTS.md)"
+        type: boolean
+        default: false
 permissions:
   contents: read
   pull-requests: read   # story #140: the roles job reads commit authors via `gh api .../pulls/.../commits`
@@ -451,6 +457,39 @@ jobs:
         run: |
           swiftlint lint --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad | tee "$RUNNER_TEMP/local.txt"
           grep -q "warning:" "$RUNNER_TEMP/local.txt"
+  ui-ios-snapshots:
+    # Story #219: swift-snapshot-testing and Prefire compare every template with its reference images (light and dark,
+    # smallest and largest Dynamic Type, iPhone SE and Pro Max) on one pinned simulator. SHIPQUICK_SNAPSHOTS adds the test
+    # target and its two packages to Package.swift; a child never resolves them. A workflow_dispatch run with record=true
+    # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ui == 'true'
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      SHIPQUICK_SNAPSHOTS: "1"
+      TEST_RUNNER_SNAPSHOT_TESTING_RECORD: ${{ inputs.record == true && 'all' || 'never' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Pin Xcode 16.4 and check the iOS 18.5 simulator is there
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app
+          xcodebuild -version
+          xcrun simctl list runtimes | grep -F "iOS 18.5"
+      - name: Run the snapshot tests on iPhone 16, iOS 18.5
+        working-directory: ui/ios
+        run: |
+          xcodebuild test -scheme ShipQuickUI-Package -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
+            -skipPackagePluginValidation -skipMacroValidation -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO -quiet
+      - name: Upload the recorded reference images (record=true only)
+        if: always() && inputs.record == true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ios-snapshots
+          path: ui/ios/ShipQuickUITests/__Snapshots__/
+          if-no-files-found: error
   secret-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -551,7 +590,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, secret-scan, dependency-review, workflow-security, test, tdd]
+    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, ui-ios-snapshots, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
       - name: Check all job results
@@ -574,6 +613,7 @@ jobs:
           echo "ui-ios-compile: ${{ needs.ui-ios-compile.result }}"
           echo "ui-android-lint: ${{ needs.ui-android-lint.result }}"
           echo "ui-ios-lint: ${{ needs.ui-ios-lint.result }}"
+          echo "ui-ios-snapshots: ${{ needs.ui-ios-snapshots.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "workflow-security: ${{ needs.workflow-security.result }}"

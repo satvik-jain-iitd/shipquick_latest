@@ -1593,3 +1593,24 @@ Scenario: adopt.sh writes, keeps and validates the milestone
   When adopt.sh runs with --milestone D2, the caller has `milestone: D2`; a later run without the flag keeps it, once; a run with no flag and no line writes none; --milestone X9 is refused and the caller is untouched; an existing line that is quoted, lowercase, D7 or has a trailing comment is refused, not dropped
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
+
+## Story #219: snapshots and Prefire for ui/ios
+```gherkin
+Scenario: the package has a test target with the two snapshot packages pinned exactly
+  Then ui/ios/Package.swift names swift-snapshot-testing and Prefire with `exact:` versions, a test target ShipQuickUITests with SnapshotTesting and PrefireTestsPlugin, all behind the SHIPQUICK_SNAPSHOTS guard, and the library a child resolves has no `.package(`; ui/ios/.prefire.yml names the target
+  Test: test_s219_the_package_has_a_test_target_with_snapshot_testing_and_prefire_pinned_exactly
+Scenario: one snapshot test per template over the whole matrix
+  Then TemplateSnapshotTests.swift has a test<Name>() per template and names light, dark, extraSmall, accessibilityExtraExtraExtraLarge, iPhoneSe and ProMax, and says how record mode is switched on
+  Test: test_s219_one_snapshot_test_per_template_over_the_whole_matrix
+Scenario: every template has a #Preview for Prefire
+  Test: test_s219_every_template_has_a_preview_for_prefire
+Scenario: CI runs the snapshot tests on a pinned Xcode and simulator with a timeout
+  Then ci.yml has a job ui-ios-snapshots behind ui-changes on macos-15 with timeout-minutes, Xcode 16.4, `xcodebuild test` on iPhone 16 iOS 18.5, the record env var, an upload-artifact step for __Snapshots__, a workflow_dispatch `record` input, and the gate waits for it
+  Test: test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout
+Scenario: the reference images are a protected path
+  Test: test_s219_the_reference_images_are_a_protected_path
+Scenario: the doc tells how references are recorded and refreshed
+  Then ui/ios/SNAPSHOTS.md names record, workflow_dispatch, gh run download, __Snapshots__, protected, Xcode 16.4 and iOS 18.5, and the README points to it
+  Test: test_s219_the_doc_tells_how_references_are_recorded_and_refreshed
+```
+Tests: `tests/test_ios_snapshots.py`. The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.

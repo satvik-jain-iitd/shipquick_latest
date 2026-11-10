@@ -34,7 +34,13 @@ It will add `.package(path: "knowledge/shipquick_latest/ui/ios")`.
 
 - Tokens: `Tokens.swift` comes from `design/tokens.json` in story S6. Until then the templates use the system
   spacing (`.padding()` with no number) and system colours.
-- Snapshots: a later story (#219). A text scan also checks the templates (`tests/test_ios_templates.py`).
+- A text scan also checks the templates (`tests/test_ios_templates.py`).
+
+## Snapshots (story #219)
+
+Job `ui-ios-snapshots` draws every template in light and dark, the smallest and the largest Dynamic Type size,
+on iPhone SE and iPhone Pro Max, and compares the pictures with `ShipQuickUITests/__Snapshots__/`.
+Prefire turns every `#Preview` into one more test. How the images are recorded and refreshed: `SNAPSHOTS.md`.
 
 ## What CI compiles (story #217)
 

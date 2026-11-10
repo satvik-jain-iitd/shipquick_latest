@@ -1,5 +1,6 @@
 // swift-tools-version:5.9
 // ShipQuickUI: the kit's iOS screen templates, built only from Apple's SwiftUI (rule 38). No dependencies.
+import Foundation
 import PackageDescription
 
 let package = Package(
@@ -14,3 +15,27 @@ let package = Package(
         .target(name: "ShipQuickUI", path: ".", sources: ["templates", "Sources/ShipQuickUI", "proof"]),
     ]
 )
+
+// Story #219: the snapshot tests and the two packages they need join the manifest only when SHIPQUICK_SNAPSHOTS is set,
+// as the ci.yml job `ui-ios-snapshots` does. SPM resolves every package a manifest names, test-only ones too, so without
+// this guard each child that depends on ShipQuickUI would clone swift-snapshot-testing and swift-syntax for nothing.
+if ProcessInfo.processInfo.environment["SHIPQUICK_SNAPSHOTS"] != nil {
+    package.dependencies += [
+        .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", exact: "1.19.7"),
+        .package(url: "https://github.com/BarredEwe/Prefire", exact: "6.6.0"),
+    ]
+    package.targets.append(
+        .testTarget(
+            name: "ShipQuickUITests",
+            dependencies: [
+                "ShipQuickUI",
+                .product(name: "SnapshotTesting", package: "swift-snapshot-testing"),
+                .product(name: "Prefire", package: "Prefire"),
+            ],
+            path: "ShipQuickUITests",
+            exclude: ["__Snapshots__"],
+            // PrefireTestsPlugin turns every #Preview of the templates into one more snapshot test (SNAPSHOTS.md).
+            plugins: [.plugin(name: "PrefireTestsPlugin", package: "Prefire")]
+        )
+    )
+}
