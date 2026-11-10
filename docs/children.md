@@ -13,11 +13,11 @@ daily issue, since a 404 from a missing token looks identical to "not adopted".
 Each child has one note above its line: `# <name>: <what GitHub shows, with the date>. Next: <step>`.
 The steps are the checklist in docs/ADOPTION.md.
 
-# GoServe: public, rule 24, kit branch `documents` pins edd3c26, no caller on main (9 Nov 2026). Next: bump `documents` to the release tag, run adopt.sh with --kit-branch documents, copy the caller to main.
+# GoServe: public, rule 24, kit branch `documents`. Bump PR GoServe#1298 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) on `documents`. Next: merge it, run the gate ruleset command and protect `documents`, then take `shipquick-call.yml` to `main` in a release and copy `CLAUDE.md` to `dev` and `staging`.
 satvik-jain-iitd/GoServe
-# job-search: private, pins edd3c26 on main, has roadmap-call.yml but no shipquick-call.yml (9 Nov 2026). Next: bump main to the release tag, run adopt.sh.
+# job-search: private, base `main`. Bump PR job-search#294 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) and adds shipquick-call.yml. Next: merge it, write `.shipquick/roles.yml`; the gate cannot be enforced on a private Free repo.
 klickbae8yt-star/job-search private
-# bhavna-ai: public, pins e0bee8a, has no caller (9 Nov 2026). Next: bump to the release tag, run adopt.sh, then the printed ruleset command.
+# bhavna-ai: public, base `dev`. Bump PR bhavna-ai#130 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) and adds shipquick-call.yml. Next: merge it, run the printed ruleset command, write `.shipquick/roles.yml`, promote to `main`.
 # This file is the one file the hygiene test lets hold that name (tests/test_repo_hygiene.py, owner, 9 Nov 2026).
 satvik-jain-iitd/bhavna-ai
 # Miraya: private and empty on GitHub; the local repo has a caller but was never pushed (9 Nov 2026). Next: push the local repo, then bump to the release tag.
