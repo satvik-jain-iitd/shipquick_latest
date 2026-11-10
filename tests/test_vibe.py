@@ -127,3 +127,26 @@ def test_a_full_run_needs_the_full_flag_so_a_typo_never_burns_sixty_calls(tmp_pa
                        capture_output=True, text=True, env=_env(tmp_path), timeout=120)
     assert r.returncode != 0 and "--full" in r.stderr, r.stdout + r.stderr
     assert not (tmp_path / "calls.jsonl").exists()
+
+
+def test_a_web_screen_with_jsx_but_no_library_import_is_raw(tmp_path):
+    # PR #371 review: a no-kit web screen uses no library at all and must not score clean (rule 38)
+    vibe = _mod()
+    (tmp_path / "Screen.tsx").write_text('export const S = () => <div className="x">plain</div>;\n', encoding="utf-8")
+    r = vibe.score_dir("web", tmp_path)
+    assert r["hits"] == ["Screen.tsx:no_library_import"], r
+    # the selftest bad fixture carries the same case on its own
+    plain = vibe.score_dir("web", BAD["web"])
+    assert "PlainScreen.tsx:no_library_import" in plain["hits"], plain
+
+
+def test_an_issue_number_after_a_colon_in_a_web_comment_is_not_a_hex_colour(tmp_path):
+    # PR #371 review: `// Story: #189 sign in` is an issue number; `color: #fff;` in CSS is still a colour
+    vibe = _mod()
+    good = (GOOD["web"] / "GoodScreen.tsx").read_text(encoding="utf-8")
+    (tmp_path / "Screen.tsx").write_text("// Story: #189 sign in\n" + good, encoding="utf-8")
+    assert vibe.score_dir("web", tmp_path)["clean"] == 1, vibe.score_dir("web", tmp_path)
+    css = tmp_path / "css"
+    css.mkdir()
+    (css / "screen.css").write_text(".x { color: #fff; }\n", encoding="utf-8")
+    assert "screen.css:no_hex_colour" in vibe.score_dir("web", css)["hits"]

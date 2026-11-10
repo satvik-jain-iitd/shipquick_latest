@@ -1618,5 +1618,13 @@ Scenario: a run folder inside a work tree is refused before any call
   Test: test_run_folder_inside_a_git_tree_is_refused_before_any_call
 Scenario: a full run needs --full, so a typo never burns sixty calls
   Test: test_a_full_run_needs_the_full_flag_so_a_typo_never_burns_sixty_calls
+Scenario: a web screen with JSX but no library import is raw (PR #371 review)
+  Given a Screen.tsx that renders a plain div and imports nothing from @astryxdesign/core
+  Then score_dir hits exactly no_library_import, and the bad fixture PlainScreen.tsx carries the same case for --selftest
+  Test: test_a_web_screen_with_jsx_but_no_library_import_is_raw
+Scenario: an issue number after a colon in a web comment is not a hex colour (PR #371 review)
+  Given the good web screen with a first line "// Story: #189 sign in"
+  Then it scores clean, while a CSS file with "color: #fff;" still hits no_hex_colour
+  Test: test_an_issue_number_after_a_colon_in_a_web_comment_is_not_a_hex_colour
 ```
 Tests: `tests/test_vibe.py`.
