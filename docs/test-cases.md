@@ -1612,5 +1612,15 @@ Scenario: --check fails naming a stale design-system board until --apply regener
   When the registry loses a row and --check runs
   Then it exits 1 and prints "STALE project/design-system.dc.html"; after --apply, --check passes again
   Test: test_S36_check_fails_naming_a_stale_design_system_board_until_apply_regenerates_it
+Scenario: a registry in a rows layout with no learnings section is a problem, not silence (review of #368)
+  Given a manifest with "registry" set, the default rows layout and no section with id "learnings"
+  When the layout runs
+  Then the run reports a problem naming "registry" and "learnings", and no design-system board is made
+  Test: test_S37_a_registry_in_a_rows_layout_with_no_learnings_section_is_a_problem_not_silence
+Scenario: a registry that is JSON but not a components object is a problem, not a traceback (review of #368)
+  Given the registry file holds [], or {"components": ["Stepper"]}, or {"components": "x"}
+  When the layout runs
+  Then no exception is raised and the run reports a problem naming the path and "components"
+  Test: test_S38_a_registry_that_is_json_but_not_a_components_object_is_a_problem_not_a_traceback
 ```
 Tests: `tests/test_canvas_stage.py::DesignSystem`.

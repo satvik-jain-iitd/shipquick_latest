@@ -206,9 +206,13 @@ def design_system_board(rows, tint, th):
 def registry_rows(path):
     """The registry's component rows, or (None, why) when the file cannot be read."""
     try:
-        return json.loads(Path(path).read_text()).get("components", []), None
+        data = json.loads(Path(path).read_text())
     except (OSError, ValueError) as e:
         return None, f"registry {path} cannot be read: {e}"
+    rows = data.get("components", []) if isinstance(data, dict) else None
+    if not isinstance(rows, list) or not all(isinstance(r, dict) for r in rows):
+        return None, f'registry {path} is not {{"components": [{{...}}]}}'
+    return rows, None
 
 
 def layout(canvas: dict, manifest: dict):
@@ -224,6 +228,7 @@ def layout(canvas: dict, manifest: dict):
     bg_files = {}
     learn = [s for s in sections if s.get("id") == "learnings"]
     if columns and not learn: problems.append('layout "columns" needs a section with "id": "learnings" (the Design learnings board, story #165)')
+    if manifest.get("registry") and not learn: problems.append('"registry" needs a section with "id": "learnings": the Design system board sits in its row (story #188)')
     for s in learn:   # the tool makes this board itself, from the section's "learnings" rows, and puts it first in that section
         html, w, h, bad = learnings_board(s.get("learnings", []), s["title"], tint_of(s.get("tint", "")), th); problems += bad
         boards[LEARN_BOARD] = {**boards.get(LEARN_BOARD, {"x": 0, "y": 0, "title": "Design learnings"}), "w": w, "h": h}

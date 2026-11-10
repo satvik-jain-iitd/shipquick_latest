@@ -387,6 +387,18 @@ class DesignSystem(unittest.TestCase):
         new, files, problems = cs.layout(self.c, self.m)
         self.assertEqual(problems, []); self.assertNotIn("project/design-system.dc.html", files); self.assertNotIn("design-system.dc.html", new["boards"])
 
+    def test_S37_a_registry_in_a_rows_layout_with_no_learnings_section_is_a_problem_not_silence(self):
+        self.m.pop("layout"); self.m["sections"] = [s for s in self.m["sections"] if s.get("id") != "learnings"]
+        new, files, problems = cs.layout(self.c, self.m)
+        self.assertTrue(any("registry" in p and "learnings" in p for p in problems), problems)
+        self.assertNotIn("project/design-system.dc.html", files)
+
+    def test_S38_a_registry_that_is_json_but_not_a_components_object_is_a_problem_not_a_traceback(self):
+        for bad in ("[]", json.dumps({"components": ["Stepper"]}), json.dumps({"components": "x"})):
+            self.reg.write_text(bad)
+            problems = cs.layout(self.c, self.m)[2]   # no exception
+            self.assertTrue(any(str(self.reg) in p and "components" in p for p in problems), (bad, problems))
+
     def test_S36_check_fails_naming_a_stale_design_system_board_until_apply_regenerates_it(self):
         import io, contextlib
         root = Path(self.d.name); (root / "project").mkdir(); (root / "project" / "canvas.json").write_text(json.dumps(self.c))
