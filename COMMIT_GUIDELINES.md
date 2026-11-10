@@ -33,6 +33,7 @@ type(scope): description
 4. No period at end of subject.
 5. Body explains why, not what.
 6. Co-author line when required.
+7. A branch that changes code carries a `## Red` section in a commit body that names the test file you saw fail, for example `- tests/test_widget.py::test_widget_rejects_empty`. The pre-push `tdd` check reads the commit log, because there is no PR body yet; CI reads the real PR body.
 
 ## Examples
 

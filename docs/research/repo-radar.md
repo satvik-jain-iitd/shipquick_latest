@@ -438,7 +438,28 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Confidence that nothing fits better: 0.7 (a narrow ShipQuick rule; the search was thin).
 - Study of Ponytail and ECC (the epic's source, read in full by the reviewer, 10 Nov 2026): `docs/research/2026-11-10-ponytail-ecc-study.md`.
 
+## 10 Nov 2026, story #325 (A7): workflow security lint
+- Need: a stdlib check that fails a GitHub Actions workflow which checks out the PR head under pull_request_target or workflow_run, or runs npm ci or npm install without --ignore-scripts.
+- Run: `scout.py --need "lint GitHub Actions workflows for pull_request_target or workflow_run checkouts of untrusted PR head and npm install without ignore-scripts"` found no repos. Then `gh search repos "github actions workflow security linter pull_request_target"` and `topic:github-actions-security`.
+- Read the top 3 READMEs that fit the need:
+  - `praetorian-inc/trajan` (Apache-2.0, Go, about 200 stars, pushed 2 Nov 2026): a full CI/CD scanner for GitHub, GitLab and Azure. Broad, needs a Go binary or an Action. Does not fit a stdlib check run in CI and in check_local. Idea noted, not copied.
+  - `indoor47/gh-workflow-hardener` (MIT, Python, about 13 stars, last push 28 Feb 2026): pin-by-SHA, permissions and script injection scan. Its scope is wider and it is a pip install. Does not check the head-checkout rule or npm install scripts. Idea noted (rule shape: one finding per line with file and line).
+  - `eliottreich/taskbounty-check` (about 2 stars, last push 21 Jun 2026): npm package, tied to a hosted review offer. Does not fit.
+- Decision: build from scratch, small (about 150 lines, stdlib, no install). Nothing found covers the two exact rules. Confidence that nothing fits: 0.8. Test: fixtures give exit 1, exit 1, exit 0, and the repo's own workflows pass.
+## 10 Nov 2026, story #319 (A15): the TDD evidence check
+- Need: fail a PR that changes code when its body has no `## Red` section, or names a test file that is not in the PR diff.
+- Run: `scout.py --need "fail a pull request whose body has no Red test section, or names a test file that is not in the PR diff (TDD evidence check in CI)"`: no repos found. `gh search repos "pull request body check tdd red test"`: no results. Thin search, said so.
+- Read: none; no repo came back to read.
+- Decision: build `scripts/check_tdd.py` from scratch (stdlib). It reuses the shape of `scripts/check_story.py` (PR body in, reason out) and the diff rule of the pr-size check. Nothing found fits a `## Red` body rule.
+- Confidence that nothing fits: 0.6 (the search was thin; a narrow ShipQuick rule).
 ---
+## 10 Nov 2026, story #313 (A2): hook plugin, rules reach every session and subagent
+- Need: a Claude Code plugin whose SessionStart and SubagentStart hooks inject a dense rules file and the mode into every session and subagent.
+- Run: `scout.py --need "Claude Code plugin with SessionStart and SubagentStart hooks that inject a dense rules file and a codebase map into every session and subagent"`: no repos found.
+  `gh search repos "claude code hooks SessionStart SubagentStart plugin"`: no results.
+  `gh search repos "topic:claude-code-plugin hooks"`: DietrichGebert/ponytail (MIT, pushed 29 Oct 2026), thedotmack/claude-mem (memory, not rules), wshobson/agents (plugin packs, no runtime rule injection).
+- Read: ponytail `.claude-plugin/plugin.json`, `hooks/claude-codex-hooks.json`, `hooks/ponytail-subagent.js`, `hooks/ponytail-map.js` (study clone, read only).
+- Decision: adopt ponytail's hook layout (SessionStart + SubagentStart, `hookSpecificOutput.additionalContext`, one hook per script). Rewrite in stdlib Python, the kit's language, with a rules file generated from CLAUDE.md. Ponytail's map and loop guard are later stories (A9, A12).
 ## 10 Nov 2026, story #331 (A1a-2): bench cell runner and --rescore
 - Need: a headless `claude -p` runner per task and arm, with a timeout tree-kill and an offline rescore.
 - Run: `scout.py --need "headless claude -p benchmark runner per task and arm with fake claude test and offline rescore"`: no repos found.
@@ -455,3 +476,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the idea of a fixed verdict word per review (PASS, FAIL, N/A in `n0nuser/goodcodereview`), as the `Verdict:` line name only.
 - Decision: build from scratch. Six lines of bash in `scripts/review_merge.sh`, using the same `refuse()` style and the existing `reviewer_account` lookup. Nothing fits as a gate inside our own merge script.
 - Confidence that nothing fits: 0.7 (the search is thin; the checklists are close in topic but none gates a merge).
+---
+## 10 Nov 2026, story #312 (A1b): bench report, stats and docs
+- Need: a report on bench results: median per task, kit divided by no-kit, geometric mean over tasks, 95% bootstrap interval, as a markdown table.
+- Run: `scout.py --need "bootstrap confidence interval geometric mean ratio report for LLM benchmark arms"`: no repos found. The GitHub search was not repeated: the same need ran in #331 with no fit.
+- Read: ponytail `benchmarks/agentic/compare.py` and `run.py` (study clone, read only): per-task median, a sign test over pairs, no bootstrap and no geometric mean.
+- Decision: write `bench/report.py` (stdlib: `statistics`, `random` with a fixed seed). Borrow the idea of per-task medians; the ratio, geometric mean and bootstrap are not in ponytail.
+- Confidence that nothing fits better: 0.7 (thin search; the stats are a few lines of stdlib).
