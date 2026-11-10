@@ -578,3 +578,54 @@ def test_s326_in_ci_a_missing_ponytail_key_only_warns_and_the_check_passes(child
     r = adopt(child, "--check", env=gh, settings=PONYTAIL_OFF, ci=True)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert "warning" in r.stdout.lower() and PONYTAIL_INSTALL[1] in r.stdout
+
+
+# ---- review of #335: adopt.sh writes and refreshes the kit rule block between the markers ----
+RULES_START = "<!-- shipquick-rules:start -->"
+RULES_END = "<!-- shipquick-rules:end -->"
+CHECK_COPIES = ROOT / "scripts" / "check_rule_copies.py"
+
+
+def rules_check(child):
+    return subprocess.run(["python3", str(CHECK_COPIES), "--child", str(child / "CLAUDE.md")],
+                          capture_output=True, text=True, cwd=ROOT)
+
+
+def test_s316_adopt_writes_the_rule_block_so_the_copy_check_passes(child):
+    r = adopt(child)
+    assert r.returncode == 0, r.stdout + r.stderr
+    text = (child / "CLAUDE.md").read_text(encoding="utf-8")
+    assert text.count(RULES_START) == 1 and text.count(RULES_END) == 1
+    check = rules_check(child)
+    assert check.returncode == 0, check.stdout + check.stderr
+
+
+def test_s316_a_second_run_refreshes_a_hand_changed_block_and_keeps_the_rest(child):
+    assert adopt(child).returncode == 0
+    path = child / "CLAUDE.md"
+    text = path.read_text(encoding="utf-8")
+    hand = text.replace("Radar first", "Radar second", 1)
+    assert hand != text
+    path.write_text(hand + "\n## Own facts\nKeep this line.\n", encoding="utf-8")
+    assert rules_check(child).returncode == 1            # the hand change is caught
+    assert adopt(child).returncode == 0
+    fixed = path.read_text(encoding="utf-8")
+    assert rules_check(child).returncode == 0
+    assert "Keep this line." in fixed                    # what sits outside the markers is the child's
+
+
+def test_s316_a_childs_own_claude_md_without_markers_gets_the_block_added(child):
+    (child / "CLAUDE.md").write_text("# my-child: facts\n\nOwn line one.\n", encoding="utf-8")
+    assert adopt(child).returncode == 0
+    text = (child / "CLAUDE.md").read_text(encoding="utf-8")
+    assert "Own line one." in text
+    assert rules_check(child).returncode == 0
+
+
+def test_s316_broken_markers_stop_adopt_and_leave_the_file_alone(child):
+    (child / "CLAUDE.md").write_text(f"# c\n{RULES_START}\nhalf a block\n", encoding="utf-8")
+    before = (child / "CLAUDE.md").read_bytes()
+    r = adopt(child)
+    assert r.returncode != 0
+    assert "markers" in (r.stdout + r.stderr)
+    assert (child / "CLAUDE.md").read_bytes() == before

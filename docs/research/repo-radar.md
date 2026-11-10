@@ -446,6 +446,26 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the install lines, taken from the Ponytail install docs (the plugin's own text). The settings key name is the one Claude Code writes (`enabledPlugins`), as read from our own `~/.claude/settings.json`.
 - Decision: extend `scripts/adopt.sh --check` with about 12 lines (a `python3 -c` JSON read, the same style as the kit_branch parser). No new tool, no new dependency.
 - Confidence that nothing fits better: 0.85 (the check is one key in one file; a plugin would only add a second source of truth).
+## 10 Nov 2026, story #316 (A3): rule-copy canary
+- Need: fail a check when a child's copy of the kit rule block drifts from the kit CLAUDE.md, or when a load-bearing phrase is missing from the kit rule file.
+- Run: `scout.py --need "fail a CI check when a copied rule block in a child CLAUDE.md drifts from the kit rules or a load-bearing phrase is missing from a rule file"` found no repos. `gh search repos --topic=rule-drift` and `--topic=prompt-lint` gave only prompt linters (ravikiranpagidi/prompt-lint-py, MIT, a static analyzer for prompt templates, not a copy check). `gh search repos "instruction file drift check CLAUDE.md"` gave `lzy02712-spec/agents-md-drift` (stale paths, npm scripts and size in AGENTS.md) and `petrkindlmann/agents-md-action` (required H2 sections, and a terso emit drift check for per-agent files).
+- Read: the top 3 READMEs. agents-md-drift checks that paths and scripts named in AGENTS.md exist; it does not compare a copied block. agents-md-action checks section names and runs `terso emit --check` (a generator, which we do not use). prompt-lint-py lints prompt text, not rule copies.
+- Borrowed: the idea and the invariant-phrase list of `scripts/check-rule-copies.js` in `dietrichgebert/ponytail` (MIT, read only, pushed 29 Oct 2026). Rewritten in stdlib Python, with the child marker rule instead of a generated file.
+- Decision: build from scratch, about 100 lines, `scripts/check_rule_copies.py`. No tool compares a child's block with the kit's rule text.
+- Confidence that nothing fits better: 0.8. Test: a one-word change in a fixture turns the check red with the file name (tests/test_check_rule_copies.py).
+## 10 Nov 2026, story #327: shortcut ledger for ponytail and shortcut comments
+- Need: list every `shortcut:` or `ponytail:` comment in tracked source, tag the ones with no upgrade trigger, log them once to a follow-ups table.
+- Run: `scout.py --need "find shortcut or ponytail debt comments in a repo that lack an upgrade trigger, and log them"` returned "no repos found". `gh search repos "todo comment tracker missing trigger lint"` returned no rows. Thin search: no read of READMEs (nothing to read).
+- Decision: build from scratch in `scripts/check_shortcuts.py` (stdlib, about 100 lines). Nothing found fits: the ponytail kit's `ponytail-debt` skill is the idea source (study in `docs/research/2026-11-10-ponytail-ecc-study.md`, row A11), not a script to call.
+- Confidence that nothing fits better: 0.5 (the search was thin; a broader search could still find a lint for TODO comments).
+## 10 Nov 2026, story #325 (A7): workflow security lint
+- Need: a stdlib check that fails a GitHub Actions workflow which checks out the PR head under pull_request_target or workflow_run, or runs npm ci or npm install without --ignore-scripts.
+- Run: `scout.py --need "lint GitHub Actions workflows for pull_request_target or workflow_run checkouts of untrusted PR head and npm install without ignore-scripts"` found no repos. Then `gh search repos "github actions workflow security linter pull_request_target"` and `topic:github-actions-security`.
+- Read the top 3 READMEs that fit the need:
+  - `praetorian-inc/trajan` (Apache-2.0, Go, about 200 stars, pushed 2 Nov 2026): a full CI/CD scanner for GitHub, GitLab and Azure. Broad, needs a Go binary or an Action. Does not fit a stdlib check run in CI and in check_local. Idea noted, not copied.
+  - `indoor47/gh-workflow-hardener` (MIT, Python, about 13 stars, last push 28 Feb 2026): pin-by-SHA, permissions and script injection scan. Its scope is wider and it is a pip install. Does not check the head-checkout rule or npm install scripts. Idea noted (rule shape: one finding per line with file and line).
+  - `eliottreich/taskbounty-check` (about 2 stars, last push 21 Jun 2026): npm package, tied to a hosted review offer. Does not fit.
+- Decision: build from scratch, small (about 150 lines, stdlib, no install). Nothing found covers the two exact rules. Confidence that nothing fits: 0.8. Test: fixtures give exit 1, exit 1, exit 0, and the repo's own workflows pass.
 ## 10 Nov 2026, story #319 (A15): the TDD evidence check
 - Need: fail a PR that changes code when its body has no `## Red` section, or names a test file that is not in the PR diff.
 - Run: `scout.py --need "fail a pull request whose body has no Red test section, or names a test file that is not in the PR diff (TDD evidence check in CI)"`: no repos found. `gh search repos "pull request body check tdd red test"`: no results. Thin search, said so.
