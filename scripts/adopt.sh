@@ -262,6 +262,7 @@ out = ["# The ShipQuick checks every pull request needs (added by ShipQuick scri
 for l in lines:
     if l.strip() == "workflow_dispatch:":
         out.append("  pull_request:")
+        out.append("    types: [opened, synchronize, reopened, edited]")   # story #92: an edited body re-runs the body-reading checks
         continue
     l = l.replace("uses: ./.github/workflows/checks.yml", f"uses: satvik-jain-iitd/shipquick_latest/.github/workflows/checks.yml@{sha}" + (f" # {tag}" if tag else ""))
     l = l.replace("shipquick_ref: ${{ github.sha }}", f"shipquick_ref: {sha}")

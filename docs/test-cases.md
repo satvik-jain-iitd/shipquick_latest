@@ -1593,3 +1593,14 @@ Scenario: adopt.sh writes, keeps and validates the milestone
   When adopt.sh runs with --milestone D2, the caller has `milestone: D2`; a later run without the flag keeps it, once; a run with no flag and no line writes none; --milestone X9 is refused and the caller is untouched; an existing line that is quoted, lowercase, D7 or has a trailing comment is refused, not dropped
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
+
+## Story #92: CI runs again when a PR body is edited
+```gherkin
+Scenario: the ShipQuick CI trigger re-runs on a body edit
+  Given the ci.yml pull_request trigger
+  Then its types list carries edited, with opened, synchronize and reopened
+Scenario: an adopted child caller re-runs on a body edit too
+  When adopt.sh writes shipquick-call.yml for a child
+  Then the pull_request trigger in the caller lists the same four types
+```
+Tests: `tests/test_s92_ci_on_body_edit.py::test_s92_ci_pull_request_trigger_lists_edited`, `tests/test_s92_ci_on_body_edit.py::test_s92_the_adopted_checks_caller_also_runs_on_body_edit`.
