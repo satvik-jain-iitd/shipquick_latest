@@ -1062,3 +1062,16 @@ Scenario: a task's seed files reach the cell folder
   Then the fake claude finds that file in its working folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
+
+## Story #317 review fixes: the verdict line and the fourth label
+```gherkin
+Scenario: a clean review still ends with a verdict
+  Given the review shape doc
+  When rule 5 says what a reviewer with zero findings writes
+  Then it names "Verdict: Ship." and "Not checked:" and never "Looks good. Ship."
+Scenario: the worked example uses the fixed fourth label
+  Given the review shape doc
+  When the worked example labels the fourth part
+  Then it writes "**If we skip:**", the same label as the list
+```
+Tests: `tests/test_review_shape.py` (`test_zero_findings_rule_does_not_skip_the_verdict_line`, `test_example_uses_the_same_fourth_label_as_the_list`).

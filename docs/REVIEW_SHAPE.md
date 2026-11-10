@@ -15,7 +15,7 @@ Source: the `ponytail-review` skill and the ECC `code-reviewer` agent, read in t
 4. **A `shortcut:` comment is a decision, not a finding.** A comment like
    `shortcut: global lock, per-key locks when throughput matters` names its limit. Report it only when
    the expected load already crosses that limit.
-5. **Zero findings is a valid result.** Do not invent findings to look busy. Say `Looks good. Ship.`
+5. **Zero findings is a valid result.** Do not invent findings to look busy. End with `Verdict: Ship.` and `Not checked:` as below.
 6. **Protected PRs get a second, fresh review.** A PR on a protected path (see `scripts/protected_paths.txt`)
    gets a second review by a fresh agent that reads the code, not the first review's notes.
 
@@ -36,7 +36,7 @@ Example:
    - **Problem:** It takes "today" from the server clock, which runs in UTC. An order placed
      at 00:30 in Berlin is billed on the day before.
    - **Fix:** Compute the day once in the shop's time zone.
-   - **If we skip it:** Late orders show the wrong date, and accounting fixes them by hand.
+   - **If we skip:** Late orders show the wrong date, and accounting fixes them by hand.
 ```
 
 ## Groups
