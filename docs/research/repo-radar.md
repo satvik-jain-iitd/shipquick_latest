@@ -444,3 +444,11 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: none; no repo came back to read.
 - Decision: build `scripts/check_tdd.py` from scratch (stdlib). It reuses the shape of `scripts/check_story.py` (PR body in, reason out) and the diff rule of the pr-size check. Nothing found fits a `## Red` body rule.
 - Confidence that nothing fits: 0.6 (the search was thin; a narrow ShipQuick rule).
+---
+## 10 Nov 2026, story #331 (A1a-2): bench cell runner and --rescore
+- Need: a headless `claude -p` runner per task and arm, with a timeout tree-kill and an offline rescore.
+- Run: `scout.py --need "headless claude -p benchmark runner per task and arm with fake claude test and offline rescore"`: no repos found.
+  `gh search repos "claude code benchmark harness headless claude -p arms"`: no results.
+- Read: ponytail `benchmarks/agentic/run.py` (`run_cell`, `_kill_group` via process group, stdout to file, `rescore`), study clone, read only.
+- Decision: adopt ponytail's cell pattern (stdout to a file, `start_new_session`, group kill on timeout, logs outside the scored folder). Written for the kit's bench with stdlib only; the ponytail fixtures, plugin arms and cache warm-up are not borrowed (ShipQuick has no plugin arms yet).
+- Confidence that nothing fits better: 0.7 (the search is thin; ponytail is the only close fit).
