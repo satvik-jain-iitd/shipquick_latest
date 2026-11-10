@@ -437,7 +437,49 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: extend `scripts/check_story.py` (the story-shape check of #155). No new tool: the same issue read, the same skip rule for old stories.
 - Confidence that nothing fits better: 0.7 (a narrow ShipQuick rule; the search was thin).
 - Study of Ponytail and ECC (the epic's source, read in full by the reviewer, 10 Nov 2026): `docs/research/2026-11-10-ponytail-ecc-study.md`.
+## 10 Nov 2026, story #317 (A4a): the review finding shape
+- Need: a short doc that fixes the shape of a code review finding (what this is, problem, fix, if we skip) with a verdict line.
+- Run: `scout.py --need "a short doc that fixes the shape of an AI code review finding (what, problem, fix, if skipped) with a verdict line"`: no repos found.
+  `gh search repos --topic=code-review --limit 5`: alibaba/open-code-review, tirth8205/code-review-graph, The-PR-Agent/pr-agent (and two unrelated).
+- Read: not read in full. These are review tools that run an LLM or build a code graph. The need is a written shape for a finding, not a tool.
+- Borrowed: the shape from our own study, `ponytail-review` (What this is, Problem, Fix, If we skip; Verdict; Not checked) and ECC `code-reviewer` (report only over 80% sure, zero findings is valid, read the callers).
+- Decision: build from scratch, one doc (`docs/REVIEW_SHAPE.md`) and one test. No code, no dependency.
+- Confidence that nothing fits better: 0.8 (a doc, not code; the tools above review code, they do not fix a writing shape).
 
+## 10 Nov 2026, story #326 (A10): adopt.sh checks the Ponytail plugin
+- Need: `adopt.sh --check` fails a child when the Ponytail plugin is not enabled in the Claude settings file, and prints the two install lines.
+- Run: `scout.py --need "adopt script checks a Claude Code plugin is enabled in the user settings file and prints install lines"`: no repos found.
+  `gh search repos --topic=claude-code-plugin --limit 5`: DietrichGebert/ponytail (the plugin itself), thedotmack/claude-mem, career-ops-hq/career-ops, and three unrelated skill repos.
+- Read: the top 3 READMEs. Ponytail: the lazy-dev rules plugin, with install by `/plugin marketplace add` and `/plugin install`. claude-mem: a memory plugin, no settings check of its own. career-ops: a job-search agent that can run as a plugin. None checks another repo's plugin switch.
+- Borrowed: the install lines, taken from the Ponytail install docs (the plugin's own text). The settings key name is the one Claude Code writes (`enabledPlugins`), as read from our own `~/.claude/settings.json`.
+- Decision: extend `scripts/adopt.sh --check` with about 12 lines (a `python3 -c` JSON read, the same style as the kit_branch parser). No new tool, no new dependency.
+- Confidence that nothing fits better: 0.85 (the check is one key in one file; a plugin would only add a second source of truth).
+## 10 Nov 2026, story #316 (A3): rule-copy canary
+- Need: fail a check when a child's copy of the kit rule block drifts from the kit CLAUDE.md, or when a load-bearing phrase is missing from the kit rule file.
+- Run: `scout.py --need "fail a CI check when a copied rule block in a child CLAUDE.md drifts from the kit rules or a load-bearing phrase is missing from a rule file"` found no repos. `gh search repos --topic=rule-drift` and `--topic=prompt-lint` gave only prompt linters (ravikiranpagidi/prompt-lint-py, MIT, a static analyzer for prompt templates, not a copy check). `gh search repos "instruction file drift check CLAUDE.md"` gave `lzy02712-spec/agents-md-drift` (stale paths, npm scripts and size in AGENTS.md) and `petrkindlmann/agents-md-action` (required H2 sections, and a terso emit drift check for per-agent files).
+- Read: the top 3 READMEs. agents-md-drift checks that paths and scripts named in AGENTS.md exist; it does not compare a copied block. agents-md-action checks section names and runs `terso emit --check` (a generator, which we do not use). prompt-lint-py lints prompt text, not rule copies.
+- Borrowed: the idea and the invariant-phrase list of `scripts/check-rule-copies.js` in `dietrichgebert/ponytail` (MIT, read only, pushed 29 Oct 2026). Rewritten in stdlib Python, with the child marker rule instead of a generated file.
+- Decision: build from scratch, about 100 lines, `scripts/check_rule_copies.py`. No tool compares a child's block with the kit's rule text.
+- Confidence that nothing fits better: 0.8. Test: a one-word change in a fixture turns the check red with the file name (tests/test_check_rule_copies.py).
+## 10 Nov 2026, story #327: shortcut ledger for ponytail and shortcut comments
+- Need: list every `shortcut:` or `ponytail:` comment in tracked source, tag the ones with no upgrade trigger, log them once to a follow-ups table.
+- Run: `scout.py --need "find shortcut or ponytail debt comments in a repo that lack an upgrade trigger, and log them"` returned "no repos found". `gh search repos "todo comment tracker missing trigger lint"` returned no rows. Thin search: no read of READMEs (nothing to read).
+- Decision: build from scratch in `scripts/check_shortcuts.py` (stdlib, about 100 lines). Nothing found fits: the ponytail kit's `ponytail-debt` skill is the idea source (study in `docs/research/2026-11-10-ponytail-ecc-study.md`, row A11), not a script to call.
+- Confidence that nothing fits better: 0.5 (the search was thin; a broader search could still find a lint for TODO comments).
+## 10 Nov 2026, story #325 (A7): workflow security lint
+- Need: a stdlib check that fails a GitHub Actions workflow which checks out the PR head under pull_request_target or workflow_run, or runs npm ci or npm install without --ignore-scripts.
+- Run: `scout.py --need "lint GitHub Actions workflows for pull_request_target or workflow_run checkouts of untrusted PR head and npm install without ignore-scripts"` found no repos. Then `gh search repos "github actions workflow security linter pull_request_target"` and `topic:github-actions-security`.
+- Read the top 3 READMEs that fit the need:
+  - `praetorian-inc/trajan` (Apache-2.0, Go, about 200 stars, pushed 2 Nov 2026): a full CI/CD scanner for GitHub, GitLab and Azure. Broad, needs a Go binary or an Action. Does not fit a stdlib check run in CI and in check_local. Idea noted, not copied.
+  - `indoor47/gh-workflow-hardener` (MIT, Python, about 13 stars, last push 28 Feb 2026): pin-by-SHA, permissions and script injection scan. Its scope is wider and it is a pip install. Does not check the head-checkout rule or npm install scripts. Idea noted (rule shape: one finding per line with file and line).
+  - `eliottreich/taskbounty-check` (about 2 stars, last push 21 Jun 2026): npm package, tied to a hosted review offer. Does not fit.
+- Decision: build from scratch, small (about 150 lines, stdlib, no install). Nothing found covers the two exact rules. Confidence that nothing fits: 0.8. Test: fixtures give exit 1, exit 1, exit 0, and the repo's own workflows pass.
+## 10 Nov 2026, story #319 (A15): the TDD evidence check
+- Need: fail a PR that changes code when its body has no `## Red` section, or names a test file that is not in the PR diff.
+- Run: `scout.py --need "fail a pull request whose body has no Red test section, or names a test file that is not in the PR diff (TDD evidence check in CI)"`: no repos found. `gh search repos "pull request body check tdd red test"`: no results. Thin search, said so.
+- Read: none; no repo came back to read.
+- Decision: build `scripts/check_tdd.py` from scratch (stdlib). It reuses the shape of `scripts/check_story.py` (PR body in, reason out) and the diff rule of the pr-size check. Nothing found fits a `## Red` body rule.
+- Confidence that nothing fits: 0.6 (the search was thin; a narrow ShipQuick rule).
 ---
 ## 10 Nov 2026, story #313 (A2): hook plugin, rules reach every session and subagent
 - Need: a Claude Code plugin whose SessionStart and SubagentStart hooks inject a dense rules file and the mode into every session and subagent.
@@ -454,6 +496,36 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: adopt ponytail's cell pattern (stdout to a file, `start_new_session`, group kill on timeout, logs outside the scored folder). Written for the kit's bench with stdlib only; the ponytail fixtures, plugin arms and cache warm-up are not borrowed (ShipQuick has no plugin arms yet).
 - Confidence that nothing fits better: 0.7 (the search is thin; ponytail is the only close fit).
 
+## 10 Nov 2026, story #323 (A8): the Spend column from the Ponytail ledger
+- Need: read a per-project cost CSV and show it as a Spend card on a localhost desk page, with a same-origin check on its JSON API.
+- Run: `scout.py --need "read a per-project CSV cost ledger and show it as a Spend table on a localhost dashboard with same-origin API check"`: no repos found. `gh search repos --topic=ledger-dashboard` and `gh search repos "localhost dashboard csv cost"` gave no fit for a single-repo desk.
+- Read: none. No repo found to read.
+- Borrowed: nothing. The desk already exists (`scripts/desk.py`, #91); the Host check is the pattern for the Origin check. The Ponytail metrics code was not found on this Mac, so the CSV columns are our own. Later read (10 Nov 2026, fix round): the columns now follow upstream `metrics.ts` CSV_HEADER, and the band folder follows upstream `hooks/band/register.tsx` ledgerFile (XDG_CONFIG_HOME, ASCII file-name rule). The assumption wording above is outdated.
+- Decision: extend `scripts/desk.py` and `scripts/desk/index.html`. Stdlib `csv` only.
+- Confidence that nothing fits better: 0.75 (the search was thin; the need is small and tied to our own desk).
+
+## 10 Nov 2026, story #328 (A13): rules split by path, spike
+- Need: move the UI rules (31, 38) into a path-scoped rule file only if Claude Code supports it, and record what the docs say.
+- Run: `scout.py --need "split Claude Code instruction rules into path-scoped rule files using paths frontmatter"`: no repos found.
+  `gh search repos --topic=claude-code-rules --limit 5`: AIPMAndy/AndySoul, omergocmen/vibe-coder-kit, JakeSelby/model-citizen, alex-feel/claude-code-toolbox, luiseiman/dotforge. All are rule templates or config installers, none reads `paths:` frontmatter to scope rules.
+  `gh search repos "claude code rules paths frontmatter" --limit 5`: no further hit that scopes rules by path.
+- Read: the Claude Code docs, not the repos (tier A): https://code.claude.com/docs/en/memory, read 10 Nov 2026. Section "Path-specific rules".
+- Borrowed: nothing. The feature is built into Claude Code; no tool is needed.
+- Decision: use the platform feature. No new code in #328; the move is a separate PR gated by the bench (#312).
+- Confidence that nothing fits better: 0.8 (the topic search is thin, but the docs settle the feature question).
+## 10 Nov 2026, story #324 (A6, epic #309): release gate for `scripts/release.sh vX.Y.Z`
+- Need: tag a release only when `docs/RELEASE_NOTES_vX.Y.Z.md` exists, its version line equals the tag, the tag is new (local and origin), and the `gate` check is SUCCESS on the exact HEAD sha.
+- Run: `scout.py --need "release script that tags a version only after the CI gate passed on the exact commit"`: no repos found (exit 1, empty list).
+  `gh search repos --topic=release-gate --limit 5`: agents-shipgate, frontend-promotion-guard, faultgate, flowreel, hermes-skilleval. None tags a git version. They gate agent tool changes, deploys or traces.
+  `gh search repos --topic=release-automation --limit 5`: release-it, semantic-release, goreleaser, release-drafter, devtron.
+- Read (top 3 README heads, gh API, tier A for what the repo says):
+  - `semantic-release/semantic-release`: publishes npm packages from commit messages. Too big; it decides the version itself. Does not fit.
+  - `release-it/release-it`: bumps package.json, tags, pushes, makes GitHub releases, with hooks. Node tool and a version bump we do not use. Does not fit.
+  - `Reality-JH/frontend-promotion-guard`: promotes Docker deploys after screenshot checks. Different gate. Does not fit.
+  - Study reference (read only): ECC `scripts/ci/verify-release-gates.js` (MIT). Borrowed: read check runs for the exact sha, and refuse a tag that already exists. Ponytail `scripts/check-versions.js` (MIT): versions must agree across files; borrowed as the idea that the notes version line must equal the tag.
+- Borrowed: the two ideas above. Code is our own bash, about 50 lines, using `gh api` and `git`, which the repo already uses (`review_merge.sh`).
+- Verdict: nothing fits (a tag gate with notes and the gate check). Build from scratch in `scripts/release.sh`, small, on top of `gh` and `git`.
+- Confidence that nothing fits better: 0.75 (one scout run found nothing, and the topic search was thin).
 ---
 ## 10 Nov 2026, story #312 (A1b): bench report, stats and docs
 - Need: a report on bench results: median per task, kit divided by no-kit, geometric mean over tasks, 95% bootstrap interval, as a markdown table.

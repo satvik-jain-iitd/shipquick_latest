@@ -32,7 +32,7 @@ Sources and tiers (rule: `web-research` skill):
 | Validators in CI for agents, skills, commands and hooks (frontmatter and dead references) | ECC `scripts/validate-*.js` | One validator for `docs/` cross-links and `scripts/` `--help` consistency. Low priority. | follow-up |
 | A transcript analyser that finds corrections and reverts and proposes a rule | ECC `conversation-analyzer` | `tasks/lessons.md` and `docs/LEARNINGS.md` stay manual. One line at session end in `docs/process-trace.md`: the smallest rule edit. No new agent. | none |
 | Paired run before any rule change. Ponytail 2026-06-22: the #245 fix went from 0/3 to 6/6 by operational wording alone; plain prose stayed at 0/3. | ponytail `benchmarks/results/` | ADR-014: a change to a kit rule's wording must beat the current kit on the bench before it merges. | #312 |
-| Rules split by path (`.claude/rules/*.md` with `paths:`) | Claude Code docs | Spike first, docs not memory. Move UI rules only after a paired run shows no regression. | #328 |
+| Rules split by path (`.claude/rules/*.md` with `paths:`) | Claude Code docs, https://code.claude.com/docs/en/memory (read 10 Nov 2026) | Supported. A path rule loads only when Claude reads or edits a matching file (Read, Write, Edit, or a Bash read of one file), so a subagent that edits through other Bash commands may not get it. Move UI rules 31 and 38 only after the paired run on the bench (#312) shows no regression. Status: pending test. | #328 |
 
 ## 3. Pinch of salt (do not copy)
 
