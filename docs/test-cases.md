@@ -1051,3 +1051,21 @@ Scenario: a task's seed files reach the cell folder
   Then the fake claude finds that file in its working folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
+
+## Story #323 (A8): the desk spend column and the Origin check
+```gherkin
+Scenario: a fixture ledger renders in the desk state and the page
+  Given a ponytail ledger CSV with two task rows
+  When the desk state is read
+  Then /api/state.json lists both rows under spend with totals
+  And the page has a Spend section
+Scenario: a missing ledger is an empty section, not an error
+  Given no ledger file for the project
+  When the desk state is read
+  Then spend is an empty list with the note "no ledger" and error is empty
+Scenario: a cross-origin API request gets 403
+  Given the desk server on 127.0.0.1
+  When /api/state.json is requested with an Origin that is not the server's own
+  Then the answer is 403, and a request with no Origin or the own origin is served
+```
+Tests: `tests/test_desk.py` (`SpendLedger`, `SpendInServer`, `OriginCheck`).

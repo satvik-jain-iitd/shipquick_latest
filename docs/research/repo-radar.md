@@ -446,3 +446,12 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: ponytail `benchmarks/agentic/run.py` (`run_cell`, `_kill_group` via process group, stdout to file, `rescore`), study clone, read only.
 - Decision: adopt ponytail's cell pattern (stdout to a file, `start_new_session`, group kill on timeout, logs outside the scored folder). Written for the kit's bench with stdlib only; the ponytail fixtures, plugin arms and cache warm-up are not borrowed (ShipQuick has no plugin arms yet).
 - Confidence that nothing fits better: 0.7 (the search is thin; ponytail is the only close fit).
+
+## 10 Nov 2026, story #323 (A8): the Spend column from the Ponytail ledger
+- Need: read a per-project cost CSV and show it as a Spend card on a localhost desk page, with a same-origin check on its JSON API.
+- Run: `scout.py --need "read a per-project CSV cost ledger and show it as a Spend table on a localhost dashboard with same-origin API check"`: no repos found. `gh search repos --topic=ledger-dashboard` and `gh search repos "localhost dashboard csv cost"` gave no fit for a single-repo desk.
+- Read: none. No repo found to read.
+- Borrowed: nothing. The desk already exists (`scripts/desk.py`, #91); the Host check is the pattern for the Origin check. The Ponytail metrics code was not found on this Mac, so the CSV columns are our own (see the assumption row in the PR body).
+- Decision: extend `scripts/desk.py` and `scripts/desk/index.html`. Stdlib `csv` only.
+- Confidence that nothing fits better: 0.75 (the search was thin; the need is small and tied to our own desk).
+
