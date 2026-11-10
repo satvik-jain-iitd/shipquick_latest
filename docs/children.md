@@ -13,12 +13,12 @@ daily issue, since a 404 from a missing token looks identical to "not adopted".
 Each child has one note above its line: `# <name>: <what GitHub shows, with the date>. Next: <step>`.
 The steps are the checklist in docs/ADOPTION.md.
 
-# GoServe: public, rule 24, kit branch `documents`. Bump PR GoServe#1298 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) on `documents`. Next: merge it, run the gate ruleset command and protect `documents`, then take `shipquick-call.yml` to `main` in a release and copy `CLAUDE.md` to `dev` and `staging`.
+# GoServe: public, rule 24, kit branch `documents`. Bump PR GoServe#1298 (re-pinned 10 Nov 2026 to v0.11.1, f66e41a, milestone D1, roles.yml added); held by its own freeze. Its CLAUDE.md has no `- Dev link:` or `- Production link:` lines, so the environments job stays red until the owner gives the links (owner, 10 Nov 2026). Next: merge it, run the gate ruleset command and protect `documents`, then take `shipquick-call.yml` to `main` in a release and copy `CLAUDE.md` to `dev` and `staging`.
 satvik-jain-iitd/GoServe
-# job-search: private, base `main`. Bump PR job-search#294 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) and adds shipquick-call.yml. Next: merge it, write `.shipquick/roles.yml`; the gate cannot be enforced on a private Free repo.
+# job-search: private, base `main`. Bump PR job-search#294 (re-pinned 10 Nov 2026 to v0.11.1, f66e41a, milestone D0, roles.yml added, its own `mode.md` kept; see feedback #359). Next: owner reviews and merges; the gate cannot be enforced on a private Free repo.
 klickbae8yt-star/job-search private
-# bhavna-ai: public, base `dev`. Bump PR bhavna-ai#130 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) and adds shipquick-call.yml. Next: merge it, run the printed ruleset command, write `.shipquick/roles.yml`, promote to `main`.
+# bhavna-ai: public, base `dev`. Bump PR bhavna-ai#130 (re-pinned 10 Nov 2026 to v0.11.1, f66e41a, milestone D0, roles.yml added, test job has a timeout). Next: owner reviews and merges, runs the printed ruleset command, then promotes to `main`.
 # This file is the one file the hygiene test lets hold that name (tests/test_repo_hygiene.py, owner, 9 Nov 2026).
 satvik-jain-iitd/bhavna-ai
-# Miraya: private and empty on GitHub; the local repo has a caller but was never pushed (9 Nov 2026). Next: push the local repo, then bump to the release tag.
+# Miraya: private. Pushed by the owner on 10 Nov 2026 as a clean orphan root without history: `operations/` (client data, 16 tracked files) and `.beads/` are not in it and are in `.gitignore`; Telegram chat and user ids in the n8n exports are redacted. Bump PR Miraya#1 (pin v0.11.1, f66e41a, milestone D0, roles.yml klickbae8yt-star / satvik-jain-iitd) to `dev`. Next: review and merge it, run the printed ruleset command (a private Free repo may not enforce it), then promote `dev` to `main`.
 satvik-jain-iitd/Miraya private
