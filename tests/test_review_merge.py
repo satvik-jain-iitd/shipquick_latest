@@ -521,7 +521,7 @@ def test_s140_the_reviewer_approving_their_own_pr_is_never_enough_even_if_they_a
 
 def test_s140_a_second_reviewer_account_in_roles_yml_is_honored(env):
     roles = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\n  - second-reviewer\nowner: satvik-jain-iitd\n"
-    pr = good(); pr["reviews"] = [{"author": {"login": "second-reviewer"}, "state": "APPROVED", "commit": {"oid": "abc123"}}]
+    pr = good(); pr["reviews"] = [{"author": {"login": "second-reviewer"}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": "Verdict: approve\nNot checked: nothing\n"}]
     r, merged = env(pr=pr, roles=roles)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert merged != ""
