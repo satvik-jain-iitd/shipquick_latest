@@ -8,7 +8,7 @@
 #   roadmap.json                        a stub (title, vision) only if you have none; yours is never overwritten
 #   .claude/commands/mode.md            the /mode command
 #   .pre-commit-config.yaml             the check_local.sh hooks, only if you have none (it prints the hook to add if yours lacks them)
-#   CLAUDE.md                           the one pointer line to the protocol; a new file starts from docs/CLAUDE.project.template.md, yours keeps every line
+#   CLAUDE.md                           the one pointer line to the protocol, and the kit rule block between the shipquick-rules markers (rewritten on every run); a new file starts from docs/CLAUDE.project.template.md, yours keeps every line outside the markers
 #   .shipquick/roles.yml                 which accounts may code, review, and own this project (story #140), only if you have none
 # --coder/--reviewer <acct[,acct]> --owner <acct>: fill .shipquick/roles.yml on first adoption. With none
 #   of these and no roles.yml yet, adopt.sh writes nothing for it and tells you to rerun with the flags or
@@ -169,6 +169,16 @@ put() {
   else cp "$tmp/new" "$dest"; echo "updated   $rel"; fi
 }
 
+# 0. broken shipquick-rules markers in the child's CLAUDE.md stop the run before anything is written (story #316).
+if [ -f "$child/CLAUDE.md" ] && ! python3 - "$child/CLAUDE.md" <<'PYEOF'
+import sys
+S, E = "<!-- shipquick-rules:start -->", "<!-- shipquick-rules:end -->"
+t = open(sys.argv[1], encoding="utf-8").read()
+ok = (t.count(S) == 0 and t.count(E) == 0) or (t.count(S) == 1 and t.count(E) == 1 and t.index(S) < t.index(E))
+sys.exit(0 if ok else 1)
+PYEOF
+then echo "adopt.sh: CLAUDE.md has broken shipquick-rules markers (one start line above one end line, or neither). Nothing was written. Fix it by hand and run again." >&2; exit 2; fi
+
 # 1. .gitattributes: keep the child's lines, add ours once
 { [ -f "$child/.gitattributes" ] && cat "$child/.gitattributes"; true; } > "$tmp/attrs"
 for line in "docs/process-trace.md merge=union" "docs/LEARNINGS.md merge=union"; do
@@ -296,6 +306,27 @@ elif grep -qF "$ptr" "$child/CLAUDE.md"; then echo "unchanged CLAUDE.md (has the
 else
   awk -v ptr="Protocol: $ptr" 'NR==1 && /^#/ {print; print ""; print ptr; next} NR==1 {print ptr; print ""} {print}' "$child/CLAUDE.md" | put CLAUDE.md
 fi
+
+# 6b. the kit rule block between the markers (story #316). Written on every run, so a pin bump refreshes the copy.
+# What sits outside the markers is the child's own. Broken markers stop the run and change nothing.
+if ! python3 - "$SQ/CLAUDE.md" "$child/CLAUDE.md" > "$tmp/claude-rules" <<'PYEOF'
+import sys
+START, END = "<!-- shipquick-rules:start -->", "<!-- shipquick-rules:end -->"
+kit = open(sys.argv[1], encoding="utf-8").read().replace("\r\n", "\n").splitlines()
+first = next(i for i, line in enumerate(kit) if line.startswith("0. "))
+block = "\n".join(kit[first:]).strip()
+text = open(sys.argv[2], encoding="utf-8").read().replace("\r\n", "\n")
+if text.count(START) == 0 and text.count(END) == 0:
+    sys.stdout.write(text.rstrip("\n") + "\n\n" + START + "\n\n" + block + "\n\n" + END + "\n")
+elif text.count(START) == 1 and text.count(END) == 1 and text.index(START) < text.index(END):
+    head, rest = text.split(START, 1)
+    tail = rest.split(END, 1)[1]
+    sys.stdout.write(head + START + "\n\n" + block + "\n\n" + END + tail)
+else:
+    sys.exit(1)
+PYEOF
+then echo "adopt.sh: CLAUDE.md has broken shipquick-rules markers (one start line above one end line, or neither). Fix it by hand and run again." >&2; exit 2; fi
+put CLAUDE.md < "$tmp/claude-rules"
 
 # 7. .shipquick/roles.yml: which accounts may code, review, and who owns this project (story #140)
 if [ -e "$child/.shipquick/roles.yml" ]; then
