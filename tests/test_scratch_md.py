@@ -43,6 +43,13 @@ def test_a_write_to_an_existing_todo_file_is_silent(tmp_path):
     assert run_write(tmp_path / "TODO.md", tmp_path) == ""
 
 
+def test_a_pattern_file_inside_a_symlinked_docs_folder_is_silent(tmp_path):
+    (tmp_path / "vault").mkdir()
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "research").symlink_to(tmp_path / "vault")
+    assert run_write(tmp_path / "docs" / "research" / "NOTES-x.md", tmp_path) == ""
+
+
 def test_a_file_outside_the_pattern_is_silent(tmp_path):
     assert run_write(tmp_path / "README.md", tmp_path) == ""
     assert run_write(tmp_path / "src" / "notes_parser.py", tmp_path) == ""

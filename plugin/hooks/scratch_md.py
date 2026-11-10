@@ -20,10 +20,12 @@ def target_for(file_path, cwd):
     name = path.name.upper()
     if path.suffix.lower() != ".md" or not name.startswith(PREFIXES):
         return ""
-    if (path if path.is_absolute() else Path(cwd) / path).exists():
+    full = path if path.is_absolute() else Path(cwd) / path
+    if full.exists():
         return ""  # an existing file is an edit, not a new scratch file
     try:
-        rel = path.resolve().relative_to(Path(cwd).resolve())
+        # abspath, not resolve(): a docs/ subfolder symlinked into a vault still counts as inside docs/
+        rel = Path(os.path.abspath(full)).relative_to(Path(os.path.abspath(cwd)))
     except (ValueError, OSError):
         rel = path
     if rel.parts and rel.parts[0] in EXEMPT_FOLDERS:
