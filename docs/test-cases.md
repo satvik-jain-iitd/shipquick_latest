@@ -1118,3 +1118,21 @@ Scenario: the manifest and the budget are honest
   Then SessionStart also matches fork, plugin.json names an author, and ADR-015 states the in-process and whole-process times
 ```
 Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).
+
+## Story #321 (A5b): the protected path warning
+```gherkin
+Scenario: editing a protected path in auto mode warns the coder
+  Given a repo in auto mode whose scripts/protected_paths.txt lists scripts/review_merge.sh
+  When an Edit or Write targets scripts/review_merge.sh, or a file under .github/workflows/
+  Then the hook prints "protected path, owner merges: <path>" and exits 0
+Scenario: an unlisted path prints nothing
+  When an Edit targets src/app.py
+  Then the hook prints nothing and exits 0
+Scenario: manual mode and files outside the repo print nothing
+  Given the same listed path in manual mode, or a file outside the repo
+  Then the hook prints nothing and exits 0
+Scenario: the hook never blocks
+  Given input that is not JSON
+  Then the hook exits 0 with no output
+```
+Tests: `tests/test_protected_warn.py` (`test_editing_a_listed_path_in_auto_mode_prints_the_warning`, `test_a_glob_line_matches_a_nested_path`, `test_an_unlisted_path_prints_nothing`, `test_a_listed_path_in_manual_mode_prints_nothing`, `test_a_file_outside_the_repo_prints_nothing`, `test_bad_stdin_exits_zero_and_never_blocks`, `test_the_hook_is_registered_on_pretooluse_edit_and_write`).
