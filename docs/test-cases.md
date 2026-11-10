@@ -1615,7 +1615,13 @@ Scenario: a renamed contract field fails --check and names the struct file
   Test: test_s222_a_renamed_contract_field_fails_check_and_names_the_struct_file
 Scenario: a removed contract leaves a stale struct that --check names and a regenerate removes
   Test: test_s222_a_removed_contract_leaves_a_stale_struct_that_check_names
-Scenario: the committed structs are current, every contract has one, and check_local.sh and CI run the check
-  Tests: test_s222_the_committed_structs_are_current_with_the_contracts, test_s222_every_contract_has_a_struct_file, test_s222_check_local_and_ci_run_the_check
+Scenario: every committed struct is a fresh render of its contract (stack layer 2, the first 48 files)
+  Given the committed Contracts folder
+  Then it is not empty, no file is stale and no file has lost its contract
+  Test: test_s222_every_committed_struct_is_current_with_its_contract
+Scenario: the committed structs are current and every contract has one (stack layer 3, the other 48 files)
+  Tests: test_s222_the_committed_structs_are_current_with_the_contracts, test_s222_every_contract_has_a_struct_file
+Scenario: check_local.sh and CI run the check (stack layer 4)
+  Test: test_s222_check_local_and_ci_run_the_check
 ```
-Tests: `tests/test_emit_contracts.py`.
+Tests: `tests/test_emit_contracts.py`. The story landed as a four-layer stack (rule 23, max 50 files a PR); each layer carries the test it turns green.

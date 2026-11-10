@@ -60,6 +60,16 @@ def test_s222_every_contract_has_a_struct_file():
         assert f"{emit_contracts.pascal(name)}.swift" in files, name
 
 
+def test_s222_every_committed_struct_is_current_with_its_contract():
+    """Each committed struct file is a fresh render of its contract; none is stale, none has lost its contract."""
+    files = emit_contracts.render(SRC)
+    have = sorted(OUT.glob("*.swift")) if OUT.is_dir() else []
+    assert have, "no struct file is committed yet"
+    for p in have:
+        assert p.name in files, f"{p.name} has no contract"
+        assert p.read_text(encoding="utf-8") == files[p.name], f"{p.name} is stale"
+
+
 def test_s222_every_prop_kind_maps_to_a_swift_type(tmp_path):
     files = emit_contracts.render(components_with(tmp_path, [SAMPLE]))
     assert list(files) == ["SampleCard.swift"]
@@ -110,15 +120,16 @@ def test_s222_a_record_type_becomes_a_nested_struct_and_an_unknown_kind_fails_by
         raise AssertionError("an unknown kind must fail, not be dropped")
 
 
-def copy_tree(tmp_path):
+def fresh_tree(tmp_path):
+    """The kit's contracts copied to a temp folder, with their structs generated beside them."""
     root, out = tmp_path / "components", tmp_path / "Contracts"
     shutil.copytree(SRC, root)
-    shutil.copytree(OUT, out)
+    assert emit_contracts.main(["--root", str(root), "--out", str(out)]) == 0
     return root, out
 
 
 def test_s222_a_renamed_contract_field_fails_check_and_names_the_struct_file(tmp_path, capsys):
-    root, out = copy_tree(tmp_path)
+    root, out = fresh_tree(tmp_path)
     assert emit_contracts.main(["--check", "--root", str(root), "--out", str(out)]) == 0
     path = root / "Button" / "Button.contract.json"
     c = json.loads(path.read_text(encoding="utf-8"))
@@ -132,12 +143,13 @@ def test_s222_a_renamed_contract_field_fails_check_and_names_the_struct_file(tmp
 
 
 def test_s222_a_removed_contract_leaves_a_stale_struct_that_check_names(tmp_path, capsys):
-    root, out = copy_tree(tmp_path)
+    root, out = fresh_tree(tmp_path)
     shutil.rmtree(root / "Chip")
     assert emit_contracts.main(["--check", "--root", str(root), "--out", str(out)]) == 1
     assert "Chip.swift" in capsys.readouterr().out
     assert emit_contracts.main(["--root", str(root), "--out", str(out)]) == 0
     assert not (out / "Chip.swift").exists()
+
 
 
 def test_s222_check_local_and_ci_run_the_check():
