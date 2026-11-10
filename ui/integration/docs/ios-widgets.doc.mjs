@@ -34,6 +34,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "widgetURL: `.widgetURL(_:)`, iOS 14.0. Apple: \"Sets the URL to open in the containing app when the user clicks the widget.\"",
             "Widget: iOS 14.0. Apple: \"The configuration and content of a widget to display on the Home screen or in Notification Center.\"",
             "WidgetConfiguration: iOS 14.0. Apple: \"A type that describes a widget’s content.\"",
             "TimelineProvider: iOS 14.0. Apple: \"A type that advises WidgetKit when to update a widget’s display.\""

@@ -1593,3 +1593,17 @@ Scenario: adopt.sh writes, keeps and validates the milestone
   When adopt.sh runs with --milestone D2, the caller has `milestone: D2`; a later run without the flag keeps it, once; a run with no flag and no line writes none; --milestone X9 is refused and the caller is untouched; an existing line that is quoted, lowercase, D7 or has a trailing comment is refused, not dropped
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
+
+## Story #296 (1/6): the InputModifiers catch-all holds only rows no control doc fits
+```gherkin
+Scenario: a catch-all row whose control has its own doc fails
+  Given the catch-all docs split so far and, per catch-all, the row-name stems a control or task doc owns (gesture, focus, keypress, drag, drop, hover, widget, ...)
+  When a row of a catch-all doc holds one of its stems
+  Then the test fails naming the catch-all, the row and the doc that owns it
+  Test: test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails
+Scenario: each owner doc exists, sets a family and holds a row of its stem
+  Given every stem of the fixture
+  Then its owner doc folder exists, the gate can count it (platforms.ios or platformApi.ios.family) and it holds a row with that stem
+  Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
+```
+Tests: `tests/test_ui_catch_all.py::test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails`, `test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem`.

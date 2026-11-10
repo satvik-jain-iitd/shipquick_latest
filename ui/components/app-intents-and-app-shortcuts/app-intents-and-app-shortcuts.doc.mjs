@@ -28,6 +28,7 @@ export default {
   },
   "platformApi": {
     "ios": {
+      "family": "app-intents-and-app-shortcuts",
       "supporting": [
         {
           "name": "AppIntent",
@@ -41,6 +42,13 @@ export default {
           "name": "AppShortcut",
           "use": "iOS 16.0. Apple: \"A type that defines a preconfigured shortcut for a specific app intent.\""
         }
+      ],
+      "variants": [
+        {"name": "appEntityIdentifier", "note": "`.appEntityIdentifier(_:)`, iOS 18.4. Apple: \"Associates a SwiftUI view with an app entity to make its content discoverable by Apple Intelligence and Siri.\""},
+        {"name": "appEntityUIElements", "note": "`.appEntityUIElements(_:)`, iOS 18.4. Apple: \"Provides the system with additional context to make a custom view’s content discoverable by Apple Intelligence and Siri.\""},
+        {"name": "onAppIntentExecution", "note": "`.onAppIntentExecution(_:perform:)`, iOS 26.0. Apple: \"Registers a handler to run when the app receives an app intent that targets the associated scene.\""},
+        {"name": "shortcutsLinkStyle", "note": "`.shortcutsLinkStyle(_:)`, iOS 16.0. Apple: \"Sets the given style for ShortcutsLinks within the view hierarchy\""},
+        {"name": "siriTipViewStyle", "note": "`.siriTipViewStyle(_:)`, iOS 16.0. Apple: \"Sets the given style for SiriTipView within the view hierarchy\""}
       ]
     }
   }
