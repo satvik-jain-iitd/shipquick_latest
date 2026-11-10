@@ -461,3 +461,11 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: ponytail `benchmarks/agentic/compare.py` and `run.py` (study clone, read only): per-task median, a sign test over pairs, no bootstrap and no geometric mean.
 - Decision: write `bench/report.py` (stdlib: `statistics`, `random` with a fixed seed). Borrow the idea of per-task medians; the ratio, geometric mean and bootstrap are not in ponytail.
 - Confidence that nothing fits better: 0.7 (thin search; the stats are a few lines of stdlib).
+
+---
+## 10 Nov 2026, story #322 (A5c): scratch markdown warning hook
+- Need: a PreToolUse Write hook that warns when a new NOTES, TODO, SCRATCH, DRAFT, WIP or TEMP markdown file appears outside docs/, .claude/ and .github/, and names the single-source file to use.
+- Run: `scout.py --need "warn when an agent writes a scratch markdown file (NOTES, TODO, SCRATCH, DRAFT, WIP, TEMP .md) outside docs, pointing to the single-source file"`: no repos found. `gh search repos --topic=claude-code-hooks --limit 5`: context-mode, Continuous-Claude-v3, Claude-Code-Quest, deja-vu, oh-my-agent. None is about scratch files.
+- Read: mksglu/context-mode, parcadei/Continuous-Claude-v3 and wesammustafa/Claude-Code-Quest READMEs (hook sections only). Each has hooks for other jobs (output size, ledgers, teaching). None blocks or warns on file names.
+- Decision: build from scratch, about 40 lines of stdlib Python in `plugin/hooks/scratch_md.py`, reusing `read_payload` from `plugin/hooks/common.py`. The hook registration is one new `PreToolUse` entry in `hooks.json`.
+- Confidence that nothing fits better: 0.8 (topic search is thin for this narrow job).
