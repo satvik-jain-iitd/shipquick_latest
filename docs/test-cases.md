@@ -1204,6 +1204,26 @@ Scenario: a task's seed files reach the cell folder
 ```
 Tests: `tests/test_bench_runner.py` (`test_an_out_folder_inside_a_git_repo_is_refused_with_no_call`, `test_the_default_out_folder_is_outside_any_repo`, `test_seed_files_are_written_into_the_cell_folder`).
 
+## Story #318 (A4b): the review shape gate
+```gherkin
+Scenario: an approval with no Verdict line is refused
+  Given a pull request approved by the reviewer account on the latest commit
+  When scripts/review_merge.sh runs in auto mode and the approving review has no line starting Verdict:
+  Then it refuses, names the Verdict: line, and merges nothing
+Scenario: an approval with no Not checked line is refused
+  Given the same approval with a Verdict: line but no line starting Not checked:
+  When scripts/review_merge.sh runs
+  Then it refuses, names the Not checked: line, and merges nothing
+Scenario: the words inside a sentence do not count as the line
+  Given an approval whose body says "Verdict: approve" inside a sentence
+  When scripts/review_merge.sh runs
+  Then it refuses, because no line starts with Verdict:
+Scenario: an approval with both lines merges
+  Given an approval with a Verdict: line and a Not checked: line
+  When scripts/review_merge.sh runs
+  Then it merges once
+```
+Tests: `tests/test_review_merge.py` (`test_s318_an_approval_without_a_verdict_line_refuses`, `test_s318_an_approval_without_a_not_checked_line_refuses`, `test_s318_the_words_inside_a_sentence_are_not_the_line`, `test_s318_an_approval_with_both_lines_merges`).
 ## Story #317 review fixes: the verdict line and the fourth label
 ```gherkin
 Scenario: a clean review still ends with a verdict
@@ -1400,6 +1420,88 @@ Scenario: the SessionStart hook appends the map, and a failed map never blocks
   When the project folder is missing, the hook still prints the rules and exits 0
 ```
 Tests: `tests/test_codebase_map.py` (`test_names_come_from_each_language_and_private_ones_are_left_out`, `test_tests_vendored_and_hidden_folders_are_skipped`, `test_scripts_and_plugin_are_listed_first`, `test_the_map_stays_within_the_budget_and_says_what_it_left_out`, `test_the_map_of_this_repo_lists_scripts_within_budget`, `test_session_start_appends_the_map_to_the_rules`, `test_a_map_failure_never_blocks_the_session`, `test_a_folder_with_no_source_gives_an_empty_map`, `test_a_shell_function_without_parentheses_is_listed`, `test_kotlin_enum_annotation_value_and_inline_classes_are_listed`).
+## Story #322, scratch markdown warning (A5c)
+```gherkin
+Scenario: a new scratch markdown file outside docs warns and names the single-source file
+  Given a Write to TODO-plan.md at the project root
+  When the PreToolUse hook runs
+  Then it prints a warning that names docs/follow-ups.md
+  And a Write to DRAFT-release.md names docs/plans/
+
+Scenario: a file outside the pattern, or a pattern file inside docs, .claude or .github, is silent
+  Given a Write to README.md, or to docs/NOTES-2026.md, or to a file in a docs/ subfolder that is a symlink into a vault
+  When the PreToolUse hook runs
+  Then it prints nothing and exits 0
+  And bad stdin exits 0 and prints nothing
+
+Scenario: a Write to a scratch file that already exists is silent (it is an edit, not a new file)
+  Given TODO.md is already on disk at the project root
+  When a Write targets TODO.md
+  Then the PreToolUse hook prints nothing and exits 0
+```
+Tests: `tests/test_scratch_md.py` (`test_a_new_todo_file_outside_docs_warns_and_names_follow_ups`, `test_a_draft_file_names_docs_plans`, `test_a_file_outside_the_pattern_is_silent`, `test_a_pattern_file_inside_docs_is_silent`, `test_a_pattern_file_inside_a_symlinked_docs_folder_is_silent`, `test_a_pattern_file_inside_claude_or_github_is_silent`, `test_bad_stdin_exits_zero_and_prints_nothing`, `test_a_write_to_an_existing_todo_file_is_silent`, `test_the_hook_is_registered_for_write_before_use`). Local: `python3 -m pytest -q tests/test_scratch_md.py`.
+## Story #321 (A5b): the protected path warning
+```gherkin
+Scenario: editing a protected path in auto mode warns the coder
+  Given a repo in auto mode whose scripts/protected_paths.txt lists scripts/review_merge.sh
+  When an Edit or Write targets scripts/review_merge.sh, or a file under .github/workflows/
+  Then the hook prints "protected path, owner merges: <path>" and exits 0
+Scenario: an unlisted path prints nothing
+  When an Edit targets src/app.py
+  Then the hook prints nothing and exits 0
+Scenario: manual mode and files outside the repo print nothing
+  Given the same listed path in manual mode, or a file outside the repo
+  Then the hook prints nothing and exits 0
+Scenario: the hook never blocks
+  Given input that is not JSON
+  Then the hook exits 0 with no output
+```
+Tests: `tests/test_protected_warn.py` (`test_editing_a_listed_path_in_auto_mode_prints_the_warning`, `test_a_glob_line_matches_a_nested_path`, `test_an_unlisted_path_prints_nothing`, `test_a_listed_path_in_manual_mode_prints_nothing`, `test_a_file_outside_the_repo_prints_nothing`, `test_bad_stdin_exits_zero_and_never_blocks`, `test_the_hook_is_registered_on_pretooluse_edit_and_write`).
+
+## Story #321 review fixes (PR #350): the warning reaches a child and the model
+```gherkin
+Scenario: a child project with the vendored list gets the warning
+  Given a child repo in auto mode whose knowledge/shipquick_latest/scripts/protected_paths.txt lists .github/workflows/*
+  When an Edit targets .github/workflows/ci.yml
+  Then the hook prints "protected path, owner merges: .github/workflows/ci.yml" and exits 0
+Scenario: the warning is given as additional context to the model
+  Given a listed path in auto mode
+  Then the hook output has hookSpecificOutput.additionalContext with the warning, hookEventName PreToolUse, and no permissionDecision
+```
+Tests: `tests/test_protected_warn.py` (`test_a_child_with_the_vendored_list_gets_the_warning`, `test_the_warning_reaches_the_model_as_additional_context`).
+
+## Story #321 review fix 3 (PR #350): an edit in a git worktree
+```gherkin
+Scenario: an edit in a worktree is judged by the edited file's own checkout
+  Given a repo in auto mode with a worktree under .claude/worktrees/lane-x, and CLAUDE_PROJECT_DIR set to the main checkout
+  When an Edit targets <worktree>/scripts/review_merge.sh
+  Then the hook prints "protected path, owner merges: scripts/review_merge.sh" and exits 0
+```
+Tests: `tests/test_protected_warn.py` (`test_an_edit_in_a_worktree_warns_when_the_session_points_at_the_main_checkout`).
+## Story #320 (A5a): the Bash hook blocks git hook bypasses
+```gherkin
+Scenario: a git commit or push that skips the hooks is blocked
+  Given a Bash tool call with "git commit --no-verify", "git push --no-verify" or "git -c core.hooksPath=... commit"
+  When the PreToolUse hook runs
+  Then it exits 2 and the reason starts with "git_guard: blocked" on stderr
+Scenario: a git config that redirects the hooks folder is blocked
+  Given a Bash tool call with "git config core.hooksPath .husky"
+  When the PreToolUse hook runs
+  Then it exits 2; a read such as "git config --get core.hooksPath" passes
+Scenario: a harmless command passes silently
+  Given "git status", "git push -n origin dev" or "ls -la"
+  When the PreToolUse hook runs
+  Then it exits 0 and prints nothing
+Scenario: the bypass text inside a quoted argument of another command passes
+  Given "echo \"git commit --no-verify\"" or "gh pr create --body \"core.hooksPath is not allowed\""
+  When the PreToolUse hook runs
+  Then it exits 0; a real bypass after "&&" in the same line is still blocked
+Scenario: a bypass hidden by a line continuation, an env var, or a long-option prefix is blocked
+  Given "git commit -m fix \\" then a new line "--no-verify", "GIT_CONFIG_PARAMETERS=... git commit", "git --config-env=core.hooksPath=X commit", "git commit --no-veri" or "git push --no-veri"
+  When the PreToolUse hook runs
+  Then it exits 2 with the reason on stderr
+```
+Tests: `tests/test_git_guard.py` (`test_bypass_is_blocked_with_reason` (eight cases added for the review round: continuation, env vars, --config-env, --no-veri), `test_harmless_command_passes_silently`, `test_bypass_text_inside_a_quoted_argument_passes`, `test_other_tools_and_broken_input_pass`, `test_hook_is_registered_for_bash_pre_tool_use`).
 ## Story #315: the loop and cost guard
 ```gherkin
 Scenario: four different calls are not a loop

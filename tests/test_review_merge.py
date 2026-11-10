@@ -59,7 +59,7 @@ class Log(str):
 def good():
     return {
         "title": "feat(x): a story (#67)", "author": {"login": "klickbae8yt-star"}, "state": "OPEN", "isDraft": False, "mergeable": "MERGEABLE", "baseRefName": "dev", "headRefOid": "abc123", "body": "## What\nSomething.\n\nCloses #67\n",
-        "reviews": [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}}],
+        "reviews": [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": "Verdict: approve\nNot checked: nothing\n"}],
         "statusCheckRollup": [{"name": "test", "status": "COMPLETED", "conclusion": "SUCCESS"}, {"name": "gate", "status": "COMPLETED", "conclusion": "SUCCESS"}],
     }
 
@@ -521,7 +521,7 @@ def test_s140_the_reviewer_approving_their_own_pr_is_never_enough_even_if_they_a
 
 def test_s140_a_second_reviewer_account_in_roles_yml_is_honored(env):
     roles = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\n  - second-reviewer\nowner: satvik-jain-iitd\n"
-    pr = good(); pr["reviews"] = [{"author": {"login": "second-reviewer"}, "state": "APPROVED", "commit": {"oid": "abc123"}}]
+    pr = good(); pr["reviews"] = [{"author": {"login": "second-reviewer"}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": "Verdict: approve\nNot checked: nothing\n"}]
     r, merged = env(pr=pr, roles=roles)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert merged != ""
@@ -572,7 +572,7 @@ def test_s225_roles_yml_missing_on_the_kit_branch_names_the_kit_branch(env):
 # the owner's own yes. `.shipquick/*` (mode, roles, freeze) stays owner-merge only, whatever the review says.
 PROTECTED = [{"filename": ".github/workflows/ci.yml", "status": "modified"}]
 TODAY = __import__("datetime").date.today().isoformat()   # the gate checks the yes is at most 14 days old
-YES = f'Approved.\nSecond review: fresh reviewer agent, 0 open findings\nOwner yes: {TODAY} "haan merge karo"\n'
+YES = f'Verdict: approve\nNot checked: nothing\nApproved.\nSecond review: fresh reviewer agent, 0 open findings\nOwner yes: {TODAY} "haan merge karo"\n'
 
 
 def with_review(body):
@@ -647,10 +647,14 @@ def test_s180_claude_md_is_a_protected_path(env):
 SCREENS = "welcome | / | 412x915 | welcome\n"
 
 
+# Story #318: every approval carries the Verdict and Not checked lines; these helpers add them to the body under test.
+VERDICT_LINES = "Verdict: approve\nNot checked: nothing\n"
+
+
 def design_pr(review_body):
     pr = good()
     pr["body"] = "Design board: Production / C1 Welcome\nApproved: 2026-11-08\nRender: https://github.com/o/r/actions/runs/1\n\nCloses #67\n"
-    pr["reviews"] = [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": review_body}]
+    pr["reviews"] = [{"author": {"login": REVIEWER}, "state": "APPROVED", "commit": {"oid": "abc123"}, "body": VERDICT_LINES + review_body}]
     return pr
 
 
@@ -685,7 +689,7 @@ SESSION_ROLES = ("coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\
 
 def session_pr(review_body, *built_by, stub_dir):
     pr = good()
-    pr["reviews"][0]["body"] = review_body
+    pr["reviews"][0]["body"] = VERDICT_LINES + review_body
     (stub_dir / "commits.json").write_text(json.dumps(
         [{"commit": {"message": f"feat: x\n\nBuilt-by: {s}\n"}} for s in built_by]), encoding="utf-8")
     return pr
@@ -766,3 +770,27 @@ def test_s194_owner_yes_words_need_a_letter(env):
 def test_s194_an_owner_yes_in_devanagari_passes(env):
     r, merged = env(pr=with_review(YES.replace('"haan merge karo"', '"हाँ मर्ज करो"')), pr_files=PROTECTED)
     assert r.returncode == 0, r.stderr
+
+
+# Story #318 (A4b): the approving review must carry a `Verdict:` line and a `Not checked:` line.
+VERDICT_BODY = "Verdict: approve, matches the story\nNot checked: the live dev link (no UAT here)\n"
+
+
+def test_s318_an_approval_without_a_verdict_line_refuses(env):
+    body = VERDICT_BODY.replace("Verdict: approve, matches the story\n", "")
+    refused(*env(pr=with_review(body)), "Verdict:")
+
+
+def test_s318_an_approval_without_a_not_checked_line_refuses(env):
+    body = VERDICT_BODY.replace("Not checked: the live dev link (no UAT here)\n", "")
+    refused(*env(pr=with_review(body)), "Not checked:")
+
+
+def test_s318_the_words_inside_a_sentence_are_not_the_line(env):
+    refused(*env(pr=with_review("Looks fine, Verdict: approve and Not checked: nothing\n")), "Verdict:")
+
+
+def test_s318_an_approval_with_both_lines_merges(env):
+    r, merged = env(pr=with_review(VERDICT_BODY))
+    assert r.returncode == 0, r.stderr
+    assert "pr merge 12" in merged

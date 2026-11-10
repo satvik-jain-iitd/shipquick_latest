@@ -496,6 +496,14 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: adopt ponytail's cell pattern (stdout to a file, `start_new_session`, group kill on timeout, logs outside the scored folder). Written for the kit's bench with stdlib only; the ponytail fixtures, plugin arms and cache warm-up are not borrowed (ShipQuick has no plugin arms yet).
 - Confidence that nothing fits better: 0.7 (the search is thin; ponytail is the only close fit).
 
+## 10 Nov 2026, story #318 (A4b): review shape gate
+- Need: a merge gate that refuses an approving review unless its body has a `Verdict:` line and a `Not checked:` line.
+- Run: `scout.py --need "fail a PR review gate when the approving review body lacks a Verdict line and a Not checked line"`: no repos found.
+  `gh search repos --topic=pr-review-gate`: no match for the need. `gh search repos --topic=code-review-checklist`: checklists only.
+- Read: `gauravs19/ai-pr-gate` (PR template and a CI gate for AI-written PRs: size and completeness, it never reviews or approves; a template, not a review-body check), `mgreiler/code-review-checklist` (a plain checklist of questions, no gate), `n0nuser/goodcodereview` (review cards with PASS, FAIL, N/A lines; a reviewer style, not a merge check).
+- Borrowed: the idea of a fixed verdict word per review (PASS, FAIL, N/A in `n0nuser/goodcodereview`), as the `Verdict:` line name only.
+- Decision: build from scratch. Six lines of bash in `scripts/review_merge.sh`, using the same `refuse()` style and the existing `reviewer_account` lookup. Nothing fits as a gate inside our own merge script.
+- Confidence that nothing fits: 0.7 (the search is thin; the checklists are close in topic but none gates a merge).
 ## 10 Nov 2026, story #323 (A8): the Spend column from the Ponytail ledger
 - Need: read a per-project cost CSV and show it as a Spend card on a localhost desk page, with a same-origin check on its JSON API.
 - Run: `scout.py --need "read a per-project CSV cost ledger and show it as a Spend table on a localhost dashboard with same-origin API check"`: no repos found. `gh search repos --topic=ledger-dashboard` and `gh search repos "localhost dashboard csv cost"` gave no fit for a single-repo desk.
@@ -543,6 +551,28 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Confidence that nothing fits better: 0.75 (the search was thin; the three close hits solve a bigger problem).
 
 ---
+## 10 Nov 2026, story #322 (A5c): scratch markdown warning hook
+- Need: a PreToolUse Write hook that warns when a new NOTES, TODO, SCRATCH, DRAFT, WIP or TEMP markdown file appears outside docs/, .claude/ and .github/, and names the single-source file to use.
+- Run: `scout.py --need "warn when an agent writes a scratch markdown file (NOTES, TODO, SCRATCH, DRAFT, WIP, TEMP .md) outside docs, pointing to the single-source file"`: no repos found. `gh search repos --topic=claude-code-hooks --limit 5`: context-mode, Continuous-Claude-v3, Claude-Code-Quest, deja-vu, oh-my-agent. None is about scratch files.
+- Read: mksglu/context-mode, parcadei/Continuous-Claude-v3 and wesammustafa/Claude-Code-Quest READMEs (hook sections only). Each has hooks for other jobs (output size, ledgers, teaching). None blocks or warns on file names.
+- Decision: build from scratch, about 40 lines of stdlib Python in `plugin/hooks/scratch_md.py`, reusing `read_payload` from `plugin/hooks/common.py`. The hook registration is one new `PreToolUse` entry in `hooks.json`.
+- Confidence that nothing fits better: 0.8 (topic search is thin for this narrow job).
+## 10 Nov 2026, story #321 (A5b): protected path edit warning
+- Need: a Claude Code PreToolUse hook on Edit and Write that warns when the edited file matches a glob in `scripts/protected_paths.txt`, only in auto mode, and never blocks.
+- Run: `scout.py --need "Claude Code PreToolUse hook that warns when an Edit or Write touches a protected path listed in a glob file"`: no repos found. `gh search repos --topic=claude-code-hook --limit 5`: five hook repos, none reads a glob list of protected paths (backthread/add-reasoning-to-prs writes PR text, ymonster/claude_encoding_guard guards file encoding, RainSunMe/cc-vision-hook describes images, nidhinjs/prompt-mini stops vague prompts, jeecgboot/skills is a skill pack). None fits.
+- Read: the top hits' READMEs (tier C, their own claims). The fit is judged on what each does, not on stars.
+- Borrowed: the hook layout already in this plugin (stdin JSON, exit 0, one script per hook, `common.py` for the mode and the git folder) from story #313. The glob rule is the one `scripts/review_merge.sh` uses (bash `[[ == ]]`, mapped to `fnmatch`).
+- Decision: build from scratch as `plugin/hooks/protected_warn.py`, a small script on top of `common.py`. Nothing found fits.
+- Confidence that nothing fits: 0.8 (the topic search is thin; the need is specific to this kit's own list).
+## 10 Nov 2026, story #320 (A5a): block `--no-verify` and `core.hooksPath` in a Bash hook
+- Need: a PreToolUse Bash hook that stops `git commit --no-verify`, `git push --no-verify` and `core.hooksPath` redirects, with no outside tool.
+- Run: `scout.py --need "PreToolUse hook that blocks git commands with --no-verify or core.hooksPath"`: no repos found.
+  `gh search repos --topic=claude-code-hooks --limit 5`: mksglu/context-mode (context window, not git), parcadei/Continuous-Claude-v3 (hooks for state and ledgers, no bypass guard), wesammustafa/Claude-Code-Quest (a guide, no hooks), vshulcz/deja-vu (memory), first-fluke/oh-my-agent (skills and presets). None blocks a git bypass.
+  `gh search repos "block no-verify git hook bypass" --limit 5`: the same unrelated set.
+- Read: the READMEs of mksglu/context-mode, parcadei/Continuous-Claude-v3 and wesammustafa/Claude-Code-Quest (tier C or B, first lines only). None describes a git bypass guard.
+- Borrowed: the idea from ECC `scripts/hooks/block-no-verify.js` (MIT, study clone, read only): a list of bypass flags, a check that the word is a real git call and not text, a split on shell separators, and the `core.hooksPath` redirect. Rewritten in stdlib Python (`plugin/hooks/git_guard.py`), because the kit's plugin hooks are Python.
+- Decision: adopt the idea, build the small Python hook. The ECC file is a Node module with a large shell scanner and a budget; it does not fit a stdlib plugin.
+- Confidence that nothing fits better: 0.7 (the search is thin; ECC is the only close fit and it is a whole plugin, not a single hook).
 ## 10 Nov 2026, story #315 (A12): cost and loop guard
 - Need: a Claude Code hook that warns on five identical tool calls in a row and warns or denies when the session cost (from the transcript usage records) is over a line.
 - Run: `scout.py --need "Claude Code hook that detects a repeated identical tool call loop and a session cost ceiling from the transcript usage records"`: no repos found.
