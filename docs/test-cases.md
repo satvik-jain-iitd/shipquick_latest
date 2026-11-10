@@ -1118,3 +1118,53 @@ Scenario: the manifest and the budget are honest
   Then SessionStart also matches fork, plugin.json names an author, and ADR-015 states the in-process and whole-process times
 ```
 Tests: `tests/test_plugin_hooks.py` (`test_the_mode_is_read_from_the_git_common_dir_like_mode_sh`, `test_a_tracked_mode_file_wins_over_the_common_dir_file`, `test_the_mode_is_found_from_a_subfolder_and_a_worktree`, `test_claude_project_dir_is_preferred_when_set`, `test_a_word_that_is_not_a_mode_reads_as_not_set`, `test_the_dense_rules_keep_the_instruction_each_rule_exists_for`, `test_the_dense_text_is_still_short_enough_to_inject_every_session`, `test_the_session_matcher_covers_fork_and_the_manifest_names_an_author`, `test_adr_015_states_the_time_budget_honestly`).
+
+## Story #315: the loop and cost guard
+```gherkin
+Scenario: four different calls are not a loop
+  Given four Edit calls with four different inputs in one session
+  When the PostToolUse guard runs after each
+  Then nothing is printed
+Scenario: five identical calls warn loop, and a sixth is denied before it runs
+  Given five identical Edit calls recorded in one session
+  When the PostToolUse guard runs on the fifth, and the PreToolUse guard runs on a sixth identical call
+  Then the fifth prints "loop: the same call 5 times" and the sixth gets a deny with the same text
+Scenario: a different call breaks the streak
+  Given five identical calls, then a call with another input
+  When the PreToolUse guard runs on the other call
+  Then nothing is printed, so the call is allowed
+Scenario: the same input on another tool is not a loop
+  Given calls alternating Edit and Write, then a Bash call with the same input
+  When the PostToolUse guard runs on the Bash call
+  Then no loop warning is printed
+Scenario: under the warn line prints nothing
+  Given a transcript whose usage costs 0.50 dollars
+  When the PostToolUse guard runs
+  Then nothing is printed
+Scenario: over the warn line warns about cost
+  Given a transcript whose usage costs 6 dollars and the block line is set to 100
+  When the PostToolUse guard runs
+  Then the warning says "cost:" and "warn line", and no deny is given
+Scenario: over the block line denies Edit, Write and Bash before they run
+  Given a transcript whose usage costs 6 dollars
+  When the PreToolUse guard runs on an Edit call
+  Then the deny reason says "cost:" and "block line"
+Scenario: the block line comes from the environment
+  Given SHIPQUICK_COST_BLOCK is 2.5 and a transcript that costs 3 dollars
+  When the PreToolUse guard runs
+  Then the call is denied with "block line"
+Scenario: cost is priced per model and per token class
+  Given one Haiku output million tokens and one Sonnet cache-read million tokens
+  Then session_cost is the Haiku output price plus the Sonnet cache-read price
+Scenario: a missing transcript costs nothing and never blocks
+  Given a transcript path that does not exist
+  When the PreToolUse guard runs
+  Then nothing is printed
+Scenario: a bad threshold falls back to the default
+  Given SHIPQUICK_COST_WARN is "two dollars" and a transcript that costs 3 dollars
+  When the PostToolUse guard runs
+  Then the warning names the warn line at the default 2 dollars
+Scenario: the hooks file registers the guard
+  Then PostToolUse runs guard.py post for every tool, and PreToolUse runs guard.py pre for Edit, Write and Bash
+```
+Tests: `tests/test_guard_hook.py` (`test_five_identical_calls_warn_loop`, `test_a_sixth_identical_call_is_denied_before_it_runs`, `test_over_the_block_line_denies_edit_before_it_runs`, `test_cost_is_priced_per_model_and_per_token_class`, and the other tests in that file).
