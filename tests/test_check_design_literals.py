@@ -119,6 +119,27 @@ def test_the_font_shorthand_is_a_font_family_literal():
     assert cdl.check(diff_with_added("src/A.tsx", "style={{ font: theme.fonts.body }}"), []) is None
 
 
+def test_style_blocks_in_vue_svelte_astro_and_tsx_urls_do_not_hide_a_literal():
+    # PR #374 review round 3: a <style> block in .vue, .svelte or .astro is CSS, and a TSX string can hold a url(),
+    # so `//` after `(` is never a comment start and the font shorthand is checked there too
+    for path in ("src/A.vue", "src/A.svelte", "src/A.astro"):
+        assert cdl.check(diff_with_added(path, ".hero { background: url(//cdn.example/a.png) #ff0000; }"), []), path
+        assert "font-family" in (cdl.check(diff_with_added(path, ".t { font: 16px/1.5 'Inter', sans-serif; }"), []) or ""), path
+        # the script part of the same file: a `//` comment and a typed `font` field are still not literals
+        assert cdl.check(diff_with_added(path, "const x = 1; // story #133"), []) is None, path
+        assert cdl.check(diff_with_added(path, "  font: string;"), []) is None, path
+        assert cdl.check(diff_with_added(path, ".t { font: 1rem var(--font-body), sans-serif; }"), []) is None, path
+    assert cdl.check(diff_with_added("src/A.tsx", "style={{ background: 'url(//cdn.example/a.png) #ff0000' }}"), [])
+
+
+def test_an_rgb_or_hsl_call_on_a_token_is_not_a_literal():
+    # PR #374 review round 3: `rgb(var(--x) / 0.12)` is a token colour with alpha (M3 state layers, Tailwind
+    # `<alpha-value>`), so only a call whose first argument is not var() is a literal
+    assert cdl.check(diff_with_added("src/a.css", "color: rgb(var(--md-primary-rgb) / 0.12);"), []) is None
+    assert cdl.check(diff_with_added("src/a.css", "color: hsla( var(--h) / 0.5);"), []) is None
+    assert "rgb/hsl" in (cdl.check(diff_with_added("src/a.css", "color: rgb(255, 0, 0);"), []) or "")
+
+
 def test_line_numbers_follow_the_hunk_header_across_hunks():
     diff = (
         "diff --git a/s.css b/s.css\n--- a/s.css\n+++ b/s.css\n"

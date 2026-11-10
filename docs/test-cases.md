@@ -1634,5 +1634,13 @@ Scenario: stylelint runs once, per package root, and installs only when the bina
   When ci.yml, checks.yml or check_local.sh design-tokens calls `scripts/run_stylelint_changed.sh <base> [repo]`
   Then it never prints `skip stylelint` for that file: it runs web's own `node_modules/.bin/stylelint` from `web/` on `a.css`, runs `npm ci` only when that binary is missing, names a folder with css but no config in its skip line, and the script is a protected path
   Test: test_stylelint_runs_from_the_package_root_of_a_web_subfolder, test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary, test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it
+Scenario: a style block or a url() string does not hide a literal (PR #374 review round 3)
+  Given `.hero { background: url(//cdn.example/a.png) #ff0000; }` or `.t { font: 16px/1.5 'Inter', sans-serif; }` on a .vue, .svelte or .astro line, or `background: 'url(//cdn.example/a.png) #ff0000'` on a tsx line
+  Then each is a hit: `//` starts a comment only at the line start or after a space; `const x = 1; // story #133`, `font: string;` and `font: 1rem var(--font-body), sans-serif;` pass
+  Test: test_style_blocks_in_vue_svelte_astro_and_tsx_urls_do_not_hide_a_literal
+Scenario: an rgb or hsl call on a token is not a literal (PR #374 review round 3)
+  Given `color: rgb(var(--md-primary-rgb) / 0.12);` on a css line
+  Then it passes, and `color: rgb(255, 0, 0);` is still an rgb/hsl hit
+  Test: test_an_rgb_or_hsl_call_on_a_token_is_not_a_literal
 ```
 Tests: `tests/test_check_design_literals.py`.

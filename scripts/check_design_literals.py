@@ -24,13 +24,16 @@ HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 # shortcut: an id selector made only of hex letters (`#face {}`) is a false hit; rename it or allowlist the file.
 HEX = re.compile(r"(?<![\w&.])#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b(?!\s*=)")
 # PR #374 review: `// story #133` and `/* story #374 */` are references, not colours, so comment text is cut first.
-# shortcut: one line at a time, so a `/* ... */` that spans lines keeps its inner lines; `//` after `:` is kept
-# (a `url(https://...)`), which also keeps a `: // note` comment. Upgrade to a real tokenizer if a child hits either.
-COMMENT = re.compile(r"/\*.*?\*/|(?<!:)//.*$")
+# Round 3: `//` starts a comment only at the line start or after whitespace, so `url(//cdn...)` in a TSX string or a
+# .vue/.svelte/.astro <style> block, and `url(https://...)`, never cut the line.
+# shortcut: one line at a time, so a `/* ... */` that spans lines keeps its inner lines, and a ` //` inside a string is
+# cut. Upgrade to a real tokenizer if a child hits either.
+COMMENT = re.compile(r"/\*.*?\*/|(?:^|(?<=\s))//.*$")
 # PR #374 review round 2: `//` is never a comment in CSS (`url(//cdn...)` is a protocol-relative URL), so a .css line
 # loses only its `/* */` comments.
 BLOCK_COMMENT = re.compile(r"/\*.*?\*/")
-FUNC = re.compile(r"\b(?:rgba?|hsla?)\(")
+# Round 3: `rgb(var(--x) / 0.12)` is a token colour with alpha (M3 state layers, Tailwind `<alpha-value>`), not a literal.
+FUNC = re.compile(r"\b(?:rgba?|hsla?)\((?!\s*var\()")
 # a font-family value that is not a token reference or a CSS keyword
 FONT_CSS = re.compile(r"font-family\s*:\s*(?!var\(|inherit\b|initial\b|unset\b|revert\b)\S")
 # PR #374 review round 2: the `font:` shorthand sets the family too. In CSS any value that is not a keyword or a token
@@ -41,6 +44,11 @@ FONT_TS = re.compile(r"\b(?:fontFamily|font)\s*:\s*['\"`]")   # the TSX inline-s
 TAILWIND_FONT = re.compile(r"\bfont-\[")           # `font-['Inter']`; `bg-[#...]` and `text-[rgb(...)]` hit HEX and FUNC
 KINDS = (("hex", HEX), ("rgb/hsl", FUNC), ("font-family", FONT_CSS), ("font-family", FONT_TS), ("tailwind font", TAILWIND_FONT))
 CSS_KINDS = (("font-family", FONT_SHORTHAND),)
+# Round 3: a .vue, .svelte or .astro line may be <style> CSS or <script> TS, and a -U0 diff does not say which, so the
+# shorthand fails there only when its value names a family (a quote or a generic family); `font: string;` passes.
+# shortcut: a bare `font: 1rem Inter;` in a <style> block passes; lint the block with stylelint if a child hits it.
+FONT_MIXED = re.compile(r"\bfont\s*:(?![^;]*var\()[^;]*(?:['\"]|\b(?:sans-serif|serif|monospace|system-ui|cursive|fantasy)\b)")
+MIXED = re.compile(r"\.(astro|vue|svelte)$")
 FIX = ("design literal(s) on added lines. Use a token (var(--x), theme.x, a Tailwind token class), "
        f"or list a real token file in {ALLOWLIST_NAME}:")
 
@@ -79,7 +87,8 @@ def check(diff_text: str, allow: list[str]) -> str | None:
             continue
         css = path.endswith(".css")
         code = (BLOCK_COMMENT if css else COMMENT).sub("", text)
-        kinds = list(dict.fromkeys(k for k, rx in KINDS + (CSS_KINDS if css else ()) if rx.search(code)))
+        extra = CSS_KINDS if css else (("font-family", FONT_MIXED),) if MIXED.search(path) else ()
+        kinds = list(dict.fromkeys(k for k, rx in KINDS + extra if rx.search(code)))
         if kinds:
             hits.append(f"{path}:{n}: {', '.join(kinds)} literal: {text.strip()[:80]}")
     return None if not hits else FIX + "\n" + "\n".join(hits)
