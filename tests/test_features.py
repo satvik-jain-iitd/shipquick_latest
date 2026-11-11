@@ -88,7 +88,7 @@ def test_the_default_list_has_the_ids_the_plan_names():
 
 def test_the_three_files_are_protected_paths():
     globs = [l.strip() for l in (ROOT / "scripts" / "protected_paths.txt").read_text(encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
-    for rel in ("scripts/features.py", "scripts/features_default.json", "scripts/features.sh"):
+    for rel in ("scripts/features.py", "scripts/features_default.json", "scripts/features_anything_later.sh"):   # the glob covers features.sh of the next story too
         assert any(fnmatch.fnmatchcase(rel, g) for g in globs), rel
 
 
@@ -119,8 +119,46 @@ def test_a_bad_defaults_file_is_an_error_not_a_crash(tmp_path):
         raise AssertionError(f"accepted {bad}")
 
 
-def test_any_unexpected_crash_still_exits_2(tmp_path):
+def test_any_unexpected_crash_still_exits_2(tmp_path, monkeypatch, capsys):
+    """A real crash inside read() (not a FeaturesError) must come out as 2, never 1 (review of #431)."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import features
+
+    def boom(root, defaults=None):
+        raise RuntimeError("boom")
+    monkeypatch.setattr(features, "read", boom)
+    assert features.main(["--root", str(tmp_path), "get", "roadmap"]) == 2
+    out = capsys.readouterr()
+    assert out.out == "" and "boom" in out.err
+
+def test_a_directory_or_dangling_link_at_the_file_path_is_an_error_not_defaults(tmp_path):
     (tmp_path / ".shipquick").mkdir()
-    (tmp_path / ".shipquick" / "features.json").write_text('{"features": {"roadmap": 5}}', encoding="utf-8")
+    f = tmp_path / ".shipquick" / "features.json"
+    f.mkdir()
     r = run(tmp_path, "get", "roadmap")
     assert r.returncode == 2 and r.stdout.strip() == ""
+    f.rmdir()
+    f.symlink_to(tmp_path / "nowhere.json")
+    r = run(tmp_path, "get", "roadmap")
+    assert r.returncode == 2 and r.stdout.strip() == ""
+
+
+def test_no_git_and_no_root_exits_2_never_1_never_defaults_from_dot(tmp_path):
+    import os
+    env = dict(os.environ, PATH="/nonexistent")
+    r = subprocess.run([sys.executable, str(FEATURES), "get", "roadmap"], cwd=tmp_path, env=env, capture_output=True, text=True)
+    assert r.returncode == 2 and r.stdout.strip() == "" and "git" in r.stderr
+    r = subprocess.run([sys.executable, str(FEATURES), "get", "roadmap"], cwd=tmp_path, capture_output=True, text=True)   # git present, not a repo
+    assert r.returncode == 2 and r.stdout.strip() == ""
+
+
+def test_a_defaults_row_with_a_non_boolean_locked_is_an_error(tmp_path):
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import features
+    d = tmp_path / "d.json"
+    d.write_text('{"features": {"a": {"default": true, "locked": "yes"}}}', encoding="utf-8")
+    try:
+        features.read(tmp_path, defaults=d)
+    except features.FeaturesError:
+        return
+    raise AssertionError("accepted a string locked")
