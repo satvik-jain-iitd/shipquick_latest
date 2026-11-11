@@ -41,3 +41,5 @@ scripts/run_stylelint_changed.sh
 ui/ios/ShipQuickUITests/__Snapshots__/*
 # story #418 (F1): the features file, its reader and the owner's setter. A PR must never switch off the check that judges it.
 scripts/features*
+# story #454: the list of files adopt.sh writes; check_tdd.py exempts a diff made only of these plus the pin, so a PR must not widen it
+scripts/adopt_files.txt
