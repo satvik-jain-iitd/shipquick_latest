@@ -2,35 +2,17 @@
 // Change the contract, then run: python3 scripts/emit_contracts.py
 import SwiftUI
 
-public enum ButtonVariant: String, CaseIterable {
-    case primary = "primary"
-    case secondary = "secondary"
-    case ghost = "ghost"
-    case destructive = "destructive"
-}
-
-public enum ButtonSize: String, CaseIterable {
-    case sm = "sm"
-    case md = "md"
-    case lg = "lg"
-}
-
 public struct ButtonProps {
     // Base props attach to: root.
+    // Web only, not here: label (the web button takes its words as a string; Compose takes `content`, SwiftUI a label view)
+    // Web only, not here: variant (a web look; M3 ships five button composables instead, with no variant of our own (story #223))
+    // Web only, not here: size (a web size; M3 sizes come from ButtonDefaults)
+    // Web only, not here: isDisabled (a web flag; Compose uses `enabled`)
+    // Web only, not here: isLoading (a web state; M3 has no loading button)
     // Web only, not here: type (HTML form submission type)
-    public var label: String
-    public var variant: ButtonVariant?
-    public var size: ButtonSize?
-    public var isDisabled: Bool?
-    public var isLoading: Bool?
     /// Same meaning: a press, as in Compose
-    public var onClick: (() -> Void)?
-    public init(label: String, variant: ButtonVariant? = nil, size: ButtonSize? = nil, isDisabled: Bool? = nil, isLoading: Bool? = nil, onClick: (() -> Void)? = nil) {
-        self.label = label
-        self.variant = variant
-        self.size = size
-        self.isDisabled = isDisabled
-        self.isLoading = isLoading
+    public var onClick: () -> Void
+    public init(onClick: @escaping () -> Void) {
         self.onClick = onClick
     }
 }

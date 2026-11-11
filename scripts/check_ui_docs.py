@@ -6,7 +6,8 @@ Fails when: a doc or contract is missing; either breaks its JSON schema (ui/sche
 the contract lacks (core, a platform, or webOnly); a contract prop has no doc; an enum prop's doc type
 does not spell out exactly the contract's literal values; any prop (webOnly too) whose type is a bare
 name or mixes literals with an open `string`; a duplicate prop (same name and same `platform`); a prop tagged
-`platform: X` that the contract has neither in core nor under platforms.X (story #228); text after the JSON other than an
+`platform: X` that the contract has neither in core nor under platforms.X (story #228); a prop with the same spec
+under both platforms.android and platforms.ios instead of in core (story #215); text after the JSON other than an
 `export const <name> = {...}` block; no component folder at all. Upstream idea: Astryx docPropReferences and
 docPropLiterals tests (meta/astryx, MIT).
 
@@ -135,6 +136,12 @@ def check_component(folder, doc_schema, contract_schema):
         return errs
     errs += api_shape_errors(doc)
     core, plats = contract["core"], contract["platforms"]
+    # Story #215: a prop Compose and SwiftUI share, same name and same spec, lives once in core.
+    # shortcut: "same meaning" is read as an identical spec; a shared prop with two types (number vs Binding<Double>)
+    # stays per platform until core can carry a per-platform type.
+    a, i = plats.get("android", {}), plats.get("ios", {})
+    errs += [f"{name}: prop '{n}' has the same spec under platforms.android and platforms.ios; move it into core"
+             for n in a if n in i and a[n] == i[n]]
     specs = dict(core)
     for platform_props in plats.values():
         specs.update(platform_props)
