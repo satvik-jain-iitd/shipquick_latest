@@ -4,6 +4,7 @@
   features.py [--root DIR] get <id>   prints on (exit 0) or off (exit 1); an unknown id exits 2, never "on"
   features.py [--root DIR] list       one line per feature: id on|off
   features.py [--root DIR] set <id> on|off   rewrites the file (features.sh is the owner's front door; refuses locked ids)
+  features.py [--root DIR] sync       the file adopt.sh writes, on stdout: every kit id, the owner's values kept; notes on stderr
   features.py [--root DIR] json       the whole map: on, default, locked and the plain words, for CI and the Desk
 
 State lives in `<root>/.shipquick/features.json` (a protected path: only a PR the owner merges changes it).
@@ -102,6 +103,21 @@ def set_feature(root, fid, word):
     return None
 
 
+def sync_text(root):
+    """(file text, notes): every kit id present, the owner's values kept, new ids at their default, dropped ids kept."""
+    m = read(root)
+    f = Path(root) / ".shipquick" / "features.json"
+    data = _load(f, ".shipquick/features.json") if f.is_file() else {"version": 1, "features": {}}
+    feats, notes = data["features"], []
+    for k, d in m["features"].items():
+        if k not in feats:
+            feats[k] = {"on": d["default"], "default": d["default"]}
+            if f.is_file():
+                notes.append(f"added feature {k} ({'on' if d['default'] else 'off'})")
+    notes += [f"feature {k}: unknown to this kit, ignored" for k in m["unknown"]]
+    return json.dumps(data, indent=2) + "\n", notes
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="features.py", add_help=False)   # -h must never print help and exit 0: 0 reads as "on"
     ap.add_argument("--root")
@@ -111,6 +127,7 @@ def main(argv=None):
     g.add_argument("id")
     sub_parser("json")
     sub_parser("list")
+    sub_parser("sync")
     st = sub_parser("set")
     st.add_argument("id")
     st.add_argument("word")
@@ -131,6 +148,12 @@ def main(argv=None):
                 print(bad[1], file=sys.stderr)
                 return bad[0]
             print(f"{a.id} is now {a.word} in .shipquick/features.json. That is a protected path: open a PR, the owner merges it.")
+            return 0
+        if a.cmd == "sync":
+            text, notes = sync_text(root)
+            sys.stdout.write(text)
+            for n in notes:
+                print(n, file=sys.stderr)
             return 0
         m = read(root)
     except FeaturesError as e:
