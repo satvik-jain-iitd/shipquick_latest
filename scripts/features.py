@@ -5,6 +5,7 @@
   features.py [--root DIR] list       one line per feature: id on|off
   features.py [--root DIR] set <id> on|off   rewrites the file (features.sh is the owner's front door; refuses locked ids)
   features.py [--root DIR] sync       the file adopt.sh writes, on stdout: every kit id, the owner's values kept; notes on stderr
+  features.py flags --git DIR --ref REF   CI: {id: true|false} from the file AS IT IS ON REF (the base branch), never the working tree
   features.py [--root DIR] json       the whole map: on, default, locked and the plain words, for CI and the Desk
 
 State lives in `<root>/.shipquick/features.json` (a protected path: only a PR the owner merges changes it).
@@ -118,6 +119,25 @@ def sync_text(root):
     return json.dumps(data, indent=2) + "\n", notes
 
 
+def flags_at_ref(gitdir, ref):
+    """{id: bool} from `.shipquick/features.json` as committed at `ref`. No file there means every default; a bad ref or file is an error."""
+    def git(*a):
+        try:
+            return subprocess.run(["git", "-C", str(gitdir), *a], capture_output=True)
+        except OSError as e:
+            raise FeaturesError(f"cannot run git ({e})")
+    if git("rev-parse", "--verify", "-q", ref + "^{commit}").returncode != 0:
+        raise FeaturesError(f"no such ref `{ref}` in {gitdir}")
+    with tempfile.TemporaryDirectory() as t:
+        if git("ls-tree", ref, "--", ".shipquick/features.json").stdout.strip():
+            show = git("show", f"{ref}:.shipquick/features.json")
+            if show.returncode != 0:
+                raise FeaturesError(f"cannot read .shipquick/features.json at {ref}")
+            (Path(t) / ".shipquick").mkdir()
+            (Path(t) / ".shipquick" / "features.json").write_bytes(show.stdout)
+        return {k: v["on"] for k, v in read(t)["features"].items()}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="features.py", add_help=False)   # -h must never print help and exit 0: 0 reads as "on"
     ap.add_argument("--root")
@@ -125,6 +145,9 @@ def main(argv=None):
     sub_parser = lambda name: sub.add_parser(name, add_help=False)
     g = sub_parser("get")
     g.add_argument("id")
+    fl = sub_parser("flags")
+    fl.add_argument("--git", required=True)
+    fl.add_argument("--ref", required=True)
     sub_parser("json")
     sub_parser("list")
     sub_parser("sync")
@@ -132,6 +155,16 @@ def main(argv=None):
     st.add_argument("id")
     st.add_argument("word")
     a = ap.parse_args(argv)
+    if a.cmd == "flags":
+        try:
+            print(json.dumps(flags_at_ref(a.git, a.ref), separators=(",", ":")))
+            return 0
+        except FeaturesError as e:
+            print(f"features.py: {e}", file=sys.stderr)
+            return 2
+        except Exception as e:   # exit 1 means "off": no crash may ever leak as 1
+            print(f"features.py: unexpected {type(e).__name__}: {e}", file=sys.stderr)
+            return 2
     try:
         root = a.root
         if not root:
