@@ -74,9 +74,21 @@ def current_mode(project_dir):
     return "not set"
 
 
+def hooks_warning(project_dir):
+    """Story #446: one line when this project's git hooks are configured but not installed. Never raises."""
+    try:
+        from hooks_state import warning
+        top, _ = _git_dirs(os.environ.get("CLAUDE_PROJECT_DIR") or project_dir)
+        return warning(top or project_dir)
+    except Exception:
+        return ""
+
+
 def context_for(event, project_dir, extra=""):
     rules = RULES_FILE.read_text(encoding="utf-8")
     text = f"ShipQuick mode: {current_mode(project_dir)}\n\n{rules}"
+    if event == "SessionStart" and (warn := hooks_warning(project_dir)):
+        text = f"{warn}\n\n{text}"
     if extra:  # the codebase map (story #314), SessionStart only
         text += f"\n\n{extra}"
     return {"hookSpecificOutput": {"hookEventName": event, "additionalContext": text}}
