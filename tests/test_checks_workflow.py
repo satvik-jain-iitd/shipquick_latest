@@ -126,3 +126,19 @@ def test_s316_rule_copies_reads_the_child_claude_md_from_the_kit_branch():
     assert "TARGET: ${{ github.base_ref }}" in job
     assert 'git -C project show "$ref:CLAUDE.md"' in job
     assert "skills" in job.split("sparse-checkout:", 1)[1], "the phrase check needs the skills folder"
+
+
+# ---- story #175: the story check reaches children ----
+def test_s175_checks_yml_has_a_story_job_that_runs_check_story_with_issues_read():
+    job = _job_block(CHECKS, "story")
+    assert "if: github.event_name == 'pull_request'" in job
+    assert "issues: read" in job   # a reusable workflow cannot read issues unless the job asks and the caller grants it
+    assert "check_story.py --pr-body-file" in job
+    assert "GH_TOKEN: ${{ github.token }}" in job and "GH_REPO: ${{ github.repository }}" in job   # the child's own issues, never the kit's
+
+
+def test_s175_the_gate_needs_the_story_job_and_echoes_its_result():
+    gate = CHECKS.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "story" in [n.strip() for n in needs.split(",")]
+    assert 'echo "story: ${{ needs.story.result }}"' in gate
