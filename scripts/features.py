@@ -13,7 +13,9 @@ every feature at its default. Locked features (adoption, gate) always read on. A
 holds a non-boolean `on`, exits 2 with the reason and never falls back to defaults. Stdlib only. ADR-016."""
 import argparse
 import json
+import os
 import subprocess
+import tempfile
 import sys
 from pathlib import Path
 
@@ -58,12 +60,15 @@ def read(root, defaults=None):
         mine = data.get("features") if isinstance(data, dict) else None
         if not isinstance(mine, dict):
             raise FeaturesError(".shipquick/features.json needs a `features` object")
+    for fid, entry in mine.items():
+        if not isinstance(entry, dict):
+            raise FeaturesError(f".shipquick/features.json: `{fid}` must be an object like {{\"on\": true}}")
     out = {}
     for fid, d in defaults.items():
         row = dict(d)
-        entry = mine.get(fid)
         on = d["default"]
-        if entry is not None:
+        if fid in mine:
+            entry = mine[fid]
             on = entry.get("on", d["default"]) if isinstance(entry, dict) else None
             if not isinstance(on, bool):
                 raise FeaturesError(f".shipquick/features.json: `{fid}.on` must be true or false")
@@ -81,13 +86,20 @@ def set_feature(root, fid, word):
     if row.get("locked"):
         return 1, f"features.sh: `{fid}` is locked: it guards every other feature and always stays on"
     f = Path(root) / ".shipquick" / "features.json"
-    data = json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {"version": 1, "features": {}}
-    feats = data["features"]
-    for k, d in m["features"].items():
-        feats.setdefault(k, {"on": d["default"], "default": d["default"]})
-    feats[fid]["on"] = word == "on"
+    data = _load(f, ".shipquick/features.json") if f.exists() or f.is_symlink() else {"version": 1, "features": {}}
+    data.setdefault("features", {}).setdefault(fid, {})["on"] = word == "on"   # only this id: the rest keep following the kit
     f.parent.mkdir(exist_ok=True)
-    f.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    fd, tmp = tempfile.mkstemp(dir=f.parent, prefix=".features-", suffix=".tmp")   # temp file + os.replace: a kill mid-write never leaves broken JSON
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as out:
+            out.write(json.dumps(data, indent=2) + "\n")
+        os.replace(tmp, f)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
     return None
 
 
@@ -107,15 +119,16 @@ def sync_text(root):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="features.py")
+    ap = argparse.ArgumentParser(prog="features.py", add_help=False)   # -h must never print help and exit 0: 0 reads as "on"
     ap.add_argument("--root")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    g = sub.add_parser("get")
+    sub_parser = lambda name: sub.add_parser(name, add_help=False)
+    g = sub_parser("get")
     g.add_argument("id")
-    sub.add_parser("json")
-    sub.add_parser("list")
-    sub.add_parser("sync")
-    st = sub.add_parser("set")
+    sub_parser("json")
+    sub_parser("list")
+    sub_parser("sync")
+    st = sub_parser("set")
     st.add_argument("id")
     st.add_argument("word")
     a = ap.parse_args(argv)

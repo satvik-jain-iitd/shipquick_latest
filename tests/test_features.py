@@ -162,3 +162,10 @@ def test_a_defaults_row_with_a_non_boolean_locked_is_an_error(tmp_path):
     except features.FeaturesError:
         return
     raise AssertionError("accepted a string locked")
+
+
+def test_help_flags_are_not_answers_they_exit_2_never_0(tmp_path):
+    """`get -h` printing help and exiting 0 would read as "on" (review of #431)."""
+    for args in (("get", "-h"), ("get", "--help"), ("-h",), ("--help",), ("json", "-h")):
+        r = run(tmp_path, *args)
+        assert r.returncode == 2 and r.stdout.strip() == "", (args, r.returncode, r.stdout)
