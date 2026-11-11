@@ -150,3 +150,8 @@ def test_s222_a_removed_contract_leaves_a_stale_struct_that_check_names(tmp_path
     assert emit_contracts.main(["--root", str(root), "--out", str(out)]) == 0
     assert not (out / "Chip.swift").exists()
 
+
+
+def test_s222_check_local_and_ci_run_the_check():
+    assert 'emit_contracts.py" --check' in (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
+    assert "python3 scripts/emit_contracts.py --check" in (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
