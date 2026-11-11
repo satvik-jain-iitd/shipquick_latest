@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="desk-token" content="__DESK_TOKEN__">
 <title>ShipQuick Desk</title>
 <style>
 /* Tokens from design/tokens.json (light), same as approved board desk-frame-b.html. Measured pairs:
@@ -167,7 +168,7 @@ nav.nav { overflow: auto; padding-right: 2px; }   /* at 1280 the left column scr
   </div>
 
   <footer class="foot">
-    <p class="muted">This page only shows state. Switch changes arrive in the next step and will start after you merge the PR they open.</p>
+    <p class="muted">A switch opens a PR for your merge. A change starts only after you merge it.</p>
     <button class="btn" type="button" id="refresh">Refresh now</button>
   </footer>
 </main>
@@ -220,8 +221,28 @@ nav.nav { overflow: auto; padding-right: 2px; }   /* at 1280 the left column scr
     ].concat(spendShown ? [{ key: "spend", title: "Spend", meta: "$" + Number((sp.totals || { cost: 0 }).cost).toFixed(2) + " total" }] : []);
   }
 
+  var confirming = null, busy = false, rowError = {};   // story #428: one inline confirm at a time, errors stay on their row
+
+  function token() { var m = document.querySelector('meta[name="desk-token"]'); return m ? m.content : ""; }
+
+  function propose(f, want) {
+    busy = true; delete rowError[f.id]; render();
+    fetch("/api/features", { method: "POST", headers: { "Content-Type": "application/json", "X-Desk-Token": token() },
+                             body: JSON.stringify({ id: f.id, on: want }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (x) {
+        busy = false;
+        if (!x.ok) { rowError[f.id] = x.d.error || "The Desk could not open the PR."; render(); return; }
+        confirming = null;
+        if (x.d.unchanged) rowError[f.id] = "Already " + (want ? "on" : "off") + " on the base branch. Nothing to change.";
+        load();
+      })
+      .catch(function () { busy = false; rowError[f.id] = "The Desk server is not reachable."; render(); });
+  }
+
   function featureRow(f) {
-    var r = el("div", "feat");
+    var pend = ((data.features || {}).pending || {})[f.id];
+    var r = el("div", "feat" + (confirming === f.id ? " confirming" : ""));
     var a = el("div");
     a.appendChild(el("p", "name", f.name));
     a.appendChild(el("p", "id", f.id));
@@ -233,17 +254,44 @@ nav.nav { overflow: auto; padding-right: 2px; }   /* at 1280 the left column scr
     var st = el("div", "state");
     if (f.locked) {
       st.appendChild(el("span", "lock", "Always on"));
+    } else if (pend) {
+      var link = el("a", "link", "Turning " + (pend.on ? "on" : "off") + ", merge PR " + pend.pr);
+      link.href = pend.url; link.target = "_blank"; link.rel = "noopener noreferrer";
+      st.appendChild(link);
     } else {
       st.appendChild(el("span", "word", f.on ? "On" : "Off"));
     }
     var sw = el("input", "sw");
     sw.type = "checkbox";
     sw.setAttribute("role", "switch");
-    sw.checked = !!f.on;
-    sw.disabled = true;   // D2 (#428) turns the switches on with the write route; here the page only shows state
+    sw.checked = confirming === f.id ? !f.on : !!f.on;
+    sw.disabled = !!f.locked || !!pend || busy;
     sw.setAttribute("aria-label", f.name);
+    sw.addEventListener("change", function () { confirming = confirming === f.id ? null : f.id; render(); });
     st.appendChild(sw);
     r.appendChild(st);
+    if (confirming === f.id && !f.locked && !pend) {
+      var want = !f.on, c = el("div", "confirm");
+      c.appendChild(el("p", "say", "Turn " + f.name + " " + (want ? "on" : "off") + "?"));
+      c.appendChild(el("p", "muted", "The Desk opens a PR. The change starts only after you merge it."));
+      var btns = el("div", "btns");
+      var cancel = el("button", "btn outline", "Cancel");
+      cancel.type = "button"; cancel.disabled = busy;
+      cancel.addEventListener("click", function () { confirming = null; render(); });
+      var go = el("button", "btn", busy ? "Opening the PR" : "Open the PR");
+      go.type = "button"; go.disabled = busy;
+      go.addEventListener("click", function () { propose(f, want); });
+      btns.appendChild(cancel); btns.appendChild(go);
+      c.appendChild(btns);
+      r.appendChild(c);
+    }
+    if (rowError[f.id]) {
+      var e = el("div", "err");
+      e.style.gridColumn = "1 / -1";
+      e.appendChild(el("p", "", rowError[f.id]));
+      e.appendChild(el("span", "chip error", "Error"));
+      r.appendChild(e);
+    }
     return r;
   }
 

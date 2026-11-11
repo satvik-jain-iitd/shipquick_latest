@@ -1,17 +1,22 @@
 """ShipQuick Desk, Option B (epic #91): one stdlib server on 127.0.0.1 that asks gh on request.
 
 Serves the page at / and the state at /api/state.json. The state is cached for 60 s.
-Only read-only gh calls. Nothing is written to disk, no token is read.
+Reads use read-only gh calls. The one write (story #428) is POST /api/features: same origin plus a per-start token, then
+`features.sh set` in a throwaway worktree off the base branch, a new branch, and a PR for the owner's merge. Nothing else is written.
 Usage: python3 scripts/desk.py [--port 8765]
 """
 import argparse
 import csv
 import fnmatch
+import hmac
 import json
 import os
 import re
+import secrets
+import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from datetime import datetime, timezone
@@ -25,6 +30,7 @@ DEFAULT_PORT = 8765
 TTL_SECONDS = 60
 GH_TIMEOUT = 20
 TRACE_ROWS = 10
+MAX_BODY = 1024
 
 
 class DeskError(Exception):
@@ -43,6 +49,71 @@ def gh_runner(repo_dir):
             raise DeskError("gh failed: " + (p.stderr.strip() or "exit %d" % p.returncode))
         return p.stdout
     return run
+
+
+def propose_feature(repo_dir, fid, on, base="dev"):
+    """Open a PR that sets one feature. Works in a throwaway worktree off origin/<base>: the owner's checkout never changes.
+    Returns {"pr", "url"}, or {"unchanged": True} when the base already has that value. Any failure raises DeskError."""
+    repo = Path(repo_dir)
+
+    def git(*a, cwd=None):
+        try:
+            p = subprocess.run(["git", *a], cwd=cwd or repo, capture_output=True, text=True, timeout=60)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            raise DeskError("git failed: %s" % e)
+        if p.returncode:
+            raise DeskError("git %s failed: %s" % (a[0], (p.stderr or p.stdout).strip() or "exit %d" % p.returncode))
+        return p.stdout
+
+    word = "on" if on else "off"
+    git("fetch", "-q", "origin", base)
+    tmp = tempfile.mkdtemp(prefix="desk-feature-")
+    wt = Path(tmp) / "wt"
+    branch = "chore/feature-%s-%s-%d" % (fid, word, int(time.time()))
+    try:
+        git("worktree", "add", "-q", "-b", branch, str(wt), "origin/" + base)
+        try:
+            cur = features.read(str(wt))["features"].get(fid)
+        except features.FeaturesError as e:
+            raise DeskError("the features file on %s is broken: %s" % (base, e))
+        if cur is None:
+            raise DeskError("unknown feature `%s`" % fid)
+        if cur.get("locked"):
+            raise DeskError("`%s` is locked: it guards every other feature and always stays on" % fid)
+        if cur["on"] == on:
+            return {"unchanged": True}
+        p = subprocess.run(["bash", str(HERE / "features.sh"), "set", fid, word], cwd=wt, capture_output=True, text=True, timeout=30)
+        if p.returncode:
+            raise DeskError("features.sh set failed: %s" % (p.stderr.strip() or "exit %d" % p.returncode))
+        git("add", ".shipquick/features.json", cwd=wt)
+        ident = []
+        if subprocess.run(["git", "config", "user.email"], cwd=repo, capture_output=True, text=True).stdout.strip() == "":
+            ident = ["-c", "user.name=ShipQuick Desk", "-c", "user.email=desk@localhost"]
+        title = "chore(features): turn %s %s" % (fid, word)
+        git(*ident, "commit", "-q", "-m", title + "\n\nProposed from the ShipQuick Desk. `.shipquick/features.json` is a protected path: the owner merges.", cwd=wt)
+        git("push", "-q", "origin", branch, cwd=wt)
+        env = dict(os.environ)
+        build = os.environ.get("SHIPQUICK_BUILD_USER")
+        if build:
+            t = subprocess.run(["gh", "auth", "token", "--user", build], capture_output=True, text=True)
+            if t.returncode == 0 and t.stdout.strip():
+                env["GH_TOKEN"] = t.stdout.strip()
+        body = "Proposed from the ShipQuick Desk: set `%s` to `%s` in `.shipquick/features.json`.\n\nThis is a protected path: the owner merges it.\n" % (fid, word)
+        try:
+            c = subprocess.run(["gh", "pr", "create", "--base", base, "--head", branch, "--title", title, "--body", body],
+                               cwd=repo, capture_output=True, text=True, timeout=GH_TIMEOUT * 2, env=env)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            raise DeskError("gh pr create failed: %s" % e)
+        if c.returncode:
+            raise DeskError("gh pr create failed: %s" % (c.stderr.strip() or "exit %d" % c.returncode))
+        url = c.stdout.strip().splitlines()[-1] if c.stdout.strip() else ""
+        m = re.search(r"/pull/(\d+)", url)
+        if not m:
+            raise DeskError("gh pr create gave no pull request link: %r" % c.stdout.strip())
+        return {"pr": int(m.group(1)), "url": url}
+    finally:
+        subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=repo, capture_output=True)
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def checks_summary(rollup):
@@ -179,8 +250,9 @@ def read_roadmap_link(run):
     return {"state": "link", "url": url + "/blob/roadmap/ROADMAP.md"}
 
 
-def gather(run, repo_dir, now, band=None):
+def gather(run, repo_dir, now, band=None, pending=None):
     errors, waiting, roadmap, roadmap_link = [], [], [], {"state": "unknown"}
+    open_nums = None   # None = the PR list failed: keep every pending switch, do not guess
     try:
         spend = read_spend(band or default_band_path(repo_dir))
     except (ValueError, OSError, csv.Error) as e:
@@ -188,6 +260,7 @@ def gather(run, repo_dir, now, band=None):
     try:
         prs = json.loads(run(["pr", "list", "--state", "open", "--limit", "50",
                               "--json", "number,title,isDraft,url,statusCheckRollup,files,baseRefName,headRefName,body,reviewDecision"]))
+        open_nums = {p["number"] for p in prs}
         globs, mode = protected_globs(repo_dir), read_switches(repo_dir)["mode"]
         waiting = [{"number": p["number"], "title": p["title"], "draft": p["isDraft"], "url": p["url"],
                     "checks": checks_summary(p.get("statusCheckRollup")), "reason": why}
@@ -205,6 +278,9 @@ def gather(run, repo_dir, now, band=None):
     except (ValueError, KeyError):
         errors.append("gh returned bad JSON for issues")
     feats = read_features(repo_dir)
+    now_vals = {i["id"]: i["on"] for g in feats["groups"] for i in g["items"]}
+    # a switch the owner asked for waits on its PR: drop it once the PR is no longer open or the file already says so
+    feats["pending"] = {k: v for k, v in (pending or {}).items() if (open_nums is None or v["pr"] in open_nums) and now_vals.get(k) != v["on"]}
     roadmap_on = next((i["on"] for g in feats["groups"] for i in g["items"] if i["id"] == "roadmap"), True)
     try:
         roadmap_link = read_roadmap_link(run) if roadmap_on else {"state": "off"}   # story #427: the card says "Roadmap is off", no link
@@ -238,6 +314,16 @@ class Desk:
         self.good = None         # last answer with no error
         self.at = 0.0
         self.status = 503        # no answer yet; set by every gather
+        self.token = secrets.token_urlsafe(24)   # per start: the page carries it, a post without it is refused
+        self.pending = {}        # {id: {on, pr, url}} proposals still waiting on their PR
+        self.proposer = lambda fid, on: propose_feature(self.repo_dir, fid, on)
+
+    def remember(self, fid, on, out):
+        """A proposal went out: show it as waiting and refresh on the next read."""
+        with self.lock:
+            if "pr" in out:
+                self.pending[fid] = {"on": on, "pr": out["pr"], "url": out["url"]}
+            self.payload = None
 
     def state(self):
         """Return (http_status, payload). Never raises on gh failure."""
@@ -245,7 +331,8 @@ class Desk:
             now = self.clock()
             if self.payload is not None and now - self.at < self.ttl:
                 return self.status, self.payload
-            fresh = gather(self.run, self.repo_dir, now, self.band)
+            fresh = gather(self.run, self.repo_dir, now, self.band, self.pending)
+            self.pending = dict(fresh["features"]["pending"])
             self.at = now
             if fresh["error"] is None:
                 self.good = fresh
@@ -285,7 +372,7 @@ def make_server(port, desk, html_path=None):
                 return self._send(403, "text/plain; charset=utf-8", b"forbidden: bad Host header\n")
             path = self.path.split("?", 1)[0]
             if path == "/":
-                return self._send(200, "text/html; charset=utf-8", html)
+                return self._send(200, "text/html; charset=utf-8", html.replace(b"__DESK_TOKEN__", desk.token.encode()))
             if path == "/api/state.json":
                 if not origin_allowed(self.headers.get("Origin"), bound):
                     return self._send(403, "text/plain; charset=utf-8", b"forbidden: cross-origin request\n")
@@ -293,6 +380,50 @@ def make_server(port, desk, html_path=None):
                 return self._send(status, "application/json; charset=utf-8",
                                   json.dumps(payload, ensure_ascii=False).encode("utf-8"))
             self._send(404, "text/plain; charset=utf-8", b"not found\n")
+
+        def _json(self, code, obj):
+            self._send(code, "application/json; charset=utf-8", json.dumps(obj, ensure_ascii=False).encode("utf-8"))
+
+        def do_POST(self):
+            bound = self.server.server_address[1]
+            if not host_allowed(self.headers.get("Host", ""), bound):
+                return self._json(403, {"error": "forbidden: bad Host header"})
+            if self.path.split("?", 1)[0] != "/api/features":
+                return self._json(404, {"error": "not found"})
+            origin = self.headers.get("Origin")
+            if origin is None or not origin_allowed(origin, bound):   # a write needs an Origin: no Origin is not "same site"
+                return self._json(403, {"error": "forbidden: cross-origin request"})
+            if not hmac.compare_digest(self.headers.get("X-Desk-Token", "").encode(), desk.token.encode()):
+                return self._json(403, {"error": "forbidden: missing or wrong token"})
+            try:
+                n = int(self.headers.get("Content-Length", ""))
+            except ValueError:
+                return self._json(400, {"error": "bad Content-Length"})
+            if n < 0 or n > MAX_BODY:
+                return self._json(400, {"error": "body too large"})
+            try:
+                body = json.loads(self.rfile.read(n).decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                return self._json(400, {"error": "body is not JSON"})
+            fid, on = (body.get("id"), body.get("on")) if isinstance(body, dict) else (None, None)
+            if not isinstance(fid, str) or not isinstance(on, bool):
+                return self._json(400, {"error": 'send {"id": "<feature>", "on": true or false}'})
+            try:
+                row = features.read(desk.repo_dir)["features"].get(fid)
+            except features.FeaturesError as e:
+                return self._json(502, {"error": "the features file is broken: %s" % e})
+            if row is None:
+                return self._json(400, {"error": "unknown feature `%s`" % fid})
+            if row.get("locked"):
+                return self._json(409, {"error": "`%s` is locked: it always stays on" % fid})
+            try:
+                out = desk.proposer(fid, on)
+            except DeskError as e:
+                return self._json(502, {"error": str(e)})
+            except Exception as e:   # never a fake success
+                return self._json(502, {"error": "unexpected %s: %s" % (type(e).__name__, e)})
+            desk.remember(fid, on, out)
+            return self._json(200, out)
 
         def log_message(self, fmt, *args):
             pass
