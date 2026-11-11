@@ -2,6 +2,8 @@
 """Story #418 (F1, epic #86): which ShipQuick features are on in this project.
 
   features.py [--root DIR] get <id>   prints on (exit 0) or off (exit 1); an unknown id exits 2, never "on"
+  features.py [--root DIR] list       one line per feature: id on|off
+  features.py [--root DIR] set <id> on|off   rewrites the file (features.sh is the owner's front door; refuses locked ids)
   features.py [--root DIR] json       the whole map: on, default, locked and the plain words, for CI and the Desk
 
 State lives in `<root>/.shipquick/features.json` (a protected path: only a PR the owner merges changes it).
@@ -54,6 +56,25 @@ def read(root):
     return {"features": out, "unknown": sorted(k for k in mine if k not in defaults)}
 
 
+def set_feature(root, fid, word):
+    """Write `on` for one feature. Returns None, or (exit code, message) when it refuses."""
+    m = read(root)   # a broken file raises here and is never overwritten
+    row = m["features"].get(fid)
+    if row is None or word not in ("on", "off"):
+        return 2, f"usage: features.sh set <id> on|off ({'unknown feature `' + fid + '`' if row is None else 'the word must be on or off'}; known: {', '.join(m['features'])})"
+    if row.get("locked"):
+        return 1, f"features.sh: `{fid}` is locked: it guards every other feature and always stays on"
+    f = Path(root) / ".shipquick" / "features.json"
+    data = json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {"version": 1, "features": {}}
+    feats = data["features"]
+    for k, d in m["features"].items():
+        feats.setdefault(k, {"on": d["default"], "default": d["default"]})
+    feats[fid]["on"] = word == "on"
+    f.parent.mkdir(exist_ok=True)
+    f.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return None
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="features.py")
     ap.add_argument("--root")
@@ -61,16 +82,31 @@ def main(argv=None):
     g = sub.add_parser("get")
     g.add_argument("id")
     sub.add_parser("json")
+    sub.add_parser("list")
+    st = sub.add_parser("set")
+    st.add_argument("id")
+    st.add_argument("word")
     a = ap.parse_args(argv)
     root = a.root
     if not root:
         p = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
         root = p.stdout.strip() if p.returncode == 0 else "."
     try:
+        if a.cmd == "set":
+            bad = set_feature(root, a.id, a.word)
+            if bad:
+                print(bad[1], file=sys.stderr)
+                return bad[0]
+            print(f"{a.id} is now {a.word} in .shipquick/features.json. That is a protected path: open a PR, the owner merges it.")
+            return 0
         m = read(root)
     except FeaturesError as e:
         print(f"features.py: {e}", file=sys.stderr)
         return 2
+    if a.cmd == "list":
+        for k, v in m["features"].items():
+            print(k, "on" if v["on"] else "off")
+        return 0
     if a.cmd == "json":
         print(json.dumps(m, indent=2))
         return 0
