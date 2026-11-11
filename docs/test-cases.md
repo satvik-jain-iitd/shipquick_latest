@@ -1620,6 +1620,10 @@ Scenario: a missing base ref fails CI and only warns locally (#366 review)
   Given a repo with no origin/dev (a shallow checkout) and a committed Swift change
   When the runner runs with no file argument
   Then the CI tier exits non-zero naming fetch-depth and LINT_BASE, and the local tier exits 0 with the same warning
+Scenario: an adopted child gets configs that exist (PR #366 review)
+  Given a child repo with only ui/platforms/lint/swiftlint.yml (what adopt.sh --platforms ios writes), no baseline, no .swiftformat
+  When the runner runs by its kit path in the CI tier
+  Then swiftlint gets --config ui/platforms/lint/swiftlint.yml, and every --config and --baseline path given to the tools exists (the kit's own files fill the gaps)
 Scenario: the baseline is committed empty and protected
   Then ui/ios/lint/swiftlint-baseline.json is the JSON array [] and matches a glob in scripts/protected_paths.txt (*baseline*)
 Scenario: the Tokens file is the one place for raw colours and fixed fonts

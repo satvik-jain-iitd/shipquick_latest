@@ -202,3 +202,19 @@ def test_s218_a_missing_swiftformat_alone_fails_the_ci_tier_and_only_warns_local
     assert strict.returncode != 0 and "swiftformat is not installed" in strict.stdout + strict.stderr
     local, _ = run(tmp_path, GOOD, env=gone)
     assert local.returncode == 0 and "swiftformat is not installed" in local.stdout + local.stderr
+
+
+def test_s218_an_adopted_child_gets_configs_that_exist(tmp_path):
+    """#366 review: adopt.sh --platforms ios puts the config at ui/platforms/lint/swiftlint.yml and copies no
+    baseline and no .swiftformat; the runner, run by its kit path, must pass only paths that exist."""
+    r = repo(tmp_path)
+    (r / "ui" / "platforms" / "lint").mkdir(parents=True)
+    (r / "ui" / "platforms" / "lint" / "swiftlint.yml").write_text("included: []\n", encoding="utf-8")
+    proc, args = run(tmp_path, "Kept.swift", cwd=r, ci="1")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    sl, sf = args["swiftlint"], args["swiftformat"]
+    assert sl[sl.index("--config") + 1] == "ui/platforms/lint/swiftlint.yml"
+    for flag, a in (("--config", sl), ("--baseline", sl), ("--config", sf)):
+        if flag in a:
+            p = a[a.index(flag) + 1]
+            assert (r / p).is_file(), f"{flag} {p} does not exist in the child"

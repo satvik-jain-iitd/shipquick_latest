@@ -7,12 +7,14 @@
 # wins over the kit's file), SWIFTLINT_BIN, SWIFTFORMAT_BIN (default: the name on PATH). CI pins SwiftLint 0.65.1 and
 # SwiftFormat 0.64.6 by SHA-256 (.github/workflows/ci.yml, job ui-ios-lint); nothing is installed on a dev Mac by this script.
 set -euo pipefail
+kit_ios="$(cd "$(dirname "$0")/../ios" && pwd)"   # the kit's own files, wherever the kit sits (in a child: its submodule)
 cd "$(git rev-parse --show-toplevel)"
 
-first_existing() { for p in "$@"; do [ -f "$p" ] && { echo "$p"; return; }; done; echo "$1"; }
-config=${SWIFTLINT_CONFIG:-$(first_existing .swiftlint.yml ui/ios/lint/swiftlint.yml)}
-baseline=${SWIFTLINT_BASELINE:-$(first_existing .swiftlint-baseline.json ui/ios/lint/swiftlint-baseline.json)}
-format=${SWIFTFORMAT_CONFIG:-$(first_existing .swiftformat ui/ios/.swiftformat)}
+# A child's own copy wins (adopt.sh writes ui/platforms/lint/swiftlint.yml), then the kit's file. Empty: none exists.
+first_existing() { for p in "$@"; do [ -f "$p" ] && { echo "$p"; return; }; done; echo ""; }
+config=${SWIFTLINT_CONFIG:-$(first_existing .swiftlint.yml ui/platforms/lint/swiftlint.yml ui/ios/lint/swiftlint.yml "$kit_ios/lint/swiftlint.yml")}
+baseline=${SWIFTLINT_BASELINE:-$(first_existing .swiftlint-baseline.json ui/platforms/lint/swiftlint-baseline.json ui/ios/lint/swiftlint-baseline.json "$kit_ios/lint/swiftlint-baseline.json")}
+format=${SWIFTFORMAT_CONFIG:-$(first_existing .swiftformat ui/platforms/lint/.swiftformat ui/ios/.swiftformat "$kit_ios/.swiftformat")}
 swiftlint=${SWIFTLINT_BIN:-swiftlint}
 swiftformat=${SWIFTFORMAT_BIN:-swiftformat}
 base=${LINT_BASE:-origin/dev}
@@ -39,7 +41,8 @@ if ! command -v "$swiftlint" >/dev/null 2>&1; then
   [ $strict -eq 1 ] && exit 1 || exit 0
 fi
 rc=0
-args=(lint --no-cache --config "$config" --baseline "$baseline")
+args=(lint --no-cache --config "$config")
+[ -n "$baseline" ] && args+=(--baseline "$baseline")
 [ $strict -eq 1 ] && args+=(--strict)
 "$swiftlint" "${args[@]}" "${files[@]}" || rc=$?
 
