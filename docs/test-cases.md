@@ -1594,55 +1594,6 @@ Scenario: adopt.sh writes, keeps and validates the milestone
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
 
-## Story #222: generated Swift contract structs for ui/components
-```gherkin
-Scenario: every prop kind maps to a Swift type
-  Given a made-up contract with string, number, boolean, enum, fn, content, array and named props, one web-only prop and one sameMeaning
-  When the generator renders it
-  Then the file holds `<Name>Props` with typed fields, a nested String enum, `(() -> Void)?` for an optional callback, `@escaping` on a required one, a backticked `in`, the generic placeholder replaced and named in a comment, the content slot and the web-only prop in comments, and no Android prop
-  Test: test_s222_every_prop_kind_maps_to_a_swift_type
-Scenario: the folder names the struct when two contracts share an inner name
-  Given two component folders whose contracts both carry the same inner `name`
-  When the generator renders them
-  Then each struct and its nested enums take the folder's name, and the inner name sits in a comment
-  Test: test_s222_the_folder_names_the_struct_when_two_contracts_share_an_inner_name
-Scenario: a record becomes a nested struct and an unknown kind fails by name
-  Test: test_s222_a_record_type_becomes_a_nested_struct_and_an_unknown_kind_fails_by_name
-Scenario: a renamed contract field fails --check and names the struct file
-  Given the kit's contracts and structs copied to a temp folder, and `label` renamed to `title` in one contract
-  When `--check` runs
-  Then it exits 1 and prints that struct file; after a regenerate the new field is there and `--check` exits 0
-  Test: test_s222_a_renamed_contract_field_fails_check_and_names_the_struct_file
-Scenario: a removed contract leaves a stale struct that --check names and a regenerate removes
-  Test: test_s222_a_removed_contract_leaves_a_stale_struct_that_check_names
-Scenario: every committed struct is a fresh render of its contract (stack layer 2, the first 48 files)
-  Given the committed Contracts folder
-  Then it is not empty, no file is stale and no file has lost its contract
-  Test: test_s222_every_committed_struct_is_current_with_its_contract
-Scenario: the committed structs are current and every contract has one (stack layer 3, the other 48 files)
-  Tests: test_s222_the_committed_structs_are_current_with_the_contracts, test_s222_every_contract_has_a_struct_file
-Scenario: check_local.sh and CI run the check (stack layer 4)
-  Test: test_s222_check_local_and_ci_run_the_check
-```
-Tests: `tests/test_emit_contracts.py`. The story landed as a four-layer stack (rule 23, max 50 files a PR); each layer carries the test it turns green.
-
-## Story #215: shared props live in the contract core
-```gherkin
-Scenario: a prop with the same spec on android and ios and an empty core fails
-  Given a made-up contract with `content` under platforms.android and platforms.ios, same spec, and an empty core
-  When check_ui_docs.py runs
-  Then it exits 1 and names the prop and core
-  Test: test_s215_a_prop_with_the_same_spec_on_android_and_ios_and_an_empty_core_fails
-Scenario: the shared prop moved into core passes
-  Test: test_s215_the_shared_prop_moved_into_core_passes
-Scenario: the same name with a different spec per platform stays put
-  Given `value` as a number on android and a Binding<Double> on ios
-  Then the check passes, because one core type cannot hold both
-  Test: test_s215_the_same_name_with_a_different_spec_per_platform_stays_put
-Scenario: no kit contract repeats a shared prop under both platforms
-  Test: test_s215_no_kit_contract_repeats_a_shared_prop_under_both_platforms
-```
-Tests: `tests/test_check_ui_docs.py`.
 ## Story #188 (S10): a Design system board on the canvas
 ```gherkin
 Scenario: the registry renders a board with every component row, right after Design learnings
