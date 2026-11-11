@@ -240,7 +240,8 @@ IOS_DOC_FAMILY = {
                           "onContinuousHover", "onHover", "pointerStyle", "pointerVisibility"],
     "Keyboard": ["keyboardShortcut", "modifierKeyAlternate", "onCommand", "onDeleteCommand", "onExitCommand", "onKeyPress",
                  "onModifierKeysChanged", "onMoveCommand", "onPlayPauseCommand", "pageCommand"],
-    "widgets": ["widgetURL"],
+    "widgets": ["widgetURL", "accessoryWidgetGroupStyle", "controlWidgetActionHint", "controlWidgetStatus", "widgetAccentable",
+                "widgetCurvesContent", "widgetLabel", "containerBackground"],
     "web-view": ["onWebViewImmersiveEnvironmentRequest", "webViewBackForwardNavigationGestures", "webViewContentBackground",
                  "webViewContextMenu", "webViewElementFullscreenBehavior", "webViewLinkPreviews", "webViewMagnificationGestures",
                  "webViewOnScrollGeometryChange", "webViewScrollInputBehavior", "webViewScrollPosition", "webViewTextSelection"],
@@ -280,6 +281,12 @@ IOS_DOC_FAMILY = {
     "Accessibility rotors": ["accessibilityRotor", "accessibilityRotorEntry"],
     "Accessibility actions": ["accessibilityAction", "accessibilityActions", "accessibilityAdjustableAction", "accessibilityScrollAction",
                               "accessibilityZoomAction", "accessibilityQuickAction"],
+    # Story #296 (5/6): AppearanceModifiers split by the surface each row styles. It keeps only rows no doc fits.
+    "Window behavior": ["windowDismissBehavior", "windowFullScreenBehavior", "windowMinimizeBehavior", "windowResizeAnchor",
+                        "windowResizeBehavior", "windowToolbarFullScreenVisibility", "preferredWindowClippingMargins"],
+    "Redaction and privacy": ["redacted", "unredacted", "privacySensitive", "invalidatableContent", "contentCaptureProtected"],
+    "Spatial appearance": ["spatialOverlay", "spatialOverlayPreferenceValue", "preferredSurroundingsEffect", "breakthroughEffect",
+                           "upperLimbVisibility", "volumeBaseplateVisibility"],
 }
 
 HEADER = re.compile(r"^// shipquick: (\w+): (.*)$")
