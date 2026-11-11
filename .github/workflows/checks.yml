@@ -409,6 +409,32 @@ jobs:
             child_file="$RUNNER_TEMP/CLAUDE.md"
           fi
           python3 .shipquick/scripts/check_rule_copies.py --child "$child_file"
+  commit-subjects:
+    # Story #446: no commit subject over 72 characters on the PR's own commits (check_commit_subjects.py, the rule of the commit-msg
+    # hook). It holds where nobody installed the hooks. Full history, so the base branch is there as origin/<base>.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['commit-subjects']
+    steps:
+      - name: Check out the project with its full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: No commit subject over 72 characters (story 446)
+        env:
+          TARGET: ${{ github.base_ref }}
+        run: cd project && python3 ../.shipquick/scripts/check_commit_subjects.py --base "origin/$TARGET"
   story:
     # Story #175: every user story the PR links names who does it and how it is done (check_story.py, story #155).
     # The job asks for issues: read; a reusable workflow gets it only when the caller grants it (adopt.sh writes that).
@@ -440,7 +466,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [adoption, features, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, story]
+    needs: [adoption, features, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, commit-subjects, story]
     if: always()
     steps:
       - name: Check all job results (story #131 -- review_merge.sh requires this exact check to be SUCCESS)
@@ -457,6 +483,7 @@ jobs:
           echo "environments: ${{ needs.environments.result }}"
           echo "component-registry: ${{ needs.component-registry.result }}"
           echo "rule-copies: ${{ needs.rule-copies.result }}"
+          echo "commit-subjects: ${{ needs.commit-subjects.result }}"
           echo "story: ${{ needs.story.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"

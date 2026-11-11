@@ -137,6 +137,14 @@
       "default": true,
       "locked": false
     },
+    "commit-subjects": {
+      "name": "Short commit titles",
+      "what": "Fails a pull request that has a commit title longer than 72 characters, naming the commit.",
+      "if_off": "A long commit title is found only by people, if at all.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
     "pre-commit": {
       "name": "Checks before each commit",
       "what": "Runs quick checks on your computer before each commit, so mistakes are caught early.",

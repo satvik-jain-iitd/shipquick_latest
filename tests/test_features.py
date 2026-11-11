@@ -81,7 +81,7 @@ def test_the_default_list_has_the_ids_the_plan_names():
     d = json.loads(DEFAULTS.read_text(encoding="utf-8"))["features"]
     for fid in ("roadmap", "modes", "merge-gate", "close-on-merge", "lanes", "pre-commit", "hosted-roadmap",
                 "disable-comments", "roles", "team-block", "frontend-design", "uat-on-main", "freeze", "environments",
-                "component-registry", "design-tokens", "rule-copies", "story", "adoption", "gate"):
+                "component-registry", "design-tokens", "rule-copies", "commit-subjects", "story", "adoption", "gate"):
         assert fid in d, fid
     assert {k for k, v in d.items() if v.get("locked")} == {"adoption", "gate"}
 
