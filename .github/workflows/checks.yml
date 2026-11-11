@@ -242,7 +242,12 @@ jobs:
       - name: Check the PR body links its issue (Closes #n)
         run: |
           # story #424: the `close-on-merge` flag comes from the features job (the base branch's file)
-          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --close-on-merge "$([ "$CLOSE_ON_MERGE" = true ] && echo on || echo off)" --title "$PR_TITLE" --author "$PR_AUTHOR"
+          case "$CLOSE_ON_MERGE" in
+            true) word=on ;;
+            false) word=off ;;
+            *) echo "the close-on-merge flag is '$CLOSE_ON_MERGE', not true or false: failing, never guessing"; exit 1 ;;
+          esac
+          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --close-on-merge "$word" --title "$PR_TITLE" --author "$PR_AUTHOR"
   frontend-design:
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -19,7 +19,7 @@ import re
 import subprocess
 import sys
 
-from features import FeaturesError, is_on
+from features import FeaturesError, remote_flag
 
 LINK = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)", re.I)
 
@@ -34,18 +34,17 @@ def main() -> int:
         print(__doc__)
         return 2
     pr_number, do_close = int(sys.argv[1]), "--yes" in sys.argv
-    try:   # story #424: the `close-on-merge` feature; off means nothing is closed and GitHub is not even asked
-        if not is_on("close-on-merge"):
-            print("close-on-merge is off: closing nothing.")
-            return 0
-    except FeaturesError as e:
-        print(f"close_linked_issues.py: the features file is broken ({e}); closing nothing.", file=sys.stderr)
-        return 2
-
     # `gh repo view` ignores GH_REPO and reads the folder's git remotes (issue #88); `gh api` honours it.
     default = json.loads(gh("api", "repos/{owner}/{repo}"))["default_branch"]
     pr = gh("pr", "view", str(pr_number), "--json", "state,baseRefName,body")
     base = pr["baseRefName"]
+    try:   # story #424: the `close-on-merge` feature, read as committed on the PR's base branch (the same file CI reads), never the local tree
+        if not remote_flag("{owner}/{repo}", base, "close-on-merge"):
+            print("close-on-merge is off: closing nothing.")
+            return 0
+    except FeaturesError as e:
+        print(f"close_linked_issues.py: the features file cannot be read ({e}); closing nothing.", file=sys.stderr)
+        return 2
 
     if pr["state"] != "MERGED":
         print(f"PR #{pr_number} is {pr['state']}, not MERGED. Closing nothing.")

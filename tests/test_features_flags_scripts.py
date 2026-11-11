@@ -1,6 +1,7 @@
 """Story #424 (F7, epic #86): the roadmap workflow and the Closes rules read their flags. `roadmap` off: roadmap.yml writes
 nothing. `close-on-merge` off: close_linked_issues.py closes nothing and the Closes link is not required. A broken features
 file is an error, never "on". Real git, a fake gh, text checks on the workflows."""
+import base64
 import json
 import os
 import subprocess
@@ -51,28 +52,51 @@ def test_check_closes_with_a_broken_features_file_fails_never_passes(repo):
     assert r.returncode == 1 and "features" in r.stdout
 
 
-def fake_gh(tmp_path):
+def fake_gh(tmp_path, features=None):
+    """features: None = the file is not on the base branch (404); "rate" = any other gh failure; else the file's text."""
     bindir = tmp_path / "bin"
-    bindir.mkdir()
+    bindir.mkdir(exist_ok=True)
     log = tmp_path / "gh.log"
     g = bindir / "gh"
-    g.write_text(f'#!/usr/bin/env bash\necho "$@" >> {log}\ncase "$*" in\n  "api repos/{{owner}}/{{repo}}") echo \'{{"default_branch":"main"}}\' ;;\n  "pr view"*) echo \'{{"state":"MERGED","baseRefName":"dev","body":"Closes #5"}}\' ;;\n  "issue view"*) echo \'{{"state":"OPEN","labels":[]}}\' ;;\nesac\n', encoding="utf-8")
+    if features is None:
+        feat = 'echo "gh: Not Found (HTTP 404)" >&2; exit 1'
+    elif features == "rate":
+        feat = 'echo "gh: rate limited" >&2; exit 1'
+    else:
+        (tmp_path / "feat.b64").write_text(base64.b64encode(features.encode()).decode(), encoding="utf-8")
+        feat = f'cat {tmp_path}/feat.b64'
+    g.write_text(f'''#!/usr/bin/env bash
+echo "$@" >> {log}
+case "$*" in
+  *contents/.shipquick/features.json?ref=dev*) {feat} ;;
+  "api repos/{{owner}}/{{repo}}") echo '{{"default_branch":"main"}}' ;;
+  "pr view"*) echo '{{"state":"MERGED","baseRefName":"dev","body":"Closes #5"}}' ;;
+  "issue view"*) echo '{{"state":"OPEN","labels":[]}}' ;;
+esac
+''', encoding="utf-8")
     g.chmod(0o755)
     return bindir, log
 
 
-def run_closer(repo, tmp_path, *args):
-    bindir, log = fake_gh(tmp_path)
+def run_closer(repo, tmp_path, *args, features=None):
+    bindir, log = fake_gh(tmp_path, features)
     env = dict(os.environ, PATH=f"{bindir}:{os.environ['PATH']}")
     r = subprocess.run([sys.executable, str(CLOSER), "7", *args], cwd=repo, env=env, capture_output=True, text=True)
     return r, (log.read_text(encoding="utf-8") if log.exists() else "")
 
 
-def test_the_closer_with_close_on_merge_off_closes_nothing_and_calls_no_gh(repo, tmp_path):
-    flag(repo, **{"close-on-merge": False})
-    r, log = run_closer(repo, tmp_path, "--yes")
-    assert r.returncode == 0 and "close-on-merge is off" in r.stdout
-    assert log == "", "it must not even look at GitHub"
+OFF = json.dumps({"version": 1, "features": {"close-on-merge": {"on": False}}})
+
+
+def test_the_closer_reads_the_flag_at_the_pr_base_ref_not_the_working_tree(repo, tmp_path):
+    flag(repo, **{"close-on-merge": False})        # a local copy saying off must not matter
+    r, log = run_closer(repo, tmp_path, "--yes")   # base has no file: default on
+    assert r.returncode == 0 and "close #5" in r.stdout and "issue close 5" in log
+    flag(repo, **{"close-on-merge": True})         # a local copy saying on must not matter either
+    (tmp_path / "second").mkdir()
+    r, log = run_closer(repo, tmp_path / "second", "--yes", features=OFF)
+    assert r.returncode == 0 and "close-on-merge is off" in r.stdout and "issue close" not in log and "issue view" not in log
+    assert "contents/.shipquick/features.json?ref=dev" in log
 
 
 def test_the_closer_with_the_flag_on_still_works(repo, tmp_path):
@@ -80,11 +104,11 @@ def test_the_closer_with_the_flag_on_still_works(repo, tmp_path):
     assert r.returncode == 0 and "close #5" in r.stdout and "issue close" not in log
 
 
-def test_the_closer_with_a_broken_features_file_exits_2_and_closes_nothing(repo, tmp_path):
-    (repo / ".shipquick").mkdir()
-    (repo / ".shipquick" / "features.json").write_bytes(b"{oops")
-    r, log = run_closer(repo, tmp_path, "--yes")
-    assert r.returncode == 2 and "features" in r.stderr and log == ""
+def test_the_closer_with_an_unreadable_base_file_exits_2_and_closes_nothing(repo, tmp_path):
+    r, log = run_closer(repo, tmp_path, "--yes", features="rate")
+    assert r.returncode == 2 and "features" in r.stderr and "issue close" not in log
+    r, log = run_closer(repo, tmp_path, "--yes", features="{oops")
+    assert r.returncode == 2 and "issue close" not in log
 
 
 def test_roadmap_yml_reads_the_flag_first_and_every_later_step_waits_for_it():
@@ -101,3 +125,19 @@ def test_the_checks_team_block_passes_the_close_on_merge_flag():
     block = CHECKS_YML.split("\n  team-block:\n", 1)[1].split("\n  frontend-design:", 1)[0]
     assert "check_closes.py --close-on-merge" in block
     assert "fromJSON(needs.features.outputs.flags)['close-on-merge']" in block
+
+
+def test_the_checks_team_block_turns_the_flag_into_on_off_and_fails_on_anything_else():
+    block = CHECKS_YML.split("\n  team-block:\n", 1)[1].split("\n  frontend-design:", 1)[0]
+    assert "&& echo on || echo off" not in block
+    assert "case " in block and "true)" in block and "false)" in block and "exit 1" in block
+
+
+def test_is_on_raises_for_an_unknown_id_and_a_failed_git_lookup(repo, tmp_path, monkeypatch):
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import features
+    with pytest.raises(features.FeaturesError):
+        features.is_on("no-such-feature", root=str(repo))
+    monkeypatch.setattr(features.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(OSError("no git")))
+    with pytest.raises(features.FeaturesError):
+        features.is_on("roadmap")

@@ -157,7 +157,16 @@ gate_concl=$(jq -r --arg n "$gate_name" '
 ' <<<"$json" | head -1)
 [ "$gate_concl" = SUCCESS ] || refuse "required check $gate_name is $gate_concl, not SUCCESS"
 
-why=$(field .body | python3 "$HERE/check_closes.py" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
+# story #424: the `close-on-merge` flag is read as committed on the PR's base branch, never from this checkout; any error refuses.
+base_ref=$(field .baseRefName); cm_rc=0
+python3 "$HERE/features.py" remote close-on-merge --repo "$repo" --ref "$base_ref" >/dev/null 2>"${TMPDIR:-/tmp}/rm_feat.$$" || cm_rc=$?
+case "$cm_rc" in
+  0) cm=on ;;
+  1) cm=off ;;
+  *) why=$(cat "${TMPDIR:-/tmp}/rm_feat.$$"); rm -f "${TMPDIR:-/tmp}/rm_feat.$$"; refuse "the features file on $base_ref cannot be read, so close-on-merge is unknown: $why" ;;
+esac
+rm -f "${TMPDIR:-/tmp}/rm_feat.$$"
+why=$(field .body | python3 "$HERE/check_closes.py" --close-on-merge "$cm" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
 
 token=$(gh auth token --user "$reviewer_account") || refuse "no token for $reviewer_account on this machine"
 
