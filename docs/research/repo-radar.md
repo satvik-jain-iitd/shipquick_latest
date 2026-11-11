@@ -704,3 +704,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the grouping only. Each system screen is its own unit (Photos picker, file dialogs, contact access), as in swift-ios-skills. StoreKit sheets join InAppPurchase, the Live Activity tints join live-activities, the document launch rows join DocumentLaunchView. No code copied; a wrapper is the opposite of library first.
 - Decision: build from scratch: three small docs in the existing doc shape, rows added to three existing docs, one map edit in `IOS_DOC_FAMILY`, one fixture entry in `tests/test_ui_catch_all.py`. A screen with one or two modifiers (Quick Look, translation, certificate, Family Controls, Game Center, MusicKit, recording editor) stays in the catch-all.
 - Confidence that nothing fits better: 0.8 (no repo checks a doc layout).
+
+## 11 Nov 2026, story #296 (4/6): split the AccessibilityModifiers catch-all doc by task
+- Need: split the SwiftUI accessibility modifier doc into task docs (speech output, rotors, custom actions) and fail when a catch-all row names a control that has its own doc.
+- Run: same method as 3/6 (radar run for the sibling split found no repo that checks a doc layout); the need only changes the topic. Reused, not rerun: the 3/6 record above, same result.
+- Borrowed: the grouping only, by task, as Apple's Accessibility page groups its modifiers. No code copied.
+- Decision: build from scratch: three small docs in the existing doc shape, rows added to DragAndDrop and Focus, one map edit in `IOS_DOC_FAMILY`, one fixture entry. `accessibilityChartDescriptor` stays: the swift-charts doc has no variants list.
+- Confidence that nothing fits better: 0.8.
