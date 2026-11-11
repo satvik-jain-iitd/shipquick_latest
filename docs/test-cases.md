@@ -1636,3 +1636,33 @@ Scenario: the doc states the real precision of the compare (#375 review, round 2
   Test: test_s219_the_doc_states_the_real_precision_of_the_compare
 ```
 Tests: `tests/test_ios_snapshots.py`, `tests/test_ci_must_have.py` (the four pr-size ones). The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.
+## Story #188 (S10): a Design system board on the canvas
+```gherkin
+Scenario: the registry renders a board with every component row, right after Design learnings
+  Given a manifest in columns layout with a learnings section and a "registry" path to a fixture registry of three rows (two platforms)
+  When the layout runs
+  Then project/design-system.dc.html holds an Android and an iOS column, every component name on its base, its status (given, "twin #n" or "no twin yet") and its doc link (given or the kit's default), painted in the manifest's ink
+  And the board sits in the learnings section, in the same row as the learnings board, fully to its right, with the LEARNINGS prefix
+  Test: test_S34_the_registry_renders_a_board_with_every_component_row_under_its_platform_right_after_learnings
+Scenario: a missing registry or an unknown platform is a problem, and no registry key means no board
+  Given the manifest names a registry file that does not exist, or one whose row has platform "web"
+  Then the run reports a problem naming the file or the row
+  And without the "registry" key no design-system board is made
+  Test: test_S35_a_missing_registry_or_an_unknown_platform_is_a_problem_and_no_registry_key_means_no_board
+Scenario: --check fails naming a stale design-system board until --apply regenerates it
+  Given --apply has written the board and --check passes
+  When the registry loses a row and --check runs
+  Then it exits 1 and prints "STALE project/design-system.dc.html"; after --apply, --check passes again
+  Test: test_S36_check_fails_naming_a_stale_design_system_board_until_apply_regenerates_it
+Scenario: a registry in a rows layout with no learnings section is a problem, not silence (review of #368)
+  Given a manifest with "registry" set, the default rows layout and no section with id "learnings"
+  When the layout runs
+  Then the run reports a problem naming "registry" and "learnings", and no design-system board is made
+  Test: test_S37_a_registry_in_a_rows_layout_with_no_learnings_section_is_a_problem_not_silence
+Scenario: a registry that is JSON but not a components object is a problem, not a traceback (review of #368)
+  Given the registry file holds [], or {"components": ["Stepper"]}, or {"components": "x"}
+  When the layout runs
+  Then no exception is raised and the run reports a problem naming the path and "components"
+  Test: test_S38_a_registry_that_is_json_but_not_a_components_object_is_a_problem_not_a_traceback
+```
+Tests: `tests/test_canvas_stage.py::DesignSystem`.
