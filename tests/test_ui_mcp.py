@@ -107,3 +107,71 @@ def test_s190_llms_txt_is_current_and_the_check_catches_drift(tmp_path):
     bad = subprocess.run([sys.executable, str(SERVER), "llms", "--check", "--out", str(stale)],
                          capture_output=True, text=True)
     assert bad.returncode == 1 and "ui_mcp.py llms" in bad.stdout + bad.stderr
+
+
+# ---- #414 review: error paths ----
+
+def raw_rpc(text):
+    out = subprocess.run([sys.executable, str(SERVER)], input=text, capture_output=True, text=True, timeout=60).stdout
+    return [json.loads(line) for line in out.splitlines() if line.strip()]
+
+
+def test_s190_a_punctuation_only_query_matches_nothing():
+    assert ui_mcp.search("!!!")["total"] == 0
+    assert ui_mcp.search("-")["items"] == []
+
+
+def test_s190_an_offset_past_the_total_gives_an_empty_last_page():
+    r = ui_mcp.search("button", offset=10_000)
+    assert r["items"] == [] and r["count"] == 0 and r["has_more"] is False and r["next_offset"] is None
+
+
+def test_s190_limit_and_offset_out_of_range_are_errors_naming_the_field():
+    replies = rpc(INIT, call(SEARCH, {"query": "a", "limit": 0}, 2), call(SEARCH, {"query": "a", "limit": 51}, 3),
+                  call(SEARCH, {"query": "a", "offset": -1}, 4))
+    for r, field in zip(replies[1:], ("limit", "limit", "offset")):
+        assert r["result"]["isError"] is True and field in r["result"]["content"][0]["text"]
+
+
+def test_s190_a_parse_error_gives_32700_and_the_session_goes_on():
+    replies = raw_rpc("not json\n" + json.dumps({"jsonrpc": "2.0", "id": 9, "method": "ping"}) + "\n")
+    assert replies[0]["error"]["code"] == -32700 and replies[0]["id"] is None
+    assert replies[1] == {"jsonrpc": "2.0", "id": 9, "result": {}}
+
+
+def test_s190_an_unknown_method_gives_32601_and_as_a_notification_gets_no_reply():
+    replies = rpc({"jsonrpc": "2.0", "method": "nope/notify"}, {"jsonrpc": "2.0", "id": 5, "method": "nope"})
+    assert len(replies) == 1 and replies[0]["id"] == 5 and replies[0]["error"]["code"] == -32601
+
+
+def test_s190_a_client_response_gets_no_reply_and_a_non_object_gets_32600():
+    replies = raw_rpc(json.dumps({"jsonrpc": "2.0", "id": 7, "result": {}}) + "\n"
+                      + json.dumps({"jsonrpc": "2.0", "id": 8, "error": {"code": 1, "message": "x"}}) + "\n"
+                      + "[1, 2]\n42\n")
+    assert [r["error"]["code"] for r in replies] == [-32600, -32600]
+    assert all(r["id"] is None for r in replies)
+
+
+def test_s190_malformed_params_and_arguments_get_an_error_with_the_id_and_the_session_goes_on():
+    replies = rpc({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": [1]},
+                  {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": "x"},
+                  {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": GET, "arguments": 5}},
+                  {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": SEARCH, "arguments": [1]}},
+                  {"jsonrpc": "2.0", "id": 5, "method": "ping"})
+    assert [r["id"] for r in replies] == [1, 2, 3, 4, 5]
+    for r in replies[:4]:
+        assert r["error"]["code"] == -32602 and "object" in r["error"]["message"]
+    assert replies[4]["result"] == {}
+
+
+def test_s190_a_non_object_registry_row_is_skipped(tmp_path, monkeypatch):
+    reg = tmp_path / "registry.json"
+    reg.write_text(json.dumps({"components": ["bad", 3, {"name": "Chipz", "platform": "android", "base": "Chip"}]}))
+    monkeypatch.setattr(ui_mcp, "REGISTRY", reg)
+    ui_mcp.load.cache_clear()
+    try:
+        assert ui_mcp.search("chipz")["items"][0]["name"] == "Chipz"
+        assert ui_mcp.get("chipz")["registry"][0]["base"] == "Chip"
+        assert "Chipz" in ui_mcp.llms_text()
+    finally:
+        ui_mcp.load.cache_clear()

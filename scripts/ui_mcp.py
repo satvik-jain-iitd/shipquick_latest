@@ -41,8 +41,10 @@ def load():
             doc = read_doc(doc_path)
             contract = json.loads(contract_path.read_text(encoding="utf-8")) if contract_path.exists() else None
             docs[doc["name"]] = {"doc": doc, "contract": contract, "path": f"components/{d.name}/{doc_path.name}"}
-    rows = json.loads(REGISTRY.read_text(encoding="utf-8")).get("components", []) if REGISTRY.exists() else []
-    return docs, rows
+    reg = json.loads(REGISTRY.read_text(encoding="utf-8")) if REGISTRY.exists() else {}
+    rows = reg.get("components") if isinstance(reg, dict) else None
+    # a row that is not an object is dropped here, so search, get and llms.txt never see it (check_component_request.py fails it)
+    return docs, [r for r in rows if isinstance(r, dict)] if isinstance(rows, list) else []
 
 
 def platforms_of(d):
@@ -88,7 +90,7 @@ def search(query="", platform=None, limit=10, offset=0):
     for e in _entries():
         if platform and platform not in e["platforms"]:
             continue
-        s = _score(e, query, words) if words else 1
+        s = _score(e, query, words) if query else 1   # "!!!" has no words and matches nothing; only "" lists all
         if s:
             hits.append({k: v for k, v in e.items() if not k.startswith("_")} | {"score": s})
     hits.sort(key=lambda h: (-h["score"], h["name"].lower()))
@@ -164,11 +166,15 @@ def _result(data=None, error=None):
 
 def handle(msg):
     """One JSON-RPC message in, one reply out (None for a notification)."""
-    mid, method, params = msg.get("id"), msg.get("method"), msg.get("params") or {}
-    if mid is None:
+    if not isinstance(msg, dict):
+        return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid request: send one JSON object per line."}}
+    mid, method, params = msg.get("id"), msg.get("method"), msg.get("params", {})
+    if mid is None or "method" not in msg:   # a notification, or the client's own response: never answered
         return None
     ok = lambda r: {"jsonrpc": "2.0", "id": mid, "result": r}
     fail = lambda code, m: {"jsonrpc": "2.0", "id": mid, "error": {"code": code, "message": m}}
+    if not isinstance(params, dict):
+        return fail(-32602, 'params must be an object, e.g. {"name": "...", "arguments": {...}}.')
     if method == "initialize":
         v = params.get("protocolVersion")
         return ok({"protocolVersion": v if v in VERSIONS else VERSIONS[0], "capabilities": {"tools": {}},
@@ -179,9 +185,11 @@ def handle(msg):
     if method == "tools/list":
         return ok({"tools": TOOLS})
     if method == "tools/call":
-        name, a = params.get("name"), params.get("arguments") or {}
+        name, a = params.get("name"), params.get("arguments", {})
         if name not in (SEARCH, GET):
             return fail(-32602, f"Unknown tool {name!r}. Tools: {SEARCH}, {GET}.")
+        if not isinstance(a, dict):
+            return fail(-32602, f'arguments must be an object, e.g. {{"query": "button"}} for {SEARCH}.')
         err = _args_error(name, a)
         if err:
             return ok(_result(error=err))
@@ -203,7 +211,11 @@ def serve(stdin=sys.stdin, stdout=sys.stdout):
         except ValueError:
             reply = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error: one JSON object per line."}}
         else:
-            reply = handle(msg) if isinstance(msg, dict) else None
+            try:
+                reply = handle(msg)
+            except Exception as e:   # one bad message never ends the session
+                mid = msg.get("id") if isinstance(msg, dict) else None
+                reply = {"jsonrpc": "2.0", "id": mid, "error": {"code": -32603, "message": f"Internal error: {e}"}}
         if reply:
             stdout.write(json.dumps(reply, ensure_ascii=False) + "\n")
             stdout.flush()
