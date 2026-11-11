@@ -41,6 +41,7 @@ export default {
   },
   "platformApi": {
     "ios": {
+      "family": "widgets",
       "supporting": [
         {
           "name": "Widget",
@@ -54,6 +55,9 @@ export default {
           "name": "TimelineProvider",
           "use": "iOS 14.0. Apple: \"A type that advises WidgetKit when to update a widget’s display.\""
         }
+      ],
+      "variants": [
+        {"name": "widgetURL", "note": "`.widgetURL(_:)`, iOS 14.0. Apple: \"Sets the URL to open in the containing app when the user clicks the widget.\""}
       ]
     },
     "android": {
