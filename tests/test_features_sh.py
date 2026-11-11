@@ -73,3 +73,12 @@ def test_a_broken_file_is_never_overwritten(repo):
 def test_the_docs_say_agents_only_get_and_the_owner_types_set():
     t = SH.read_text(encoding="utf-8")
     assert "Agents only run `get`" in t and "! bash" in t
+
+
+def test_every_command_exits_2_on_an_invalid_utf8_file_never_1(repo):
+    """Exit 1 means off (review of #431): a crash must never read as off."""
+    (repo / ".shipquick").mkdir()
+    (repo / ".shipquick" / "features.json").write_bytes(b'{"features": {}}\n\xff')
+    for args in (("get", "roadmap"), ("get",), ("set", "roadmap", "off")):
+        r = sh(repo, *args)
+        assert r.returncode == 2 and r.stdout.strip() == "" and "Traceback" not in r.stderr, (args, r.returncode, r.stderr)
