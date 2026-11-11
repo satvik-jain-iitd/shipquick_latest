@@ -12,15 +12,26 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-11
+Tag `v0.12.0`, "D7: the iOS library, the live roadmap and the design checks". Notes: `docs/RELEASE_NOTES_v0.12.0.md`.
+
 ### Changed
-- Children warning, for the next release notes: after the pin bump the `adoption` job fails any child job with no `timeout-minutes`. Fix: add `timeout-minutes: 10` per job; `python3 knowledge/shipquick_latest/scripts/check_timeouts.py .github/workflows` lists them (#174).
+- Children warning: after the pin bump the `adoption` job fails any child job with no `timeout-minutes`. Fix: add `timeout-minutes: 10` per job; `python3 knowledge/shipquick_latest/scripts/check_timeouts.py .github/workflows` lists them (#174).
 - `check_timeouts.py` names and fails a workflow file that has zero jobs (for example a root-indented `jobs:`), instead of passing it silently (#174).
+- PR checks re-run when a PR body is edited: `edited` is in the `pull_request` types of `ci.yml` and `checks.yml`, and `adopt.sh` writes it into a child's caller (#92).
 
 ### Added
 - `checks.yml` gains a `story` job, in the gate: every user story a child's PR links must carry `Who does it:` (and `Done when:` for stories made from 10 Nov 2026). `adopt.sh --check` reports a caller without `issues: read` (#175).
+- `checks.yml` gains a `design-tokens` job, in the gate: no colour or font literal on an added web style line, then stylelint on the changed CSS (#133).
+- iOS library: a Swift contract emitter with a drift check and one generated struct per contract (#222), shared Android and iOS props in the contract core (#215), the Button Android topic follows Material 3 exactly (#223), a two-tier SwiftLint runner with a protected baseline and a fixture app (#218, #221), snapshot tests with Prefire on a pinned macOS job (#219), an XCUITest accessibility audit per template (#220).
+- The six iOS catch-all modifier docs are split by control or task into 18 docs; each catch-all holds only rows no doc fits (#296).
+- The live roadmap page: golden tests, times, milestones and priority in the model, timeline, You are here, the dependency map, an HTML page and Cloudflare Pages inputs (#81, #82, #83, #84).
+- Design system board built from the registry (#188). Vibe tests, ten fixed screen prompts per platform, `bench/vibe.py` (#189).
 
 ### Children, read this before you bump
 - The `story` job needs `issues: read` from your caller. Without it the whole ShipQuick checks run fails at startup with `The nested job 'story' is requesting 'issues: read', but is only allowed 'issues: none'`, and no gate check appears. Run `bash knowledge/shipquick_latest/scripts/adopt.sh .` after the bump to fix it. A story without `Who does it:` turns the gate red too: add the line to the issue, then re-run the job.
+- Every job in a child's own workflows needs `timeout-minutes`, or the `adoption` job fails.
+- The `design-tokens` job fails a PR that adds a hex, `rgb()`, `hsl()` or `font-family` literal on a web style line. Put the value in a token file, or list the file in the project's design token allowlist.
 
 ## [0.11.1] - 2026-11-10
 Tag `v0.11.1`, "a child sets its milestone". Notes: `docs/RELEASE_NOTES_v0.11.1.md`.
