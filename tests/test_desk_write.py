@@ -135,7 +135,7 @@ class RealProposal(unittest.TestCase):
         self.bin.mkdir()
         self.log = t / "gh.log"
         g = self.bin / "gh"
-        g.write_text('#!/usr/bin/env bash\necho "$@" >> %s\nif [ "$1 $2" = "pr create" ]; then echo https://example.test/pull/55; fi\n' % self.log, encoding="utf-8")
+        g.write_text('#!/usr/bin/env bash\necho "$@" >> %s\nif [ "$1 $2" = "pr create" ]; then echo https://example.test/pull/55; fi\nif [ "$1 $2" = "api user" ]; then echo "${FAKE_GH_USER-klickbae8yt-star}"; fi\n' % self.log, encoding="utf-8")
         g.chmod(0o755)
         self.old = os.environ["PATH"]
         os.environ["PATH"] = "%s:%s" % (self.bin, self.old)
@@ -165,6 +165,52 @@ class RealProposal(unittest.TestCase):
     def test_a_locked_feature_raises_and_nothing_is_pushed(self):
         with self.assertRaises(desk.DeskError):
             desk.propose_feature(self.repo, "gate", False, base="dev")
+        self.assertEqual(sh(self.bare, "branch", "--list", "chore/feature-*").stdout.strip(), "")
+
+    def local_branches(self):
+        return sh(self.repo, "branch", "--list", "chore/feature-*").stdout.strip()
+
+    def test_s456_no_local_branch_is_left_after_a_good_proposal_an_unchanged_one_or_an_error(self):
+        desk.propose_feature(self.repo, "lanes", False, base="dev")
+        self.assertEqual(self.local_branches(), "")
+        desk.propose_feature(self.repo, "roadmap", True, base="dev")
+        self.assertEqual(self.local_branches(), "")
+        with self.assertRaises(desk.DeskError):
+            desk.propose_feature(self.repo, "gate", False, base="dev")
+        self.assertEqual(self.local_branches(), "")
+
+    def test_s456_the_pr_body_names_the_account_that_opens_it(self):
+        desk.propose_feature(self.repo, "lanes", False, base="dev")
+        self.assertIn("Opened by `klickbae8yt-star`", self.log.read_text(encoding="utf-8"))
+
+    def commit_roles(self):
+        (self.repo / ".shipquick").mkdir()
+        (self.repo / ".shipquick" / "roles.yml").write_text("coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n", encoding="utf-8")
+        sh(self.repo, "add", "-A")
+        sh(self.repo, "commit", "-q", "-m", "roles")
+        sh(self.repo, "push", "-q", "origin", "dev")
+
+    def test_s456_the_review_account_is_refused_before_anything_is_pushed(self):
+        self.commit_roles()
+        os.environ["FAKE_GH_USER"] = "satvik-jain-iitd"
+        self.addCleanup(os.environ.pop, "FAKE_GH_USER", None)
+        with self.assertRaises(desk.DeskError) as e:
+            desk.propose_feature(self.repo, "lanes", False, base="dev")
+        self.assertIn("satvik-jain-iitd", str(e.exception))
+        self.assertIn("SHIPQUICK_BUILD_USER", str(e.exception))
+        self.assertEqual(sh(self.bare, "branch", "--list", "chore/feature-*").stdout.strip(), "")
+        self.assertNotIn("pr create", self.log.read_text(encoding="utf-8"))
+        self.assertEqual(self.local_branches(), "")
+
+    def test_s456_a_coder_account_is_accepted_when_roles_exist(self):
+        self.commit_roles()
+        self.assertEqual(desk.propose_feature(self.repo, "lanes", False, base="dev")["pr"], 55)
+
+    def test_s456_an_account_gh_cannot_name_is_refused(self):
+        os.environ["FAKE_GH_USER"] = ""
+        self.addCleanup(os.environ.pop, "FAKE_GH_USER", None)
+        with self.assertRaises(desk.DeskError):
+            desk.propose_feature(self.repo, "lanes", False, base="dev")
         self.assertEqual(sh(self.bare, "branch", "--list", "chore/feature-*").stdout.strip(), "")
 
 
