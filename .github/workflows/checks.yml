@@ -86,10 +86,44 @@ jobs:
         run: python3 .shipquick/scripts/check_timeouts.py project/.github/workflows
       - name: Check a configured docs/screens.txt is actually wired into CI (story #146)
         run: python3 .shipquick/scripts/check_screens_wired.py --screens-file project/docs/screens.txt --workflows-dir project/.github/workflows
-  disable-comments:
+  features:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.event_name == 'pull_request'
+    outputs:
+      flags: ${{ steps.read.outputs.flags }}
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Read the feature flags from the base branch, never from this PR (story #421)
+        id: read
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          # A PR that turns a feature off in its own diff still runs that job here: the base branch still says on.
+          # A rule-24 child keeps the file on its kit branch, as it keeps roles.yml.
+          REF="$TARGET"
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then REF="$KIT_BRANCH"; fi
+          git -C project fetch -q --depth=1 origin "+refs/heads/$REF:refs/remotes/origin/$REF" || { echo "branch $REF not found in this repo."; exit 1; }
+          flags=$(python3 .shipquick/scripts/features.py flags --git project --ref "origin/$REF")
+          echo "flags=$flags" >> "$GITHUB_OUTPUT"
+          python3 -c 'import json,sys; [print("feature %s is off: its job is skipped" % k) for k, v in json.loads(sys.argv[1]).items() if not v]' "$flags"
+  disable-comments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['disable-comments']
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
@@ -115,7 +149,8 @@ jobs:
   design-tokens:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['design-tokens']
     steps:
       - name: Check out the project
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -142,7 +177,8 @@ jobs:
   roles:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['roles']
     env:
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
       GH_TOKEN: ${{ github.token }}
@@ -181,11 +217,13 @@ jobs:
   team-block:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['team-block']
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
       PR_TITLE: ${{ github.event.pull_request.title }}
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      CLOSE_ON_MERGE: ${{ fromJSON(needs.features.outputs.flags)['close-on-merge'] }}
     steps:
       - name: Check out the ShipQuick scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -203,11 +241,18 @@ jobs:
           printf '%s\n' "$PR_BODY" | awk '/^## For the reviewer/{f=1;next} /^## /{f=0} f' | python3 .shipquick/scripts/check_block.py
       - name: Check the PR body links its issue (Closes #n)
         run: |
-          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
+          # story #424: the `close-on-merge` flag comes from the features job (the base branch's file)
+          case "$CLOSE_ON_MERGE" in
+            true) word=on ;;
+            false) word=off ;;
+            *) echo "the close-on-merge flag is '$CLOSE_ON_MERGE', not true or false: failing, never guessing"; exit 1 ;;
+          esac
+          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --close-on-merge "$word" --title "$PR_TITLE" --author "$PR_AUTHOR"
   frontend-design:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['frontend-design']
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
@@ -233,7 +278,8 @@ jobs:
   uat-on-main:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    needs: [features]
+    if: github.event_name == 'pull_request' && github.base_ref == 'main' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['uat-on-main']
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
@@ -256,7 +302,8 @@ jobs:
   freeze-on-main:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    needs: [features]
+    if: github.event_name == 'pull_request' && github.base_ref == 'main' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['freeze']
     steps:
       - name: Check out the project
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -279,7 +326,8 @@ jobs:
   environments:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['environments']
     steps:
       - name: Check out the project
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -301,7 +349,8 @@ jobs:
     # Story #186: every custom component in the child's ui/registry.json has the owner's recorded yes, read live from the issue.
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['component-registry']
     permissions:
       contents: read
       issues: read
@@ -327,7 +376,8 @@ jobs:
     # Story #316 (A3): the child's CLAUDE.md carries the kit rule block unchanged, and the kit's phrases are present.
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['rule-copies']
     steps:
       - name: Check out the project
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -364,7 +414,8 @@ jobs:
     # The job asks for issues: read; a reusable workflow gets it only when the caller grants it (adopt.sh writes that).
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['story']
     permissions:
       contents: read
       issues: read
@@ -389,12 +440,13 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [adoption, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, story]
+    needs: [adoption, features, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, story]
     if: always()
     steps:
       - name: Check all job results (story #131 -- review_merge.sh requires this exact check to be SUCCESS)
         run: |
           echo "adoption: ${{ needs.adoption.result }}"
+          echo "features: ${{ needs.features.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
           echo "design-tokens: ${{ needs.design-tokens.result }}"
           echo "roles: ${{ needs.roles.result }}"
