@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments story tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
+#   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
 #   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
 #   shortcuts (story #327): warn only, prints the count of shortcut:/ponytail: comments; runs after the checks when no argument is given
@@ -106,6 +107,13 @@ check_story() {
   report story "$rc"
 }
 check_workflow_security() { python3 "$HERE/check_workflow_security.py"; report workflow-security $?; }   # story #325
+check_design_tokens() {   # story #133: the same two steps as the design-tokens CI job
+  have_base design-tokens || return 0
+  python3 "$HERE/check_design_literals.py" --base "origin/$BASE"
+  report design-tokens $?
+  bash "$HERE/run_stylelint_changed.sh" "origin/$BASE"
+  report stylelint $?
+}
 check_tdd() {   # story #319 (A15): the commit log stands in for the PR body before a push; CI reads the real body
   have_base tdd || return 0
   local tmp rc
@@ -136,7 +144,7 @@ check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story tdd roadmap workflow-security secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments design-tokens story tdd roadmap workflow-security secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
@@ -154,12 +162,13 @@ for c in "${checks[@]}"; do
     pr-size) check_pr_size ;;
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
+    design-tokens) check_design_tokens ;;
     story) check_story ;;
     shortcuts) check_shortcuts ;;
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments story tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts
