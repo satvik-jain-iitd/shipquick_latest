@@ -590,3 +590,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: swift-snapshot-testing and Prefire as named by the story, pinned `exact`. The env-guarded manifest (deps added only when `SHIPQUICK_SNAPSHOTS` is set) is the pattern pointfree's own packages use for test-only tooling, so a child never resolves swift-syntax. Prefire's `-Package` scheme and the record-mode env var passed as `TEST_RUNNER_...`. Nothing from playbook-ios: it is a catalog app, not a CI check.
 - Decision: adopt both packages; our own matrix test is one XCTest per template looping over eight cells. References are recorded on CI through a `workflow_dispatch` input and committed from the artifact (`ui/ios/SNAPSHOTS.md`). No new script.
 - Confidence that nothing fits better: 0.85 (the two packages are the story's constraint and the only maintained Swift options with this reach).
+## 11 Nov 2026, story #220 (S5e): XCUITest accessibility audit per iOS screen
+- Need: run XCUITest `performAccessibilityAudit()` on each SwiftUI template of a Swift package, on a macOS CI runner.
+- Run: `scout.py --need "run XCUITest performAccessibilityAudit on SwiftUI screens from a Swift package in CI"`: no repos found.
+  `scout.py --need "xcodegen generate xcode project ui test target"`: no repos found.
+  `gh search repos --topic=accessibility-testing --language=swift --limit 5`: cashapp/AccessibilitySnapshot, banksalad/AXSnapshot, Sherlouk/AccessibilitySnapshot-SnapshotTesting (archived).
+  `gh search repos --topic=xcodegen --limit 5`: sweetpad-dev/sweetpad, UnlockAgency/Natrium, ZhgChgLi/XCFolder and two apps; XcodeGen itself (yonaskolb/XcodeGen, release 2.45.4 on 14 Apr 2026) read directly.
+- Read: the READMEs of cashapp/AccessibilitySnapshot (snapshots of the accessibility tree, needs a host app), banksalad/AXSnapshot (a text snapshot of what VoiceOver reads) and yonaskolb/XcodeGen (makes an Xcode project from a YAML spec). Tier A for what each does.
+- Borrowed: XcodeGen as a CI tool only (pinned release and SHA-256, like SwiftLint), because `performAccessibilityAudit()` needs an app and a UI test target and a Swift package can have neither. Nothing from the two snapshot libraries: they record the accessibility tree, they do not run Apple's audit, and the story names Apple's audit.
+- Decision: a tiny host app and one XCUITest per template, generated into a project on CI and never committed. No new script, no committed dependency.
+- Confidence that nothing fits better: 0.8 (Apple's own audit is the story's constraint; XcodeGen is the common way to get an app target without a committed project file).

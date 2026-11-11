@@ -1636,3 +1636,25 @@ Scenario: the doc states the real precision of the compare (#375 review, round 2
   Test: test_s219_the_doc_states_the_real_precision_of_the_compare
 ```
 Tests: `tests/test_ios_snapshots.py`, `tests/test_ci_must_have.py` (the four pr-size ones). The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.
+
+## Story #220 (S5e): XCUITest accessibility audit per iOS screen
+
+```gherkin
+Scenario: one audit test per template
+  Given ui/ios/templates holds N *Template.swift files
+  Then A11yAudit/Tests/TemplateAccessibilityAuditTests.swift has test<Name>() calling audit("<Name>") for each, and calls performAccessibilityAudit()
+  Test: test_s220_one_audit_test_per_template_calls_perform_accessibility_audit
+Scenario: the host app can show every template
+  Then A11yAudit/Host/A11yHostApp.swift has a case "<Name>": <Name>() for each template
+  Test: test_s220_the_host_app_shows_every_template_by_launch_argument
+Scenario: the XcodeGen spec makes an app and a UI test target on iOS 17
+  Then project.yml uses the local ShipQuickUI package at .., has an application and a bundle.ui-testing target, and the generated project is git-ignored
+  Test: test_s220_the_xcodegen_spec_has_the_app_and_a_ui_test_target
+Scenario: the audit runs in the snapshot job
+  Then ui-ios-snapshots fetches XcodeGen by pinned release and SHA-256, generates the project, runs xcodebuild test on iPhone 16, iOS 18.5, and runs even after a red snapshot step
+  Test: test_s220_the_audit_runs_in_the_snapshot_job_with_a_pinned_xcodegen
+Scenario: the HIG items no machine checks are listed as review-only
+  Then ui/ios/ACCESSIBILITY.md tags navigation, gestures, VoiceOver order and Reduce Motion as `review-only`, and the README links it
+  Test: test_s220_the_review_only_list_names_what_no_machine_checks
+```
+Tests: `tests/test_ios_a11y_audit.py`. The Swift UI tests (`ui/ios/A11yAudit/Tests/TemplateAccessibilityAuditTests.swift`, 5 tests) run only in the CI job `ui-ios-snapshots`.

@@ -35,3 +35,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Story #220: XcodeGen makes this on CI from ui/ios/A11yAudit/project.yml
+ui/ios/A11yAudit/*.xcodeproj/
