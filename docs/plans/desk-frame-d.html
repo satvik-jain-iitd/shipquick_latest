@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Features frame D</title>
+<style>
+/* Tokens from design/tokens.json (light), same as approved board desk-frame-b.html. Measured pairs:
+   ink on bg 17.4:1, ink on card 15.96:1, muted on bg 7.0:1, muted on card 6.42:1, on-primary on primary 17.4:1.
+   Dark: ink on bg 17.4:1, muted on bg 5.18:1, on-primary on primary 17.4:1. Line is borders only (3.36:1 / 5.18:1). */
+:root {
+  --backdrop: #F5F5F5; --bg: #FFFFFF; --card: #F5F5F5;
+  --ink: #1A1A1A; --muted: #595959; --line: #8C8C8C;
+  --primary: #1A1A1A; --on-primary: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --backdrop: #1A1A1A; --bg: #1A1A1A; --card: #1A1A1A;
+    --ink: #FFFFFF; --muted: #8C8C8C; --line: #8C8C8C;
+    --primary: #FFFFFF; --on-primary: #1A1A1A;
+  }
+}
+:root[data-theme="dark"] {
+  --backdrop: #1A1A1A; --bg: #1A1A1A; --card: #1A1A1A;
+  --ink: #FFFFFF; --muted: #8C8C8C; --line: #8C8C8C;
+  --primary: #FFFFFF; --on-primary: #1A1A1A;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--backdrop); font-family: system-ui, sans-serif; color: var(--ink); font-size: 14px; line-height: 20px; padding: 16px; }
+p, h1, h2, h3 { margin: 0; }
+.board {
+  height: 100%; min-height: 768px; max-width: 1408px; margin: 0 auto;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 16px 24px;
+  display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 12px; overflow: hidden;
+}
+.rule { font-size: 12px; line-height: 16px; color: var(--muted); }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+h1 { font-size: 22px; line-height: 28px; font-weight: 700; }
+.sub { color: var(--muted); }
+.chip { display: inline-block; font-size: 12px; line-height: 16px; padding: 4px 8px; border-radius: 9999px; border: 1px solid var(--line); color: var(--ink); background: var(--bg); white-space: nowrap; }
+.chip.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.muted { color: var(--muted); }
+
+/* Intro: three plain-word boxes */
+.intro { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.intro > div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 18px; }
+.intro h2 { font-size: 14px; line-height: 20px; font-weight: 700; margin-bottom: 2px; }
+
+/* Body: groups as a nav on the left, the chosen group on the right */
+.body { display: grid; grid-template-columns: 300px 1fr; gap: 16px; min-height: 0; }
+.nav { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.nav h2, .pane-head h2 { font-size: 16px; line-height: 22px; font-weight: 700; }
+.group { display: block; width: 100%; text-align: left; font: inherit; color: var(--ink); background: var(--card);
+         border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+.group[aria-current="true"] { border: 2px solid var(--ink); padding: 9px 11px; background: var(--bg); }
+.group b { display: block; font-size: 15px; }
+.group .muted { font-size: 13px; }
+.mini { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: auto; }
+.mini h3 { font-size: 13px; font-weight: 700; }
+
+.pane { border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; }
+.pane-head { padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.list { overflow: auto; min-height: 0; }
+.feat { display: grid; grid-template-columns: 210px 1fr 150px; gap: 16px; align-items: center; padding: 6px 16px; border-bottom: 1px solid var(--line); }
+.feat:last-child { border-bottom: 0; }
+.feat .name { font-weight: 700; font-size: 15px; }
+.feat .id { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
+.feat .off { color: var(--muted); }
+.state { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.state .word { font-weight: 700; min-width: 64px; text-align: right; }
+
+/* The switch: a real checkbox with role=switch */
+.sw { appearance: none; -webkit-appearance: none; margin: 0; width: 44px; height: 24px; border-radius: 9999px; position: relative; cursor: pointer;
+      border: 2px solid var(--ink); background: var(--bg); flex: none; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); transition: left .15s; }
+.sw:checked { background: var(--primary); border-color: var(--primary); }
+.sw:checked::after { left: 22px; background: var(--on-primary); }
+.sw:disabled { cursor: not-allowed; }
+.sw:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.lock { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+
+/* Confirm step, inside the row it belongs to */
+.feat.confirming { border: 2px solid var(--ink); border-radius: 12px; margin: 4px 8px; padding: 8px 8px; }
+.feat .chip { margin-top: 4px; }
+.confirm { grid-column: 1 / -1; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px;
+           display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; }
+.confirm .say { font-weight: 700; }
+.confirm .btns { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 8px; }
+.btn { height: 40px; padding: 0 18px; border-radius: 10px; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+       background: var(--primary); color: var(--on-primary); border: 1px solid var(--primary); }
+.btn.outline { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+code { font-family: ui-monospace, monospace; font-size: 13px; }
+
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.foot .btn { height: 44px; min-width: 160px; } /* main button: last, bottom right, same place in frame E */
+
+@media (max-width: 1340px) {
+  .body { grid-template-columns: 260px 1fr; }
+  .feat { grid-template-columns: 180px 1fr 130px; gap: 12px; }
+}
+</style>
+</head>
+<body>
+<main class="board">
+  <p class="rule">Frame D. Design rule shown: progressive disclosure (show one group at a time). Why: 17 switches at once is too much for a newcomer; the left list gives the big picture, the right side gives the details of one group. Sample data only.</p>
+
+  <header class="top">
+    <div>
+      <h1>ShipQuick Desk</h1>
+      <p class="sub">Sample project · main branch</p>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center">
+      <span class="chip">14 of 17 features on</span>
+      <span class="chip">Live · checked 40 s ago</span>
+    </div>
+  </header>
+
+  <section class="intro" aria-label="About this page">
+    <div>
+      <h2>What is ShipQuick?</h2>
+      <p>A helper kit for your project. It checks each change before it goes live. It keeps people and agents (AI helpers) in step.</p>
+    </div>
+    <div>
+      <h2>What is this page?</h2>
+      <p>Your Desk. It runs only on your computer. It shows what ShipQuick does in your project, and what waits for you.</p>
+    </div>
+    <div>
+      <h2>What can I do here?</h2>
+      <p>Pick a group on the left. Read what each feature does. Flip its switch to turn it on or off. A lock means it must stay on.</p>
+    </div>
+  </section>
+
+  <div class="body">
+    <nav class="nav" aria-label="Feature groups">
+      <h2>Feature groups</h2>
+      <button class="group" type="button" aria-current="true"><b>Protects your main branch</b><span class="muted">6 of 7 on · 1 changed by you</span></button>
+      <button class="group" type="button"><b>Checks your code</b><span class="muted">3 of 4 on · 1 changed by you</span></button>
+      <button class="group" type="button"><b>Keeps your team in sync</b><span class="muted">4 of 4 on</span></button>
+      <button class="group" type="button"><b>Shows progress</b><span class="muted">1 of 2 on</span></button>
+      <div class="mini">
+        <h3>Waiting for you</h3>
+        <p>PR 101 is ready. Your merge.</p>
+        <p class="muted" style="font-size:12px">A PR (pull request) is one change asking to join the main branch.</p>
+      </div>
+    </nav>
+
+    <section class="pane" aria-labelledby="g1">
+      <div class="pane-head">
+        <h2 id="g1">Protects your main branch</h2>
+        <p class="muted">The main branch is the copy of your code that goes live. These features stop a bad change from getting in.</p>
+      </div>
+      <div class="list">
+        <div class="feat">
+          <div><p class="name">Final check</p><p class="id">gate</p></div>
+          <p>Waits for every other check and gives one clear pass or fail for each change. <span class="off">Cannot be turned off: without it, a change could skip every check.</span></p>
+          <div class="state"><span class="lock"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Always on</span><input class="sw" type="checkbox" role="switch" checked disabled aria-label="Final check, always on"></div>
+        </div>
+        <div class="feat">
+          <div><p class="name">Kit link check</p><p class="id">adoption</p></div>
+          <p>Makes sure your project uses a real, approved copy of ShipQuick. <span class="off">Cannot be turned off: it guards the switches on this page.</span></p>
+          <div class="state"><span class="lock"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Always on</span><input class="sw" type="checkbox" role="switch" checked disabled aria-label="Kit link check, always on"></div>
+        </div>
+        <div class="feat">
+          <div><p class="name">Agents may merge</p><p class="id">merge-gate</p></div>
+          <p>An agent may accept (merge) a change once every check passes. <span class="off">If off: agents never merge. You accept every change by hand.</span></p>
+          <div class="state"><span class="word">On</span><input class="sw" type="checkbox" role="switch" checked aria-label="Agents may merge"></div>
+        </div>
+        <div class="feat confirming">
+          <div><p class="name">Try it before release</p><p class="id">uat-on-main</p></div>
+          <p>Before a release, you tick a short test list on the test site (dev link). <span class="off">If off: a release can go live before anyone tries it.</span></p>
+          <div class="state"><span class="word">On</span><input class="sw" type="checkbox" role="switch" checked aria-label="Try it before release" aria-describedby="c1"></div>
+          <div class="confirm" id="c1" role="group" aria-label="Confirm turning off">
+            <p class="say">Turn off "Try it before release"? Releases will go live without your test list.</p>
+            <p class="muted">We save this to <code>.shipquick/features.json</code> (your project's settings file). That file is protected, so it starts working only after you merge the PR we open.</p>
+            <div class="btns"><button class="btn outline" type="button">Keep it on</button><button class="btn" type="button">Turn off</button></div>
+          </div>
+        </div>
+        <div class="feat">
+          <div><p class="name">Pause button</p><p class="id">freeze</p><span class="chip">Changed from default</span></div>
+          <p>Lets you pause all changes to main, for example before a launch. <span class="off">If off: there is no pause; changes keep flowing.</span></p>
+          <div class="state"><span class="word">Off</span><input class="sw" type="checkbox" role="switch" aria-label="Pause button"></div>
+        </div>
+        <div class="feat">
+          <div><p class="name">No hidden off-switches</p><p class="id">disable-comments</p></div>
+          <p>Blocks code that quietly silences a check, unless a written decision says why. <span class="off">If off: a change can mute a check and no one sees.</span></p>
+          <div class="state"><span class="word">On</span><input class="sw" type="checkbox" role="switch" checked aria-label="No hidden off-switches"></div>
+        </div>
+        <div class="feat">
+          <div><p class="name">Builder is not reviewer</p><p class="id">roles</p></div>
+          <p>Checks that changes come from the builder account, so a different account reviews them. <span class="off">If off: one account could write and approve its own work.</span></p>
+          <div class="state"><span class="word">On</span><input class="sw" type="checkbox" role="switch" checked aria-label="Builder is not reviewer"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="foot">
+    <p class="muted">Switch changes go to the settings file and start after your merge. Nothing changes the moment you tap.</p>
+    <button class="btn" type="button">Refresh now</button>
+  </footer>
+</main>
+</body>
+</html>
