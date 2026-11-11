@@ -31,7 +31,7 @@ Tag `v0.12.0`, "D7: the iOS library, the live roadmap and the design checks". No
 ### Children, read this before you bump
 - The `story` job needs `issues: read` from your caller. Without it the whole ShipQuick checks run fails at startup with `The nested job 'story' is requesting 'issues: read', but is only allowed 'issues: none'`, and no gate check appears. Run `bash knowledge/shipquick_latest/scripts/adopt.sh .` after the bump to fix it. A story without `Who does it:` turns the gate red too: add the line to the issue, then re-run the job.
 - Every job in a child's own workflows needs `timeout-minutes`, or the `adoption` job fails.
-- The `design-tokens` job fails a PR that adds a hex, `rgb()`, `hsl()` or `font-family` literal on a web style line. Put the value in a token file, or list the file in the project's design token allowlist.
+- The `design-tokens` job fails a PR that adds a hex, `rgb()`, `hsl()` or `font-family` literal on a web style line. Put the value in a token file, or list the file in `scripts/design_token_files.txt`.
 
 ## [0.11.1] - 2026-11-10
 Tag `v0.11.1`, "a child sets its milestone". Notes: `docs/RELEASE_NOTES_v0.11.1.md`.

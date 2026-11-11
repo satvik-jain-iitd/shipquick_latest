@@ -13,7 +13,7 @@ D7 ships as a minor release (`pm/agile/RELEASE_GUIDE.md`). The kit gets an iOS l
 
 - **The `story` job needs `issues: read` from the caller.** A caller without it makes GitHub refuse the whole ShipQuick checks run at startup (`The nested job 'story' is requesting 'issues: read', but is only allowed 'issues: none'`) and no gate check appears. Run `bash knowledge/shipquick_latest/scripts/adopt.sh .` after the bump. A user story without `Who does it:` (and, from 10 Nov 2026, `Done when:`) also turns the gate red.
 - **The caller needs the `edited` pull_request type** to re-run the body-reading checks after a body edit. `adopt.sh` writes it; a hand-written caller keeps working but does not re-run on an edit.
-- **The new `design-tokens` job** fails a PR that adds a colour or font literal on a web style line. Move the value into a token file, or add the file to the allowlist.
+- **The new `design-tokens` job** fails a PR that adds a colour or font literal on a web style line. Move the value into a token file, or list the file in `scripts/design_token_files.txt`.
 - **`timeout-minutes` on every child job.** The `adoption` job fails a child workflow job without it. `python3 knowledge/shipquick_latest/scripts/check_timeouts.py .github/workflows` lists them; `timeout-minutes: 10` is the usual value.
 
 ## Not yet
