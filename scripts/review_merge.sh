@@ -37,6 +37,11 @@ pr="${1:-}"
 [[ "$pr" =~ ^[0-9]+$ ]] || usage
 refuse() { echo "refused: $1" >&2; exit 1; }
 
+# story #425: the `merge-gate` feature. Off means no agent merges: the owner merges by hand. A broken features file takes the
+# same safe side and names the error: off is the safe side, an error is never read as on.
+frc=0; fout="$(python3 "$HERE/features.py" get merge-gate 2>&1)" || frc=$?
+[ "$frc" -eq 0 ] || { [ "$frc" -eq 1 ] && refuse "merge gate is off: the owner merges by hand"; refuse "the features file is unreadable ($fout): the owner merges by hand"; }
+
 mode=$("$HERE/mode.sh" get 2>/dev/null) || refuse "mode is not set (ask the owner)"
 [ "$mode" = auto ] || refuse "mode is $mode (only auto merges)"
 
