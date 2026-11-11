@@ -37,17 +37,21 @@ pr="${1:-}"
 [[ "$pr" =~ ^[0-9]+$ ]] || usage
 refuse() { echo "refused: $1" >&2; exit 1; }
 
-# story #425: the `merge-gate` feature. Off means no agent merges: the owner merges by hand. A broken features file takes the
-# same safe side and names the error: off is the safe side, an error is never read as on.
-frc=0; fout="$(python3 "$HERE/features.py" get merge-gate 2>&1)" || frc=$?
-[ "$frc" -eq 0 ] || { [ "$frc" -eq 1 ] && refuse "merge gate is off: the owner merges by hand"; refuse "the features file is unreadable ($fout): the owner merges by hand"; }
-
 mode=$("$HERE/mode.sh" get 2>/dev/null) || refuse "mode is not set (ask the owner)"
 [ "$mode" = auto ] || refuse "mode is $mode (only auto merges)"
 
 repo="${2:-$(gh repo view --json nameWithOwner --jq .nameWithOwner)}"
 json=$(gh pr view "$pr" -R "$repo" --json state,isDraft,mergeable,baseRefName,headRefOid,title,author,body,reviews,statusCheckRollup) || refuse "cannot read pull request $pr"
 field() { jq -r "$1" <<<"$json"; }
+
+# story #425: the `merge-gate` feature, read as committed on the PR's base branch (never this checkout, which a PR could
+# change). Off means no agent merges: the owner merges by hand. An unreadable or broken file takes the same safe side.
+gate_rc=0; gate_err=$(python3 "$HERE/features.py" remote merge-gate --repo "$repo" --ref "$(field .baseRefName)" 2>&1 >/dev/null) || gate_rc=$?
+case "$gate_rc" in
+  0) ;;
+  1) refuse "merge gate is off: the owner merges by hand" ;;
+  *) refuse "the features file on $(field .baseRefName) cannot be read ($gate_err): the owner merges by hand" ;;
+esac
 
 { [ "$(field .state)" = OPEN ] && [ "$(field .isDraft)" = false ]; } || refuse "pull request is not open, or is a draft"
 [ "$(field .mergeable)" != CONFLICTING ] || refuse "pull request has conflicts"
