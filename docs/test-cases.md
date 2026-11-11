@@ -1621,3 +1621,17 @@ Scenario: each framework doc exists, sets a family and holds a row of its stem
   Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
 ```
 Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by the `TechnologyModifiers` entry.
+
+## Story #296 (3/6): the PresentationModifiers catch-all holds only rows no screen doc fits
+```gherkin
+Scenario: a PresentationModifiers row whose screen has its own doc fails
+  Given the fixture entry for PresentationModifiers: the row-name stems a doc owns (photos, file dialog, file importer, file exporter, file mover, contact access, app store, manage subscriptions, offer code, refund request, the Live Activity tints, document launch, document browser)
+  When a row of the PresentationModifiers doc holds one of its stems
+  Then the test fails naming the catch-all, the row and the doc that owns it (PhotosPicker, FileDialogs, ContactAccess, InAppPurchase, live-activities or DocumentLaunchView)
+  Test: test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails
+Scenario: each screen doc exists, sets a family and holds a row of its stem
+  Given every stem of the PresentationModifiers entry, and the photospicker stem of the TechnologyModifiers entry, now owned by PhotosPicker
+  Then its owner doc folder exists, the gate can count it (platformApi.ios.family) and it holds a row with that stem
+  Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
+```
+Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by the `PresentationModifiers` entry.

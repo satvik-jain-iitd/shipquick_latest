@@ -36,7 +36,18 @@ SPLIT = {
         "tip": "Tips",
         "applepay": "Wallet", "wallet": "Wallet", "paylater": "Wallet",
         "imageplayground": "ImagePlayground",
-        "webview": "web-view", "gesture": "Gestures", "photospicker": "PresentationModifiers",
+        "webview": "web-view", "gesture": "Gestures", "photospicker": "PhotosPicker",
+    },
+    # 3/6: PresentationModifiers split by the screen each row presents (stems kept narrow: musicSubscriptionOffer is
+    # MusicKit, not StoreKit, and familyActivityPicker is Family Controls, not a Live Activity)
+    "PresentationModifiers": {
+        "photos": "PhotosPicker",
+        "filedialog": "FileDialogs", "fileexporter": "FileDialogs", "fileimporter": "FileDialogs", "filemover": "FileDialogs",
+        "contactaccess": "ContactAccess",
+        "appstore": "InAppPurchase", "managesubscriptions": "InAppPurchase", "offercode": "InAppPurchase",
+        "refundrequest": "InAppPurchase",
+        "activitybackground": "live-activities", "activitysystemaction": "live-activities",
+        "documentlaunch": "DocumentLaunchView", "documentbrowser": "DocumentLaunchView",
     },
 }
 
