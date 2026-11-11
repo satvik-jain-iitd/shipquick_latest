@@ -33,6 +33,8 @@ def adopt(child, *args, env=None, settings=None, ci=False, precommit=True, d0=Tr
     e = dict(os.environ if env is None else env)
     if precommit:
         e["PATH"] = f"{FAKE_PRECOMMIT}:{e['PATH']}"
+    elif precommit is False:   # None leaves PATH as the test built it; False = "no pre-commit" must mean none, even on a Mac that has the real one (story #452)
+        e["PATH"] = os.pathsep.join(d for d in e["PATH"].split(os.pathsep) if not os.access(os.path.join(d, "pre-commit"), os.X_OK))
     e["SHIPQUICK_CLAUDE_SETTINGS"] = str(settings or PONYTAIL_ON)
     e.pop("CI", None)   # a real CI runner sets CI; a test sets it on purpose with ci=True
     if ci:
@@ -536,7 +538,7 @@ def test_s260_a_ruleset_with_a_different_context_does_not_count(child, gh):
 def test_s260_a_403_on_the_rules_read_fails_as_cannot_read_not_as_gate_not_required(child, gh):
     (gh.stub / "rules.403").write_text("", encoding="utf-8")
     r = gate_run(child, gh, protection=PROTECTED)
-    assert r.returncode == 1 and "cannot read rules (403/404)" in r.stdout and "gate not required" not in r.stdout
+    assert r.returncode == 1 and "cannot read rules (403/404)" in r.stdout and "every other --check test still ran" in r.stdout and "gate not required" not in r.stdout
 
 
 # ---- story #326 (A10): adopt.sh --check reads the Ponytail plugin switch in the Claude settings file ----

@@ -69,6 +69,11 @@ def test_state_configured_with_an_empty_hooks_folder_is_missing_and_exit_1(child
     assert state(child) == (1, "missing")
 
 
+def test_a_stand_in_pre_commit_on_the_path_gets_the_hooks_installed_by_adopt(child):
+    adopt(child)   # FAKE_PRECOMMIT first on PATH, as on any machine that has pre-commit
+    assert state(child) == (0, "installed")
+
+
 def test_state_one_hook_missing_is_still_missing(child):
     adopt(child, precommit=False)
     real_hooks(child)
@@ -132,8 +137,9 @@ def test_adopt_with_pre_commit_off_installs_no_hooks(child):
 def test_a_failing_pre_commit_is_said_in_one_line_and_adopt_still_finishes(child, tmp_path):
     bad = tmp_path / "bad"; bad.mkdir()
     (bad / "pre-commit").write_text('#!/usr/bin/env bash\necho "boom" >&2\nexit 1\n', encoding="utf-8"); (bad / "pre-commit").chmod(0o755)
-    env = {**os.environ, "PATH": f"{bad}:{os.environ['PATH']}"}
-    r = adopt(child, env=env, precommit=False)
+    path = os.pathsep.join(d for d in os.environ["PATH"].split(os.pathsep) if not os.access(os.path.join(d, "pre-commit"), os.X_OK))
+    env = {**os.environ, "PATH": f"{bad}:{path}"}
+    r = adopt(child, env=env, precommit=None)
     assert r.returncode == 0, r.stderr
     assert "could not install the git hooks" in r.stdout and "pre-commit install" in r.stdout
     assert state(child) == (1, "missing")
