@@ -93,7 +93,7 @@ function fromGraphql(resp) {
 
 function render(model, project, now) {
   const stories = model.stories, epicName = Object.fromEntries(model.epics.map(e => [e.number, e.title]));
-  const tz = project.timezone || model.tz || TZ, hhmm = hm(now, tz), today = dayOf(now, tz), tzName = zoneName(tz, now);
+  const tz = model.tz || project.timezone || TZ, hhmm = hm(now, tz), today = dayOf(now, tz), tzName = zoneName(tz, now);
   const closedStories = stories.filter(s => s.column === 'Done').sort((a, b) => String(b.closedAt).localeCompare(String(a.closedAt)));
   const byEpic = new Map(); for (const s of closedStories) { const k = s.epic || 0; byEpic.set(k, (byEpic.get(k) || []).concat(s)); }   // Map keeps the order of the newest story first
   const range = (list) => { const days = list.filter(s => s.closedAt).map(s => dayOf(s.closedAt, tz)).sort(), a = days[0], b = days[days.length - 1];

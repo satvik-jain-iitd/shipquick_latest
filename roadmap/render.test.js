@@ -109,3 +109,12 @@ test('S83 the close day follows the timezone input, default Asia/Kolkata', () =>
   assert.ok(render(build(late, [], 'UTC'), PROJECT, at).includes('updated 03:35'));
   assert.ok(page(empty, { ...PROJECT, timezone: 'UTC' }, at).includes('updated 03:35'));
 });
+
+test('S83 the model owns the zone: a different project.timezone never splits the heading day from the row day', () => {
+  const late = [{ number: 5, title: 'Story: late close', body: '## Business\nA late close.', state: 'CLOSED', labels: ['story'], closedAt: '2026-10-24T20:00:00Z', parent: null }];
+  const out = render(build(late, []), { ...PROJECT, timezone: 'Europe/Berlin' }, new Date('2026-10-25T03:35:00Z'));
+  const tl = out.split('id="timeline"')[1].split('</section>')[0];
+  assert.ok(tl.includes('<h3>25 Oct</h3>'), tl);   // build() grouped the day in India time
+  assert.ok(tl.includes('closed 01:30'), tl);       // the row shows the same day, not "24 Oct 22:00"
+  assert.ok(out.includes('updated 09:05'));         // the clock line uses the same zone
+});
