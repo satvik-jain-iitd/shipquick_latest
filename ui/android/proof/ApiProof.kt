@@ -41,7 +41,7 @@ fun ProofBadge() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProofBottomSheet() {
-    ModalBottomSheet(onDismissRequest = {}, sheetState = rememberModalBottomSheetState(), content = {})
+    ModalBottomSheet(content = {}, onDismissRequest = {}, sheetState = rememberModalBottomSheetState())
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,12 +52,12 @@ fun ProofBottomSheetScaffold() {
 
 @Composable
 fun ProofButton() {
-    Button(onClick = {}) {}
+    Button(onClick = {}, enabled = true, content = {})
 }
 
 @Composable
 fun ProofCard() {
-    Card(onClick = {}, enabled = true, content = {})
+    Card(content = {}, onClick = {}, enabled = true)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,7 +128,7 @@ fun ProofMaterialTheme() {
 
 @Composable
 fun ProofMenu() {
-    DropdownMenu(expanded = true, onDismissRequest = {}, content = {})
+    DropdownMenu(content = {}, expanded = true, onDismissRequest = {})
 }
 
 @Composable

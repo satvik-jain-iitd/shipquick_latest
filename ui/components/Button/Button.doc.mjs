@@ -14,7 +14,6 @@ export default {
   "usage": {
     "description": "A button starts an action when the user presses it. Use it to save, send, confirm or start a task.",
     "bestPractices": [
-      {"guidance": true, "description": "Keep one primary button per screen. Use secondary or ghost for the rest."},
       {"guidance": true, "description": "Name the action in the label, like \"Save changes\", not \"OK\"."},
       {"guidance": false, "description": "Use a button only to go to another page. Use a link instead."}
     ],
@@ -28,6 +27,18 @@ export default {
       {"name": "Spinner", "required": false, "description": "Shows while the action runs."}
     ]
   },
+  "platformUsage": {
+    "android": {
+      "bestPractices": [
+        {"guidance": true, "description": "Keep one filled Button per screen for the main action. Use FilledTonalButton, OutlinedButton or TextButton for the rest."}
+      ]
+    },
+    "web": {
+      "bestPractices": [
+        {"guidance": true, "description": "Keep one primary button per screen. Use secondary or ghost for the rest."}
+      ]
+    }
+  },
   "props": [
     {"name": "label", "type": "string", "description": "The words on the button. Screen readers read them too.", "required": true},
     {"name": "variant", "type": "'primary' | 'secondary' | 'ghost' | 'destructive'", "description": "How strong the button looks. Primary is for the one main action.", "default": "'secondary'"},
@@ -35,6 +46,8 @@ export default {
     {"name": "isDisabled", "type": "boolean", "description": "Greys the button out and ignores presses.", "default": "false"},
     {"name": "isLoading", "type": "boolean", "description": "Shows a spinner and ignores presses until the action ends.", "default": "false"},
     {"name": "onClick", "type": "() => void", "description": "Runs when the user presses the button."},
+    {"name": "enabled", "type": "boolean", "description": "False greys the button out and ignores presses.", "default": "true", "platform": "android"},
+    {"name": "content", "type": "@Composable RowScope.() -> Unit", "description": "What sits inside the button: a Text, with an Icon before it when needed.", "required": true, "platform": "android"},
     {"name": "type", "type": "'button' | 'submit' | 'reset'", "description": "The HTML button type. Web only.", "default": "'button'"}
   ],
   "platformApi": {

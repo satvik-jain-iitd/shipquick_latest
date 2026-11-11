@@ -285,6 +285,8 @@ jobs:
         run: python3 scripts/ui_topics.py --check
       - name: The compile proofs are current with the contracts (story #217)
         run: python3 scripts/ui_proof.py --check
+      - name: The Swift contract structs are current with the contracts (story #222)
+        run: python3 scripts/emit_contracts.py --check
       - name: The theme files are current with design/tokens.json (story #184)
         run: python3 scripts/emit_tokens.py --check
       - name: Set up Node (the pinned Astryx CLI needs 22.13 or newer)
@@ -334,7 +336,7 @@ jobs:
           fi
           # Captured first: a failing git diff inside the `if` below would have written ui=false. --no-renames lists the old path of a move.
           names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
-          if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_tokens\.py|\.github/workflows/ci\.yml|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
+          if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_contracts\.py|scripts/emit_tokens\.py|\.github/workflows/ci\.yml|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
   ui-android-compile:
     # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
     # Compile only; nothing runs. All downloads happen on this runner (owner, #217).

@@ -3,6 +3,7 @@
 `scripts/ui_topics.py` builds `ios-<name>` and `android-<name>` from one shared doc. Text that fits one platform
 lives in `platformUsage.<platform>`; props come from `core` or that platform only. The generator fails on a leak."""
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -194,3 +195,48 @@ def test_s231_a_framework_doc_with_only_platform_usage_ios_gets_an_ios_topic(tmp
     write_component(tmp_path, "Widgets", doc, {"core": {}, "platforms": {}})
     files, _ = ui_topics.render(tmp_path)
     assert list(files) == ["ios-widgets.doc.mjs"] and "Use WidgetKit." in files["ios-widgets.doc.mjs"]
+
+
+# Story #223: the Android Button topic follows M3 exactly. Its props are M3 parameters only (the fixture names
+# Google's page as its source); the web props (label, variant, size, isDisabled, isLoading) stay in the web doc.
+M3 = json.loads((ROOT / "tests" / "fixtures" / "m3_button.json").read_text(encoding="utf-8"))
+BUTTON = ROOT / "ui" / "components" / "Button"
+
+
+def prop_names(t):
+    return [r[0] for s in t["sections"] if s["title"] == "Props" for r in s["content"][0]["rows"]]
+
+
+def not_m3(t):
+    """Prop names in topic `t` that are not a Compose Material 3 Button parameter."""
+    return [n for n in prop_names(t) if n not in M3["parameters"]]
+
+
+def android_button_topic():
+    doc = read_doc(BUTTON / "Button.doc.mjs")
+    contract = json.loads((BUTTON / "Button.contract.json").read_text(encoding="utf-8"))
+    return ui_topics.topic(doc, contract, "android"), doc, contract
+
+
+def test_s223_the_android_button_topic_shows_only_m3_parameters_and_the_five_m3_buttons():
+    t, _, _ = android_button_topic()
+    assert not_m3(t) == [], f"not M3 parameters: {not_m3(t)}"
+    assert {"onClick", "enabled", "content"} <= set(prop_names(t))
+    text = text_of(t)
+    assert all(name in text for name in M3["composables"]), M3["composables"]
+    # PR #367 review: the shared Do list once told an Android coder to use a "ghost" button. M3 has no web variant.
+    web_words = re.findall(r"\b(?:primary|secondary|ghost|destructive)\b", text, re.IGNORECASE)
+    assert web_words == [], f"web variant words in the Android topic: {web_words}"
+
+
+def test_s223_a_web_prop_in_core_is_caught_as_not_m3():
+    doc = {"name": "Button", "platforms": {"android": "androidx.compose.material3.Button", "ios": None, "web": "x"},
+           "usage": {"description": "d"}, "props": [{"name": "variant", "type": "'primary' | 'ghost'", "description": "web look"}]}
+    assert not_m3(ui_topics.topic(doc, {"core": {"variant": {}}}, "android")) == ["variant"]
+
+
+def test_s223_the_web_props_stay_in_the_web_doc_as_web_only():
+    _, doc, contract = android_button_topic()
+    web = {"label", "variant", "size", "isDisabled", "isLoading"}
+    assert web <= {p["name"] for p in doc["props"]}
+    assert web <= {w["name"] for w in contract["webOnly"]}

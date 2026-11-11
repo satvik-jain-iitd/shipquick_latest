@@ -2,14 +2,15 @@
   "name": "NavigationBar",
   "baseTarget": "root",
   "types": {},
-  "core": {},
+  "core": {
+    "content": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
   "platforms": {
     "android": {
-      "content": {
-        "type": {
-          "kind": "content"
-        }
-      },
       "selected": {
         "type": {
           "kind": "boolean"
@@ -38,11 +39,6 @@
         "type": {
           "kind": "named",
           "name": "Binding<SelectionValue>"
-        }
-      },
-      "content": {
-        "type": {
-          "kind": "content"
         }
       },
       "titleKey": {

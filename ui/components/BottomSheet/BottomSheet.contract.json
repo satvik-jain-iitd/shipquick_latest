@@ -2,7 +2,13 @@
   "name": "BottomSheet",
   "baseTarget": "root",
   "types": {},
-  "core": {},
+  "core": {
+    "content": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
   "platforms": {
     "android": {
       "onDismissRequest": {
@@ -17,11 +23,6 @@
           "name": "SheetState"
         },
         "optional": true
-      },
-      "content": {
-        "type": {
-          "kind": "content"
-        }
       }
     },
     "ios": {
@@ -37,11 +38,6 @@
           "args": []
         },
         "optional": true
-      },
-      "content": {
-        "type": {
-          "kind": "content"
-        }
       },
       "presentationDetents": {
         "type": {

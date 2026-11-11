@@ -34,6 +34,11 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "appEntityIdentifier: `.appEntityIdentifier(_:)`, iOS 18.4. Apple: \"Associates a SwiftUI view with an app entity to make its content discoverable by Apple Intelligence and Siri.\"",
+            "appEntityUIElements: `.appEntityUIElements(_:)`, iOS 18.4. Apple: \"Provides the system with additional context to make a custom view’s content discoverable by Apple Intelligence and Siri.\"",
+            "onAppIntentExecution: `.onAppIntentExecution(_:perform:)`, iOS 26.0. Apple: \"Registers a handler to run when the app receives an app intent that targets the associated scene.\"",
+            "shortcutsLinkStyle: `.shortcutsLinkStyle(_:)`, iOS 16.0. Apple: \"Sets the given style for ShortcutsLinks within the view hierarchy\"",
+            "siriTipViewStyle: `.siriTipViewStyle(_:)`, iOS 16.0. Apple: \"Sets the given style for SiriTipView within the view hierarchy\"",
             "AppIntent: iOS 16.0. Apple: \"An interface you use to express app-specific actions and make them available to the rest of the system.\"",
             "AppShortcutsProvider: iOS 16.0. Apple: \"A type alias for the type that provides an app’s preconfigured shortcuts.\"",
             "AppShortcut: iOS 16.0. Apple: \"A type that defines a preconfigured shortcut for a specific app intent.\""
