@@ -1624,3 +1624,136 @@ Scenario: a registry that is JSON but not a components object is a problem, not 
   Test: test_S38_a_registry_that_is_json_but_not_a_components_object_is_a_problem_not_a_traceback
 ```
 Tests: `tests/test_canvas_stage.py::DesignSystem`.
+## Story #81 (epic #80, S1): the roadmap tests and a golden fixture in JS
+```gherkin
+Scenario: the reference roadmap tests run on node:test
+  Given the 33 tests of the reference Python roadmap suite
+  When they are ported to roadmap/ported.test.js (28 tests; the 5 deploy tests are the kit's S4 story)
+  Then 7 pass on the current render.js (board, columns, delivered, epic link, plain words, Now, India clock) and 21 are todo tests naming #82 (data) or #83 (page), and ROADMAP_STRICT=1 runs the 21 as real failures
+Scenario: the golden fixture gives the same model in Python and JS
+  Given roadmap/fixtures/golden-issues.json, a synthetic GitHub answer with 27 issues (parents both ways, 4 milestones, Needs lines, doing label times) and 5 pull requests
+  And roadmap/fixtures/golden-expected.json captured from the reference Python by roadmap/fixtures/expected.py
+  When the JS builds its model from the same answer
+  Then epics, and every story's epic, column, raw, text, needsWords and pull request equal the golden now
+  And milestone, prio, needs, blockedBy, started, cycleMin (#82), timeline, here, next, older, milestones with days left, map with crossings, chain (#83) are todo until those stories land
+Scenario: the runner is wired
+  Then scripts/check_local.sh has a `roadmap` check running `node --test roadmap/*.test.js`, the same line as ci.yml
+Scenario: a node:test file counts as the red test
+  Given a PR whose `## Red` names roadmap/golden.test.js and whose diff adds that file
+  When check_tdd.py runs
+  Then it prints "tdd OK: roadmap/golden.test.js"
+  Test: tests/test_check_tdd.py::test_s81_a_node_test_file_in_the_red_section_passes
+```
+Tests: `roadmap/ported.test.js` (28, prefix `S1`), `roadmap/golden.test.js` (10, prefix `golden:` plus the runner check), `tests/test_check_tdd.py::test_s81_a_node_test_file_in_the_red_section_passes`.
+
+## Story #82 (epic #80, S1): roadmap data, times, parent, milestones, Needs
+```gherkin
+Scenario: the model carries the data fields
+  Given the golden fixture roadmap/fixtures/golden-issues.json (milestones with due dates, parents, P labels, Needs lines, doing label events, a Started line)
+  When the JS builds its model from the same answer
+  Then every story's milestone, prio, needs, blockedBy, started and cycleMin equal the golden captured from the reference
+Scenario: Needs lines become numbers
+  Given a body with `Needs: #23` and `Needs: #26` lines under a Needs heading
+  Then story.needs is [23, 26] and a story with no line has []
+Scenario: the start time has a fallback
+  Given a closed story with no doing label and a `Started: 2026-10-25T04:00:00Z (estimated)` line
+  Then cycleMin is close minus that time; a doing label wins over the line; no label and no line, or a line that is not a UTC time, gives null
+Scenario: a blocker is an open story
+  Given a story that needs a closed story and an issue number that is not a story
+  Then needs lists both and blockedBy lists neither
+```
+Tests: `roadmap/golden.test.js` (`golden: every story has the same milestone, priority, Needs, blockers, start time and cycle minutes`), `roadmap/ported.test.js` (`S1 Needs lines become numbers`, `S1 a Started line gives the start when there is no doing label`, `S1 the doing label wins over a Started line`, `S1 no label and no line means no cycle time, and a bad line is ignored`).
+
+## Story #83 part (a) (epic #80, S1): roadmap render, board and timeline
+```gherkin
+Scenario: the timeline groups closed stories by close day in the project's timezone
+  Given closed stories, one closed at 20:00 UTC on 24 Oct
+  When the model is built with the default timezone Asia/Kolkata
+  Then it sits under 2026-10-25, days run newest first, and with timezone UTC it sits under 2026-10-24
+Scenario: the timeline shows start, close and cycle time
+  Given stories that took 2 hours, 45 minutes, and one never marked doing
+  Then the timeline shows "2 h", "45 min" and "no start time"
+Scenario: You are here
+  Given a story with the doing label since 04:00 UTC and ready stories
+  Then the page shows the time, the story "since 09:30" and the first unblocked ready story as next
+Scenario: Next order and older work
+  Given open stories with ready, blocked or no plan label
+  Then Next holds ready and blocked stories by milestone due date, then priority, then number, and marks "blocked by #23, #26"
+  And stories with no plan label sit in a folded Older work list
+Scenario: delivered epics show a date range
+  Given an epic whose stories closed on 21 Oct and 25 Oct
+  Then Delivered shows "21 Oct to 25 Oct" and stays folded
+Scenario: the golden fixture renders
+  Given roadmap/fixtures/golden-issues.json
+  Then the timeline, here, next and older equal the golden and every part-(a) section renders
+Scenario: the model owns the zone
+  Given a model built in India time and a project.timezone of Europe/Berlin
+  When render() runs at 03:35 UTC on 25 Oct
+  Then the heading says "25 Oct", the row says "closed 01:30" and the clock line says 09:05
+```
+Tests: `roadmap/ported.test.js` (`S1 the timeline groups closed stories by India close day, newest first`, `S1 the start is the first doing label and the cycle time is close minus start`, `S1 You are here shows the time, the story in progress and the next ready story`, `S1 Next is sorted by milestone, then priority, then number, and marks blocked stories`, `S1 stories without a ready or blocked label are older work and stay out of Next`, `S1 delivered epics show their date range and stay folded`), `roadmap/golden.test.js` (`golden: the timeline groups closed stories by India close day, newest first`, `golden: you are here, the Next order and the older work are the same`, `golden: the page renders the board, timeline, you are here, Next, older work and delivered ranges (#83 part a)`), `roadmap/render.test.js` (`S83 the close day follows the timezone input, default Asia/Kolkata`, `S83 the model owns the zone: a different project.timezone never splits the heading day from the row day`).
+
+## Story #83 part (b) (epic #80, S1): milestone bars, dependency map, longest chain, Night theme, phone
+```gherkin
+Scenario: milestone bars
+  Given stories in two milestones with due dates
+  When the page is drawn on 26 Oct
+  Then each bar shows "3 of 8", "due 27 Oct" and "1 day left", earliest due first
+  And a milestone past its due date with work left is red and says "late by 2 days"
+Scenario: the dependency map
+  Given Needs lines between stories in different milestones
+  Then there is one edge per pair of milestones with the number of needs, a need on a later milestone is a dotted backward edge,
+  And an arrow that only repeats a longer path is hidden and counted
+Scenario: crossings are measured and the order search keeps the fewest
+  Given two arcs that interleave in due order
+  Then crossings() counts 1, nested or touching arcs count 0
+  And the map picks a milestone order with 0 crossings and still draws every milestone once
+Scenario: the longest chain
+  Given open stories that wait on each other
+  Then the longest chain is listed, ties go to the lowest numbers
+Scenario: Night theme and phone
+  Given a phone in dark mode at 360 px
+  Then the page carries the color-scheme meta, every token the body paints with changes at night, the map uses theme tokens only,
+  And board columns may shrink and wrap long words, so the page never scrolls sideways
+Scenario: no project text of its own
+  Given the same model rendered with two titles and two visions
+  Then the two pages differ only in the title and the vision
+```
+Tests: `roadmap/ported.test.js` (`S1 milestone bars count done over total, with the due date and the days left`, `S1 a milestone past its due date with work left is late and red`, `S1 the map has one edge per pair of milestones with the number of needs`, `S1 a need on a later milestone is a backward edge`, `S1 crossings are measured, not guessed`, `S1 the svg labels every arrow and names the crossings`, `S1 an arrow that only repeats a longer path is hidden and counted`, `S1 the longest chain of open work is listed, ties go to the lowest numbers`, `S1 the page has a night theme that follows the phone, and a phone-width layout`, `S1 board columns may shrink and wrap long words, so a phone does not scroll sideways`, `S1 the map svg uses theme colours, so it follows night`), `roadmap/golden.test.js` (`golden: the milestones have the same due date, counts, days left and late flag`, `golden: the dependency map has the same nodes, edges, hidden arrows and crossings`, `golden: the longest chain of open work is the same`), `roadmap/render.test.js` (`S83 the map order search finds the order with the fewest crossings`, `S83 the page has no project text of its own: only the title and the vision change it`).
+
+## PR #393 review fix (story #83 part b): the map order keeps the arrow way, a two-way pair stays apart
+```gherkin
+Scenario: the order search never turns a solid arrow up or a dotted arrow down
+  Given five milestones M0 to M4 with needs M0 to M3, M1 to M4, M2 to M3 and M2 to M4
+  When the map searches for an order with fewer crossings
+  Then every solid arrow still points down and every dotted arrow still points up, or the due order stays
+Scenario: two milestones that wait on each other
+  Given a story in M1 that needs M0 and a story in M0 that needs M1
+  Then the solid and the dotted arrow get different arcs and their "1 need" labels sit at different places
+```
+Tests: `roadmap/render.test.js` (`S83 the order search never turns a solid arrow up or a dotted arrow down`, `S83 two milestones that wait on each other get two arrows apart, two labels apart`).
+
+## PR #393 review fix round 2 (story #83 part b): nested arcs keep their labels clear
+```gherkin
+Scenario: nested arcs keep every label clear of every other arc
+  Given two needs from M0 to M3 and two needs from M1 to M2, so both arcs share one middle height
+  When the map draws its arcs
+  Then the outer arc runs past the inner arc's "2 needs" label, and no label sits on another arc
+```
+Tests: `roadmap/render.test.js` (`S83 nested arcs keep every label clear of every other arc`).
+
+## Story #84 (epic #80): roadmap HTML and Cloudflare Pages inputs
+```gherkin
+Scenario: no new inputs
+  Given a caller that passes only shipquick_ref
+  Then the html and deploy steps are skipped and only ROADMAP.md is saved on the roadmap branch, as in v0.6.0
+Scenario: html on
+  Given html true
+  Then roadmap.js writes the HTML page and roadmap.html is kept on the roadmap branch
+Scenario: html and a project name
+  Given cloudflare_project, cloudflare_account_id and the CLOUDFLARE_API_TOKEN secret
+  Then a pinned wrangler with no install scripts deploys the page, and a failed deploy fails the job
+Scenario: a project name and no token
+  Then the deploy step prints a notice and the job stays green
+```
+Tests: `tests/test_roadmap_workflow.py` (`test_s84_the_workflow_takes_html_and_cloudflare_inputs_and_an_optional_token`, `test_s84_with_no_new_inputs_the_html_and_deploy_steps_are_skipped`, `test_s84_the_html_page_is_written_by_the_roadmap_script_and_kept_on_the_branch`, `test_s84_the_deploy_uses_a_pinned_wrangler_with_no_install_scripts_and_fails_loudly`, `test_s84_inputs_reach_the_shell_through_env_not_inline`, `test_s84_node_22_is_set_up_for_wrangler`, `test_s84_the_workflow_security_check_passes`), `roadmap/roadmap.test.js` (`S84 an output file ending in .html gets the HTML page, not the Markdown one`).
