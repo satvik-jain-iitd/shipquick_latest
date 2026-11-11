@@ -53,6 +53,7 @@ A token reference passes, like `.padding(.top, Tokens.space2)`.
 
 In a child, `lint/swiftlint.yml` does this job (story #185): every rule is a warning locally, and CI runs `swiftlint lint --strict`.
 `tests/test_ui_lint.py` keeps it in step with this list. See `docs/ADOPTION.md`.
+`bash ui/tool/ios_lint.sh` (story #218) runs both tiers on the Swift files changed against `origin/dev`: `CI=1` is strict, else it warns; the committed baseline `lint/swiftlint-baseline.json` (protected) filters old findings, and `.swiftformat` runs in lint mode.
 ## The tokens (story #184)
 
 `Sources/ShipQuickUI/Tokens.swift` is written by `python3 scripts/emit_tokens.py` from `design/tokens.json`. Do not edit it.

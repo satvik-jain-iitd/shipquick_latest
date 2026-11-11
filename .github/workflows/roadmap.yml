@@ -2,6 +2,8 @@
 # It reads the project's own issues and pull requests with the built-in token, writes ROADMAP.md and keeps it on a branch called `roadmap`.
 # Settings come from roadmap.json in the calling project (title, vision). This repo holds no project names.
 # The calling job must grant the rights below; a reusable workflow cannot take more than its caller gives.
+# Story #84, all optional: `html: true` also keeps roadmap.html on the branch; `cloudflare_project` (with `cloudflare_account_id`
+# and the secret CLOUDFLARE_API_TOKEN) also publishes the HTML page to Cloudflare Pages. With none of them the output is the v0.6.0 one.
 name: Roadmap
 
 on:
@@ -15,6 +17,22 @@ on:
         description: Commit SHA or tag of the roadmap scripts. Use the same one as in `uses:`.
         type: string
         required: true
+      html:
+        description: Also write roadmap.html and keep it on the roadmap branch
+        type: boolean
+        default: false
+      cloudflare_project:
+        description: Cloudflare Pages project name. Set it to publish the HTML page there. Empty means no deploy.
+        type: string
+        default: ""
+      cloudflare_account_id:
+        description: Cloudflare account id that owns the Pages project
+        type: string
+        default: ""
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        description: Token with Cloudflare Pages edit rights. Without it the deploy is skipped with a notice, not a failure.
+        required: false
 
 permissions:
   contents: read
@@ -54,8 +72,15 @@ jobs:
             -f query="$(cat .shipquick/roadmap/query.graphql)" > "$RUNNER_TEMP/answer.json"
       - name: Write ROADMAP.md
         run: node .shipquick/roadmap/roadmap.js "$RUNNER_TEMP/answer.json" project/roadmap.json "$RUNNER_TEMP/ROADMAP.md"
+      - name: Write roadmap.html
+        if: inputs.html || inputs.cloudflare_project != ''
+        run: |
+          mkdir -p "$RUNNER_TEMP/site"
+          node .shipquick/roadmap/roadmap.js "$RUNNER_TEMP/answer.json" project/roadmap.json "$RUNNER_TEMP/site/index.html"
       - name: Save it on the roadmap branch
         working-directory: project
+        env:
+          WITH_HTML: ${{ inputs.html }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -68,9 +93,36 @@ jobs:
           fi
           cp "$RUNNER_TEMP/ROADMAP.md" ROADMAP.md
           git add ROADMAP.md
+          if [ "$WITH_HTML" = "true" ]; then
+            # shortcut: the HTML page shows the time it was made, so with html on every run makes one commit; skip unchanged stories if the branch grows too fast.
+            cp "$RUNNER_TEMP/site/index.html" roadmap.html
+            git add roadmap.html
+          fi
           if git diff --cached --quiet; then
             echo "ROADMAP.md is unchanged, nothing to save"
             exit 0
           fi
           git commit -q -m "docs: update the roadmap page"
           git push origin HEAD:roadmap
+      - name: Set up Node for wrangler
+        if: inputs.cloudflare_project != ''
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Deploy to Cloudflare Pages
+        if: inputs.cloudflare_project != ''
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare_account_id }}
+          CLOUDFLARE_PROJECT: ${{ inputs.cloudflare_project }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::notice::No CLOUDFLARE_API_TOKEN secret, so the page is not published. ROADMAP.md is saved as usual."
+            exit 0
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::cloudflare_project is set but cloudflare_account_id is empty. Add the account id to the caller's with: block."
+            exit 1
+          fi
+          npx --yes --ignore-scripts wrangler@4.152.0 pages deploy "$RUNNER_TEMP/site" --project-name "$CLOUDFLARE_PROJECT" --branch main --commit-dirty=true
