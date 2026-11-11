@@ -73,3 +73,26 @@ def test_the_cli_exits_0_on_the_real_workflow_and_1_with_the_problem_named(tmp_p
 def test_check_local_runs_it():
     t = (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
     assert "check_features_wiring.py" in t and "features-wiring" in t
+
+
+# ---- review of #439 ----
+def test_a_job_id_with_an_underscore_or_capitals_is_still_checked():
+    for bad_id in ("sneaky_check", "SneakyCheck", "_x"):
+        bad = CHECKS.replace("\n  gate:\n", f"\n  {bad_id}:\n    runs-on: ubuntu-latest\n    timeout-minutes: 10\n    if: github.event_name == 'pull_request'\n    steps:\n      - run: echo hi\n  gate:\n", 1)
+        out = W.problems(bad, DEFAULTS)
+        assert any(bad_id in p for p in out), (bad_id, out)
+    assert "sneaky_check" in W.split_jobs(CHECKS.replace("\n  gate:\n", "\n  sneaky_check:\n    runs-on: x\n  gate:\n", 1))
+
+
+def test_each_gated_job_reads_its_own_flag_not_another_jobs():
+    swapped = CHECKS.replace("['roles']", "['story']", 1)
+    out = W.problems(swapped, DEFAULTS)
+    assert any("roles" in p and "story" in p for p in out), out
+    freeze = CHECKS.replace("['freeze']", "['roles']", 1)
+    assert any("freeze-on-main" in p for p in W.problems(freeze, DEFAULTS))
+
+
+def test_the_check_local_guard_looks_in_the_folder_the_script_reads():
+    t = (ROOT / "scripts" / "check_local.sh").read_text(encoding="utf-8")
+    line = next(l for l in t.splitlines() if l.startswith("check_features_wiring()"))
+    assert '"$HERE/../.github/workflows/checks.yml"' in line and "[ -f .github/workflows/checks.yml ]" not in line

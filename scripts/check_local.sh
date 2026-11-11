@@ -52,7 +52,8 @@ check_ui_tokens() { [ -f design/tokens.json ] || return 0; python3 "$HERE/emit_t
 check_ui_proof() { [ -d ui/components ] || return 0; python3 "$HERE/ui_proof.py" --check; report ui-proof $?; }   # story #217
 check_ui_contracts() { [ -d ui/components ] || return 0; python3 "$HERE/emit_contracts.py" --check; report ui-contracts $?; }   # story #222
 check_ui_coverage() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_coverage.py" --strict-api; report ui-coverage $?; }   # stories #216, #231; web part skips without ui/tool/node_modules
-check_features_wiring() { [ -f .github/workflows/checks.yml ] || return 0; python3 "$HERE/check_features_wiring.py"; report features-wiring $?; }   # story #422
+check_features_wiring() { [ -f "$HERE/../.github/workflows/checks.yml" ] || return 0;   # the workflow the script reads sits in the kit, not in the cwd
+  python3 "$HERE/check_features_wiring.py"; report features-wiring $?; }   # story #422
 check_timeouts() { [ -d .github/workflows ] || return 0; python3 "$HERE/check_timeouts.py" .github/workflows; report timeouts $?; }
 check_commits() {
   have_base commits || return 0

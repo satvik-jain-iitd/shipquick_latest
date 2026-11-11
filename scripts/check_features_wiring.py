@@ -13,12 +13,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 UNFLAGGED = {"features", "adoption", "gate"}
+OWN_FLAG = {"freeze-on-main": "freeze"}   # a job reads the flag named like itself; list the exceptions here, so a swapped flag is caught
 FLAG = re.compile(r"fromJSON\(needs\.features\.outputs\.flags\)\['([^']+)'\]")
 
 
 def split_jobs(text):
     body = text.split("\njobs:\n", 1)[1]
-    parts = re.split(r"^  ([a-z][a-z0-9-]*):[ \t]*\n", body, flags=re.M)
+    parts = re.split(r"^  ([A-Za-z_][A-Za-z0-9_-]*):[ \t]*\n", body, flags=re.M)   # GitHub job ids may hold _ and capitals
     return {parts[i]: parts[i + 1] for i in range(1, len(parts) - 1, 2)}
 
 
@@ -46,6 +47,9 @@ def problems(text, defaults):
         if len(ids) != 1:
             out.append(f"job `{n}` reads {len(ids)} feature flags in its if: (it needs exactly one, from scripts/features_default.json)")
             continue
+        expected = OWN_FLAG.get(n, n)
+        if ids[0] != expected:
+            out.append(f"job `{n}` reads the flag `{ids[0]}` but must read its own, `{expected}`")
         if ids[0] not in defaults:
             out.append(f"job `{n}` reads the unknown flag `{ids[0]}`")
         elif defaults[ids[0]].get("locked"):
