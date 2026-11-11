@@ -373,6 +373,9 @@ jobs:
       - name: Compile the templates and the proof for iOS
         working-directory: ui/ios
         run: xcodebuild -scheme ShipQuickUI -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+      - name: Compile the fixture app (story #221) on the kit module, so its good and bad screens are real SwiftUI
+        working-directory: tests/fixtures/ios/FixtureApp
+        run: xcodebuild -scheme FixtureApp -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
   ui-android-lint:
     # Story #185: detekt (ForbiddenImport) and Konsist refuse hand-drawn UI. The good fixture screen must pass and the
     # bad one must fail with every rule named. detekt 1.23.8, Konsist 0.17.3, Gradle from the pin in ui/android. CI only.
@@ -431,6 +434,8 @@ jobs:
   ui-ios-lint:
     # Story #185: SwiftLint custom_rules refuse hand-drawn UI. The good fixture screen must pass `--strict` and the bad one
     # must fail with every rule id named. SwiftLint 0.65.1 from its release page, checked against the pinned SHA-256. CI only.
+    # Story #218: both tiers run through ui/tool/ios_lint.sh (CI=1 strict, else warn-only) with the committed baseline
+    # ui/ios/lint/swiftlint-baseline.json, and SwiftFormat 0.64.6 (pinned the same way) checks the format in lint mode.
     needs: [ui-changes]
     if: needs.ui-changes.outputs.ui == 'true'
     runs-on: macos-15
@@ -446,12 +451,20 @@ jobs:
           mkdir "$RUNNER_TEMP/swiftlint"
           unzip -q "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/swiftlint"
           echo "$RUNNER_TEMP/swiftlint" >> "$GITHUB_PATH"
-      - name: The good screen passes in strict mode (CI tier)
-        run: swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Good
-      - name: The bad screen fails in strict mode, and the report names every rule
+      - name: Fetch SwiftFormat 0.64.6 and check it against the pinned SHA-256
         run: |
-          if swiftlint lint --strict --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad > "$RUNNER_TEMP/bad.txt" 2>&1; then
-            cat "$RUNNER_TEMP/bad.txt"; echo "::error::the bad screen passed SwiftLint"; exit 1
+          curl -sSfL -o "$RUNNER_TEMP/swiftformat.zip" https://github.com/nicklockwood/SwiftFormat/releases/download/0.64.6/swiftformat.zip
+          echo "70e6b2057647fb1c54d620ebbb6649274de56534c57f91f67461a129ebaaba3e  $RUNNER_TEMP/swiftformat.zip" | shasum -a 256 -c -
+          mkdir "$RUNNER_TEMP/swiftformat"
+          unzip -q "$RUNNER_TEMP/swiftformat.zip" -d "$RUNNER_TEMP/swiftformat"
+          chmod +x "$RUNNER_TEMP/swiftformat/swiftformat"
+          echo "$RUNNER_TEMP/swiftformat" >> "$GITHUB_PATH"
+      - name: The good screen and the Tokens file pass the CI tier (strict, with the baseline, formatted)
+        run: CI=1 bash ui/tool/ios_lint.sh tests/fixtures/ios/Good/*.swift
+      - name: The bad screen fails the CI tier, and the report names every rule
+        run: |
+          if CI=1 bash ui/tool/ios_lint.sh tests/fixtures/ios/Bad/BadScreen.swift > "$RUNNER_TEMP/bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/bad.txt"; echo "::error::the bad screen passed the CI tier"; exit 1
           fi
           cat "$RUNNER_TEMP/bad.txt"
           missing=0
@@ -461,8 +474,14 @@ jobs:
           exit $missing
       - name: The local tier warns and does not fail
         run: |
-          swiftlint lint --no-cache --config ui/ios/lint/swiftlint.yml tests/fixtures/ios/Bad | tee "$RUNNER_TEMP/local.txt"
+          CI= bash ui/tool/ios_lint.sh tests/fixtures/ios/Bad/BadScreen.swift | tee "$RUNNER_TEMP/local.txt"
           grep -q "warning:" "$RUNNER_TEMP/local.txt"
+      - name: With no Swift file changed, the runner exits 0 and runs nothing
+        run: |
+          LINT_BASE=HEAD CI=1 bash ui/tool/ios_lint.sh | tee "$RUNNER_TEMP/none.txt"
+          grep -q "no Swift file changed" "$RUNNER_TEMP/none.txt"
+      - name: The fixture app (story #221) has a good screen that passes and a bad screen caught with each rule named
+        run: python3 ui/tool/ios_fixture_check.py
   ui-ios-snapshots:
     # Story #219: swift-snapshot-testing and Prefire compare every template with its reference images (light and dark,
     # smallest and largest Dynamic Type, iPhone SE and Pro Max) on one pinned simulator. Runs only when ui/ios/**, design/**,

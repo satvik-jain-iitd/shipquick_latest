@@ -117,6 +117,13 @@ def test_s319_a_feature_pr_into_dev_is_not_exempt(tmp_path):
     assert r.returncode == 1, r.stdout
 
 
+def test_s81_a_node_test_file_in_the_red_section_passes(tmp_path):
+    # story #81: the roadmap tests are node:test files, so `roadmap/x.test.js` is a test path too
+    repo = make_repo(tmp_path, {"roadmap/render.js": "module.exports = {};\n", "roadmap/golden.test.js": "require('node:test');\n"})
+    r = run(tmp_path, repo, "## What\nx\n\n## Red\n\n- roadmap/golden.test.js (28 failed first)\n\n## Tests\nok\n")
+    assert r.returncode == 0 and "tdd OK: roadmap/golden.test.js" in r.stdout, r.stdout
+
+
 def test_s319_a_pytest_node_id_names_its_file(tmp_path):
     repo = make_repo(tmp_path, CODE)
     r = run(tmp_path, repo, "## Red\n\n- tests/test_widget.py::test_widget_rejects_empty\n")

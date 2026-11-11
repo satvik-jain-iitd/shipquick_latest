@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments story tdd shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments story tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
 #   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
@@ -125,11 +126,16 @@ check_secrets_staged() {
   report secrets-staged $?
 }
 
+check_roadmap() {   # story #81: the roadmap's node:test files, the same command as ci.yml; todo tests (stories #82, #83) do not fail the run
+  command -v node >/dev/null || { echo "skip roadmap: node is not installed"; return 0; }
+  node --test roadmap/*.test.js
+  report roadmap $?
+}
 check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story tdd workflow-security secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments story tdd roadmap workflow-security secrets)
 for c in "${checks[@]}"; do
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
@@ -150,7 +156,8 @@ for c in "${checks[@]}"; do
     shortcuts) check_shortcuts ;;
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments story tdd shortcuts secrets secrets-staged)"; exit 2 ;;
+    roadmap) check_roadmap ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-proof ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments story tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts

@@ -1,0 +1,486 @@
+{
+ "now": "2026-11-11T05:30:00Z",
+ "epics": [
+  {
+   "number": 1,
+   "title": "Lending desk",
+   "state": "CLOSED"
+  },
+  {
+   "number": 2,
+   "title": "Member cards",
+   "state": "OPEN"
+  },
+  {
+   "number": 3,
+   "title": "Late fees",
+   "state": "OPEN"
+  }
+ ],
+ "stories": [
+  {
+   "number": 10,
+   "epic": 1,
+   "column": "Done",
+   "raw": "A member sees every shelf on one page.",
+   "text": "A member sees every shelf on one page.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M0 Setup",
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": "2026-11-02T05:00:00Z",
+   "cycleMin": 180
+  },
+  {
+   "number": 11,
+   "epic": 1,
+   "column": "Done",
+   "raw": "A member finds a book by its name.",
+   "text": "A member finds a book by its name.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M0 Setup",
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": "2026-11-03T18:40:00Z",
+   "cycleMin": 50
+  },
+  {
+   "number": 12,
+   "epic": 1,
+   "column": "Done",
+   "raw": "The desk stamps the due date in the book.",
+   "text": "The desk stamps the due date in the book.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M1 Open day",
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": "2026-11-04T04:15:00Z",
+   "cycleMin": 120
+  },
+  {
+   "number": 13,
+   "epic": 1,
+   "column": "Done",
+   "raw": "A member drops a book in the slot after hours.",
+   "text": "A member drops a book in the slot after hours.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M1 Open day",
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 14,
+   "epic": 2,
+   "column": "Done",
+   "raw": "A new member gets a printed card.",
+   "text": "A new member gets a printed card.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M1 Open day",
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": "2026-11-05T10:00:00Z",
+   "cycleMin": 120
+  },
+  {
+   "number": 15,
+   "epic": 2,
+   "column": "Doing",
+   "raw": "The card shows the member's photo.",
+   "text": "The card shows the member's photo.",
+   "needsWords": false,
+   "pr": 101,
+   "milestone": "M1 Open day",
+   "prio": 1,
+   "needs": [],
+   "blockedBy": [],
+   "started": "2026-11-10T03:30:00Z",
+   "cycleMin": null
+  },
+  {
+   "number": 16,
+   "epic": 2,
+   "column": "To do",
+   "raw": "A member gets a new card in one visit.",
+   "text": "A member gets a new card in one visit.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M1 Open day",
+   "prio": 0,
+   "needs": [],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 17,
+   "epic": 1,
+   "column": "To do",
+   "raw": "A sign at the desk says the opening hours.",
+   "text": "A sign at the desk says the opening hours.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M0 Setup",
+   "prio": 2,
+   "needs": [],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 18,
+   "epic": 3,
+   "column": "To do",
+   "raw": "The owner sets the fee per late day.",
+   "text": "The owner sets the fee per late day.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M2 First month",
+   "prio": 0,
+   "needs": [
+    16
+   ],
+   "blockedBy": [
+    16
+   ],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 19,
+   "epic": 3,
+   "column": "To do",
+   "raw": "A member gets a note when a book is late.",
+   "text": "A member gets a note when a book is late.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M2 First month",
+   "prio": 1,
+   "needs": [
+    18,
+    16
+   ],
+   "blockedBy": [
+    18,
+    16
+   ],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 20,
+   "epic": 3,
+   "column": "To do",
+   "raw": "A member pays the fee at the desk.",
+   "text": "A member pays the fee at the desk.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M3 Winter",
+   "prio": 0,
+   "needs": [
+    18,
+    16
+   ],
+   "blockedBy": [
+    18,
+    16
+   ],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 21,
+   "epic": 3,
+   "column": "To do",
+   "raw": "The desk closes early in winter.",
+   "text": "The desk closes early in winter.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M3 Winter",
+   "prio": 1,
+   "needs": [
+    19
+   ],
+   "blockedBy": [
+    19
+   ],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 22,
+   "epic": 2,
+   "column": "To do",
+   "raw": "A card is renewed once a year.",
+   "text": "A card is renewed once a year.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M1 Open day",
+   "prio": 1,
+   "needs": [
+    20
+   ],
+   "blockedBy": [
+    20
+   ],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 23,
+   "epic": 3,
+   "column": "To do",
+   "raw": "A member gets a letter after thirty late days.",
+   "text": "A member gets a letter after thirty late days.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M2 First month",
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 24,
+   "epic": 1,
+   "column": "To do",
+   "raw": "Story: shelf map",
+   "text": "Story: shelf map",
+   "needsWords": true,
+   "pr": null,
+   "milestone": null,
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 25,
+   "epic": 2,
+   "column": "Review",
+   "raw": "A member logs in with the card number.",
+   "text": "A member logs in with the card number.",
+   "needsWords": false,
+   "pr": 102,
+   "milestone": "M1 Open day",
+   "prio": 0,
+   "needs": [],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 26,
+   "epic": 2,
+   "column": "Doing",
+   "raw": "The desk scans a card in one second.",
+   "text": "The desk scans a card in one second.",
+   "needsWords": false,
+   "pr": 103,
+   "milestone": "M1 Open day",
+   "prio": 1,
+   "needs": [],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 27,
+   "epic": 3,
+   "column": "To do",
+   "raw": "The owner can waive a fee.",
+   "text": "The owner can waive a fee.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M2 First month",
+   "prio": 2,
+   "needs": [
+    90,
+    13
+   ],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  },
+  {
+   "number": 28,
+   "epic": 1,
+   "column": "Done",
+   "raw": "A member rings a bell when the desk is empty.",
+   "text": "A member rings a bell when the desk is empty.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M0 Setup",
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": "2026-11-01T20:00:00Z",
+   "cycleMin": 420
+  },
+  {
+   "number": 29,
+   "epic": 2,
+   "column": "Done",
+   "raw": "The old plan is kept as a note.",
+   "text": "The old plan is kept as a note.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": null,
+   "prio": null,
+   "needs": [],
+   "blockedBy": [],
+   "started": "2026-11-05T22:30:00Z",
+   "cycleMin": 210
+  },
+  {
+   "number": 30,
+   "epic": 3,
+   "column": "To do",
+   "raw": "The owner sees the room bookings after the migration.",
+   "text": "The owner sees the room bookings after the database change.",
+   "needsWords": false,
+   "pr": null,
+   "milestone": "M2 First month",
+   "prio": 0,
+   "needs": [],
+   "blockedBy": [],
+   "started": null,
+   "cycleMin": null
+  }
+ ],
+ "timeline": [
+  {
+   "day": "2026-11-06",
+   "stories": [
+    29
+   ]
+  },
+  {
+   "day": "2026-11-05",
+   "stories": [
+    14
+   ]
+  },
+  {
+   "day": "2026-11-04",
+   "stories": [
+    13,
+    12,
+    11
+   ]
+  },
+  {
+   "day": "2026-11-02",
+   "stories": [
+    10,
+    28
+   ]
+  }
+ ],
+ "here": {
+  "doing": [
+   15
+  ],
+  "next": 17
+ },
+ "next": [
+  17,
+  16,
+  25,
+  22,
+  26,
+  18,
+  30,
+  19,
+  27,
+  20,
+  21
+ ],
+ "older": [
+  23,
+  24
+ ],
+ "milestones": [
+  {
+   "title": "M0 Setup",
+   "due": "2026-11-05T18:29:00Z",
+   "done": 3,
+   "total": 4,
+   "daysLeft": -6,
+   "late": true
+  },
+  {
+   "title": "M1 Open day",
+   "due": "2026-11-15T18:29:00Z",
+   "done": 3,
+   "total": 8,
+   "daysLeft": 4,
+   "late": false
+  },
+  {
+   "title": "M2 First month",
+   "due": "2026-11-30T18:29:00Z",
+   "done": 0,
+   "total": 5,
+   "daysLeft": 19,
+   "late": false
+  },
+  {
+   "title": "M3 Winter",
+   "due": "2026-12-20T18:29:00Z",
+   "done": 0,
+   "total": 2,
+   "daysLeft": 39,
+   "late": false
+  }
+ ],
+ "map": {
+  "nodes": [
+   "M0 Setup",
+   "M1 Open day",
+   "M2 First month",
+   "M3 Winter"
+  ],
+  "edges": [
+   {
+    "from": "M1 Open day",
+    "to": "M2 First month",
+    "count": 3,
+    "back": false
+   },
+   {
+    "from": "M2 First month",
+    "to": "M3 Winter",
+    "count": 2,
+    "back": false
+   },
+   {
+    "from": "M3 Winter",
+    "to": "M1 Open day",
+    "count": 1,
+    "back": true
+   }
+  ],
+  "hidden": 1,
+  "crossings": 0
+ },
+ "chain": [
+  16,
+  18,
+  19,
+  21
+ ]
+}
