@@ -1594,61 +1594,6 @@ Scenario: adopt.sh writes, keeps and validates the milestone
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
 
-## Story #133 (S5w): design literals on added web lines
-```gherkin
-Scenario: a colour or font literal on an added web style line fails with the file and the line
-  Given a diff that adds `color: #ff0033;` to a css file, `rgb(...)`/`rgba(...)` to a tsx inline style, `hsl(...)` to a vue, svelte or astro file, `font-family: 'Inter'` to css, `fontFamily: "Inter"` to tsx, or `bg-[#1e293b]` / `font-['Inter']` Tailwind classes
-  When check_design_literals.py reads the diff
-  Then it exits 1 and names `path:line` and the literal kind for every hit
-  Test: test_a_hex_colour_in_added_css_fails_with_file_and_line, test_rgb_and_rgba_in_added_tsx_inline_style_fail, test_hsl_in_added_vue_svelte_and_astro_fails, test_a_font_family_literal_fails_in_css_and_in_tsx, test_a_tailwind_arbitrary_colour_or_font_fails
-Scenario: token references, keywords and a token file in the allowlist pass
-  Given `var(--color-primary)`, `font-family: inherit`, `theme.fonts.body` and a Tailwind token class, or a hex in a file that matches a glob in scripts/design_token_files.txt
-  Then the check prints "no design literals on added lines" and exits 0
-  Test: test_token_references_and_keywords_pass, test_a_token_file_in_the_allowlist_passes, test_the_allowlist_file_reads_globs_and_skips_comments_and_blanks
-Scenario: only added lines of the named file types count, with the hunk's line numbers
-  Given a removed line, a python, markdown or js file, a private field `this.#cafe`, an entity `&#dead;`, an id selector `#main-nav`, and two hunks
-  Then none is a hit, and a hit in the second hunk carries that hunk's line number
-  Test: test_a_removed_line_and_a_non_web_file_are_never_a_hit, test_a_private_field_an_html_entity_and_an_id_selector_with_letters_are_not_hex, test_line_numbers_follow_the_hunk_header_across_hunks
-Scenario: a story reference in a comment is not a hex colour (PR #374 review)
-  Given `// story #133` on a ts line, `/* story #374 */` on a css line, or a `#cafe = 1` class field
-  Then none is a hit; a literal outside the comment still fails, and `//` inside a `url(https://...)` is not a comment
-  Test: test_a_story_reference_in_a_comment_is_not_a_hex_colour
-Scenario: the check is wired and the allowlist is protected
-  Then scripts/design_token_files.txt is in scripts/protected_paths.txt, check_local.sh names design-tokens, ci.yml and checks.yml carry a design-tokens job (the script, then stylelint with `--report-needless-disables` only when css changed) and both gates wait for it; the CLI reads a diff file and exits 1 with the hits
-  Test: test_the_kit_allowlist_is_protected_and_check_local_names_the_check, test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it, test_the_cli_reads_a_diff_file_and_exits_1_with_the_hits
-Scenario: stylelint runs with the project's own dependencies (PR #374 review)
-  Given a child whose .stylelintrc.json extends `stylelint-config-standard`, or a `"stylelint"` key in package.json
-  When the design-tokens job (ci.yml, checks.yml) or check_local.sh design-tokens runs stylelint
-  Then it runs `npm ci --ignore-scripts` first when package-lock.json exists, uses `node_modules/.bin/stylelint` when present, and `npx --yes stylelint@16.26.1` only as the fallback
-  Test: test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary
-Scenario: a protocol-relative url in css does not hide a hex (PR #374 review round 2)
-  Given `background: url(//cdn.example/a.png) #ff0000;` or the quoted `url('//...')` form on an added css line
-  Then it is a hex hit: `//` is never a comment in css, only `/* */` is cut there; a ts line still loses its `//` comment
-  Test: test_a_protocol_relative_url_in_css_does_not_hide_a_hex
-Scenario: the font shorthand is a font-family literal (PR #374 review round 2)
-  Given `font: 16px/1.5 'Inter', sans-serif;` or `font: 1rem Inter;` on a css line, or `style={{ font: '16px Inter' }}` on a tsx line
-  Then each is a font-family hit; `font: 1rem var(--font-body)`, `font: inherit`, `font-size`/`font-weight` and the tsx `font: theme.fonts.body` pass
-  Test: test_the_font_shorthand_is_a_font_family_literal
-Scenario: stylelint runs once, per package root, and installs only when the binary is missing (PR #374 review round 2)
-  Given a child whose web app sits in `web/` (web/package.json, web/.stylelintrc.json, a lockfile, Android beside it) and a changed `web/a.css`
-  When ci.yml, checks.yml or check_local.sh design-tokens calls `scripts/run_stylelint_changed.sh <base> [repo]`
-  Then it never prints `skip stylelint` for that file: it runs web's own `node_modules/.bin/stylelint` from `web/` on `a.css`, runs `npm ci` only when that binary is missing, names a folder with css but no config in its skip line, and the script is a protected path
-  Test: test_stylelint_runs_from_the_package_root_of_a_web_subfolder, test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary, test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it
-Scenario: a style block or a url() string does not hide a literal (PR #374 review round 3)
-  Given `.hero { background: url(//cdn.example/a.png) #ff0000; }` or `.t { font: 16px/1.5 'Inter', sans-serif; }` on a .vue, .svelte or .astro line, or `background: 'url(//cdn.example/a.png) #ff0000'` on a tsx line
-  Then each is a hit: `//` starts a comment only at the line start or after a space; `const x = 1; // story #133`, `font: string;` and `font: 1rem var(--font-body), sans-serif;` pass
-  Test: test_style_blocks_in_vue_svelte_astro_and_tsx_urls_do_not_hide_a_literal
-Scenario: an rgb or hsl call on a token is not a literal (PR #374 review round 3)
-  Given `color: rgb(var(--md-primary-rgb) / 0.12);` on a css line
-  Then it passes, and `color: rgb(255, 0, 0);` is still an rgb/hsl hit
-  Test: test_an_rgb_or_hsl_call_on_a_token_is_not_a_literal
-Scenario: a non-ASCII file name does not hide a literal (PR #374 review round 4)
-  Given a commit that adds `a { color: #ff0033; }` to `src/café.css`, so git writes a quoted header `+++ "b/src/caf\303\251.css"`
-  When the check runs with --base, or reads a saved diff with that quoted header
-  Then it reports `src/café.css:1`: git runs with `core.quotePath=false`, and a quoted header is unquoted before the `b/` strip
-  Test: test_a_quoted_non_ascii_path_header_is_still_checked, test_the_cli_reports_a_hex_in_a_non_ascii_file_name_from_git
-```
-Tests: `tests/test_check_design_literals.py`.
 ## Story #188 (S10): a Design system board on the canvas
 ```gherkin
 Scenario: the registry renders a board with every component row, right after Design learnings
