@@ -8,7 +8,8 @@ Assumptions (docs/assumptions.md, rows for story #319):
 - A code file is any changed file that is not a .md or .txt file and not under docs/ or pm/.
 - A PR with no code file is docs-only and exempt. A PR into main (promotion) or from main (back-merge) is exempt.
 - The `## Red` section runs to the next `## ` heading. A test is named by its path, `tests/test_x.py`, optionally
-  followed by `::test_name`; the path must equal a file in the diff (added, modified or renamed, not deleted).
+  followed by `::test_name`, or a node:test file `roadmap/x.test.js` (story #81); the path must equal a file in the diff
+  (added, modified or renamed, not deleted).
 """
 import argparse
 import re
@@ -17,7 +18,7 @@ import sys
 
 RED = re.compile(r"^##\s+red\s*$", re.I | re.M)
 NEXT_H2 = re.compile(r"^##\s", re.M)
-TEST_PATH = re.compile(r"[\w./-]*test_\w*\.py")
+TEST_PATH = re.compile(r"[\w./-]*(?:test_\w*\.py|\w+\.test\.js)")   # pytest files, and node:test files (story #81, roadmap/*.test.js)
 DOC_SUFFIXES = (".md", ".txt")
 DOC_DIRS = ("docs/", "pm/")
 SHAPE = "write a `## Red` section that names the test file you saw fail, for example `- tests/test_widget.py::test_widget_rejects_empty`"
