@@ -2162,3 +2162,18 @@ Scenario: a project name and no token
   Then the deploy step prints a notice and the job stays green
 ```
 Tests: `tests/test_roadmap_workflow.py` (`test_s84_the_workflow_takes_html_and_cloudflare_inputs_and_an_optional_token`, `test_s84_with_no_new_inputs_the_html_and_deploy_steps_are_skipped`, `test_s84_the_html_page_is_written_by_the_roadmap_script_and_kept_on_the_branch`, `test_s84_the_deploy_uses_a_pinned_wrangler_with_no_install_scripts_and_fails_loudly`, `test_s84_inputs_reach_the_shell_through_env_not_inline`, `test_s84_node_22_is_set_up_for_wrangler`, `test_s84_the_workflow_security_check_passes`), `roadmap/roadmap.test.js` (`S84 an output file ending in .html gets the HTML page, not the Markdown one`).
+
+## Story #190 (S12): MCP search and get over the registries, and llms.txt
+```gherkin
+Scenario: MCP server with search and get
+  Given an MCP client starts python3 scripts/ui_mcp.py
+  When it lists the tools
+  Then it sees shipquick_ui_search_components and shipquick_ui_get_component, read-only, with described inputs
+  And a search returns ranked matches one page at a time, with next_offset
+  And a get returns the doc and the contract, and an unknown name names the closest match and the search tool
+Scenario: llms.txt generated from the registries
+  Given the component docs and ui/registry.json
+  Then python3 scripts/ui_mcp.py llms writes ui/llms.txt, and --check fails naming the fix when it drifts
+```
+Tests: `tests/test_ui_mcp.py` (`test_s190_the_server_names_itself_and_lists_two_annotated_tools_with_described_inputs`, `test_s190_search_returns_ranked_matches_with_pagination`, `test_s190_search_filters_by_platform_and_reports_no_match_plainly`, `test_s190_get_returns_the_doc_and_the_contract`, `test_s190_an_unknown_name_gives_an_actionable_error_over_mcp`, `test_s190_search_over_mcp_returns_text_and_structured_content`, `test_s190_bad_input_and_unknown_tool_are_errors_that_name_the_fix`, `test_s190_llms_txt_is_current_and_the_check_catches_drift`).
+Review fix (#414): `test_s190_a_punctuation_only_query_matches_nothing`, `test_s190_an_offset_past_the_total_gives_an_empty_last_page`, `test_s190_limit_and_offset_out_of_range_are_errors_naming_the_field`, `test_s190_a_parse_error_gives_32700_and_the_session_goes_on`, `test_s190_an_unknown_method_gives_32601_and_as_a_notification_gets_no_reply`, `test_s190_a_client_response_gets_no_reply_and_a_non_object_gets_32600`, `test_s190_malformed_params_and_arguments_get_an_error_with_the_id_and_the_session_goes_on`, `test_s190_a_non_object_registry_row_is_skipped`.

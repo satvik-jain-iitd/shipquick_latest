@@ -291,6 +291,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native topics are current with the component docs (story #183)
         run: python3 scripts/ui_topics.py --check
+      - name: ui/llms.txt is current with the component docs and the registry (story #190)
+        run: python3 scripts/ui_mcp.py llms --check
       - name: The compile proofs are current with the contracts (story #217)
         run: python3 scripts/ui_proof.py --check
       - name: The Swift contract structs are current with the contracts (story #222)
