@@ -1644,6 +1644,11 @@ Scenario: the audit runs in the snapshot job
 Scenario: the HIG items no machine checks are listed as review-only
   Then ui/ios/ACCESSIBILITY.md tags navigation, gestures, VoiceOver order and Reduce Motion as `review-only`, and the README links it
   Test: test_s220_the_review_only_list_names_what_no_machine_checks
+Scenario: only named findings on Apple's stock controls are let through (CI round 3)
+  Given the audit found 19 issues, all on stock controls in system colours
+  Then knownSystemFindings lists each as "<screen>|<check>|<label>", every screen exists, and ACCESSIBILITY.md has one row per entry
+  And any other finding still fails the test
+  Test: test_s220_every_known_system_finding_is_narrow_and_written_down
 ```
 Tests: `tests/test_ios_a11y_audit.py`. The Swift UI tests (`ui/ios/A11yAudit/Tests/TemplateAccessibilityAuditTests.swift`, 5 tests) run only in the CI job `ui-ios-snapshots`.
 Tests: `tests/test_canvas_stage.py::DesignSystem`.

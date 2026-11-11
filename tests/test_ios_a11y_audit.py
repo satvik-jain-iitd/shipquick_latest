@@ -68,3 +68,19 @@ def test_s220_the_review_only_list_names_what_no_machine_checks():
     for item in ("navigation", "gesture", "voiceover", "reduce motion"):
         assert item in body, item
     assert "ACCESSIBILITY.md" in (IOS / "README.md").read_text(encoding="utf-8")
+
+
+def test_s220_every_known_system_finding_is_narrow_and_written_down():
+    """CI round 3: the audit found 19 issues, all on Apple's stock controls in system colours (section headers,
+    destructive and bordered buttons, a disabled button, the search bar). Rule 38 forbids a raw colour to fix them, so
+    the test lets through only these, each matched by screen, check and element label, and each one has a row in
+    ACCESSIBILITY.md. A new finding, or a known one on another screen or element, still fails."""
+    swift = (AUDIT / "Tests" / "TemplateAccessibilityAuditTests.swift").read_text(encoding="utf-8")
+    assert "knownSystemFindings" in swift and "knownSystemFindings.contains(" in swift
+    entries = re.findall(r'^\s*"(\w+Template)\|([^"|]+)\|([^"|]*)",$', swift, re.M)
+    assert entries, "no known findings listed"
+    assert {s for s, _, _ in entries} <= set(TEMPLATES), "a known finding names a screen that does not exist"
+    doc = (IOS / "ACCESSIBILITY.md").read_text(encoding="utf-8")
+    for screen, check, label in entries:
+        row = f"| {screen} | {check} | {label or '(no element)'} |"
+        assert row in doc, f"ACCESSIBILITY.md has no row {row}"

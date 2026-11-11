@@ -18,6 +18,30 @@ It runs on CI in the job `ui-ios-snapshots`, after the snapshot tests.
 XcodeGen makes the Xcode project from `A11yAudit/project.yml` on CI. The project is never committed.
 A new template gets one `case` in the host app and one test.
 
+## Known findings on Apple's own controls
+
+The first CI run found 19 issues. All of them sit on Apple's stock controls, drawn in system colours.
+Rule 38 forbids a raw colour to fix them. So the test lets only these through.
+Each one is matched by screen, check and element label. A new finding still fails the test.
+The list lives in `knownSystemFindings` in the test file. Drop a row when Apple's control passes.
+
+| Screen | Check | Element | Why it is let through |
+|---|---|---|---|
+| DetailTemplate | Contrast nearly passed | NOTES | System section header colour. |
+| DetailTemplate | Contrast nearly passed | Delete item | System red of a destructive button. |
+| ListTemplate | Dynamic Type font sizes are unsupported | (no element) | The system navigation bar and search bar. |
+| ListTemplate | Text clipped | (no element) | The system navigation bar at the largest size. |
+| ListTemplate | Text clipped | Search | The system search bar placeholder. |
+| SettingsTemplate | Contrast nearly passed | (no element) | System section header colour. |
+| SettingsTemplate | Text clipped | System | The system menu picker row. |
+| SettingsTemplate | Text clipped | Appearance | The system menu picker row. |
+| SignInTemplate | Contrast failed | Create account | The system bordered button: tint on a light tint. |
+| SignInTemplate | Contrast failed | Sign in | A disabled button. WCAG does not ask disabled controls to meet contrast. |
+| SignInTemplate | Contrast nearly passed | (no element) | System placeholder or section colour. |
+| StepFlowTemplate | Hit area is too small | (no element) | The progress bar. It cannot be tapped. |
+| StepFlowTemplate | Contrast nearly passed | One line on what the app does. | The system secondary text colour. |
+| StepFlowTemplate | Contrast nearly passed | Continue | The system prominent button: white on the default accent. |
+
 ## What a person checks (review-only)
 
 No machine checks these. The reviewer looks at each one on every new or changed screen.
