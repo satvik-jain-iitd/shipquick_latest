@@ -27,8 +27,6 @@ The list lives in `knownSystemFindings` in the test file. Drop a row when Apple'
 
 | Screen | Check | Element | Why it is let through |
 |---|---|---|---|
-| DetailTemplate | Contrast nearly passed | NOTES | System section header colour. |
-| DetailTemplate | Contrast nearly passed | Delete item | System red of a destructive button. |
 | ListTemplate | Dynamic Type font sizes are unsupported | (no element) | The system navigation bar and search bar. |
 | ListTemplate | Text clipped | (no element) | The system navigation bar at the largest size. |
 | ListTemplate | Text clipped | Search | The system search bar placeholder. |

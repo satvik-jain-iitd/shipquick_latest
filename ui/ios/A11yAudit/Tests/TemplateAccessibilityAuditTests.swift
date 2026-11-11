@@ -10,8 +10,6 @@ final class TemplateAccessibilityAuditTests: XCTestCase {
     /// shortcut: matched by label, not by element frame; drop an entry when Apple's control passes or when the
     /// templates get contrast-checked token colours.
     private let knownSystemFindings: Set<String> = [
-        "DetailTemplate|Contrast nearly passed|NOTES",
-        "DetailTemplate|Contrast nearly passed|Delete item",
         "ListTemplate|Dynamic Type font sizes are unsupported|",
         "ListTemplate|Text clipped|",
         "ListTemplate|Text clipped|Search",
