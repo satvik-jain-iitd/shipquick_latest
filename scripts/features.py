@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Story #418 (F1, epic #86): which ShipQuick features are on in this project.
+
+  features.py [--root DIR] get <id>   prints on (exit 0) or off (exit 1); an unknown id exits 2, never "on"
+  features.py [--root DIR] json       the whole map: on, default, locked and the plain words, for CI and the Desk
+
+State lives in `<root>/.shipquick/features.json` (a protected path: only a PR the owner merges changes it).
+The kit's list, defaults and plain words live in `scripts/features_default.json`. A missing project file means
+every feature at its default. Locked features (adoption, gate) always read on. A file that is not valid JSON, or
+holds a non-boolean `on`, exits 2 with the reason and never falls back to defaults. Stdlib only. ADR-016."""
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+
+
+class FeaturesError(Exception):
+    pass
+
+
+def _load(path, what):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise FeaturesError(f"{what} is not valid JSON: line {e.lineno}, column {e.colno}: {e.msg}")
+    except UnicodeDecodeError as e:
+        raise FeaturesError(f"{what} is not valid UTF-8: byte {e.start}")
+    except (OSError, ValueError) as e:
+        raise FeaturesError(f"cannot read {what}: {e}")
+
+
+def _defaults(path):
+    data = _load(path, "scripts/features_default.json")
+    feats = data.get("features") if isinstance(data, dict) else None
+    if not isinstance(feats, dict) or not feats:
+        raise FeaturesError("scripts/features_default.json needs a non-empty `features` object")
+    for fid, d in feats.items():
+        if not isinstance(d, dict) or not isinstance(d.get("default"), bool):
+            raise FeaturesError(f"scripts/features_default.json: `{fid}` needs a true or false `default`")
+        if not isinstance(d.get("locked", False), bool):
+            raise FeaturesError(f"scripts/features_default.json: `{fid}.locked` must be true or false")
+    return feats
+
+
+def read(root, defaults=None):
+    """The merged map {"features": {id: {...}}, "unknown": [ids the kit does not know]}."""
+    defaults = _defaults(defaults or HERE / "features_default.json")
+    f = Path(root) / ".shipquick" / "features.json"
+    mine = {}
+    if f.exists() or f.is_symlink():   # a directory or a dangling link is a broken file, never "missing"
+        data = _load(f, ".shipquick/features.json")
+        mine = data.get("features") if isinstance(data, dict) else None
+        if not isinstance(mine, dict):
+            raise FeaturesError(".shipquick/features.json needs a `features` object")
+    out = {}
+    for fid, d in defaults.items():
+        row = dict(d)
+        entry = mine.get(fid)
+        on = d["default"]
+        if entry is not None:
+            on = entry.get("on", d["default"]) if isinstance(entry, dict) else None
+            if not isinstance(on, bool):
+                raise FeaturesError(f".shipquick/features.json: `{fid}.on` must be true or false")
+        row["on"] = True if d.get("locked") else on
+        out[fid] = row
+    return {"features": out, "unknown": sorted(k for k in mine if k not in defaults)}
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="features.py", add_help=False)   # -h must never print help and exit 0: 0 reads as "on"
+    ap.add_argument("--root")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub_parser = lambda name: sub.add_parser(name, add_help=False)
+    g = sub_parser("get")
+    g.add_argument("id")
+    sub_parser("json")
+    a = ap.parse_args(argv)
+    try:
+        root = a.root
+        if not root:
+            try:
+                p = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+            except OSError as e:
+                raise FeaturesError(f"cannot run git to find the project folder ({e}); pass --root")
+            if p.returncode != 0 or not p.stdout.strip():
+                raise FeaturesError("not inside a git repository; pass --root")
+            root = p.stdout.strip()
+        m = read(root)
+    except FeaturesError as e:
+        print(f"features.py: {e}", file=sys.stderr)
+        return 2
+    except Exception as e:   # exit 1 means "off": no crash may ever leak as 1
+        print(f"features.py: unexpected {type(e).__name__}: {e}", file=sys.stderr)
+        return 2
+    if a.cmd == "json":
+        print(json.dumps(m, indent=2))
+        return 0
+    row = m["features"].get(a.id)
+    if row is None:
+        print(f"features.py: unknown feature `{a.id}`; known: {', '.join(m['features'])}", file=sys.stderr)
+        return 2
+    print("on" if row["on"] else "off")
+    return 0 if row["on"] else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
