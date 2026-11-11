@@ -46,7 +46,9 @@ export default {
         {"name": "onDrop", "note": "`.onDrop(of:delegate:)`, iOS 14.0. Apple: \"Defines the destination of a drag and drop operation using behavior controlled by the delegate that you provide.\""},
         {"name": "onDropSessionUpdated", "note": "`.onDropSessionUpdated(_:)`, iOS 27.0. Apple: \"Specifies an action to perform on each update of an ongoing drop operation activated by `dropDestination(_:)` or other drop modifiers.\""},
         {"name": "reorderContainer", "note": "`.reorderContainer(for:isEnabled:move:)`, iOS 27.0. Apple: \"Defines a container of reorderable views.\""},
-        {"name": "springLoadingBehavior", "note": "`.springLoadingBehavior(_:)`, iOS 17.0. Apple: \"Sets the spring loading behavior this view.\""}
+        {"name": "springLoadingBehavior", "note": "`.springLoadingBehavior(_:)`, iOS 17.0. Apple: \"Sets the spring loading behavior this view.\""},
+        {"name": "accessibilityDragPoint", "note": "`.accessibilityDragPoint(_:description:)`, iOS 16.0. Apple: \"The point an assistive technology should use to begin a drag interaction.\""},
+        {"name": "accessibilityDropPoint", "note": "`.accessibilityDropPoint(_:description:)`, iOS 16.0. Apple: \"The point an assistive technology should use to end a drag interaction.\""}
       ]
     }
   }

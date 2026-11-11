@@ -229,10 +229,10 @@ IOS_DOC_FAMILY = {
                                       "siriTipViewStyle"],
     "Drag and drop": ["draggable", "dragConfiguration", "dragContainer", "dragContainerSelection", "dragPreviewsFormation",
                       "dropConfiguration", "dropDestination", "dropPreviewsFormation", "itemProvider", "onDrag",
-                      "onDragSessionUpdated", "onDrop", "onDropSessionUpdated", "reorderContainer", "springLoadingBehavior"],
+                      "onDragSessionUpdated", "onDrop", "onDropSessionUpdated", "reorderContainer", "springLoadingBehavior", "accessibilityDragPoint", "accessibilityDropPoint"],
     "edit-menus": ["copyable", "cuttable", "onCopyCommand", "onCutCommand", "onPasteCommand"],
     "Focus": ["defaultFocus", "focusable", "focused", "focusedObject", "focusedSceneObject", "focusedSceneValue", "focusedValue",
-              "focusEffectDisabled", "focusScope", "focusSection", "prefersDefaultFocus"],
+              "focusEffectDisabled", "focusScope", "focusSection", "prefersDefaultFocus", "accessibilityFocused", "accessibilityDefaultFocus"],
     "Gestures": ["allowsHitTesting", "allowsWindowActivationEvents", "contentShape", "defersSystemGestures", "directTouchSystemGesturesDisabled",
                  "gesture", "handGestureShortcut", "highPriorityGesture", "manipulable", "manipulationGesture", "onLongPressGesture",
                  "onLongTouchGesture", "onPencilDoubleTap", "onPencilSqueeze", "onTapGesture", "simultaneousGesture"],
@@ -240,7 +240,8 @@ IOS_DOC_FAMILY = {
                           "onContinuousHover", "onHover", "pointerStyle", "pointerVisibility"],
     "Keyboard": ["keyboardShortcut", "modifierKeyAlternate", "onCommand", "onDeleteCommand", "onExitCommand", "onKeyPress",
                  "onModifierKeysChanged", "onMoveCommand", "onPlayPauseCommand", "pageCommand"],
-    "widgets": ["widgetURL"],
+    "widgets": ["widgetURL", "accessoryWidgetGroupStyle", "controlWidgetActionHint", "controlWidgetStatus", "widgetAccentable",
+                "widgetCurvesContent", "widgetLabel", "containerBackground"],
     "web-view": ["onWebViewImmersiveEnvironmentRequest", "webViewBackForwardNavigationGestures", "webViewContentBackground",
                  "webViewContextMenu", "webViewElementFullscreenBehavior", "webViewLinkPreviews", "webViewMagnificationGestures",
                  "webViewOnScrollGeometryChange", "webViewScrollInputBehavior", "webViewScrollPosition", "webViewTextSelection"],
@@ -274,7 +275,18 @@ IOS_DOC_FAMILY = {
                      "fileDialogImportsUnresolvedAliases", "fileDialogMessage", "fileDialogURLEnabled", "fileExporter",
                      "fileExporterFilenameLabel", "fileImporter", "fileMover"],
     "Contact access": ["contactAccessButtonCaption", "contactAccessButtonStyle", "contactAccessPicker"],
-    "live-activities": ["activityBackgroundTint", "activitySystemActionForegroundColor"],
+    "live-activities": ["activityBackgroundTint", "activitySystemActionForegroundColor", "dynamicIsland"],
+    # Story #296 (4/6): AccessibilityModifiers split by task. It keeps only rows no doc fits.
+    "Speech": ["speechAdjustedPitch", "speechAlwaysIncludesPunctuation", "speechAnnouncementsQueued", "speechSpellsOutCharacters"],
+    "Accessibility rotors": ["accessibilityRotor", "accessibilityRotorEntry"],
+    "Accessibility actions": ["accessibilityAction", "accessibilityActions", "accessibilityAdjustableAction", "accessibilityScrollAction",
+                              "accessibilityZoomAction", "accessibilityQuickAction"],
+    # Story #296 (5/6): AppearanceModifiers split by the surface each row styles. It keeps only rows no doc fits.
+    "Window behavior": ["windowDismissBehavior", "windowFullScreenBehavior", "windowMinimizeBehavior", "windowResizeAnchor",
+                        "windowResizeBehavior", "windowToolbarFullScreenVisibility", "preferredWindowClippingMargins"],
+    "Redaction and privacy": ["redacted", "unredacted", "privacySensitive", "invalidatableContent", "contentCaptureProtected"],
+    "Spatial appearance": ["spatialOverlay", "spatialOverlayPreferenceValue", "preferredSurroundingsEffect", "breakthroughEffect",
+                           "upperLimbVisibility", "volumeBaseplateVisibility"],
 }
 
 HEADER = re.compile(r"^// shipquick: (\w+): (.*)$")
