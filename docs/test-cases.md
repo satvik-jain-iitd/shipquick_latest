@@ -1633,3 +1633,28 @@ Scenario: a blocker is an open story
   Then needs lists both and blockedBy lists neither
 ```
 Tests: `roadmap/golden.test.js` (`golden: every story has the same milestone, priority, Needs, blockers, start time and cycle minutes`), `roadmap/ported.test.js` (`S1 Needs lines become numbers`, `S1 a Started line gives the start when there is no doing label`, `S1 the doing label wins over a Started line`, `S1 no label and no line means no cycle time, and a bad line is ignored`).
+
+## Story #83 part (a) (epic #80, S1): roadmap render, board and timeline
+```gherkin
+Scenario: the timeline groups closed stories by close day in the project's timezone
+  Given closed stories, one closed at 20:00 UTC on 24 Oct
+  When the model is built with the default timezone Asia/Kolkata
+  Then it sits under 2026-10-25, days run newest first, and with timezone UTC it sits under 2026-10-24
+Scenario: the timeline shows start, close and cycle time
+  Given stories that took 2 hours, 45 minutes, and one never marked doing
+  Then the timeline shows "2 h", "45 min" and "no start time"
+Scenario: You are here
+  Given a story with the doing label since 04:00 UTC and ready stories
+  Then the page shows the time, the story "since 09:30" and the first unblocked ready story as next
+Scenario: Next order and older work
+  Given open stories with ready, blocked or no plan label
+  Then Next holds ready and blocked stories by milestone due date, then priority, then number, and marks "blocked by #23, #26"
+  And stories with no plan label sit in a folded Older work list
+Scenario: delivered epics show a date range
+  Given an epic whose stories closed on 21 Oct and 25 Oct
+  Then Delivered shows "21 Oct to 25 Oct" and stays folded
+Scenario: the golden fixture renders
+  Given roadmap/fixtures/golden-issues.json
+  Then the timeline, here, next and older equal the golden and every part-(a) section renders
+```
+Tests: `roadmap/ported.test.js` (`S1 the timeline groups closed stories by India close day, newest first`, `S1 the start is the first doing label and the cycle time is close minus start`, `S1 You are here shows the time, the story in progress and the next ready story`, `S1 Next is sorted by milestone, then priority, then number, and marks blocked stories`, `S1 stories without a ready or blocked label are older work and stay out of Next`, `S1 delivered epics show their date range and stay folded`), `roadmap/golden.test.js` (`golden: the timeline groups closed stories by India close day, newest first`, `golden: you are here, the Next order and the older work are the same`, `golden: the page renders the board, timeline, you are here, Next, older work and delivered ranges (#83 part a)`), `roadmap/render.test.js` (`S83 the close day follows the timezone input, default Asia/Kolkata`).

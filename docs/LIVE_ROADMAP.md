@@ -26,6 +26,8 @@ Owner decision, 26 Oct 2026: a kit user may have no n8n and no server, so the ro
   No secret, no personal token.
 - Settings live in the project: `roadmap.json` with `title` and `vision` (the vision is one line, in words a stranger understands).
   ShipQuick holds no project names. A missing title or vision stops the run with a clear message.
+- The HTML page shows days and times in one timezone: `timezone` in the project settings passed to `render.js` `page()` (an IANA name such
+  as `Europe/Berlin`), default `Asia/Kolkata`. The timeline groups closed stories by that close day.
 - Code: `roadmap/roadmap.js` writes the Markdown page, `roadmap/query.graphql` is the GitHub question, `roadmap/render.js` has the shared
   rules (plain words, columns, epics) and an HTML page for GitHub Pages. Tests: `node --test roadmap/*.test.js` and `tests/test_roadmap_workflow.py`.
 - The page lists the titles of the repo's issues. In a private repo GitHub's own login guards the `roadmap` branch.

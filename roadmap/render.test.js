@@ -100,3 +100,12 @@ test('S0.11 plain words: "CI checks" becomes "checks", not "the checks checks"',
   assert.equal(plain('CI/CD and PRs'), 'build and deploy and change');
   assert.ok(!/checks checks/.test(plain('Add CI checks and CI checks')));
 });
+
+test('S83 the close day follows the timezone input, default Asia/Kolkata', () => {
+  const late = [{ number: 5, title: 'Story: late close', body: '## Business\nA late close.', state: 'CLOSED', labels: ['story'], closedAt: '2026-10-24T20:00:00Z', parent: null }];
+  const at = new Date('2026-10-25T03:35:00Z'), empty = { data: { repository: { issues: { nodes: [] }, pullRequests: { nodes: [] } } } };
+  assert.deepEqual(build(late, []).timeline.map(d => d.day), ['2026-10-25']);   // 01:30 the next day in India
+  assert.deepEqual(build(late, [], 'UTC').timeline.map(d => d.day), ['2026-10-24']);
+  assert.ok(render(build(late, [], 'UTC'), PROJECT, at).includes('updated 03:35'));
+  assert.ok(page(empty, { ...PROJECT, timezone: 'UTC' }, at).includes('updated 03:35'));
+});

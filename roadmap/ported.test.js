@@ -87,20 +87,20 @@ const NOW = new Date('2026-10-26T05:30:00Z');   // 26 Oct 11:00 India time
 const V = { title: 'Plan', vision: 'Vision.' };
 const model2 = build(V2, []), html2 = render(model2, V, NOW);
 
-test('S1 the timeline groups closed stories by India close day, newest first', later('#83', 'model.timeline and the timeline section'), () => {
+test('S1 the timeline groups closed stories by India close day, newest first', () => {
   assert.deepEqual((model2.timeline || []).map(d => [d.day, nums(d.stories)]), [['2026-10-25', [21, 20]], ['2026-10-23', [22]]]);   // 20 closed at 01:30 India on the 25th, not the 24th UTC
   const tl = sec(html2, 'timeline');
   assert.ok(tl.indexOf('25 Oct') >= 0 && tl.indexOf('25 Oct') < tl.indexOf('23 Oct'));
 });
 
-test('S1 the start is the first doing label and the cycle time is close minus start', later('#82 and #83', 'story.cycleMin, then the timeline shows it'), () => {
+test('S1 the start is the first doing label and the cycle time is close minus start', () => {
   const by = byNumber(model2);
   assert.deepEqual([by[20].cycleMin, by[21].cycleMin, by[22].cycleMin], [120, 45, null]);
   const tl = sec(html2, 'timeline');
   assert.ok(tl.includes('2 h') && tl.includes('45 min') && tl.includes('no start time'));   // honest: the story was never marked doing
 });
 
-test('S1 You are here shows the time, the story in progress and the next ready story', later('#83', 'model.here and the here section'), () => {
+test('S1 You are here shows the time, the story in progress and the next ready story', () => {
   const here = model2.here || {};
   assert.deepEqual(nums(here.doing), [23]);
   assert.equal(here.next && here.next.number, 26);   // P0 in the earliest milestone, then the lowest number
@@ -108,12 +108,12 @@ test('S1 You are here shows the time, the story in progress and the next ready s
   for (const t of ['11:00', 'Story D in progress', 'since 09:30', 'Story G ready p0 first']) assert.ok(h.includes(t), t);   // 04:00 UTC is 09:30 India
 });
 
-test('S1 Next is sorted by milestone, then priority, then number, and marks blocked stories', later('#83', 'model.next and the next section'), () => {
+test('S1 Next is sorted by milestone, then priority, then number, and marks blocked stories', () => {
   assert.deepEqual(nums(model2.next), [26, 27, 24, 25]);   // M1 first: P0 (26, 27) then P1 (24); M2 last. Doing and done stories are not in Next.
   assert.ok(sec(html2, 'next').includes('blocked by #23, #26'));
 });
 
-test('S1 stories without a ready or blocked label are older work and stay out of Next', later('#83', 'model.older and the older section'), () => {
+test('S1 stories without a ready or blocked label are older work and stay out of Next', () => {
   assert.ok(!nums(model2.next).includes(40));
   assert.deepEqual(nums(model2.older), [40]);
   assert.ok(sec(html2, 'older').includes('Story old open, no plan labels'));
@@ -125,7 +125,7 @@ test('S1 Needs lines become numbers', () => {
   assert.deepEqual(by[26].needs, []);
 });
 
-test('S1 delivered epics show their date range and stay folded', later('#83', 'the delivered date range'), () => {
+test('S1 delivered epics show their date range and stay folded', () => {
   const issues = V2.concat([issue(30, 'Epic E8: Old', { state: 'CLOSED', labels: ['epic'], closedAt: '2026-10-25T07:00:00Z', body: '## Business\nOld work.' }),
     issue(31, 'Story old one', { state: 'CLOSED', closedAt: '2026-10-21T08:00:00Z', parent: { number: 30 } }),
     issue(32, 'Story old two', { state: 'CLOSED', closedAt: '2026-10-25T07:00:00Z', parent: { number: 30 } })]);

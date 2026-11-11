@@ -33,14 +33,24 @@ test('golden: every story has the same milestone, priority, Needs, blockers, sta
   assert.deepEqual(model.stories.map(s => pick(s, keys)), want.stories.map(s => pick(s, keys)));
 });
 
-test('golden: the timeline groups closed stories by India close day, newest first', later('#83', 'model.timeline'), () => {
+test('golden: the timeline groups closed stories by India close day, newest first', () => {
   assert.deepEqual((model.timeline || []).map(d => ({ day: d.day, stories: nums(d.stories) })), want.timeline);
 });
 
-test('golden: you are here, the Next order and the older work are the same', later('#83', 'model.here, model.next, model.older'), () => {
+test('golden: you are here, the Next order and the older work are the same', () => {
   assert.deepEqual({ doing: nums((model.here || {}).doing), next: model.here && model.here.next ? model.here.next.number : null }, want.here);
   assert.deepEqual(nums(model.next), want.next);
   assert.deepEqual(nums(model.older), want.older);
+});
+
+test('golden: the page renders the board, timeline, you are here, Next, older work and delivered ranges (#83 part a)', () => {
+  const html = require('./render.js').page(resp, { title: 'Example', vision: 'A synthetic project.' }, new Date(want.now));
+  const sec = (id) => (html.split(`id="${id}"`)[1] || '').split('</section>')[0];
+  for (const id of ['here', 'delivered', 'now', 'next', 'older', 'timeline', 'board']) assert.ok(sec(id).length > 0, id);
+  assert.ok(sec('here').includes('It is 11:00') && sec('here').includes('#' + want.here.next));
+  assert.ok(sec('timeline').indexOf('6 Nov') < sec('timeline').indexOf('2 Nov'));
+  assert.ok(sec('delivered').includes(' to ') && !sec('delivered').includes('<details open'));
+  assert.ok(sec('next').indexOf('#' + want.next[0]) < sec('next').indexOf('#' + want.next[1]));
 });
 
 test('golden: the milestones have the same due date, counts, days left and late flag', later('#83', 'model.milestones and clock(model, now)'), () => {
