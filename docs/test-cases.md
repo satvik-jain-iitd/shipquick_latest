@@ -1637,3 +1637,22 @@ Scenario: CI runs both tiers through the runner
   Then job ui-ios-lint fetches SwiftFormat 0.64.6 by SHA-256 like SwiftLint, runs `CI=1 bash ui/tool/ios_lint.sh` on Good and Bad, `CI= bash ui/tool/ios_lint.sh` on Bad, and the bad run names every rule id
 ```
 Tests: `tests/test_ios_lint_tool.py` (s218). CI job: `ui-ios-lint` (macos-15).
+
+## Story #221: the iOS fixture app with a good and a bad screen
+```gherkin
+Scenario: the fixture app is real SwiftUI on the kit module
+  Given tests/fixtures/ios/FixtureApp/Package.swift depends on ../../../../ui/ios and the product ShipQuickUI
+  When CI job ui-ios-compile builds the scheme FixtureApp for iOS
+  Then both screens compile, so the bad screen can only be caught by the lint
+Scenario: the good screen uses only kit components and tokens
+  Given GoodScreen.swift imports only ShipQuickUI and SwiftUI and uses ListTemplate() and ShipQuickTokens
+  Then no SwiftLint rule regex matches it, and the CI tier passes it
+Scenario: the bad screen is caught with each rule named
+  Given BadScreen.swift holds Color(red:, .font(.system(size: and a struct that conforms to Shape
+  When ui/tool/ios_fixture_check.py runs the CI tier of ui/tool/ios_lint.sh on it
+  Then the run fails and the report names no_raw_color, no_fixed_font_size and no_custom_shape_or_style
+Scenario: the harness catches a lint that lets the bad screen through
+  Given a swiftlint that passes the bad screen, or reports only two of the three rules
+  Then the harness exits 1 saying "the bad screen passed" or "rule not reported: <rule>"
+```
+Tests: `tests/test_ios_fixture_app.py` (s221). CI jobs: `ui-ios-compile` and `ui-ios-lint` (macos-15).
