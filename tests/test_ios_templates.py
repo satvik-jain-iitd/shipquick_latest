@@ -116,7 +116,10 @@ def test_s135_the_step_flow_keeps_the_main_button_last_at_the_bottom_above_the_k
 def test_s135_the_package_has_no_dependencies_and_the_readme_says_how_to_use_it():
     pkg = (IOS / "Package.swift").read_text(encoding="utf-8")
     assert 'name: "ShipQuickUI"' in pkg
-    assert "dependencies:" not in pkg and ".package(" not in pkg
+    # Story #219: the snapshot test target and its packages sit behind the SHIPQUICK_SNAPSHOTS guard; the library a child
+    # resolves has none.
+    library = pkg.split('environment["SHIPQUICK_SNAPSHOTS"]', 1)[0]
+    assert "dependencies:" not in library and ".package(" not in library
     readme = (IOS / "README.md").read_text(encoding="utf-8")
     assert '.package(path: "knowledge/shipquick_latest/ui/ios")' in readme
     for path in templates():

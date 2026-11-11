@@ -65,8 +65,10 @@ check_pr_size() {
       release/*) echo "skip pr-size: a release branch into main aggregates already-reviewed dev commits, not new review surface"; report pr-size 0; return 0 ;;
     esac
   fi
-  n=$(changed | wc -l | tr -d ' ')
-  echo "Counted files: $n (max 50, renames ignored)"
+  # story #219: recorded reference images in the protected folder ui/ios/ShipQuickUITests/__Snapshots__/ are looked at, not read;
+  # anchored to that folder so a __Snapshots__/ folder anywhere else still counts (#375 review)
+  n=$(changed | grep -vE '^ui/ios/ShipQuickUITests/__Snapshots__/.*\.png$' | wc -l | tr -d ' ')
+  echo "Counted files: $n (max 50, renames and ui/ios/ShipQuickUITests/__Snapshots__/*.png reference images ignored)"
   [ "$n" -le 50 ]; report pr-size $?
 }
 check_frontend_design() {

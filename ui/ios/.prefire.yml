@@ -1,0 +1,6 @@
+# Story #219: Prefire reads this from the tested target's folder. It turns every #Preview in templates/ into a
+# snapshot test of the test target ShipQuickUITests, compared with swift-snapshot-testing (ui/ios/SNAPSHOTS.md).
+test_configuration:
+  target: ShipQuickUI
+  imports:
+    - SwiftUI
