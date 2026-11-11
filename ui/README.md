@@ -45,3 +45,14 @@ Then:
 
 Native topics live in `integration/docs/`. They are generated: run `python3 scripts/ui_topics.py` after you
 change a doc in `components/`. CI fails a stale topic (job `ui-cli`, and `ui-topics` in `check_local.sh`).
+
+## Look a component up through MCP, or read `llms.txt`
+
+No Node needed (story #190). `scripts/ui_mcp.py` is a stdio MCP server, `shipquick_ui_mcp`, with two read-only tools:
+- `shipquick_ui_search_components`: find components by words, best match first, one page at a time.
+- `shipquick_ui_get_component`: one component's doc, contract and registry rows.
+
+Add it to an MCP client: `{"command": "python3", "args": ["<kit>/scripts/ui_mcp.py"]}`.
+`llms.txt` lists every component with a link to its doc. It is generated: run `python3 scripts/ui_mcp.py llms`
+after you change a doc or `registry.json`. CI fails a stale file (job `ui-cli`, and `ui-llms` in `check_local.sh`).
+Ten test questions for the server live in `mcp/evals.xml`.
