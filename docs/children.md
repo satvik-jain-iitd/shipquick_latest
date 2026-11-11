@@ -13,12 +13,12 @@ daily issue, since a 404 from a missing token looks identical to "not adopted".
 Each child has one note above its line: `# <name>: <what GitHub shows, with the date>. Next: <step>`.
 The steps are the checklist in docs/ADOPTION.md.
 
-# GoServe: public, rule 24, kit branch `documents`. Bump PR GoServe#1298 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) on `documents`. Next: merge it, run the gate ruleset command and protect `documents`, then take `shipquick-call.yml` to `main` in a release and copy `CLAUDE.md` to `dev` and `staging`.
+# GoServe: public, rule 24, kit branch `documents`. Bump PR GoServe#1298 (re-pinned 10 Nov 2026 to v0.11.1, f66e41a, milestone D1, roles.yml added); held by its own freeze. Its CLAUDE.md has no `- Dev link:` or `- Production link:` lines, so the environments job stays red until the owner gives the links (owner, 10 Nov 2026). Next: merge it, run the gate ruleset command and protect `documents`, then take `shipquick-call.yml` to `main` in a release and copy `CLAUDE.md` to `dev` and `staging`.
 satvik-jain-iitd/GoServe
-# job-search: private, base `main`. Bump PR job-search#294 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) and adds shipquick-call.yml. Next: merge it, write `.shipquick/roles.yml`; the gate cannot be enforced on a private Free repo.
+# job-search: private, base `main`. Bump PR job-search#294 merged 10 Nov 2026 (pin v0.11.1, f66e41a, milestone D0, roles.yml, its own `mode.md` kept, timeouts added to seven jobs; see feedback #359). The gate ruleset was refused with HTTP 403 "Upgrade to GitHub Pro or make this repository public to enable this feature": on a private Free repo the gate reports only and nothing is enforced, until Pro or public. Next: nothing until the plan changes.
 klickbae8yt-star/job-search private
-# bhavna-ai: public, base `dev`. Bump PR bhavna-ai#130 (10 Nov 2026) moves the pin to v0.11.0 (f87ddb1) and adds shipquick-call.yml. Next: merge it, run the printed ruleset command, write `.shipquick/roles.yml`, promote to `main`.
+# bhavna-ai: public, base `dev`. Bump PR bhavna-ai#130 merged 10 Nov 2026 (pin v0.11.1, f66e41a, milestone D0, roles.yml, test job has a timeout). The ruleset "shipquick gate" was created and is active on `main` (10 Nov 2026), so the gate is enforced there. Next: promote `dev` to `main` so the caller runs from the default branch.
 # This file is the one file the hygiene test lets hold that name (tests/test_repo_hygiene.py, owner, 9 Nov 2026).
 satvik-jain-iitd/bhavna-ai
-# Miraya: private and empty on GitHub; the local repo has a caller but was never pushed (9 Nov 2026). Next: push the local repo, then bump to the release tag.
+# Miraya: private. Pushed by the owner on 10 Nov 2026 as a clean orphan root without history: `operations/` (client data, 16 tracked files) and `.beads/` are not in it and are in `.gitignore`; Telegram chat and user ids in the n8n exports are redacted. Bump PR Miraya#1 merged 10 Nov 2026 (pin v0.11.1, f66e41a, milestone D0, roles.yml klickbae8yt-star / satvik-jain-iitd). The gate ruleset was refused with HTTP 403 "Upgrade to GitHub Pro or make this repository public to enable this feature": the gate reports only, nothing is enforced, until Pro or public. Next: promote `dev` to `main`.
 satvik-jain-iitd/Miraya private
