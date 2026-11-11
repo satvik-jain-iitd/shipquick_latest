@@ -69,9 +69,12 @@ function depMap(stories, milestones) {
     return false;
   };
   const kept = edges.filter(e => e.back || !reach(e.from, e.to));
-  const arcs = (order) => { const p = Object.fromEntries(order.map((t, i) => [t, i])); return kept.map(e => [p[e.from], p[e.to]].sort((x, y) => x - y)); };
+  const at = (order) => Object.fromEntries(order.map((t, i) => [t, i]));
+  const arcs = (order) => { const p = at(order); return kept.map(e => [p[e.from], p[e.to]].sort((x, y) => x - y)); };
+  // An order is allowed only when every solid arrow still points down and every dotted one up, so the caption stays true.
+  const keepsWay = (order) => { const p = at(order); return kept.every(e => (p[e.from] > p[e.to]) === e.back); };
   let nodes = milestones.map(m => m.title), best = crossings(arcs(nodes));
-  if (best && nodes.length <= MAX_SEARCH) for (const o of perms(nodes)) { const n = crossings(arcs(o)); if (n < best) { nodes = o; best = n; } }
+  if (best && nodes.length <= MAX_SEARCH) for (const o of perms(nodes)) { const n = crossings(arcs(o)); if (n < best && keepsWay(o)) { nodes = o; best = n; } }
   return { nodes, edges: kept, hidden: edges.length - kept.length, crossings: best };
 }
 // The longest line of open stories where each waits for the one before. Ties go to the lowest story numbers (the reference's rule, memo included).
@@ -100,8 +103,9 @@ function clock(model, now, tz = model.tz || TZ) {
 function mapSvg(mp) {
   const gap = 62, h = 40, w = 250, ys = Object.fromEntries(mp.nodes.map((t, i) => [t, 20 + i * gap])), pos = Object.fromEntries(mp.nodes.map((t, i) => [t, i]));
   const height = 40 + Math.max(mp.nodes.length - 1, 0) * gap + h, width = 24 + w + 50 + 36 * Math.max(mp.nodes.length - 1, 1) + 90, x = 24 + w;
+  const twoWay = (e) => e.back && mp.edges.some(f => f.from === e.to && f.to === e.from);   // the dotted half of a pair that waits on each other
   const paths = mp.edges.map(e => {
-    const y1 = ys[e.from] + h / 2, y2 = ys[e.to] + h / 2, off = 50 + 36 * Math.abs(pos[e.from] - pos[e.to]);
+    const y1 = ys[e.from] + h / 2, y2 = ys[e.to] + h / 2, off = 50 + 36 * Math.abs(pos[e.from] - pos[e.to]) + (twoWay(e) ? 24 : 0);
     return `<g data-edge="${esc(e.from)} to ${esc(e.to)}"><path d="M${x} ${y1} C${x + off} ${y1} ${x + off} ${y2} ${x + 6} ${y2}" style="fill:none;stroke:var(--dark);stroke-width:2"${e.back ? ' stroke-dasharray="6 4"' : ''} marker-end="url(#ah)"/>`
       + `<text x="${x + off * 0.75 + 6}" y="${(y1 + y2) / 2 + 5}" font-size="14" style="fill:var(--text)">${e.count} need${e.count === 1 ? '' : 's'}</text></g>`;
   }).join('');

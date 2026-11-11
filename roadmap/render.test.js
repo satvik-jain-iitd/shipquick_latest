@@ -133,3 +133,21 @@ test('S83 the page has no project text of its own: only the title and the vision
   assert.equal(a.split('Alpha').join('X').split('First words.').join('V'), b.split('Beta').join('X').split('Other words.').join('V'));
   assert.ok(a.includes('id="milestones"') && a.includes('id="map"'));
 });
+
+const msOf = (k) => Array.from({ length: k }, (_, i) => ({ title: 'M' + i, dueOn: `2026-11-0${i + 1}T18:29:00Z` }));
+const storyIn = (ms) => (n, m, needs) => ({ number: n, title: 'Story ' + n, body: '## Business\nS.\n' + (needs ? 'Needs: ' + needs.map(x => '#' + x).join(', ') : ''), state: 'OPEN', labels: ['story'], closedAt: null, parent: null, milestone: ms[m] });
+
+test('S83 the order search never turns a solid arrow up or a dotted arrow down', () => {
+  const s = storyIn(msOf(5));   // needs M0->M3, M1->M4, M2->M3, M2->M4
+  const mp = build([s(1, 0), s(2, 1), s(3, 2), s(4, 3, [1, 3]), s(5, 4, [2, 3])], []).map, p = Object.fromEntries(mp.nodes.map((t, i) => [t, i]));
+  assert.equal(mp.edges.length, 4);
+  for (const e of mp.edges) assert.equal(p[e.from] > p[e.to], e.back, `${e.from} to ${e.to} in ${mp.nodes.join(', ')}`);
+});
+
+test('S83 two milestones that wait on each other get two arrows apart, two labels apart', () => {
+  const s = storyIn(msOf(2));   // a story in M1 needs M0, a story in M0 needs M1
+  const html = require('./render.js').mapSvg(build([s(1, 0, [2]), s(2, 1, [1])], []).map);
+  const labels = [...html.matchAll(/<text x="([\d.]+)" y="([\d.]+)"[^>]*>1 need</g)].map(m => m[1] + ',' + m[2]);
+  assert.equal(labels.length, 2);
+  assert.notEqual(labels[0], labels[1]);
+});

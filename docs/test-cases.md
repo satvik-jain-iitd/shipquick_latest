@@ -1690,3 +1690,15 @@ Scenario: no project text of its own
   Then the two pages differ only in the title and the vision
 ```
 Tests: `roadmap/ported.test.js` (`S1 milestone bars count done over total, with the due date and the days left`, `S1 a milestone past its due date with work left is late and red`, `S1 the map has one edge per pair of milestones with the number of needs`, `S1 a need on a later milestone is a backward edge`, `S1 crossings are measured, not guessed`, `S1 the svg labels every arrow and names the crossings`, `S1 an arrow that only repeats a longer path is hidden and counted`, `S1 the longest chain of open work is listed, ties go to the lowest numbers`, `S1 the page has a night theme that follows the phone, and a phone-width layout`, `S1 board columns may shrink and wrap long words, so a phone does not scroll sideways`, `S1 the map svg uses theme colours, so it follows night`), `roadmap/golden.test.js` (`golden: the milestones have the same due date, counts, days left and late flag`, `golden: the dependency map has the same nodes, edges, hidden arrows and crossings`, `golden: the longest chain of open work is the same`), `roadmap/render.test.js` (`S83 the map order search finds the order with the fewest crossings`, `S83 the page has no project text of its own: only the title and the vision change it`).
+
+## PR #393 review fix (story #83 part b): the map order keeps the arrow way, a two-way pair stays apart
+```gherkin
+Scenario: the order search never turns a solid arrow up or a dotted arrow down
+  Given five milestones M0 to M4 with needs M0 to M3, M1 to M4, M2 to M3 and M2 to M4
+  When the map searches for an order with fewer crossings
+  Then every solid arrow still points down and every dotted arrow still points up, or the due order stays
+Scenario: two milestones that wait on each other
+  Given a story in M1 that needs M0 and a story in M0 that needs M1
+  Then the solid and the dotted arrow get different arcs and their "1 need" labels sit at different places
+```
+Tests: `roadmap/render.test.js` (`S83 the order search never turns a solid arrow up or a dotted arrow down`, `S83 two milestones that wait on each other get two arrows apart, two labels apart`).
