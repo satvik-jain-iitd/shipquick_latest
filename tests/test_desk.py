@@ -251,9 +251,11 @@ class SpendInServer(ServerCase):
         self.assertEqual(data["waiting"][0]["number"], 101)
         self.assertEqual(data["roadmap"][0]["title"], "ShipQuick Desk")
 
-    def test_page_has_a_spend_section(self):
+    def test_page_has_a_spend_panel_shown_only_when_the_ledger_exists(self):   # story #427: frame D, Spend is an Overview row
         self.start(fake_runner([]))
-        self.assertIn('id="spend"', self.get("/")[2])
+        page = self.get("/")[2]
+        self.assertIn('"Spend"', page)
+        self.assertIn("spendShown", page)
 
 
 class OriginCheck(ServerCase):
