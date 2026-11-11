@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
@@ -55,6 +55,10 @@ check_ui_coverage() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_
 check_features_wiring() { [ -f "$HERE/../.github/workflows/checks.yml" ] || return 0;   # the workflow the script reads sits in the kit, not in the cwd
   python3 "$HERE/check_features_wiring.py"; report features-wiring $?; }   # story #422
 check_timeouts() { [ -d .github/workflows ] || return 0; python3 "$HERE/check_timeouts.py" .github/workflows; report timeouts $?; }
+check_commit_subjects() {   # story #446: the same rule as CI's commit-subjects job
+  have_base commit-subjects || return 0
+  python3 "$HERE/check_commit_subjects.py" --base "origin/$BASE"; report commit-subjects $?
+}
 check_commits() {
   have_base commits || return 0
   local bad
@@ -151,6 +155,7 @@ check_shortcuts() {   # story #327: warn only, never sets failed
 feature_of() {   # feature_of <check> -- the feature id that switches the check, or nothing when it has none
   case "$1" in
     rule-copies) echo rule-copies ;;
+    commit-subjects) echo commit-subjects ;;
     disable-comments) echo disable-comments ;;
     design-tokens) echo design-tokens ;;
     frontend-design) echo frontend-design ;;
@@ -170,7 +175,7 @@ feature_skip() {   # feature_skip <check>: returns 0 when the check must be skip
   esac
 }
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits pr-size frontend-design disable-comments design-tokens story tdd roadmap workflow-security secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story tdd roadmap workflow-security secrets)
 for c in "${checks[@]}"; do
   feature_skip "$c" && continue
   [ $? -eq 2 ] && continue
@@ -178,6 +183,7 @@ for c in "${checks[@]}"; do
     sizes|markers|commits|secrets) "check_$c" ;;
     md-blocks) check_md_blocks ;;
     rule-copies) check_rule_copies ;;
+    commit-subjects) check_commit_subjects ;;
     ui-docs) check_ui_docs ;;
     ui-registry) check_ui_registry ;;
     ui-topics) check_ui_topics ;;
@@ -198,7 +204,7 @@ for c in "${checks[@]}"; do
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts

@@ -236,3 +236,16 @@ def test_session_start_is_quiet_when_installed_or_not_configured(child):
     adopt(child, precommit=False)
     real_hooks(child)
     assert "not installed" not in session(child)
+
+
+# ---- nit from the #447 review: a config with no commit-msg hook type is said out loud ----
+def test_a_config_with_no_commit_msg_hook_type_is_named_in_a_note(child):
+    (child / ".pre-commit-config.yaml").write_text("repos:\n  - repo: local\n    hooks:\n      - id: check-local\n        entry: bash scripts/check_local.sh\n        language: system\n", encoding="utf-8")
+    r = adopt(child)
+    assert r.returncode == 0, r.stderr
+    assert "note: .pre-commit-config.yaml has no commit-msg hook type" in r.stdout and "default_install_hook_types" in r.stdout
+
+
+def test_a_config_that_lists_commit_msg_gets_no_such_note(child):
+    r = adopt(child)
+    assert "no commit-msg hook type" not in r.stdout

@@ -53,6 +53,7 @@ F4 to F8 of epic #86 land, turning any other flag off changes nothing, so nothin
 | `design-tokens` | No loose colours or fonts | Fails a web style line that adds a colour or font value directly, instead of using the shared design values. | Colours and fonts may be written straight into style files. | on |
 | `component-registry` | Ready-made screen parts only | Checks that screens are built from the shared library of screen parts, not drawn by hand. | Screens may be hand-drawn instead of using the library. | on |
 | `rule-copies` | One copy of each rule | Fails when two copies of the rules text drift apart. | Copies of the rules may differ and nobody is told. | on |
+| `commit-subjects` | Short commit titles | Fails a pull request that has a commit title longer than 72 characters, naming the commit. | A long commit title is found only by people, if at all. | on |
 
 ## Local checks
 

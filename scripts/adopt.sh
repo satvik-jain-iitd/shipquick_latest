@@ -419,6 +419,10 @@ case "$hs" in
     fi ;;
   error) echo "note: could not tell whether the git hooks are installed (hooks_state.py exit $hs_rc)" ;;
 esac
+# the config must also ask for the commit-msg hook type, or `pre-commit install` leaves the subject guard out
+if [ "$hs" != not-configured ] && [ "$hs" != off ] && ! grep -qE '^default_install_hook_types:.*commit-msg' "$child/.pre-commit-config.yaml" 2>/dev/null; then
+  echo "note: .pre-commit-config.yaml has no commit-msg hook type, so the commit subject guard will not run. Add this line at the top: default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]"
+fi
 
 # 6. CLAUDE.md: one pointer line to the protocol. A new file starts from the template; yours keeps every line.
 ptr="follow $rel/CLAUDE.md"
