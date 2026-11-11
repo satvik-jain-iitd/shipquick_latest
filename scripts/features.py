@@ -138,6 +138,18 @@ def flags_at_ref(gitdir, ref):
         return {k: v["on"] for k, v in read(t)["features"].items()}
 
 
+def is_on(feature, root=None):
+    """True or False for one feature in the project at `root` (default: the git root of the current folder, else the folder).
+    A broken features file raises FeaturesError: callers fail, they never read an error as "on"."""
+    if root is None:
+        try:
+            p = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+            root = p.stdout.strip() if p.returncode == 0 and p.stdout.strip() else "."
+        except OSError:
+            root = "."
+    return read(root)["features"][feature]["on"]
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="features.py", add_help=False)   # -h must never print help and exit 0: 0 reads as "on"
     ap.add_argument("--root")
