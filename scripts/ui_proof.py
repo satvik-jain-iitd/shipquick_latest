@@ -45,7 +45,7 @@ ANDROID = {
     "Badge": {"t": "BadgedBox(@ARGS@)"},
     "BottomSheet": {"t": "ModalBottomSheet(@ARGS@)"},
     "BottomSheetScaffold": {"t": "BottomSheetScaffold(@ARGS@)"},
-    "Button": {"t": "Button(onClick = {}) {}"},
+    "Button": {"t": "Button(onClick = {}, @ARGS@)"},  # onClick sits in core, so it is not a platforms.android prop (#223)
     "Card": {"t": "Card(@ARGS@)"},
     "Carousel": {"t": "HorizontalMultiBrowseCarousel(@ARGS@)"},
     "Checkbox": {"t": "Checkbox(@ARGS@)"},

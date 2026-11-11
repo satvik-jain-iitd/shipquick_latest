@@ -72,8 +72,9 @@ def test_s183_topics_are_generated_from_the_s2_docs_and_are_current():
     r = subprocess.run(["python3", str(TOPICS), "--check"], capture_output=True, text=True, cwd=ROOT)
     assert r.returncode == 0, r.stdout + r.stderr
     topic = (ROOT / "ui/integration/docs/android-button.doc.mjs").read_text()
-    assert "androidx.compose.material3.Button" in topic and "'primary' | 'secondary' | 'ghost' | 'destructive'" in topic
-    assert "HTML form submission" not in topic   # a webOnly prop never reaches a native topic
+    assert "androidx.compose.material3.Button" in topic
+    # a webOnly prop never reaches a native topic; the web variant enum is webOnly since story #223
+    assert "HTML form submission" not in topic and "'primary' | 'secondary' | 'ghost' | 'destructive'" not in topic
     assert (ROOT / "ui/integration/docs/ios-button.doc.mjs").exists()
 
 

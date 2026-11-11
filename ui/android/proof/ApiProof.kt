@@ -52,7 +52,7 @@ fun ProofBottomSheetScaffold() {
 
 @Composable
 fun ProofButton() {
-    Button(onClick = {}) {}
+    Button(onClick = {}, enabled = true, content = {})
 }
 
 @Composable
