@@ -16,6 +16,10 @@ We never call our product "Astryx". Rule 38, ADR-012.
 | `guides/dense-writing.md` | `.claude/skills/dense-compression-protocol.md` | A header comment only |
 | `LICENSE.meta-astryx.txt` | `LICENSE` | None |
 
+Idea only, no code (story #189): `bench/vibe_prompts.json` and `bench/vibe.py` follow the prompt battery shape and
+the five fairness rules of upstream `internal/vibe-tests/README.md` (same prompts across arms, only the system under
+test varies, nothing leaks the expected answer, fresh agent per prompt). The runner is ours (`bench/run.py`).
+
 Ours, not copied: `schema/component.schema.json` and `schema/contract.schema.json` (JSON twins of the two
 type files, so Python checks run without Node), `scripts/check_ui_docs.py` (the idea of upstream's
 `docPropReferences.test.ts` and `docPropLiterals.test.ts`, checked against our contracts), and `components/Button/`.
@@ -49,3 +53,12 @@ Astryx has `packages/native/scripts/swift-ios-theme.mjs` (tag `v0.7.11`, commit 
 It turns resolved CSS custom properties into `Tokens.swift`. Our input is a W3C `design/tokens.json`, so no file was copied
 and nothing in the kit carries the Meta header for it. Ideas we used: a header that names the regenerate command, committed
 output, a test that fails when a file drifts, and a reserved-word check on names. Our own emitter is `scripts/emit_tokens.py`.
+
+## The Swift contract emitter (story #222): read, not copied
+
+Astryx has `packages/native/src/contract/generateSwift.ts` (commit `86a32152f4ede57783bc72574bc3ec363755d53d`). It writes
+`<Name>Props` and a wire layer (`AstryxNode`, `AstryxAction`) for a TypeScript core. We have no such core, so no file was
+copied and nothing in the kit carries the Meta header for it. Ideas we used, in our own Python (`scripts/emit_contracts.py`):
+the `<Name>Props` struct with a `public init`, one `String` enum per enum prop named `<Owner><Prop>`, `fn` as `(...) -> Void`
+with `@escaping` when required, content slots left out of the stored fields, and the Swift keyword list for backticks.
+Ours, not upstream's: the `GENERIC` table that turns a generic placeholder (`Binding<SelectionValue>`) into one stored type.

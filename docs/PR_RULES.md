@@ -16,6 +16,7 @@ The coder opens every PR, feature to dev and dev to main. The reviewer never ope
 
 - Max 50 files.
 - Moved files (renames) do not count. Only added and changed files count.
+- Recorded reference images (`ui/ios/ShipQuickUITests/__Snapshots__/*.png`, story #219) do not count. Only that exact folder: a `__Snapshots__/` folder anywhere else still counts. They are looked at, not read, and their folder is a protected path, so the owner merges a change to them anyway.
 - Target about 400 lines changed.
 - Bigger than that means split it.
 
@@ -148,3 +149,13 @@ its own gate off from inside itself:
   `eslint-disable`, `stylelint-disable`, `swiftlint:disable`, `@ts-nocheck`, `@Suppress(`, or a new
   ignore-file entry on an added line — unless the PR's body names the ADR that justifies it
   (`ADR: docs/decisions/ADR-NNN.md`).
+- **Design literal guard (story #133).** `scripts/check_design_literals.py` fails a PR that adds a hex,
+  `rgb()`, `hsl()` or font-family literal (a Tailwind `bg-[#...]` too) on a new line of a `.css`, `.ts`,
+  `.tsx`, `.astro`, `.vue` or `.svelte` file. The look comes from the tokens, so app code says
+  `var(--color-primary)` or `theme.fonts.body`. The token files themselves are listed in
+  `scripts/design_token_files.txt` (a protected path, so a PR cannot allowlist its own file). The same
+  `design-tokens` job then runs stylelint on the changed CSS files with `--report-needless-disables`: it installs
+  the project's own dependencies first (`npm ci`, when a lockfile exists) and runs the project's stylelint, with
+  pinned `npx` as the fallback, since a config's `extends` and `plugins` resolve from the project's node_modules.
+  It skips when no CSS changed or the project has no stylelint config (a file or a `stylelint` key in package.json).
+  Comment text on a line (`// story #133`, `/* ... */`) is never a literal.

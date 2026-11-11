@@ -30,6 +30,10 @@ Layer 1 only fires once a child is wired enough to have the caller running. A ch
 
 **Private children.** The workflow's own `github.token` can only ever read this repo, never someone else's private one. A line in `docs/children.md` marked `private` is read instead with the `SHIPQUICK_CHILD_TOKEN` secret — a fine-grained GitHub PAT, scoped to that repo only, with `Contents: read` and `Metadata: read` and nothing else. Set it once: `gh secret set SHIPQUICK_CHILD_TOKEN -R satvik-jain-iitd/shipquick_latest` (same build account, pasting the fine-grained PAT). With no secret set, or when the token gets a 404 or 403, a private child files nothing — that answer would otherwise look exactly like "not adopted," and a false feedback issue is worse than a skip. But a skip is never silent (story #260): the run ends with `summary: <n> skipped` and one line per child, `skipped <repo>: private, no token (...)` or `skipped <repo>: private, cannot read it with SHIPQUICK_CHILD_TOKEN (404 or 403)`.
 
+## The story job (story #175)
+
+`checks.yml` runs `scripts/check_story.py` on every user story the PR body links (`Closes #n`): the story must say `Who does it:` and, from 10 Nov 2026, `Done when:`. The job reads the child's own issues, so it needs `issues: read`. A called workflow gets only what the caller grants, never more, and the caller `adopt.sh` writes grants it. With a caller written by hand without it, GitHub refuses the whole ShipQuick checks run at startup with `The nested job 'story' is requesting 'issues: read', but is only allowed 'issues: none'`, and no gate check appears (no job of `checks.yml` runs at all). `adopt.sh . --check` names it as `not adopted: shipquick-call.yml grants no issues: read`; a caller that grants `issues: write` passes too.
+
 ## Rule-24 children (story #225)
 
 Some children keep `main` small. Only the code that runs goes there (rule 24). The submodule and the rule files live on another branch, for example `dev` or `documents`. We call it the kit branch.

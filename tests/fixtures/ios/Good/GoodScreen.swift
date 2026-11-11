@@ -1,7 +1,7 @@
 // Fixture (story #185): a screen with no hand-drawn UI. The lint must pass it with no finding.
 // SwiftLint reads text only; this file is never compiled, so Tokens need not exist.
-import SwiftUI
 import Foundation
+import SwiftUI
 
 struct GoodScreen: View {
     @State private var name = ""

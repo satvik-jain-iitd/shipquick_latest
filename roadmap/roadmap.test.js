@@ -81,3 +81,14 @@ test('S0.12 the GraphQL query is a file the workflow can hand to gh, with owner 
   const q = fs.readFileSync(path.join(__dirname, 'query.graphql'), 'utf8');
   assert.ok(q.includes('$owner: String!') && q.includes('$name: String!') && q.includes('statusCheckRollup') && q.includes('parent { number }'));
 });
+
+test('S84 an output file ending in .html gets the HTML page, not the Markdown one', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rm-')), out = path.join(dir, 'index.html');
+  fs.writeFileSync(path.join(dir, 'resp.json'), JSON.stringify(RESP));
+  fs.writeFileSync(path.join(dir, 'roadmap.json'), JSON.stringify({ title: 'Kitchen', vision: 'Hot meals.', timezone: 'UTC' }));
+  const r = spawnSync('node', [path.join(__dirname, 'roadmap.js'), path.join(dir, 'resp.json'), path.join(dir, 'roadmap.json'), out], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  const html = fs.readFileSync(out, 'utf8');
+  assert.ok(html.startsWith('<!doctype html>') && html.includes('<title>Kitchen roadmap</title>') && html.includes('Hot meals.'), html.slice(0, 200));
+  assert.ok(html.includes(' UTC'), 'the timezone from roadmap.json reaches the page');
+});

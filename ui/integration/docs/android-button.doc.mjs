@@ -41,40 +41,22 @@ export default {
           ],
           "rows": [
             [
-              "label",
-              "string",
-              "",
-              "The words on the button. Screen readers read them too."
-            ],
-            [
-              "variant",
-              "'primary' | 'secondary' | 'ghost' | 'destructive'",
-              "'secondary'",
-              "How strong the button looks. Primary is for the one main action."
-            ],
-            [
-              "size",
-              "'sm' | 'md' | 'lg'",
-              "'md'",
-              "How big the button is. The touch target never drops below the token."
-            ],
-            [
-              "isDisabled",
-              "boolean",
-              "false",
-              "Greys the button out and ignores presses."
-            ],
-            [
-              "isLoading",
-              "boolean",
-              "false",
-              "Shows a spinner and ignores presses until the action ends."
-            ],
-            [
               "onClick",
               "() => void",
               "",
               "Runs when the user presses the button."
+            ],
+            [
+              "enabled",
+              "boolean",
+              "true",
+              "False greys the button out and ignores presses."
+            ],
+            [
+              "content",
+              "@Composable RowScope.() -> Unit",
+              "",
+              "What sits inside the button: a Text, with an Icon before it when needed."
             ]
           ]
         }
@@ -105,8 +87,8 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Keep one primary button per screen. Use secondary or ghost for the rest.",
-            "Name the action in the label, like \"Save changes\", not \"OK\"."
+            "Name the action in the label, like \"Save changes\", not \"OK\".",
+            "Keep one filled Button per screen for the main action. Use FilledTonalButton, OutlinedButton or TextButton for the rest."
           ]
         },
         {

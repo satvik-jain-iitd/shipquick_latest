@@ -100,3 +100,66 @@ test('S0.11 plain words: "CI checks" becomes "checks", not "the checks checks"',
   assert.equal(plain('CI/CD and PRs'), 'build and deploy and change');
   assert.ok(!/checks checks/.test(plain('Add CI checks and CI checks')));
 });
+
+test('S83 the close day follows the timezone input, default Asia/Kolkata', () => {
+  const late = [{ number: 5, title: 'Story: late close', body: '## Business\nA late close.', state: 'CLOSED', labels: ['story'], closedAt: '2026-10-24T20:00:00Z', parent: null }];
+  const at = new Date('2026-10-25T03:35:00Z'), empty = { data: { repository: { issues: { nodes: [] }, pullRequests: { nodes: [] } } } };
+  assert.deepEqual(build(late, []).timeline.map(d => d.day), ['2026-10-25']);   // 01:30 the next day in India
+  assert.deepEqual(build(late, [], 'UTC').timeline.map(d => d.day), ['2026-10-24']);
+  assert.ok(render(build(late, [], 'UTC'), PROJECT, at).includes('updated 03:35'));
+  assert.ok(page(empty, { ...PROJECT, timezone: 'UTC' }, at).includes('updated 03:35'));
+});
+
+test('S83 the model owns the zone: a different project.timezone never splits the heading day from the row day', () => {
+  const late = [{ number: 5, title: 'Story: late close', body: '## Business\nA late close.', state: 'CLOSED', labels: ['story'], closedAt: '2026-10-24T20:00:00Z', parent: null }];
+  const out = render(build(late, []), { ...PROJECT, timezone: 'Europe/Berlin' }, new Date('2026-10-25T03:35:00Z'));
+  const tl = out.split('id="timeline"')[1].split('</section>')[0];
+  assert.ok(tl.includes('<h3>25 Oct</h3>'), tl);   // build() grouped the day in India time
+  assert.ok(tl.includes('closed 01:30'), tl);       // the row shows the same day, not "24 Oct 22:00"
+  assert.ok(out.includes('updated 09:05'));         // the clock line uses the same zone
+});
+
+test('S83 the map order search finds the order with the fewest crossings', () => {
+  const ms = ['A', 'B', 'C', 'D'].map((t, i) => ({ title: 'M' + i + ' ' + t, dueOn: `2026-11-0${i + 1}T18:29:00Z` }));
+  const s = (n, m, needs) => ({ number: n, title: 'Story ' + n, body: '## Business\nS.\n' + (needs ? 'Needs: #' + needs : ''), state: 'OPEN', labels: ['story'], closedAt: null, parent: null, milestone: ms[m] });
+  const mp = build([s(1, 0), s(2, 1), s(3, 2, 1), s(4, 3, 2)], []).map;   // M0 to M2 and M1 to M3 interleave in due order: 1 crossing
+  assert.equal(require('./render.js').crossings([[0, 2], [1, 3]]), 1);
+  assert.equal(mp.crossings, 0);
+  assert.deepEqual(mp.nodes.slice().sort(), ms.map(m => m.title));   // every milestone is still drawn once
+});
+
+test('S83 the page has no project text of its own: only the title and the vision change it', () => {
+  const a = render(model, { title: 'Alpha', vision: 'First words.' }, NOW), b = render(model, { title: 'Beta', vision: 'Other words.' }, NOW);
+  assert.equal(a.split('Alpha').join('X').split('First words.').join('V'), b.split('Beta').join('X').split('Other words.').join('V'));
+  assert.ok(a.includes('id="milestones"') && a.includes('id="map"'));
+});
+
+const msOf = (k) => Array.from({ length: k }, (_, i) => ({ title: 'M' + i, dueOn: `2026-11-0${i + 1}T18:29:00Z` }));
+const storyIn = (ms) => (n, m, needs) => ({ number: n, title: 'Story ' + n, body: '## Business\nS.\n' + (needs ? 'Needs: ' + needs.map(x => '#' + x).join(', ') : ''), state: 'OPEN', labels: ['story'], closedAt: null, parent: null, milestone: ms[m] });
+
+test('S83 the order search never turns a solid arrow up or a dotted arrow down', () => {
+  const s = storyIn(msOf(5));   // needs M0->M3, M1->M4, M2->M3, M2->M4
+  const mp = build([s(1, 0), s(2, 1), s(3, 2), s(4, 3, [1, 3]), s(5, 4, [2, 3])], []).map, p = Object.fromEntries(mp.nodes.map((t, i) => [t, i]));
+  assert.equal(mp.edges.length, 4);
+  for (const e of mp.edges) assert.equal(p[e.from] > p[e.to], e.back, `${e.from} to ${e.to} in ${mp.nodes.join(', ')}`);
+});
+
+test('S83 two milestones that wait on each other get two arrows apart, two labels apart', () => {
+  const s = storyIn(msOf(2));   // a story in M1 needs M0, a story in M0 needs M1
+  const html = require('./render.js').mapSvg(build([s(1, 0, [2]), s(2, 1, [1])], []).map);
+  const labels = [...html.matchAll(/<text x="([\d.]+)" y="([\d.]+)"[^>]*>1 need</g)].map(m => m[1] + ',' + m[2]);
+  assert.equal(labels.length, 2);
+  assert.notEqual(labels[0], labels[1]);
+});
+
+test('S83 nested arcs keep every label clear of every other arc', () => {
+  const s = storyIn(msOf(4));   // two needs M0->M3 around two needs M1->M2: both arcs share one middle y
+  const html = require('./render.js').mapSvg(build([s(1, 0), s(2, 0), s(3, 3, [1, 2]), s(4, 1), s(5, 1), s(6, 2, [4, 5])], []).map);
+  const groups = [...html.matchAll(/<g data-edge="[^"]*"><path d="M([\d.]+) ([\d.]+) C([\d.]+) [\d.]+ [\d.]+ ([\d.]+)[^>]*\/><text x="([\d.]+)" y="([\d.]+)"([^>]*)>([^<]*)</g)].map(m => {
+    const [x, y1, cx, y2, tx, ty] = m.slice(1, 7).map(Number), wide = m[8].length * 8, end = m[7].includes('text-anchor="end"');
+    return { midX: x + 0.75 * (cx - x) + 0.75, midY: (y1 + y2) / 2, x0: end ? tx - wide : tx, x1: end ? tx : tx + wide, y: ty - 5, text: m[8] };
+  });
+  assert.equal(groups.length, 2);
+  for (const l of groups) for (const a of groups) if (a !== l && Math.abs(a.midY - l.y) < 10)
+    assert.ok(a.midX < l.x0 - 2 || a.midX > l.x1 + 2, `arc at x ${a.midX} runs through label "${l.text}" at x ${l.x0}..${l.x1}`);
+});
