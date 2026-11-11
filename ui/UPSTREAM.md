@@ -16,6 +16,10 @@ We never call our product "Astryx". Rule 38, ADR-012.
 | `guides/dense-writing.md` | `.claude/skills/dense-compression-protocol.md` | A header comment only |
 | `LICENSE.meta-astryx.txt` | `LICENSE` | None |
 
+Idea only, no code (story #189): `bench/vibe_prompts.json` and `bench/vibe.py` follow the prompt battery shape and
+the five fairness rules of upstream `internal/vibe-tests/README.md` (same prompts across arms, only the system under
+test varies, nothing leaks the expected answer, fresh agent per prompt). The runner is ours (`bench/run.py`).
+
 Ours, not copied: `schema/component.schema.json` and `schema/contract.schema.json` (JSON twins of the two
 type files, so Python checks run without Node), `scripts/check_ui_docs.py` (the idea of upstream's
 `docPropReferences.test.ts` and `docPropLiterals.test.ts`, checked against our contracts), and `components/Button/`.
