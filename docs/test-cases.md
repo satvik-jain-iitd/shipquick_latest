@@ -1711,3 +1711,19 @@ Scenario: nested arcs keep every label clear of every other arc
   Then the outer arc runs past the inner arc's "2 needs" label, and no label sits on another arc
 ```
 Tests: `roadmap/render.test.js` (`S83 nested arcs keep every label clear of every other arc`).
+
+## Story #84 (epic #80): roadmap HTML and Cloudflare Pages inputs
+```gherkin
+Scenario: no new inputs
+  Given a caller that passes only shipquick_ref
+  Then the html and deploy steps are skipped and only ROADMAP.md is saved on the roadmap branch, as in v0.6.0
+Scenario: html on
+  Given html true
+  Then roadmap.js writes the HTML page and roadmap.html is kept on the roadmap branch
+Scenario: html and a project name
+  Given cloudflare_project, cloudflare_account_id and the CLOUDFLARE_API_TOKEN secret
+  Then a pinned wrangler with no install scripts deploys the page, and a failed deploy fails the job
+Scenario: a project name and no token
+  Then the deploy step prints a notice and the job stays green
+```
+Tests: `tests/test_roadmap_workflow.py` (`test_s84_the_workflow_takes_html_and_cloudflare_inputs_and_an_optional_token`, `test_s84_with_no_new_inputs_the_html_and_deploy_steps_are_skipped`, `test_s84_the_html_page_is_written_by_the_roadmap_script_and_kept_on_the_branch`, `test_s84_the_deploy_uses_a_pinned_wrangler_with_no_install_scripts_and_fails_loudly`, `test_s84_inputs_reach_the_shell_through_env_not_inline`, `test_s84_node_22_is_set_up_for_wrangler`, `test_s84_the_workflow_security_check_passes`), `roadmap/roadmap.test.js` (`S84 an output file ending in .html gets the HTML page, not the Markdown one`).

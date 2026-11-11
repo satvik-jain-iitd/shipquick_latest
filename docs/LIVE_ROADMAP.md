@@ -48,6 +48,26 @@ It copies or updates `.github/workflows/roadmap-call.yml` (pinned to that commit
 To move to a newer release: update the submodule, run the command again with the new `--ref`.
 The ShipQuick checks compare with `origin/dev`. A project whose default branch is `main` runs them as `BASE=main bash knowledge/shipquick_latest/scripts/check_local.sh`; the base checks are skipped otherwise.
 
+### Optional: an HTML page and a Cloudflare Pages address (story #84)
+Owner decision, 26 Oct 2026: Cloudflare hosting is optional. Without the new inputs the workflow does exactly what it did in v0.6.0.
+- `html: true` also writes `roadmap.html` (the full page from `roadmap/render.js`, in the `timezone` of `roadmap.json`) and keeps it on the
+  `roadmap` branch beside `ROADMAP.md`. The HTML page shows the time it was made, so with `html` on every run makes one commit on that branch.
+- `cloudflare_project` (the Pages project name) and `cloudflare_account_id`, plus the secret `CLOUDFLARE_API_TOKEN` (a token with Pages edit
+  rights), publish that page to the project's own Cloudflare Pages address on every run. It deploys to the branch `main`, so make `main`
+  the production branch of the Pages project. The deploy runs `npx --yes --ignore-scripts wrangler@<exact version> pages deploy`.
+- No token: the deploy step prints a notice and the job stays green. A project name with no account id stops the job with an error line.
+  A deploy that fails (a wrong token, a missing project) fails the job, so the run shows red.
+- The caller passes only the one secret by name, never `secrets: inherit`. A caller job that publishes:
+```
+    uses: <owner>/shipquick_latest/.github/workflows/roadmap.yml@<SHA>
+    with:
+      shipquick_ref: <SHA>
+      cloudflare_project: my-roadmap
+      cloudflare_account_id: <account id>
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+```
+
 ### Triggers
 Issues (opened, edited, closed, reopened, labeled), a finished CI run (it runs on every pull request push, so Doing and Review stay current), a daily
 timer, and a manual run. There is no pull request trigger: on a pull request the job would run that change's own unreviewed script with write rights.
