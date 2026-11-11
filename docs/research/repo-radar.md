@@ -688,3 +688,12 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the grouping only. swift-ios-skills keeps one unit per Apple framework, which is the split here (InAppPurchase, Map, Tips, Wallet, ImagePlayground), with each row's framework read from its own Apple documentation page (`metadata.modules`), not guessed from the name: `transactionTask` is SecureElementCredential, not StoreKit, so it stays. No code copied.
 - Decision: build from scratch: five small docs in the existing doc shape, one map edit in `IOS_DOC_FAMILY`, one fixture entry in `tests/test_ui_catch_all.py`. A framework with one or two modifiers (HealthKit, WorkoutKit, MusicKit, RealityKit, the sensor anchors) stays in the catch-all; a doc of two rows is not worth a folder.
 - Confidence that nothing fits better: 0.8 (no repo checks a doc layout; the module field of Apple's own page is the ground truth for the grouping).
+
+## 11 Nov 2026, story #215: shared props move into the contract core
+- Need: a lint rule in the existing stdlib contract checker that fails when a prop with the same name and spec sits under both `platforms.android` and `platforms.ios` instead of in `core`.
+- Run: `scout.py --need "lint a cross-platform component contract so a prop shared by android and ios lives in core"`: no repos found.
+  `gh search repos --topic=design-tokens --limit 5`: VoltAgent/awesome-design-md (a list), chakra-ui/panda (CSS-in-JS), Shopify/polaris-react-archive (archived), system-ui/theme-ui (React themes), Manavarya09/design-extract (token extraction).
+- Read: the READMEs of Manavarya09/design-extract, chakra-ui/panda and system-ui/theme-ui (tier C, first lines). None checks a per-platform prop contract.
+- Borrowed: the core-versus-platform split from Astryx `packages/native` (already in `ui/schema/contract/types.ts`); the check is a few lines in `scripts/check_ui_docs.py`, beside the other contract rules.
+- Decision: add the rule to `check_ui_docs.py`; no new script. Nothing found fits.
+- Confidence that nothing fits better: 0.85 (the rule is specific to this kit's contract shape).

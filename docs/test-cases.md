@@ -1965,3 +1965,21 @@ Scenario: each framework doc exists, sets a family and holds a row of its stem
   Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
 ```
 Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by the `TechnologyModifiers` entry.
+
+## Story #215: shared props live in the contract core
+```gherkin
+Scenario: a prop with the same spec on android and ios and an empty core fails
+  Given a made-up contract with `content` under platforms.android and platforms.ios, same spec, and an empty core
+  When check_ui_docs.py runs
+  Then it exits 1 and names the prop and core
+  Test: test_s215_a_prop_with_the_same_spec_on_android_and_ios_and_an_empty_core_fails
+Scenario: the shared prop moved into core passes
+  Test: test_s215_the_shared_prop_moved_into_core_passes
+Scenario: the same name with a different spec per platform stays put
+  Given `value` as a number on android and a Binding<Double> on ios
+  Then the check passes, because one core type cannot hold both
+  Test: test_s215_the_same_name_with_a_different_spec_per_platform_stays_put
+Scenario: no kit contract repeats a shared prop under both platforms
+  Test: test_s215_no_kit_contract_repeats_a_shared_prop_under_both_platforms
+```
+Tests: `tests/test_check_ui_docs.py`.
