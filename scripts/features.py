@@ -42,6 +42,8 @@ def _defaults(path):
     for fid, d in feats.items():
         if not isinstance(d, dict) or not isinstance(d.get("default"), bool):
             raise FeaturesError(f"scripts/features_default.json: `{fid}` needs a true or false `default`")
+        if not isinstance(d.get("locked", False), bool):
+            raise FeaturesError(f"scripts/features_default.json: `{fid}.locked` must be true or false")
     return feats
 
 
@@ -50,7 +52,7 @@ def read(root, defaults=None):
     defaults = _defaults(defaults or HERE / "features_default.json")
     f = Path(root) / ".shipquick" / "features.json"
     mine = {}
-    if f.is_file():
+    if f.exists() or f.is_symlink():   # a directory or a dangling link is a broken file, never "missing"
         data = _load(f, ".shipquick/features.json")
         mine = data.get("features") if isinstance(data, dict) else None
         if not isinstance(mine, dict):
@@ -100,11 +102,16 @@ def main(argv=None):
     st.add_argument("id")
     st.add_argument("word")
     a = ap.parse_args(argv)
-    root = a.root
-    if not root:
-        p = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
-        root = p.stdout.strip() if p.returncode == 0 else "."
     try:
+        root = a.root
+        if not root:
+            try:
+                p = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+            except OSError as e:
+                raise FeaturesError(f"cannot run git to find the project folder ({e}); pass --root")
+            if p.returncode != 0 or not p.stdout.strip():
+                raise FeaturesError("not inside a git repository; pass --root")
+            root = p.stdout.strip()
         if a.cmd == "set":
             bad = set_feature(root, a.id, a.word)
             if bad:
