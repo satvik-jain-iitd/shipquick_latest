@@ -41,6 +41,7 @@ export default {
   },
   "platformApi": {
     "ios": {
+      "family": "widgets",
       "supporting": [
         {
           "name": "Widget",
@@ -54,6 +55,16 @@ export default {
           "name": "TimelineProvider",
           "use": "iOS 14.0. Apple: \"A type that advises WidgetKit when to update a widget’s display.\""
         }
+      ],
+      "variants": [
+        {"name": "widgetURL", "note": "`.widgetURL(_:)`, iOS 14.0. Apple: \"Sets the URL to open in the containing app when the user clicks the widget.\""},
+        {"name": "accessoryWidgetGroupStyle", "note": "`.accessoryWidgetGroupStyle(_:)`, not on iOS. Apple: \"The view modifier that can be applied to `AccessoryWidgetGroup` to specify the shape the three content views will be masked with. The value of `style` is set to `.automatic`, which is `.circular` by default.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (a watchOS accessory widget group; build iOS widgets with WidgetKit)"},
+        {"name": "controlWidgetActionHint", "note": "`.controlWidgetActionHint(_:)`, iOS 18.0. Apple: \"The action hint of the control described by the modified label.\""},
+        {"name": "controlWidgetStatus", "note": "`.controlWidgetStatus(_:)`, iOS 18.0. Apple: \"The status of the control described by the modified label.\""},
+        {"name": "widgetAccentable", "note": "`.widgetAccentable(_:)`, iOS 16.0. Apple: \"Adds the view and all of its subviews to the accented group.\""},
+        {"name": "widgetCurvesContent", "note": "`.widgetCurvesContent(_:)`, iOS 17.0. Apple: \"Displays the widget’s content along a curve if the context allows it.\""},
+        {"name": "widgetLabel", "note": "`.widgetLabel(_:)`, iOS 16.0. Apple: \"Returns a localized text label that displays additional content outside the accessory family widget’s main SwiftUI view.\""},
+        {"name": "containerBackground", "note": "`.containerBackground(_:for:)`, iOS 17.0. Apple: \"Sets the container background of the enclosing container using a view.\""}
       ]
     },
     "android": {

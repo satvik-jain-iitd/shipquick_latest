@@ -1,0 +1,5 @@
+{
+  "_source": "https://developer.android.com/develop/ui/compose/components/button (Compose Material 3 Button, read 11 Nov 2026)",
+  "composables": ["Button", "FilledTonalButton", "ElevatedButton", "OutlinedButton", "TextButton"],
+  "parameters": ["onClick", "modifier", "enabled", "shape", "colors", "elevation", "border", "contentPadding", "interactionSource", "content"]
+}

@@ -66,6 +66,16 @@ In a child, `lint/swiftlint.yml` does this job (story #185): every rule is a war
 It holds `ShipQuickTokens`: `Colors` (light and dark), `Fonts`, `Spacing`, `Radius`, `Motion`, `Haptics` and `touchTarget`.
 The feel tokens match Android's. CI compiles it with the templates.
 
+## The contract structs (story #222)
+
+`Sources/ShipQuickUI/Contracts/<Name>.swift` is written by `python3 scripts/emit_contracts.py`, one file per
+`ui/components/<Name>/<Name>.contract.json`. Do not edit them. Each holds `<Name>Props`: the contract's core props and
+its `platforms.ios` props as typed fields, one nested enum per enum prop. Content slots are listed in a comment, not
+stored (SwiftUI takes content as a view builder). Android props stay out; the Kotlin twin is its own story.
+`python3 scripts/emit_contracts.py --check` fails when a struct is missing, stale or has no contract left; it runs in
+`scripts/check_local.sh` (`ui-contracts`) and in CI. CI compiles the folder with the templates, so a type name that is
+not real Swift fails the build.
+
 ## Accessibility (story #220)
 
 One UI test per template runs Apple's accessibility audit on CI.

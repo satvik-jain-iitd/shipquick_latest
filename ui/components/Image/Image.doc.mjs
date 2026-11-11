@@ -77,7 +77,8 @@ export default {
         {"name": "symbolRenderingMode", "note": "`.symbolRenderingMode(_:)`, iOS 15.0. Apple: \"Sets the rendering mode for symbol images within this view.\""},
         {"name": "symbolVariableValueMode", "note": "`.symbolVariableValueMode(_:)`, iOS 26.0. Apple: \"Sets the variable value mode mode for symbol images within this view.\""},
         {"name": "symbolVariant", "note": "`.symbolVariant(_:)`, iOS 15.0. Apple: \"Makes symbols within the view show a particular variant.\""},
-        {"name": "imageScale", "note": "`.imageScale(_:)`, iOS 13.0. Apple: \"Scales images within the view according to one of the relative sizes available including small, medium, and large images sizes.\""}
+        {"name": "imageScale", "note": "`.imageScale(_:)`, iOS 13.0. Apple: \"Scales images within the view according to one of the relative sizes available including small, medium, and large images sizes.\""},
+        {"name": "asyncImageURLSession", "note": "`.asyncImageURLSession(_:)`, iOS 27.0. Apple: \"A modifier that adds a URL session for asynchronous images contained in the view to use when fetching image data.\""}
       ]
     }
   }

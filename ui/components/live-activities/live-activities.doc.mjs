@@ -27,6 +27,7 @@ export default {
   },
   "platformApi": {
     "ios": {
+      "family": "live-activities",
       "supporting": [
         {
           "name": "Activity",
@@ -40,6 +41,11 @@ export default {
           "name": "ActivityConfiguration",
           "use": "iOS 16.1. Apple: \"An object that describes the content of a Live Activity.\""
         }
+      ],
+      "variants": [
+        {"name": "activityBackgroundTint", "note": "`.activityBackgroundTint(_:)`, iOS 16.0. Apple: \"Sets the tint color for the background of a Live Activity that appears on the Lock Screen.\""},
+        {"name": "activitySystemActionForegroundColor", "note": "`.activitySystemActionForegroundColor(_:)`, iOS 16.1. Apple: \"The text color for the auxiliary action button that the system shows next to a Live Activity on the Lock Screen.\""},
+        {"name": "dynamicIsland", "note": "`.dynamicIsland(verticalPlacement:)`, iOS 16.1. Apple: \"Specifies the vertical placement for a view of an expanded Live Activity that appears in the Dynamic Island.\""}
       ]
     }
   }
