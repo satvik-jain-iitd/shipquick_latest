@@ -34,6 +34,9 @@ export default {
           "style": "unordered",
           "items": [
             "DocumentLaunchView: iOS 18.0. Apple: \"A view to present when launching document-related user experience.\"",
+            "documentBrowserContextMenu: `.documentBrowserContextMenu(_:)`, iOS 18.1. Apple: \"Adds to a `DocumentLaunchView` actions that accept a list of selected files as their parameter.\"",
+            "documentLaunchSubtitle: `.documentLaunchSubtitle(_:)`, iOS 27.0. Apple: \"Sets the subtitle displayed beneath the title on the document launch card.\"",
+            "documentLaunchTitle: `.documentLaunchTitle(_:)`, iOS 27.0. Apple: \"Sets the title displayed on the document launch card.\"",
             "DefaultDocumentGroupLaunchActions: iOS 18.0. Apple: \"The default actions for the document group launch scene and the document launch view.\""
           ]
         }

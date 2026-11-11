@@ -157,7 +157,7 @@ IOS_DOC_FAMILY = {
                     "presentationPreventsAppTermination", "presentationSizing", "presentedWindowStyle", "sheet"],
     "Button": ["buttonBorderShape", "ButtonBorderShape", "buttonRepeatBehavior", "buttonSizing", "buttonStyle", "EditButton", "NewDocumentButton",
                "PasteButton", "pasteDestination", "renameAction", "RenameButton"],
-    "DocumentLaunchView": ["DocumentLaunchView"],
+    "DocumentLaunchView": ["DocumentLaunchView", "documentBrowserContextMenu", "documentLaunchSubtitle", "documentLaunchTitle"],
     "Canvas": ["Canvas"],
     "ControlGroup": ["controlGroupStyle"],
     "DatePicker": ["datePickerStyle", "MultiDatePicker"],
@@ -190,7 +190,6 @@ IOS_DOC_FAMILY = {
     "PageControl": ["indexViewStyle"],
     "Picker": ["defaultWheelPickerItemHeight", "horizontalRadioGroupLayout", "paletteSelectionEffect", "pickerStyle"],
     "Popover": ["popover"],
-    "Presentation modifiers": ["photosPickerMetadataOptions", "postToPhotosSharedAlbumSheet"],
     "ProgressView": ["progressViewStyle"],
     "ScrollView": ["defaultScrollAnchor", "scrollDismissesKeyboard", "onScrollGeometryChange", "onScrollPhaseChange", "onScrollTargetVisibilityChange",
                    "onScrollVisibilityChange", "scrollBounceBehavior", "scrollClipDisabled", "scrollContentBackground",
@@ -255,7 +254,8 @@ IOS_DOC_FAMILY = {
                         "subscriptionStatusTask", "subscriptionStoreButtonLabel", "subscriptionStoreControlBackground",
                         "subscriptionStoreControlIcon", "subscriptionStoreControlStyle", "subscriptionStoreOptionGroupStyle",
                         "subscriptionStorePickerItemBackground", "subscriptionStorePolicyDestination",
-                        "subscriptionStorePolicyForegroundStyle", "subscriptionStoreSignInAction"],
+                        "subscriptionStorePolicyForegroundStyle", "subscriptionStoreSignInAction",
+                        "appStoreMerchandising", "appStoreOverlay", "manageSubscriptionsSheet", "offerCodeRedemption", "refundRequestSheet"],
     "Map": ["lookAroundViewer", "mapCameraKeyframeAnimator", "mapControls", "mapControlVisibility", "mapFeatureSelectionAccessory",
             "mapFeatureSelectionContent", "mapFeatureSelectionDisabled", "mapItemDetailPopover", "mapItemDetailSheet", "mapScope",
             "mapStyle", "onMapCameraChange"],
@@ -266,6 +266,15 @@ IOS_DOC_FAMILY = {
                "payWithApplePayButtonDisableCardArt", "payWithApplePayButtonStyle", "verifyIdentityWithWalletButtonStyle"],
     "Image Playground": ["imagePlaygroundGenerationStyle", "imagePlaygroundOptions", "imagePlaygroundPersonalizationPolicy",
                          "imagePlaygroundSheet"],
+    # Story #296 (3/6): PresentationModifiers split by the screen each row presents. It keeps only rows no doc fits.
+    "PhotosPicker": ["photosPicker", "photosPickerAccessoryVisibility", "photosPickerDisabledCapabilities", "photosPickerMetadataOptions",
+                     "photosPickerSearchText", "photosPickerStyle", "photosReferenceImageViewer", "photosSharedAlbumCreationSheet",
+                     "photosSharedAlbumCustomizationSheet", "photosSharedAlbumPostingSheet", "postToPhotosSharedAlbumSheet"],
+    "File dialogs": ["fileDialogBrowserOptions", "fileDialogConfirmationLabel", "fileDialogCustomizationID", "fileDialogDefaultDirectory",
+                     "fileDialogImportsUnresolvedAliases", "fileDialogMessage", "fileDialogURLEnabled", "fileExporter",
+                     "fileExporterFilenameLabel", "fileImporter", "fileMover"],
+    "Contact access": ["contactAccessButtonCaption", "contactAccessButtonStyle", "contactAccessPicker"],
+    "live-activities": ["activityBackgroundTint", "activitySystemActionForegroundColor"],
 }
 
 HEADER = re.compile(r"^// shipquick: (\w+): (.*)$")

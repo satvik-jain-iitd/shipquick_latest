@@ -54,7 +54,12 @@ export default {
         {"name": "subscriptionStoreSignInAction", "note": "`.subscriptionStoreSignInAction(_:)`, iOS 17.0. Apple: \"Adds an action to perform when a person uses the sign-in button on a subscription store view within a view.\""},
         {"name": "multiSeatDataSharingConsentSheet", "note": "`.multiSeatDataSharingConsentSheet(isPresented:subscriptionGroupID:onCompletion:)`, iOS 27.3. Apple: \"Presents the data sharing consent sheet, where a subscriber decides whether to share account-level data with you.\""},
         {"name": "multiSeatInvitationBehavior", "note": "`.multiSeatInvitationBehavior(_:)`, iOS 27.3. Apple: \"Sets the behavior of the Apple-owned invitation sheet that appears after a customer purchases a multi-seat subscription from a StoreKit view.\""},
-        {"name": "multiSeatInvitationSheet", "note": "`.multiSeatInvitationSheet(isPresented:subscriptionGroupID:onCompletion:)`, iOS 27.3. Apple: \"Presents the Apple-owned multi-seat invitation sheet, allowing the subscriber to invite others to join their multi-seat subscription.\""}
+        {"name": "multiSeatInvitationSheet", "note": "`.multiSeatInvitationSheet(isPresented:subscriptionGroupID:onCompletion:)`, iOS 27.3. Apple: \"Presents the Apple-owned multi-seat invitation sheet, allowing the subscriber to invite others to join their multi-seat subscription.\""},
+        {"name": "appStoreMerchandising", "note": "`.appStoreMerchandising(isPresented:kind:onDismiss:)`, iOS 26.0. Apple: \"Display a merchandising view.\""},
+        {"name": "appStoreOverlay", "note": "`.appStoreOverlay(isPresented:configuration:)`, iOS 14.0. Apple: \"Presents a StoreKit overlay when a given condition is true.\""},
+        {"name": "manageSubscriptionsSheet", "note": "`.manageSubscriptionsSheet(isPresented:)`, iOS 15.0. Apple: \"Presents the App Store sheet for managing subscriptions.\""},
+        {"name": "offerCodeRedemption", "note": "`.offerCodeRedemption(options:isPresented:onCompletion:)`, iOS 27.0. Apple: \"Presents a sheet that enables customers to redeem offer codes that you configure in App Store Connect.\""},
+        {"name": "refundRequestSheet", "note": "`.refundRequestSheet(for:isPresented:onDismiss:)`, iOS 15.0. Apple: \"Display the refund request sheet for the given transaction.\""}
       ]
     }
   }
