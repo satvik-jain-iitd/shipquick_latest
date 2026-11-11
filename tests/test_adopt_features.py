@@ -19,6 +19,8 @@ def child(tmp_path):
     c = tmp_path / "kid"
     (c / ".github" / "workflows").mkdir(parents=True)
     subprocess.run(["git", "init", "-q", "-b", "dev", str(c)], check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=c, check=True)   # the CI runner has no git identity
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=c, check=True)
     (c / ".github" / "workflows" / "ci.yml").write_text("name: Kid CI\non:\n  push:\n", encoding="utf-8")
     return c
 
