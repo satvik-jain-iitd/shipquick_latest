@@ -39,7 +39,8 @@ export default {
         {"name": "webViewOnScrollGeometryChange", "note": "`.webViewOnScrollGeometryChange(for:of:action:)`, iOS 26.0. Apple: \"Adds an action to be performed when a value, created from a scroll geometry, changes.\""},
         {"name": "webViewScrollInputBehavior", "note": "`.webViewScrollInputBehavior(_:for:)`, iOS 26.0. Apple: \"Enables or disables scrolling in web views when using particular inputs.\""},
         {"name": "webViewScrollPosition", "note": "`.webViewScrollPosition(_:)`, iOS 26.0. Apple: \"Associates a binding to a scroll position with the web view.\""},
-        {"name": "webViewTextSelection", "note": "`.webViewTextSelection(_:)`, iOS 26.0. Apple: \"Determines whether to allow people to select or otherwise interact with text.\""}
+        {"name": "webViewTextSelection", "note": "`.webViewTextSelection(_:)`, iOS 26.0. Apple: \"Determines whether to allow people to select or otherwise interact with text.\""},
+        {"name": "onWebViewImmersiveEnvironmentRequest", "note": "`.onWebViewImmersiveEnvironmentRequest(shouldAllow:present:dismiss:)`, not on iOS. Apple: \"Manages the lifecycle of immersive environments requested by websites.\"", "status": "unavailable-ios", "replacement": "nothing on iOS (a visionOS volume or immersive space; iOS has no 3D space around the app)"}
       ],
       "supporting": [
         {"name": "WebView", "use": "iOS 26.0. Apple: \"A view that displays some web content.\""},

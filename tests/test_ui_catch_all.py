@@ -28,6 +28,27 @@ SPLIT = {
         "shortcutslink": "app-intents-and-app-shortcuts", "siritip": "app-intents-and-app-shortcuts",
         "widget": "widgets", "asyncimage": "Image",
     },
+    # 2/6: TechnologyModifiers split by Apple framework (each row's module read from its own Apple page, 11 Nov 2026)
+    "TechnologyModifiers": {
+        "inapppurchase": "InAppPurchase", "entitlement": "InAppPurchase", "storeproduct": "InAppPurchase",
+        "storebutton": "InAppPurchase", "subscription": "InAppPurchase", "product": "InAppPurchase", "multiseat": "InAppPurchase",
+        "map": "Map", "lookaround": "Map",
+        "tip": "Tips",
+        "applepay": "Wallet", "wallet": "Wallet", "paylater": "Wallet",
+        "imageplayground": "ImagePlayground",
+        "webview": "web-view", "gesture": "Gestures", "photospicker": "PhotosPicker",
+    },
+    # 3/6: PresentationModifiers split by the screen each row presents (stems kept narrow: musicSubscriptionOffer is
+    # MusicKit, not StoreKit, and familyActivityPicker is Family Controls, not a Live Activity)
+    "PresentationModifiers": {
+        "photos": "PhotosPicker",
+        "filedialog": "FileDialogs", "fileexporter": "FileDialogs", "fileimporter": "FileDialogs", "filemover": "FileDialogs",
+        "contactaccess": "ContactAccess",
+        "appstore": "InAppPurchase", "managesubscriptions": "InAppPurchase", "offercode": "InAppPurchase",
+        "refundrequest": "InAppPurchase",
+        "activitybackground": "live-activities", "activitysystemaction": "live-activities",
+        "documentlaunch": "DocumentLaunchView", "documentbrowser": "DocumentLaunchView",
+    },
 }
 
 
