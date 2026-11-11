@@ -1623,7 +1623,7 @@ Scenario: a registry that is JSON but not a components object is a problem, not 
   Then no exception is raised and the run reports a problem naming the path and "components"
   Test: test_S38_a_registry_that_is_json_but_not_a_components_object_is_a_problem_not_a_traceback
 ```
-Tests: `tests/test_ios_snapshots.py`, `tests/test_ci_must_have.py` (the four pr-size ones). The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.
+Tests: `tests/test_canvas_stage.py::DesignSystem`.
 
 ## Story #220 (S5e): XCUITest accessibility audit per iOS screen
 
@@ -1649,6 +1649,8 @@ Scenario: only named findings on Apple's stock controls are let through (CI roun
   Then knownSystemFindings lists each as "<screen>|<check>|<label>", every screen exists, and ACCESSIBILITY.md has one row per entry
   And any other finding still fails the test
   Test: test_s220_every_known_system_finding_is_narrow_and_written_down
+Scenario: each story keeps its own Tests line (review of #390)
+  Then the #188 Tests line sits right after #188's closing fence, and the #220 section has exactly one Tests line
+  Test: test_s220_the_test_cases_rows_keep_each_story_with_its_own_tests_line
 ```
 Tests: `tests/test_ios_a11y_audit.py`. The Swift UI tests (`ui/ios/A11yAudit/Tests/TemplateAccessibilityAuditTests.swift`, 5 tests) run only in the CI job `ui-ios-snapshots`.
-Tests: `tests/test_canvas_stage.py::DesignSystem`.

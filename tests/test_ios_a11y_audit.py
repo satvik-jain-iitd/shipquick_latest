@@ -84,3 +84,13 @@ def test_s220_every_known_system_finding_is_narrow_and_written_down():
     for screen, check, label in entries:
         row = f"| {screen} | {check} | {label or '(no element)'} |"
         assert row in doc, f"ACCESSIBILITY.md has no row {row}"
+
+
+def test_s220_the_test_cases_rows_keep_each_story_with_its_own_tests_line():
+    """Review of #390: the #220 block went between #188's scenarios and #188's Tests line."""
+    text = (ROOT / "docs" / "test-cases.md").read_text(encoding="utf-8")
+    s188 = text.split("## Story #188", 1)[1].split("\n## ", 1)[0]
+    assert s188.rstrip().endswith("```\nTests: `tests/test_canvas_stage.py::DesignSystem`."), "#188 lost its Tests line"
+    s220 = text.split("## Story #220", 1)[1].split("\n## ", 1)[0]
+    assert re.findall(r"^Tests: ", s220, re.M) == ["Tests: "], "#220 must have exactly one Tests line"
+    assert "test_ios_a11y_audit.py" in s220
