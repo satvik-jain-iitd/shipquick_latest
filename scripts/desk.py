@@ -6,6 +6,7 @@ Usage: python3 scripts/desk.py [--port 8765]
 """
 import argparse
 import csv
+import fnmatch
 import json
 import os
 import re
@@ -85,6 +86,37 @@ def read_switches(repo_dir):
     }
 
 
+def protected_globs(repo_dir):
+    """The globs of scripts/protected_paths.txt, the one list review_merge.sh reads (the repo's own, else the kit's in a child)."""
+    root = Path(repo_dir)
+    for rel in ("scripts/protected_paths.txt", "knowledge/shipquick_latest/scripts/protected_paths.txt"):
+        f = root / rel
+        if f.is_file():
+            lines = [l.split("#", 1)[0].strip() for l in f.read_text(encoding="utf-8").splitlines()]
+            return [l for l in lines if l] + [".shipquick/*"]
+    return [".shipquick/*"]
+
+
+def owner_reason(p, globs, mode):
+    """Why this open PR needs the owner, or None. Order: a protected path, an unticked UAT box, an approval in manual or semi."""
+    for f in (x.get("path", "") for x in p.get("files") or []):
+        if any(fnmatch.fnmatchcase(f, g) for g in globs):   # bash [[ == ]] glob: `*` crosses `/`, same as fnmatchcase
+            return "protected path, your merge (%s)" % f
+    if p.get("baseRefName") == "main" and p.get("headRefName") == "dev":
+        uat, on = [], False
+        for line in (p.get("body") or "").splitlines():
+            if line.startswith("## "):
+                on = line.startswith("## UAT on dev")
+            elif on:
+                uat.append(line)
+        n = sum(1 for l in uat if re.match(r"\s*[-*] \[ \]", l))
+        if n:
+            return "release: %d unticked test box%s, you tick them on the dev link" % (n, "" if n == 1 else "es")
+    if p.get("reviewDecision") == "APPROVED" and mode in ("manual", "semi", "not set"):
+        return "approved, your merge (%s mode)" % mode
+    return None
+
+
 def default_band_path(repo_dir):
     # The Ponytail ledger for this project: one CSV per repo folder name, written on this Mac.
     # The writer's rule is ASCII only (JS \w), so re.ASCII. The config root follows XDG_CONFIG_HOME, like the writer.
@@ -118,17 +150,31 @@ def read_spend(path):
     return {"rows": rows, "totals": totals}
 
 
+def read_roadmap_link(run):
+    """The live roadmap is ROADMAP.md on the `roadmap` branch (roadmap.yml). 404 on the branch is "no branch", not an error."""
+    url = json.loads(run(["repo", "view", "--json", "url"]))["url"]
+    try:
+        run(["api", "repos/{owner}/{repo}/branches/roadmap", "--silent"])
+    except DeskError as e:
+        if "404" in str(e) or "Not Found" in str(e):
+            return {"state": "no_branch"}
+        raise
+    return {"state": "link", "url": url + "/blob/roadmap/ROADMAP.md"}
+
+
 def gather(run, repo_dir, now, band=None):
-    errors, waiting, roadmap = [], [], []
+    errors, waiting, roadmap, roadmap_link = [], [], [], {"state": "unknown"}
     try:
         spend = read_spend(band or default_band_path(repo_dir))
     except (ValueError, OSError, csv.Error) as e:
         spend = {"rows": [], "note": "ledger unreadable: %s" % e}
     try:
         prs = json.loads(run(["pr", "list", "--state", "open", "--limit", "50",
-                              "--json", "number,title,isDraft,url,statusCheckRollup"]))
+                              "--json", "number,title,isDraft,url,statusCheckRollup,files,baseRefName,headRefName,body,reviewDecision"]))
+        globs, mode = protected_globs(repo_dir), read_switches(repo_dir)["mode"]
         waiting = [{"number": p["number"], "title": p["title"], "draft": p["isDraft"], "url": p["url"],
-                    "checks": checks_summary(p.get("statusCheckRollup"))} for p in prs]
+                    "checks": checks_summary(p.get("statusCheckRollup")), "reason": why}
+                   for p in prs for why in [owner_reason(p, globs, mode)] if why]
     except DeskError as e:
         errors.append(str(e))
     except (ValueError, KeyError):
@@ -141,12 +187,19 @@ def gather(run, repo_dir, now, band=None):
         errors.append(str(e))
     except (ValueError, KeyError):
         errors.append("gh returned bad JSON for issues")
+    try:
+        roadmap_link = read_roadmap_link(run)
+    except DeskError as e:
+        errors.append(str(e))
+    except (ValueError, KeyError):
+        errors.append("gh returned bad JSON for the repository")
     return {
         "as_of": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
         "waiting": waiting,
         "decided": read_trace(repo_dir),
         "switches": read_switches(repo_dir),
         "roadmap": roadmap,
+        "roadmap_link": roadmap_link,
         "spend": spend,
         "error": "; ".join(errors) or None,
         "stale": False,
