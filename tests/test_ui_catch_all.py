@@ -59,6 +59,14 @@ SPLIT = {
         "dragpoint": "DragAndDrop", "droppoint": "DragAndDrop",
         "focus": "Focus",
     },
+    # 5/6: AppearanceModifiers split by the surface each row styles (windows, redaction, visionOS space, widgets)
+    "AppearanceModifiers": {
+        "window": "WindowBehavior",
+        "redact": "Redaction", "privacysensitive": "Redaction", "invalidatable": "Redaction", "contentcapture": "Redaction",
+        "spatial": "Spatial", "surroundings": "Spatial", "breakthrough": "Spatial", "upperlimb": "Spatial",
+        "volumebaseplate": "Spatial",
+        "widget": "widgets", "containerbackground": "widgets",
+    },
 }
 
 
