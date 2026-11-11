@@ -67,6 +67,15 @@ SPLIT = {
         "volumebaseplate": "Spatial",
         "widget": "widgets", "containerbackground": "widgets",
     },
+    # 6/6: GraphicsModifiers split by the effect each row applies (3D, shaders, color adjustments)
+    "GraphicsModifiers": {
+        "3d": "Transforms3D", "perspectiverotation": "Transforms3D", "projectioneffect": "Transforms3D",
+        "coloreffect": "ShaderEffects", "distortioneffect": "ShaderEffects", "layereffect": "ShaderEffects",
+        "visualeffect": "ShaderEffects",
+        "brightness": "ColorAdjustments", "contrast": "ColorAdjustments", "colorinvert": "ColorAdjustments",
+        "colormultiply": "ColorAdjustments", "grayscale": "ColorAdjustments", "huerotation": "ColorAdjustments",
+        "luminance": "ColorAdjustments", "saturation": "ColorAdjustments",
+    },
 }
 
 
