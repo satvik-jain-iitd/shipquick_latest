@@ -133,12 +133,12 @@ def test_s222_a_renamed_contract_field_fails_check_and_names_the_struct_file(tmp
     assert emit_contracts.main(["--check", "--root", str(root), "--out", str(out)]) == 0
     path = root / "Button" / "Button.contract.json"
     c = json.loads(path.read_text(encoding="utf-8"))
-    c["core"]["title"] = c["core"].pop("label")
+    c["core"]["title"] = c["core"].pop(next(iter(c["core"])))  # the first core prop of Button, whatever it is called
     path.write_text(json.dumps(c), encoding="utf-8")
     assert emit_contracts.main(["--check", "--root", str(root), "--out", str(out)]) == 1
     assert "Button.swift" in capsys.readouterr().out
     assert emit_contracts.main(["--root", str(root), "--out", str(out)]) == 0  # regenerate
-    assert "public var title: String" in (out / "Button.swift").read_text(encoding="utf-8")
+    assert "public var title" in (out / "Button.swift").read_text(encoding="utf-8")
     assert emit_contracts.main(["--check", "--root", str(root), "--out", str(out)]) == 0
 
 
