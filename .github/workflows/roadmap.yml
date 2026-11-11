@@ -62,22 +62,37 @@ jobs:
           repository: ${{ inputs.shipquick_repo }}
           ref: ${{ inputs.shipquick_ref }}
           path: .shipquick
-          sparse-checkout: roadmap
+          sparse-checkout: |
+            roadmap
+            scripts
           persist-credentials: false
+      - name: Is the roadmap feature on? (story 424)
+        id: flag
+        run: |
+          # The project is checked out at the default branch here (push, schedule, issues), so its own file is the base.
+          # A missing file means the default (on). A broken file is an error, never "on".
+          rc=0
+          python3 .shipquick/scripts/features.py --root project get roadmap > "$RUNNER_TEMP/flag.out" 2> "$RUNNER_TEMP/flag.err" || rc=$?
+          if [ "$rc" = 0 ]; then echo "on=true" >> "$GITHUB_OUTPUT"
+          elif [ "$rc" = 1 ]; then echo "roadmap is off: nothing is read or written."; echo "on=false" >> "$GITHUB_OUTPUT"
+          else cat "$RUNNER_TEMP/flag.err"; exit 1; fi
       - name: Read issues and pull requests (this repo only)
+        if: steps.flag.outputs.on == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api graphql -f owner="${GITHUB_REPOSITORY%/*}" -f name="${GITHUB_REPOSITORY#*/}" \
             -f query="$(cat .shipquick/roadmap/query.graphql)" > "$RUNNER_TEMP/answer.json"
       - name: Write ROADMAP.md
+        if: steps.flag.outputs.on == 'true'
         run: node .shipquick/roadmap/roadmap.js "$RUNNER_TEMP/answer.json" project/roadmap.json "$RUNNER_TEMP/ROADMAP.md"
       - name: Write roadmap.html
-        if: inputs.html || inputs.cloudflare_project != ''
+        if: steps.flag.outputs.on == 'true' && (inputs.html || inputs.cloudflare_project != '')
         run: |
           mkdir -p "$RUNNER_TEMP/site"
           node .shipquick/roadmap/roadmap.js "$RUNNER_TEMP/answer.json" project/roadmap.json "$RUNNER_TEMP/site/index.html"
       - name: Save it on the roadmap branch
+        if: steps.flag.outputs.on == 'true'
         working-directory: project
         env:
           WITH_HTML: ${{ inputs.html }}
@@ -105,12 +120,12 @@ jobs:
           git commit -q -m "docs: update the roadmap page"
           git push origin HEAD:roadmap
       - name: Set up Node for wrangler
-        if: inputs.cloudflare_project != ''
+        if: steps.flag.outputs.on == 'true' && (inputs.cloudflare_project != '')
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
       - name: Deploy to Cloudflare Pages
-        if: inputs.cloudflare_project != ''
+        if: steps.flag.outputs.on == 'true' && (inputs.cloudflare_project != '')
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare_account_id }}

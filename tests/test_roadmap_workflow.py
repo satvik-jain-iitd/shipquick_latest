@@ -89,9 +89,10 @@ def test_s84_the_workflow_takes_html_and_cloudflare_inputs_and_an_optional_token
 
 
 def test_s84_with_no_new_inputs_the_html_and_deploy_steps_are_skipped():
-    assert "if: inputs.html || inputs.cloudflare_project != ''" in _step("Write roadmap.html")
-    assert "if: inputs.cloudflare_project != ''" in _step("Deploy to Cloudflare Pages")
-    assert "if:" not in _step("Write ROADMAP.md") and "if:" not in _step("Save it on the roadmap branch")
+    assert "(inputs.html || inputs.cloudflare_project != '')" in _step("Write roadmap.html")   # story #424: also behind the roadmap flag
+    assert "(inputs.cloudflare_project != '')" in _step("Deploy to Cloudflare Pages")
+    for always in ("Write ROADMAP.md", "Save it on the roadmap branch"):   # story #424: only the roadmap flag gates these two
+        assert re.findall(r"if: .*", _step(always)) == ["if: steps.flag.outputs.on == 'true'"], always
     save = _step("Save it on the roadmap branch")
     assert 'cp "$RUNNER_TEMP/ROADMAP.md" ROADMAP.md' in save and "git add ROADMAP.md" in save
 
@@ -125,7 +126,7 @@ def test_s84_inputs_reach_the_shell_through_env_not_inline():
 
 def test_s84_node_22_is_set_up_for_wrangler():
     node = _step("Set up Node for wrangler")
-    assert "if: inputs.cloudflare_project != ''" in node
+    assert "(inputs.cloudflare_project != '')" in node
     assert re.search(r"uses: actions/setup-node@[0-9a-f]{40}", node) and 'node-version: "22"' in node
 
 

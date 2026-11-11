@@ -12,6 +12,8 @@
 #                        `auto` when .shipquick/roles.yml lists one account as the only coder and the
 #                        only reviewer: review_merge.sh would then never find an approver who is not
 #                        the author, so auto could never merge anything.
+# Story #425 (the `modes` feature, scripts/features.py): with `modes` off, `get` prints manual whatever the file says, so no agent
+# ever merges alone. A broken features file takes the same safe side (manual) and prints the error on stderr: off is the safe side.
 # Agents only run `get`. Before .shipquick/mode exists, only the owner runs `set`, by typing
 # `! bash scripts/mode.sh set <word>` himself: a `!` line is his own shell input, never an agent's
 # tool call. If an agent could set auto, it could then merge through review_merge.sh and the gate
@@ -23,6 +25,11 @@ tracked="$top/.shipquick/mode"
 file="$common/shipquick-mode"
 case "${1:-}" in
   get)
+    frc=0; fout="$(python3 "$(dirname "${BASH_SOURCE[0]}")/features.py" --root "$top" get modes 2>&1)" || frc=$?
+    if [ "$frc" -ne 0 ]; then
+      [ "$frc" -eq 1 ] || echo "mode.sh: $fout -- reading the mode as manual (off is the safe side)" >&2
+      echo manual; exit 0
+    fi
     if [ -f "$tracked" ]; then
       mode=$({ tr -d '[:space:]' < "$tracked"; } 2>/dev/null)
     else

@@ -18,6 +18,9 @@ a = sys.argv[1:]
 if a[:2] == ["repo", "view"]:
     # real gh ignores GH_REPO here and reads the folder's git remotes: answer with a wrong repo (issue #88)
     print(json.dumps({"defaultBranchRef": {"name": "master-of-the-wrong-repo"}}))
+elif a[:1] == ["api"] and "contents/.shipquick/features.json" in a[1]:
+    # story #424: no features file on the base branch = the defaults (close-on-merge on)
+    sys.stderr.write("gh: Not Found (HTTP 404)\\n"); sys.exit(1)
 elif a[:2] == ["api", "repos/{owner}/{repo}"]:
     print(json.dumps({"default_branch": fx["default"]}))
 elif a[:2] == ["pr", "view"]:
