@@ -2009,3 +2009,15 @@ Scenario: each owner doc exists, sets a family and holds a row of its stem
   Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
 ```
 Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by the `AccessibilityModifiers` entry.
+
+## Story #296 (5/6, 6/6): the AppearanceModifiers and GraphicsModifiers catch-alls hold only rows no doc fits
+```gherkin
+Scenario: a catch-all row whose surface or effect has its own doc fails
+  Given the fixture entries for AppearanceModifiers (window, redaction, spatial and widget stems) and GraphicsModifiers (3D, shader and color adjustment stems)
+  When a row of either doc holds one of its stems
+  Then the test fails naming the catch-all, the row and the doc that owns it
+  Test: test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails
+Scenario: each owner doc exists, sets a family and holds a row of its stem
+  Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
+```
+Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by both entries.

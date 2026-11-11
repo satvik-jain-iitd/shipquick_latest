@@ -711,3 +711,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the grouping only, by task, as Apple's Accessibility page groups its modifiers. No code copied.
 - Decision: build from scratch: three small docs in the existing doc shape, rows added to DragAndDrop and Focus, one map edit in `IOS_DOC_FAMILY`, one fixture entry. `accessibilityChartDescriptor` stays: the swift-charts doc has no variants list.
 - Confidence that nothing fits better: 0.8.
+
+## 11 Nov 2026, story #296 (5/6, 6/6): split the AppearanceModifiers and GraphicsModifiers catch-all docs
+- Need: split two SwiftUI modifier docs into per-surface and per-effect docs, and fail when a catch-all row names a surface that has its own doc.
+- Run: same method as 3/6 and 4/6 (no repo checks a doc layout); only the topic changed. Reused, not rerun.
+- Borrowed: the grouping only (windows, redaction, visionOS space, widgets; 3D transforms, shaders, color adjustments), as Apple's own pages group them. No code copied.
+- Decision: build from scratch: six small docs in the existing doc shape, seven rows added to widgets, one map edit and two fixture entries.
+- Confidence that nothing fits better: 0.8.
