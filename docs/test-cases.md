@@ -1594,46 +1594,34 @@ Scenario: adopt.sh writes, keeps and validates the milestone
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
 
-## Story #219: snapshots and Prefire for ui/ios
+## Story #188 (S10): a Design system board on the canvas
 ```gherkin
-Scenario: the package has a test target with the two snapshot packages pinned exactly
-  Then ui/ios/Package.swift names swift-snapshot-testing and Prefire with `exact:` versions, a test target ShipQuickUITests with SnapshotTesting and PrefireTestsPlugin, all behind the SHIPQUICK_SNAPSHOTS guard, and the library a child resolves has no `.package(`; ui/ios/.prefire.yml names the target
-  Test: test_s219_the_package_has_a_test_target_with_snapshot_testing_and_prefire_pinned_exactly
-Scenario: one snapshot test per template over the whole matrix
-  Then TemplateSnapshotTests.swift has a test<Name>() per template and names light, dark, extraSmall, accessibilityExtraExtraExtraLarge, iPhoneSe and ProMax, and says how record mode is switched on
-  Test: test_s219_one_snapshot_test_per_template_over_the_whole_matrix
-Scenario: every template has a #Preview for Prefire
-  Test: test_s219_every_template_has_a_preview_for_prefire
-Scenario: CI runs the snapshot tests on a pinned Xcode and simulator with a timeout
-  Then ci.yml has a job ui-ios-snapshots behind ui-changes on macos-15 with timeout-minutes, Xcode 16.4, `xcodebuild test` on iPhone 16 iOS 18.5, the record env var, an upload-artifact step for __Snapshots__, a workflow_dispatch `record` input, and the gate waits for it
-  Test: test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout
-Scenario: the reference images are a protected path
-  Test: test_s219_the_reference_images_are_a_protected_path
-Scenario: the doc tells how references are recorded and refreshed
-  Then ui/ios/SNAPSHOTS.md names record, workflow_dispatch, gh run download, __Snapshots__, protected, Xcode 16.4 and iOS 18.5, and the README points to it
-  Test: test_s219_the_doc_tells_how_references_are_recorded_and_refreshed
-Scenario: the reference folder holds one PNG per template and matrix cell (#375 review)
-  Then ui/ios/ShipQuickUITests/__Snapshots__/TemplateSnapshotTests/ holds exactly test<Template>.<light|dark>-<xs|ax5>-<se|promax>.png for every template, 40 in all
-  Test: test_s219_the_reference_folder_holds_one_png_per_template_and_matrix_cell
-Scenario: CI names the scheme and never parses xcodebuild output (#375 review)
-  Then the job runs `xcodebuild test -scheme ShipQuickUI` and has no json.load
-  Test: test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout
-Scenario: recorded reference images do not count toward pr-size (#375 review)
-  Given 10 text files and 45 PNGs under ui/ios/ShipQuickUITests/__Snapshots__/, pr-size counts 10 and passes
-  Given 50 PNGs outside __Snapshots__ and one .txt inside it, pr-size counts 51 and fails
-  Given 51 PNGs under docs/__Snapshots__/ (not the protected folder), pr-size counts 51 and fails (round 4)
-  Then both ci.yml pr-size awk lines anchor the exclusion to ^ui/ios/ShipQuickUITests/__Snapshots__/.*\.png$
-  Tests: test_s219_reference_images_under_snapshots_do_not_count_toward_pr_size, test_s219_a_png_outside_snapshots_and_a_non_png_inside_still_count, test_s219_pngs_in_a_snapshots_folder_outside_the_protected_path_still_count, test_s219_cis_pr_size_job_leaves_out_the_same_reference_images (tests/test_ci_must_have.py)
-Scenario: the snapshot job runs only when iOS paths change (#375 review, round 2)
-  Given ui-changes has an `ios` output written by a grep over the changed names
-  Then that grep matches ui/ios/** and design/** and does not match ui/android/** or tests/fixtures/**
-  And the job ui-ios-snapshots waits on needs.ui-changes.outputs.ios, not on `ui`
-  And it runs unless ios is 'false', so a fail-safe exit that writes only ui=true still runs it (round 3)
-  And the story #217 fail-safe lines stay as they were
-  Test: test_s219_the_snapshot_job_runs_only_when_ios_paths_change
-Scenario: the doc states the real precision of the compare (#375 review, round 2)
-  Then ui/ios/SNAPSHOTS.md names `perceptualPrecision <n>` with the same n as TemplateSnapshotTests.swift, points to that file, and never says "changed pixel"
-  Test: test_s219_the_doc_states_the_real_precision_of_the_compare
+Scenario: the registry renders a board with every component row, right after Design learnings
+  Given a manifest in columns layout with a learnings section and a "registry" path to a fixture registry of three rows (two platforms)
+  When the layout runs
+  Then project/design-system.dc.html holds an Android and an iOS column, every component name on its base, its status (given, "twin #n" or "no twin yet") and its doc link (given or the kit's default), painted in the manifest's ink
+  And the board sits in the learnings section, in the same row as the learnings board, fully to its right, with the LEARNINGS prefix
+  Test: test_S34_the_registry_renders_a_board_with_every_component_row_under_its_platform_right_after_learnings
+Scenario: a missing registry or an unknown platform is a problem, and no registry key means no board
+  Given the manifest names a registry file that does not exist, or one whose row has platform "web"
+  Then the run reports a problem naming the file or the row
+  And without the "registry" key no design-system board is made
+  Test: test_S35_a_missing_registry_or_an_unknown_platform_is_a_problem_and_no_registry_key_means_no_board
+Scenario: --check fails naming a stale design-system board until --apply regenerates it
+  Given --apply has written the board and --check passes
+  When the registry loses a row and --check runs
+  Then it exits 1 and prints "STALE project/design-system.dc.html"; after --apply, --check passes again
+  Test: test_S36_check_fails_naming_a_stale_design_system_board_until_apply_regenerates_it
+Scenario: a registry in a rows layout with no learnings section is a problem, not silence (review of #368)
+  Given a manifest with "registry" set, the default rows layout and no section with id "learnings"
+  When the layout runs
+  Then the run reports a problem naming "registry" and "learnings", and no design-system board is made
+  Test: test_S37_a_registry_in_a_rows_layout_with_no_learnings_section_is_a_problem_not_silence
+Scenario: a registry that is JSON but not a components object is a problem, not a traceback (review of #368)
+  Given the registry file holds [], or {"components": ["Stepper"]}, or {"components": "x"}
+  When the layout runs
+  Then no exception is raised and the run reports a problem naming the path and "components"
+  Test: test_S38_a_registry_that_is_json_but_not_a_components_object_is_a_problem_not_a_traceback
 ```
 Tests: `tests/test_ios_snapshots.py`, `tests/test_ci_must_have.py` (the four pr-size ones). The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.
 
@@ -1658,3 +1646,4 @@ Scenario: the HIG items no machine checks are listed as review-only
   Test: test_s220_the_review_only_list_names_what_no_machine_checks
 ```
 Tests: `tests/test_ios_a11y_audit.py`. The Swift UI tests (`ui/ios/A11yAudit/Tests/TemplateAccessibilityAuditTests.swift`, 5 tests) run only in the CI job `ui-ios-snapshots`.
+Tests: `tests/test_canvas_stage.py::DesignSystem`.
