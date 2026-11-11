@@ -1624,3 +1624,512 @@ Scenario: a registry that is JSON but not a components object is a problem, not 
   Test: test_S38_a_registry_that_is_json_but_not_a_components_object_is_a_problem_not_a_traceback
 ```
 Tests: `tests/test_canvas_stage.py::DesignSystem`.
+
+
+## Story #174: a workflow file with zero jobs is named and failed
+
+**S174.1 Zero jobs is named and failed.**
+```gherkin
+Scenario: a workflow file in another indent style with no jobs is named and failed
+  Given a workflow file whose "jobs:" key is indented, so no job can be read
+  When check_timeouts.py checks that file
+  Then the output has a line "no timeout-minutes: <file>: no jobs found"
+  And the exit code is 1, never "timeouts OK"
+```
+Test: `tests/test_check_timeouts.py::test_s174_a_file_with_zero_jobs_is_named_and_failed`
+
+
+## Story #218: the two-tier iOS lint runner with a baseline
+```gherkin
+Scenario: the CI tier is strict and reads the baseline
+  Given a child with ui/tool/ios_lint.sh and CI=1 (or CI=true, as GitHub sets it)
+  When the runner lints a Swift file
+  Then swiftlint runs with --strict, --config ui/ios/lint/swiftlint.yml and --baseline ui/ios/lint/swiftlint-baseline.json
+  And swiftformat runs with --lint and ui/ios/.swiftformat, so a format change fails the job
+Scenario: the local tier only warns
+  Given no CI variable
+  When the runner lints a Swift file
+  Then swiftlint runs without --strict, still with the baseline, and swiftformat gets --lenient, and the exit code is 0
+Scenario: only the changed Swift files are linted
+  Given a repo where one committed Swift file changed, one Swift file is new and untracked, and a markdown file changed
+  When the runner runs with no file argument and LINT_BASE=HEAD
+  Then exactly the two Swift files reach swiftlint and swiftformat
+  And with nothing changed the runner prints "no Swift file changed" and runs no tool
+Scenario: a missing swiftlint fails CI and only warns locally
+  When swiftlint is not on PATH
+  Then the CI tier exits non-zero and the local tier exits 0, both saying "swiftlint is not installed"
+Scenario: a missing swiftformat alone fails CI and only warns locally (#366 review)
+  When swiftlint is on PATH but swiftformat is not
+  Then the CI tier exits non-zero and the local tier exits 0, both saying "swiftformat is not installed"
+Scenario: a missing base ref fails CI and only warns locally (#366 review)
+  Given a repo with no origin/dev (a shallow checkout) and a committed Swift change
+  When the runner runs with no file argument
+  Then the CI tier exits non-zero naming fetch-depth and LINT_BASE, and the local tier exits 0 with the same warning
+Scenario: an adopted child gets configs that exist (PR #366 review)
+  Given a child repo with only ui/platforms/lint/swiftlint.yml (what adopt.sh --platforms ios writes), no baseline, no .swiftformat
+  When the runner runs by its kit path in the CI tier
+  Then swiftlint gets --config ui/platforms/lint/swiftlint.yml, and every --config and --baseline path given to the tools exists (the kit's own files fill the gaps)
+Scenario: the baseline is committed empty and protected
+  Then ui/ios/lint/swiftlint-baseline.json is the JSON array [] and matches a glob in scripts/protected_paths.txt (*baseline*)
+Scenario: the Tokens file is the one place for raw colours and fixed fonts
+  Given tests/fixtures/ios/Good/Tokens.swift holds Color(red:, UIColor(red:, Font.system(size: and Font.custom(
+  Then the rule regexes match it, the token rules carry an excluded pattern that matches its path, and no other rule fires on it
+  And CI job ui-ios-lint passes the whole Good folder in strict mode with real SwiftLint
+Scenario: named snippets break their rule, good snippets break none
+  Then Color(red:, UIColor(red:, .font(.system(size:, Font.custom(, import SnapKit and import UIKit each match their rule id
+  And Color.red, Color("Brand"), .font(.body), Tokens.font, import SwiftUI, import Foundation and @testable import ShipQuickUI match no rule
+Scenario: CI runs both tiers through the runner
+  Then job ui-ios-lint fetches SwiftFormat 0.64.6 by SHA-256 like SwiftLint, runs `CI=1 bash ui/tool/ios_lint.sh` on Good and Bad, `CI= bash ui/tool/ios_lint.sh` on Bad, and the bad run names every rule id
+```
+Tests: `tests/test_ios_lint_tool.py` (s218). CI job: `ui-ios-lint` (macos-15).
+
+
+## Story #223: the Android Button topic follows M3 exactly
+```gherkin
+Scenario: the Android Button topic shows only M3 parameters and the five M3 buttons
+  Given the Button doc and contract in ui/components/Button
+  When the android topic is built
+  Then every prop row is a Compose Material 3 Button parameter (tests/fixtures/m3_button.json, from Google's page), onClick, enabled and content are among them, and Button, FilledTonalButton, ElevatedButton, OutlinedButton and TextButton are named, and no web variant word (primary, secondary, ghost, destructive) appears anywhere in the topic text (PR #367 review: the web Do line moved to platformUsage.web, Android got its own M3 line)
+  Test: test_s223_the_android_button_topic_shows_only_m3_parameters_and_the_five_m3_buttons
+Scenario: a web prop in core is caught as not M3
+  Given a contract with `variant` in core
+  When the android topic is built
+  Then the M3 check names `variant`
+  Test: test_s223_a_web_prop_in_core_is_caught_as_not_m3
+Scenario: the web props stay in the web doc as webOnly
+  Then the Button doc still lists label, variant, size, isDisabled and isLoading, and the contract has each under webOnly with a reason
+  Test: test_s223_the_web_props_stay_in_the_web_doc_as_web_only
+```
+Tests: `tests/test_ui_topics.py::test_s223_the_android_button_topic_shows_only_m3_parameters_and_the_five_m3_buttons`, `test_s223_a_web_prop_in_core_is_caught_as_not_m3`, `test_s223_the_web_props_stay_in_the_web_doc_as_web_only`; `tests/test_ui_cli.py::test_s183_topics_are_generated_from_the_s2_docs_and_are_current` now asserts the web variant enum is absent from the Android topic.
+
+
+## Story #175: the story check reaches children
+```gherkin
+Scenario: the story job exists in checks.yml and the gate needs it
+  Then checks.yml has a `story` job that runs only on a pull request, asks for issues: read, runs check_story.py --pr-body-file with GH_TOKEN and the child's own GH_REPO, and the gate lists it and echoes its result
+Scenario: the caller adopt.sh writes grants issues: read
+  When adopt.sh runs on a fresh child, the written shipquick-call.yml has an `issues: read` line
+Scenario: --check reports a caller without issues: read
+  Given a correctly pinned child whose caller lost every `issues: read` line
+  When adopt.sh --check runs
+  Then it exits 1 and says "not adopted: shipquick-call.yml grants no issues: read"
+Scenario: --check accepts a caller that grants issues: write (review of #370)
+  Given a correctly pinned child whose caller says `issues: write` instead of `issues: read`
+  When adopt.sh --check runs
+  Then it exits 0 and says nothing about issues: read, since write lets the story job read issues
+Scenario: --check accepts a caller with `permissions: read-all` (review of #370, round 2)
+  Given a correctly pinned child whose caller's permissions block is the one line `permissions: read-all`
+  When adopt.sh --check runs
+  Then it exits 0 and says nothing about issues: read, since read-all grants issues: read too
+Scenario: --check accepts an `issues: read` line with a trailing comment (review of #370, round 2)
+  Given a correctly pinned child whose caller says `issues: read   # the story job reads the linked stories`
+  When adopt.sh --check runs
+  Then it exits 0 and says nothing about issues: read
+```
+Tests: `tests/test_checks_workflow.py::test_s175_checks_yml_has_a_story_job_that_runs_check_story_with_issues_read`, `test_s175_the_gate_needs_the_story_job_and_echoes_its_result`, `tests/test_adopt.py::test_s175_the_written_caller_grants_issues_read`, `test_s175_check_reports_a_caller_without_issues_read`, `test_s175_check_accepts_a_caller_that_grants_issues_write`, `test_s175_check_accepts_a_caller_with_permissions_read_all`, `test_s175_check_accepts_an_issues_read_line_with_a_trailing_comment`.
+
+
+## Story #189 (S11): vibe tests, ten fixed screen prompts per platform
+```gherkin
+Scenario: the selftest scores the fixtures with zero model calls
+  Given a fake claude on PATH that logs every call
+  When `bench/vibe.py --selftest` runs
+  Then it prints "selftest 3/3 platforms pass", exits 0, and the log is absent
+  Test: test_selftest_scores_the_fixtures_and_makes_no_claude_call
+Scenario: the good fixture is clean and the bad fixture is raw on every platform
+  Then score_dir gives clean=1 for android, ios and web good fixtures and clean=0 with hits for the bad ones
+  Test: test_good_fixture_is_clean_and_bad_fixture_is_raw_on_every_platform
+Scenario: a cell that wrote no screen file scores zero
+  Test: test_a_cell_with_no_screen_file_scores_zero
+Scenario: the prompts are the same ten generic screens on three platforms
+  Then each platform has exactly ten prompts with the fixed screen ids, and the task text is identical across platforms
+  Test: test_prompts_are_the_same_ten_generic_screens_on_three_platforms
+Scenario: the smoke runs exactly four calls and only the kit arm gets the agent block
+  Given a fake claude that copies good fixture screens into its work folder
+  When `--run --smoke` runs
+  Then 4 calls are made on claude-haiku-5-5 with Bash disallowed, 2 carry --append-system-prompt with SELF-CHECK, and results.json scores kit 2/2 and no-kit 2/2
+  Test: test_smoke_runs_exactly_four_calls_and_only_the_kit_arm_gets_the_agent_block
+Scenario: a run folder inside a work tree is refused before any call
+  Test: test_run_folder_inside_a_git_tree_is_refused_before_any_call
+Scenario: a full run needs --full, so a typo never burns sixty calls
+  Test: test_a_full_run_needs_the_full_flag_so_a_typo_never_burns_sixty_calls
+Scenario: a web screen with JSX but no library import is raw (PR #371 review)
+  Given a Screen.tsx that renders a plain div and imports nothing from @astryxdesign/core
+  Then score_dir hits exactly no_library_import, and the bad fixture PlainScreen.tsx carries the same case for --selftest
+  Test: test_a_web_screen_with_jsx_but_no_library_import_is_raw
+Scenario: a web screen that imports a library subpath is clean (PR #371 review, round 2)
+  Given a Screen.tsx that imports Button from "@astryxdesign/core/Button", the form the component docs teach
+  Then it scores clean, while PlainScreen.tsx with no library import still hits no_library_import
+  Test: test_a_web_screen_that_imports_a_library_subpath_is_clean
+Scenario: an issue number after a colon in a web comment is not a hex colour (PR #371 review)
+  Given the good web screen with a first line "// Story: #189 sign in"
+  Then it scores clean, while a CSS file with "color: #fff;" still hits no_hex_colour
+  Test: test_an_issue_number_after_a_colon_in_a_web_comment_is_not_a_hex_colour
+```
+Tests: `tests/test_vibe.py`.
+
+
+## Story #296 (1/6): the InputModifiers catch-all holds only rows no control doc fits
+```gherkin
+Scenario: a catch-all row whose control has its own doc fails
+  Given the catch-all docs split so far and, per catch-all, the row-name stems a control or task doc owns (gesture, focus, keypress, drag, drop, hover, widget, ...)
+  When a row of a catch-all doc holds one of its stems
+  Then the test fails naming the catch-all, the row and the doc that owns it
+  Test: test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails
+Scenario: each owner doc exists, sets a family and holds a row of its stem
+  Given every stem of the fixture
+  Then its owner doc folder exists, the gate can count it (platforms.ios or platformApi.ios.family) and it holds a row with that stem
+  Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
+```
+Tests: `tests/test_ui_catch_all.py::test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails`, `test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem`.
+
+
+## Story #92: CI runs again when a PR body is edited
+```gherkin
+Scenario: the ShipQuick CI trigger re-runs on a body edit
+  Given the ci.yml pull_request trigger
+  Then its types list carries edited, with opened, synchronize and reopened
+Scenario: an adopted child caller re-runs on a body edit too
+  When adopt.sh writes shipquick-call.yml for a child
+  Then the pull_request trigger in the caller lists the same four types
+```
+Tests: `tests/test_s92_ci_on_body_edit.py::test_s92_ci_pull_request_trigger_lists_edited`, `tests/test_s92_ci_on_body_edit.py::test_s92_the_adopted_checks_caller_also_runs_on_body_edit`.
+
+## Story #133 (S5w): design literals on added web lines
+```gherkin
+Scenario: a colour or font literal on an added web style line fails with the file and the line
+  Given a diff that adds `color: #ff0033;` to a css file, `rgb(...)`/`rgba(...)` to a tsx inline style, `hsl(...)` to a vue, svelte or astro file, `font-family: 'Inter'` to css, `fontFamily: "Inter"` to tsx, or `bg-[#1e293b]` / `font-['Inter']` Tailwind classes
+  When check_design_literals.py reads the diff
+  Then it exits 1 and names `path:line` and the literal kind for every hit
+  Test: test_a_hex_colour_in_added_css_fails_with_file_and_line, test_rgb_and_rgba_in_added_tsx_inline_style_fail, test_hsl_in_added_vue_svelte_and_astro_fails, test_a_font_family_literal_fails_in_css_and_in_tsx, test_a_tailwind_arbitrary_colour_or_font_fails
+Scenario: token references, keywords and a token file in the allowlist pass
+  Given `var(--color-primary)`, `font-family: inherit`, `theme.fonts.body` and a Tailwind token class, or a hex in a file that matches a glob in scripts/design_token_files.txt
+  Then the check prints "no design literals on added lines" and exits 0
+  Test: test_token_references_and_keywords_pass, test_a_token_file_in_the_allowlist_passes, test_the_allowlist_file_reads_globs_and_skips_comments_and_blanks
+Scenario: only added lines of the named file types count, with the hunk's line numbers
+  Given a removed line, a python, markdown or js file, a private field `this.#cafe`, an entity `&#dead;`, an id selector `#main-nav`, and two hunks
+  Then none is a hit, and a hit in the second hunk carries that hunk's line number
+  Test: test_a_removed_line_and_a_non_web_file_are_never_a_hit, test_a_private_field_an_html_entity_and_an_id_selector_with_letters_are_not_hex, test_line_numbers_follow_the_hunk_header_across_hunks
+Scenario: a story reference in a comment is not a hex colour (PR #374 review)
+  Given `// story #133` on a ts line, `/* story #374 */` on a css line, or a `#cafe = 1` class field
+  Then none is a hit; a literal outside the comment still fails, and `//` inside a `url(https://...)` is not a comment
+  Test: test_a_story_reference_in_a_comment_is_not_a_hex_colour
+Scenario: the check is wired and the allowlist is protected
+  Then scripts/design_token_files.txt is in scripts/protected_paths.txt, check_local.sh names design-tokens, ci.yml and checks.yml carry a design-tokens job (the script, then stylelint with `--report-needless-disables` only when css changed) and both gates wait for it; the CLI reads a diff file and exits 1 with the hits
+  Test: test_the_kit_allowlist_is_protected_and_check_local_names_the_check, test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it, test_the_cli_reads_a_diff_file_and_exits_1_with_the_hits
+Scenario: stylelint runs with the project's own dependencies (PR #374 review)
+  Given a child whose .stylelintrc.json extends `stylelint-config-standard`, or a `"stylelint"` key in package.json
+  When the design-tokens job (ci.yml, checks.yml) or check_local.sh design-tokens runs stylelint
+  Then it runs `npm ci --ignore-scripts` first when package-lock.json exists, uses `node_modules/.bin/stylelint` when present, and `npx --yes stylelint@16.26.1` only as the fallback
+  Test: test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary
+Scenario: a protocol-relative url in css does not hide a hex (PR #374 review round 2)
+  Given `background: url(//cdn.example/a.png) #ff0000;` or the quoted `url('//...')` form on an added css line
+  Then it is a hex hit: `//` is never a comment in css, only `/* */` is cut there; a ts line still loses its `//` comment
+  Test: test_a_protocol_relative_url_in_css_does_not_hide_a_hex
+Scenario: the font shorthand is a font-family literal (PR #374 review round 2)
+  Given `font: 16px/1.5 'Inter', sans-serif;` or `font: 1rem Inter;` on a css line, or `style={{ font: '16px Inter' }}` on a tsx line
+  Then each is a font-family hit; `font: 1rem var(--font-body)`, `font: inherit`, `font-size`/`font-weight` and the tsx `font: theme.fonts.body` pass
+  Test: test_the_font_shorthand_is_a_font_family_literal
+Scenario: stylelint runs once, per package root, and installs only when the binary is missing (PR #374 review round 2)
+  Given a child whose web app sits in `web/` (web/package.json, web/.stylelintrc.json, a lockfile, Android beside it) and a changed `web/a.css`
+  When ci.yml, checks.yml or check_local.sh design-tokens calls `scripts/run_stylelint_changed.sh <base> [repo]`
+  Then it never prints `skip stylelint` for that file: it runs web's own `node_modules/.bin/stylelint` from `web/` on `a.css`, runs `npm ci` only when that binary is missing, names a folder with css but no config in its skip line, and the script is a protected path
+  Test: test_stylelint_runs_from_the_package_root_of_a_web_subfolder, test_stylelint_installs_the_child_dependencies_and_prefers_the_local_binary, test_a_design_tokens_job_sits_in_ci_and_checks_and_both_gates_wait_for_it
+Scenario: a style block or a url() string does not hide a literal (PR #374 review round 3)
+  Given `.hero { background: url(//cdn.example/a.png) #ff0000; }` or `.t { font: 16px/1.5 'Inter', sans-serif; }` on a .vue, .svelte or .astro line, or `background: 'url(//cdn.example/a.png) #ff0000'` on a tsx line
+  Then each is a hit: `//` starts a comment only at the line start or after a space; `const x = 1; // story #133`, `font: string;` and `font: 1rem var(--font-body), sans-serif;` pass
+  Test: test_style_blocks_in_vue_svelte_astro_and_tsx_urls_do_not_hide_a_literal
+Scenario: an rgb or hsl call on a token is not a literal (PR #374 review round 3)
+  Given `color: rgb(var(--md-primary-rgb) / 0.12);` on a css line
+  Then it passes, and `color: rgb(255, 0, 0);` is still an rgb/hsl hit
+  Test: test_an_rgb_or_hsl_call_on_a_token_is_not_a_literal
+Scenario: a non-ASCII file name does not hide a literal (PR #374 review round 4)
+  Given a commit that adds `a { color: #ff0033; }` to `src/café.css`, so git writes a quoted header `+++ "b/src/caf\303\251.css"`
+  When the check runs with --base, or reads a saved diff with that quoted header
+  Then it reports `src/café.css:1`: git runs with `core.quotePath=false`, and a quoted header is unquoted before the `b/` strip
+  Test: test_a_quoted_non_ascii_path_header_is_still_checked, test_the_cli_reports_a_hex_in_a_non_ascii_file_name_from_git
+```
+Tests: `tests/test_check_design_literals.py`.
+
+
+## Story #219: snapshots and Prefire for ui/ios
+```gherkin
+Scenario: the package has a test target with the two snapshot packages pinned exactly
+  Then ui/ios/Package.swift names swift-snapshot-testing and Prefire with `exact:` versions, a test target ShipQuickUITests with SnapshotTesting and PrefireTestsPlugin, all behind the SHIPQUICK_SNAPSHOTS guard, and the library a child resolves has no `.package(`; ui/ios/.prefire.yml names the target
+  Test: test_s219_the_package_has_a_test_target_with_snapshot_testing_and_prefire_pinned_exactly
+Scenario: one snapshot test per template over the whole matrix
+  Then TemplateSnapshotTests.swift has a test<Name>() per template and names light, dark, extraSmall, accessibilityExtraExtraExtraLarge, iPhoneSe and ProMax, and says how record mode is switched on
+  Test: test_s219_one_snapshot_test_per_template_over_the_whole_matrix
+Scenario: every template has a #Preview for Prefire
+  Test: test_s219_every_template_has_a_preview_for_prefire
+Scenario: CI runs the snapshot tests on a pinned Xcode and simulator with a timeout
+  Then ci.yml has a job ui-ios-snapshots behind ui-changes on macos-15 with timeout-minutes, Xcode 16.4, `xcodebuild test` on iPhone 16 iOS 18.5, the record env var, an upload-artifact step for __Snapshots__, a workflow_dispatch `record` input, and the gate waits for it
+  Test: test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout
+Scenario: the reference images are a protected path
+  Test: test_s219_the_reference_images_are_a_protected_path
+Scenario: the doc tells how references are recorded and refreshed
+  Then ui/ios/SNAPSHOTS.md names record, workflow_dispatch, gh run download, __Snapshots__, protected, Xcode 16.4 and iOS 18.5, and the README points to it
+  Test: test_s219_the_doc_tells_how_references_are_recorded_and_refreshed
+Scenario: the reference folder holds one PNG per template and matrix cell (#375 review)
+  Then ui/ios/ShipQuickUITests/__Snapshots__/TemplateSnapshotTests/ holds exactly test<Template>.<light|dark>-<xs|ax5>-<se|promax>.png for every template, 40 in all
+  Test: test_s219_the_reference_folder_holds_one_png_per_template_and_matrix_cell
+Scenario: CI names the scheme and never parses xcodebuild output (#375 review)
+  Then the job runs `xcodebuild test -scheme ShipQuickUI` and has no json.load
+  Test: test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout
+Scenario: recorded reference images do not count toward pr-size (#375 review)
+  Given 10 text files and 45 PNGs under ui/ios/ShipQuickUITests/__Snapshots__/, pr-size counts 10 and passes
+  Given 50 PNGs outside __Snapshots__ and one .txt inside it, pr-size counts 51 and fails
+  Given 51 PNGs under docs/__Snapshots__/ (not the protected folder), pr-size counts 51 and fails (round 4)
+  Then both ci.yml pr-size awk lines anchor the exclusion to ^ui/ios/ShipQuickUITests/__Snapshots__/.*\.png$
+  Tests: test_s219_reference_images_under_snapshots_do_not_count_toward_pr_size, test_s219_a_png_outside_snapshots_and_a_non_png_inside_still_count, test_s219_pngs_in_a_snapshots_folder_outside_the_protected_path_still_count, test_s219_cis_pr_size_job_leaves_out_the_same_reference_images (tests/test_ci_must_have.py)
+Scenario: the snapshot job runs only when iOS paths change (#375 review, round 2)
+  Given ui-changes has an `ios` output written by a grep over the changed names
+  Then that grep matches ui/ios/** and design/** and does not match ui/android/** or tests/fixtures/**
+  And the job ui-ios-snapshots waits on needs.ui-changes.outputs.ios, not on `ui`
+  And it runs unless ios is 'false', so a fail-safe exit that writes only ui=true still runs it (round 3)
+  And the story #217 fail-safe lines stay as they were
+  Test: test_s219_the_snapshot_job_runs_only_when_ios_paths_change
+Scenario: the doc states the real precision of the compare (#375 review, round 2)
+  Then ui/ios/SNAPSHOTS.md names `perceptualPrecision <n>` with the same n as TemplateSnapshotTests.swift, points to that file, and never says "changed pixel"
+  Test: test_s219_the_doc_states_the_real_precision_of_the_compare
+```
+Tests: `tests/test_ios_snapshots.py`, `tests/test_ci_must_have.py` (the four pr-size ones). The Swift tests themselves (`ui/ios/ShipQuickUITests/TemplateSnapshotTests.swift`, 5 tests, 40 images, plus Prefire's generated preview tests) run only in the CI job `ui-ios-snapshots`.
+
+
+## Story #222: generated Swift contract structs for ui/components
+```gherkin
+Scenario: every prop kind maps to a Swift type
+  Given a made-up contract with string, number, boolean, enum, fn, content, array and named props, one web-only prop and one sameMeaning
+  When the generator renders it
+  Then the file holds `<Name>Props` with typed fields, a nested String enum, `(() -> Void)?` for an optional callback, `@escaping` on a required one, a backticked `in`, the generic placeholder replaced and named in a comment, the content slot and the web-only prop in comments, and no Android prop
+  Test: test_s222_every_prop_kind_maps_to_a_swift_type
+Scenario: the folder names the struct when two contracts share an inner name
+  Given two component folders whose contracts both carry the same inner `name`
+  When the generator renders them
+  Then each struct and its nested enums take the folder's name, and the inner name sits in a comment
+  Test: test_s222_the_folder_names_the_struct_when_two_contracts_share_an_inner_name
+Scenario: a record becomes a nested struct and an unknown kind fails by name
+  Test: test_s222_a_record_type_becomes_a_nested_struct_and_an_unknown_kind_fails_by_name
+Scenario: a renamed contract field fails --check and names the struct file
+  Given the kit's contracts and structs copied to a temp folder, and `label` renamed to `title` in one contract
+  When `--check` runs
+  Then it exits 1 and prints that struct file; after a regenerate the new field is there and `--check` exits 0
+  Test: test_s222_a_renamed_contract_field_fails_check_and_names_the_struct_file
+Scenario: a removed contract leaves a stale struct that --check names and a regenerate removes
+  Test: test_s222_a_removed_contract_leaves_a_stale_struct_that_check_names
+Scenario: every committed struct is a fresh render of its contract (stack layer 2, the first 48 files)
+  Given the committed Contracts folder
+  Then it is not empty, no file is stale and no file has lost its contract
+  Test: test_s222_every_committed_struct_is_current_with_its_contract
+Scenario: the committed structs are current and every contract has one (stack layer 3, the other 48 files)
+  Tests: test_s222_the_committed_structs_are_current_with_the_contracts, test_s222_every_contract_has_a_struct_file
+Scenario: check_local.sh and CI run the check (stack layer 4)
+  Test: test_s222_check_local_and_ci_run_the_check
+```
+Tests: `tests/test_emit_contracts.py`. The story landed as a four-layer stack (rule 23, max 50 files a PR); each layer carries the test it turns green.
+
+
+## Story #81 (epic #80, S1): the roadmap tests and a golden fixture in JS
+```gherkin
+Scenario: the reference roadmap tests run on node:test
+  Given the 33 tests of the reference Python roadmap suite
+  When they are ported to roadmap/ported.test.js (28 tests; the 5 deploy tests are the kit's S4 story)
+  Then 7 pass on the current render.js (board, columns, delivered, epic link, plain words, Now, India clock) and 21 are todo tests naming #82 (data) or #83 (page), and ROADMAP_STRICT=1 runs the 21 as real failures
+Scenario: the golden fixture gives the same model in Python and JS
+  Given roadmap/fixtures/golden-issues.json, a synthetic GitHub answer with 27 issues (parents both ways, 4 milestones, Needs lines, doing label times) and 5 pull requests
+  And roadmap/fixtures/golden-expected.json captured from the reference Python by roadmap/fixtures/expected.py
+  When the JS builds its model from the same answer
+  Then epics, and every story's epic, column, raw, text, needsWords and pull request equal the golden now
+  And milestone, prio, needs, blockedBy, started, cycleMin (#82), timeline, here, next, older, milestones with days left, map with crossings, chain (#83) are todo until those stories land
+Scenario: the runner is wired
+  Then scripts/check_local.sh has a `roadmap` check running `node --test roadmap/*.test.js`, the same line as ci.yml
+Scenario: a node:test file counts as the red test
+  Given a PR whose `## Red` names roadmap/golden.test.js and whose diff adds that file
+  When check_tdd.py runs
+  Then it prints "tdd OK: roadmap/golden.test.js"
+  Test: tests/test_check_tdd.py::test_s81_a_node_test_file_in_the_red_section_passes
+```
+Tests: `roadmap/ported.test.js` (28, prefix `S1`), `roadmap/golden.test.js` (10, prefix `golden:` plus the runner check), `tests/test_check_tdd.py::test_s81_a_node_test_file_in_the_red_section_passes`.
+
+
+## Story #296 (2/6): the TechnologyModifiers catch-all holds only rows no framework doc fits
+```gherkin
+Scenario: a TechnologyModifiers row whose framework has its own doc fails
+  Given the fixture entry for TechnologyModifiers: the row-name stems a framework doc owns (in-app purchase, subscription, product, map, tip, apple pay, wallet, image playground, web view, gesture, photos picker)
+  When a row of the TechnologyModifiers doc holds one of its stems
+  Then the test fails naming the catch-all, the row and the doc that owns it (InAppPurchase, Map, Tips, Wallet, ImagePlayground, web-view, Gestures or PresentationModifiers)
+  Test: test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails
+Scenario: each framework doc exists, sets a family and holds a row of its stem
+  Given every stem of the TechnologyModifiers entry
+  Then its owner doc folder exists, the gate can count it (platformApi.ios.family) and it holds a row with that stem
+  Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
+```
+Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by the `TechnologyModifiers` entry.
+
+## Story #215: shared props live in the contract core
+```gherkin
+Scenario: a prop with the same spec on android and ios and an empty core fails
+  Given a made-up contract with `content` under platforms.android and platforms.ios, same spec, and an empty core
+  When check_ui_docs.py runs
+  Then it exits 1 and names the prop and core
+  Test: test_s215_a_prop_with_the_same_spec_on_android_and_ios_and_an_empty_core_fails
+Scenario: the shared prop moved into core passes
+  Test: test_s215_the_shared_prop_moved_into_core_passes
+Scenario: the same name with a different spec per platform stays put
+  Given `value` as a number on android and a Binding<Double> on ios
+  Then the check passes, because one core type cannot hold both
+  Test: test_s215_the_same_name_with_a_different_spec_per_platform_stays_put
+Scenario: no kit contract repeats a shared prop under both platforms
+  Test: test_s215_no_kit_contract_repeats_a_shared_prop_under_both_platforms
+```
+Tests: `tests/test_check_ui_docs.py`.
+
+## Story #296 (3/6): the PresentationModifiers catch-all holds only rows no screen doc fits
+```gherkin
+Scenario: a PresentationModifiers row whose screen has its own doc fails
+  Given the fixture entry for PresentationModifiers: the row-name stems a doc owns (photos, file dialog, file importer, file exporter, file mover, contact access, app store, manage subscriptions, offer code, refund request, the Live Activity tints, document launch, document browser)
+  When a row of the PresentationModifiers doc holds one of its stems
+  Then the test fails naming the catch-all, the row and the doc that owns it (PhotosPicker, FileDialogs, ContactAccess, InAppPurchase, live-activities or DocumentLaunchView)
+  Test: test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails
+Scenario: each screen doc exists, sets a family and holds a row of its stem
+  Given every stem of the PresentationModifiers entry, and the photospicker stem of the TechnologyModifiers entry, now owned by PhotosPicker
+  Then its owner doc folder exists, the gate can count it (platformApi.ios.family) and it holds a row with that stem
+  Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
+```
+Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by the `PresentationModifiers` entry.
+
+## Story #296 (4/6): the AccessibilityModifiers catch-all holds only rows no task doc fits
+```gherkin
+Scenario: an AccessibilityModifiers row whose task has its own doc fails
+  Given the fixture entry for AccessibilityModifiers: the row-name stems a doc owns (speech, rotor, accessibility action, adjustable action, scroll action, zoom action, quick action, drag point, drop point, focus)
+  When a row of the AccessibilityModifiers doc holds one of its stems
+  Then the test fails naming the catch-all, the row and the doc that owns it (Speech, AccessibilityRotors, AccessibilityActions, DragAndDrop or Focus)
+  Test: test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails
+Scenario: each owner doc exists, sets a family and holds a row of its stem
+  Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
+```
+Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by the `AccessibilityModifiers` entry.
+
+## Story #296 (5/6, 6/6): the AppearanceModifiers and GraphicsModifiers catch-alls hold only rows no doc fits
+```gherkin
+Scenario: a catch-all row whose surface or effect has its own doc fails
+  Given the fixture entries for AppearanceModifiers (window, redaction, spatial and widget stems) and GraphicsModifiers (3D, shader and color adjustment stems)
+  When a row of either doc holds one of its stems
+  Then the test fails naming the catch-all, the row and the doc that owns it
+  Test: test_s296_a_catch_all_row_whose_control_has_its_own_doc_fails
+Scenario: each owner doc exists, sets a family and holds a row of its stem
+  Test: test_s296_each_owner_doc_exists_sets_a_family_and_holds_a_row_of_its_stem
+```
+Tests: the same two tests of `tests/test_ui_catch_all.py`, with the fixture extended by both entries.
+
+## Story #82 (epic #80, S1): roadmap data, times, parent, milestones, Needs
+```gherkin
+Scenario: the model carries the data fields
+  Given the golden fixture roadmap/fixtures/golden-issues.json (milestones with due dates, parents, P labels, Needs lines, doing label events, a Started line)
+  When the JS builds its model from the same answer
+  Then every story's milestone, prio, needs, blockedBy, started and cycleMin equal the golden captured from the reference
+Scenario: Needs lines become numbers
+  Given a body with `Needs: #23` and `Needs: #26` lines under a Needs heading
+  Then story.needs is [23, 26] and a story with no line has []
+Scenario: the start time has a fallback
+  Given a closed story with no doing label and a `Started: 2026-10-25T04:00:00Z (estimated)` line
+  Then cycleMin is close minus that time; a doing label wins over the line; no label and no line, or a line that is not a UTC time, gives null
+Scenario: a blocker is an open story
+  Given a story that needs a closed story and an issue number that is not a story
+  Then needs lists both and blockedBy lists neither
+```
+Tests: `roadmap/golden.test.js` (`golden: every story has the same milestone, priority, Needs, blockers, start time and cycle minutes`), `roadmap/ported.test.js` (`S1 Needs lines become numbers`, `S1 a Started line gives the start when there is no doing label`, `S1 the doing label wins over a Started line`, `S1 no label and no line means no cycle time, and a bad line is ignored`).
+
+## Story #83 part (a) (epic #80, S1): roadmap render, board and timeline
+```gherkin
+Scenario: the timeline groups closed stories by close day in the project's timezone
+  Given closed stories, one closed at 20:00 UTC on 24 Oct
+  When the model is built with the default timezone Asia/Kolkata
+  Then it sits under 2026-10-25, days run newest first, and with timezone UTC it sits under 2026-10-24
+Scenario: the timeline shows start, close and cycle time
+  Given stories that took 2 hours, 45 minutes, and one never marked doing
+  Then the timeline shows "2 h", "45 min" and "no start time"
+Scenario: You are here
+  Given a story with the doing label since 04:00 UTC and ready stories
+  Then the page shows the time, the story "since 09:30" and the first unblocked ready story as next
+Scenario: Next order and older work
+  Given open stories with ready, blocked or no plan label
+  Then Next holds ready and blocked stories by milestone due date, then priority, then number, and marks "blocked by #23, #26"
+  And stories with no plan label sit in a folded Older work list
+Scenario: delivered epics show a date range
+  Given an epic whose stories closed on 21 Oct and 25 Oct
+  Then Delivered shows "21 Oct to 25 Oct" and stays folded
+Scenario: the golden fixture renders
+  Given roadmap/fixtures/golden-issues.json
+  Then the timeline, here, next and older equal the golden and every part-(a) section renders
+Scenario: the model owns the zone
+  Given a model built in India time and a project.timezone of Europe/Berlin
+  When render() runs at 03:35 UTC on 25 Oct
+  Then the heading says "25 Oct", the row says "closed 01:30" and the clock line says 09:05
+```
+Tests: `roadmap/ported.test.js` (`S1 the timeline groups closed stories by India close day, newest first`, `S1 the start is the first doing label and the cycle time is close minus start`, `S1 You are here shows the time, the story in progress and the next ready story`, `S1 Next is sorted by milestone, then priority, then number, and marks blocked stories`, `S1 stories without a ready or blocked label are older work and stay out of Next`, `S1 delivered epics show their date range and stay folded`), `roadmap/golden.test.js` (`golden: the timeline groups closed stories by India close day, newest first`, `golden: you are here, the Next order and the older work are the same`, `golden: the page renders the board, timeline, you are here, Next, older work and delivered ranges (#83 part a)`), `roadmap/render.test.js` (`S83 the close day follows the timezone input, default Asia/Kolkata`, `S83 the model owns the zone: a different project.timezone never splits the heading day from the row day`).
+
+## Story #83 part (b) (epic #80, S1): milestone bars, dependency map, longest chain, Night theme, phone
+```gherkin
+Scenario: milestone bars
+  Given stories in two milestones with due dates
+  When the page is drawn on 26 Oct
+  Then each bar shows "3 of 8", "due 27 Oct" and "1 day left", earliest due first
+  And a milestone past its due date with work left is red and says "late by 2 days"
+Scenario: the dependency map
+  Given Needs lines between stories in different milestones
+  Then there is one edge per pair of milestones with the number of needs, a need on a later milestone is a dotted backward edge,
+  And an arrow that only repeats a longer path is hidden and counted
+Scenario: crossings are measured and the order search keeps the fewest
+  Given two arcs that interleave in due order
+  Then crossings() counts 1, nested or touching arcs count 0
+  And the map picks a milestone order with 0 crossings and still draws every milestone once
+Scenario: the longest chain
+  Given open stories that wait on each other
+  Then the longest chain is listed, ties go to the lowest numbers
+Scenario: Night theme and phone
+  Given a phone in dark mode at 360 px
+  Then the page carries the color-scheme meta, every token the body paints with changes at night, the map uses theme tokens only,
+  And board columns may shrink and wrap long words, so the page never scrolls sideways
+Scenario: no project text of its own
+  Given the same model rendered with two titles and two visions
+  Then the two pages differ only in the title and the vision
+```
+Tests: `roadmap/ported.test.js` (`S1 milestone bars count done over total, with the due date and the days left`, `S1 a milestone past its due date with work left is late and red`, `S1 the map has one edge per pair of milestones with the number of needs`, `S1 a need on a later milestone is a backward edge`, `S1 crossings are measured, not guessed`, `S1 the svg labels every arrow and names the crossings`, `S1 an arrow that only repeats a longer path is hidden and counted`, `S1 the longest chain of open work is listed, ties go to the lowest numbers`, `S1 the page has a night theme that follows the phone, and a phone-width layout`, `S1 board columns may shrink and wrap long words, so a phone does not scroll sideways`, `S1 the map svg uses theme colours, so it follows night`), `roadmap/golden.test.js` (`golden: the milestones have the same due date, counts, days left and late flag`, `golden: the dependency map has the same nodes, edges, hidden arrows and crossings`, `golden: the longest chain of open work is the same`), `roadmap/render.test.js` (`S83 the map order search finds the order with the fewest crossings`, `S83 the page has no project text of its own: only the title and the vision change it`).
+
+## PR #393 review fix (story #83 part b): the map order keeps the arrow way, a two-way pair stays apart
+```gherkin
+Scenario: the order search never turns a solid arrow up or a dotted arrow down
+  Given five milestones M0 to M4 with needs M0 to M3, M1 to M4, M2 to M3 and M2 to M4
+  When the map searches for an order with fewer crossings
+  Then every solid arrow still points down and every dotted arrow still points up, or the due order stays
+Scenario: two milestones that wait on each other
+  Given a story in M1 that needs M0 and a story in M0 that needs M1
+  Then the solid and the dotted arrow get different arcs and their "1 need" labels sit at different places
+```
+Tests: `roadmap/render.test.js` (`S83 the order search never turns a solid arrow up or a dotted arrow down`, `S83 two milestones that wait on each other get two arrows apart, two labels apart`).
+
+## PR #393 review fix round 2 (story #83 part b): nested arcs keep their labels clear
+```gherkin
+Scenario: nested arcs keep every label clear of every other arc
+  Given two needs from M0 to M3 and two needs from M1 to M2, so both arcs share one middle height
+  When the map draws its arcs
+  Then the outer arc runs past the inner arc's "2 needs" label, and no label sits on another arc
+```
+Tests: `roadmap/render.test.js` (`S83 nested arcs keep every label clear of every other arc`).
+
+## Story #84 (epic #80): roadmap HTML and Cloudflare Pages inputs
+```gherkin
+Scenario: no new inputs
+  Given a caller that passes only shipquick_ref
+  Then the html and deploy steps are skipped and only ROADMAP.md is saved on the roadmap branch, as in v0.6.0
+Scenario: html on
+  Given html true
+  Then roadmap.js writes the HTML page and roadmap.html is kept on the roadmap branch
+Scenario: html and a project name
+  Given cloudflare_project, cloudflare_account_id and the CLOUDFLARE_API_TOKEN secret
+  Then a pinned wrangler with no install scripts deploys the page, and a failed deploy fails the job
+Scenario: a project name and no token
+  Then the deploy step prints a notice and the job stays green
+```
+Tests: `tests/test_roadmap_workflow.py` (`test_s84_the_workflow_takes_html_and_cloudflare_inputs_and_an_optional_token`, `test_s84_with_no_new_inputs_the_html_and_deploy_steps_are_skipped`, `test_s84_the_html_page_is_written_by_the_roadmap_script_and_kept_on_the_branch`, `test_s84_the_deploy_uses_a_pinned_wrangler_with_no_install_scripts_and_fails_loudly`, `test_s84_inputs_reach_the_shell_through_env_not_inline`, `test_s84_node_22_is_set_up_for_wrangler`, `test_s84_the_workflow_security_check_passes`), `roadmap/roadmap.test.js` (`S84 an output file ending in .html gets the HTML page, not the Markdown one`).
