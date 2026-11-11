@@ -118,7 +118,7 @@ jobs:
           git -C project fetch -q --depth=1 origin "+refs/heads/$REF:refs/remotes/origin/$REF" || { echo "branch $REF not found in this repo."; exit 1; }
           flags=$(python3 .shipquick/scripts/features.py flags --git project --ref "origin/$REF")
           echo "flags=$flags" >> "$GITHUB_OUTPUT"
-          python3 -c 'import json,sys; [print("feature %s is off: its job is skipped" % k) for k, v in json.loads(sys.argv[1]).items() if not v]' "$flags"
+          python3 -c 'import json,sys; [print("skipped: %s is off" % k) for k, v in json.loads(sys.argv[1]).items() if not v]' "$flags"
   disable-comments:
     runs-on: ubuntu-latest
     timeout-minutes: 10

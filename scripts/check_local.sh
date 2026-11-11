@@ -146,9 +146,34 @@ check_roadmap() {   # story #81: the roadmap's node:test files, the same command
 check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
+# story #423: the feature flags (scripts/features.py) switch a check off. Off prints `skipped: <id> is off`, the same words CI's
+# features job prints. A broken features file fails the run: an error is never read as "on". The file is the project's own, here.
+feature_of() {   # feature_of <check> -- the feature id that switches the check, or nothing when it has none
+  case "$1" in
+    rule-copies) echo rule-copies ;;
+    disable-comments) echo disable-comments ;;
+    design-tokens) echo design-tokens ;;
+    frontend-design) echo frontend-design ;;
+    story) echo story ;;
+    roadmap) echo roadmap ;;
+    ui-registry) echo component-registry ;;
+  esac
+}
+feature_skip() {   # feature_skip <check>: returns 0 when the check must be skipped, 1 to run it, 2 when the features file is broken
+  local id out rc=0
+  id="$(feature_of "$1")"; [ -n "$id" ] || return 1
+  out="$(python3 "$HERE/features.py" get "$id" 2>&1)" || rc=$?
+  case "$rc" in
+    0) return 1 ;;
+    1) echo "skipped: $id is off"; return 0 ;;
+    *) echo "FAIL features: $out"; failed=1; return 2 ;;
+  esac
+}
 checks=("$@")
 [ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits pr-size frontend-design disable-comments design-tokens story tdd roadmap workflow-security secrets)
 for c in "${checks[@]}"; do
+  feature_skip "$c" && continue
+  [ $? -eq 2 ] && continue
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
     md-blocks) check_md_blocks ;;
