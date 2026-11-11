@@ -1594,27 +1594,6 @@ Scenario: adopt.sh writes, keeps and validates the milestone
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
 
-## Story #81 (epic #80, S1): the roadmap tests and a golden fixture in JS
-```gherkin
-Scenario: the reference roadmap tests run on node:test
-  Given the 33 tests of the reference Python roadmap suite
-  When they are ported to roadmap/ported.test.js (28 tests; the 5 deploy tests are the kit's S4 story)
-  Then 7 pass on the current render.js (board, columns, delivered, epic link, plain words, Now, India clock) and 21 are todo tests naming #82 (data) or #83 (page), and ROADMAP_STRICT=1 runs the 21 as real failures
-Scenario: the golden fixture gives the same model in Python and JS
-  Given roadmap/fixtures/golden-issues.json, a synthetic GitHub answer with 27 issues (parents both ways, 4 milestones, Needs lines, doing label times) and 5 pull requests
-  And roadmap/fixtures/golden-expected.json captured from the reference Python by roadmap/fixtures/expected.py
-  When the JS builds its model from the same answer
-  Then epics, and every story's epic, column, raw, text, needsWords and pull request equal the golden now
-  And milestone, prio, needs, blockedBy, started, cycleMin (#82), timeline, here, next, older, milestones with days left, map with crossings, chain (#83) are todo until those stories land
-Scenario: the runner is wired
-  Then scripts/check_local.sh has a `roadmap` check running `node --test roadmap/*.test.js`, the same line as ci.yml
-Scenario: a node:test file counts as the red test
-  Given a PR whose `## Red` names roadmap/golden.test.js and whose diff adds that file
-  When check_tdd.py runs
-  Then it prints "tdd OK: roadmap/golden.test.js"
-  Test: tests/test_check_tdd.py::test_s81_a_node_test_file_in_the_red_section_passes
-```
-Tests: `roadmap/ported.test.js` (28, prefix `S1`), `roadmap/golden.test.js` (10, prefix `golden:` plus the runner check), `tests/test_check_tdd.py::test_s81_a_node_test_file_in_the_red_section_passes`.
 ## Story #188 (S10): a Design system board on the canvas
 ```gherkin
 Scenario: the registry renders a board with every component row, right after Design learnings
