@@ -49,6 +49,16 @@ SPLIT = {
         "activitybackground": "live-activities", "activitysystemaction": "live-activities",
         "documentlaunch": "DocumentLaunchView", "documentbrowser": "DocumentLaunchView",
     },
+    # 4/6: AccessibilityModifiers split by the task each row serves (speech output, rotors, custom actions) or by the
+    # control it describes (drag and drop points, focus)
+    "AccessibilityModifiers": {
+        "speech": "Speech",
+        "rotor": "AccessibilityRotors",
+        "accessibilityaction": "AccessibilityActions", "adjustableaction": "AccessibilityActions",
+        "scrollaction": "AccessibilityActions", "zoomaction": "AccessibilityActions", "quickaction": "AccessibilityActions",
+        "dragpoint": "DragAndDrop", "droppoint": "DragAndDrop",
+        "focus": "Focus",
+    },
 }
 
 

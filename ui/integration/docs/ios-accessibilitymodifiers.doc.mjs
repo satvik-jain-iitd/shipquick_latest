@@ -35,20 +35,13 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "accessibilityAction: `.accessibilityAction(_:_:)`, iOS 13.0. Apple: \"Adds an accessibility action to the view. Actions allow assistive technologies, such as the VoiceOver, to interact with the view by invoking the action.\"",
-            "accessibilityActions: `.accessibilityActions(_:)`, iOS 16.0. Apple: \"Adds multiple accessibility actions to the view.\"",
             "accessibilityActivationPoint: `.accessibilityActivationPoint(_:)`, iOS 14.0. Apple: \"The activation point for an element is the location assistive technologies use to initiate gestures.\"",
             "accessibilityAddTraits: `.accessibilityAddTraits(_:)`, iOS 14.0. Apple: \"Adds the given traits to the view.\"",
-            "accessibilityAdjustableAction: `.accessibilityAdjustableAction(_:)`, iOS 13.0. Apple: \"Adds an accessibility adjustable action to the view. Actions allow assistive technologies, such as the VoiceOver, to interact with the view by invoking the action.\"",
             "accessibilityChartDescriptor: `.accessibilityChartDescriptor(_:)`, iOS 15.0. Apple: \"Adds a descriptor to a View that represents a chart to make the chart’s contents accessible to all users.\"",
             "accessibilityChildren: `.accessibilityChildren(children:)`, iOS 15.0. Apple: \"Replaces the existing accessibility element’s children with one or more new synthetic accessibility elements.\"",
             "accessibilityCustomContent: `.accessibilityCustomContent(_:_:importance:)`, iOS 16.0. Apple: \"Add additional accessibility information to the view.\"",
-            "accessibilityDefaultFocus: `.accessibilityDefaultFocus(_:_:)`, iOS 26.0. Apple: \"Defines a region in which default accessibility focus is evaluated by assigning a value to a given accessibility focus state binding.\"",
             "accessibilityDirectTouch: `.accessibilityDirectTouch(_:options:)`, iOS 17.0. Apple: \"Explicitly set whether this accessibility element is a direct touch area. Direct touch areas passthrough touch events to the app rather than being handled through an assistive technology, such as VoiceOver. The modifier accepts an optional `AccessibilityDirectTouchOptions` option set to customize the functionality of the direct touch area.\"",
-            "accessibilityDragPoint: `.accessibilityDragPoint(_:description:)`, iOS 16.0. Apple: \"The point an assistive technology should use to begin a drag interaction.\"",
-            "accessibilityDropPoint: `.accessibilityDropPoint(_:description:)`, iOS 16.0. Apple: \"The point an assistive technology should use to end a drag interaction.\"",
             "accessibilityElement: `.accessibilityElement(children:)`, iOS 13.0. Apple: \"Creates a new accessibility element, or modifies the `AccessibilityChildBehavior` of the existing accessibility element.\"",
-            "accessibilityFocused: `.accessibilityFocused(_:)`, iOS 15.0. Apple: \"Modifies this view by binding its accessibility element’s focus state to the given boolean state value.\"",
             "accessibilityHeading: `.accessibilityHeading(_:)`, iOS 15.0. Apple: \"Sets the accessibility level of this heading.\"",
             "accessibilityHidden: `.accessibilityHidden(_:)`, iOS 14.0. Apple: \"Specifies whether to hide this view from system accessibility features.\"",
             "accessibilityHint: `.accessibilityHint(_:)`, iOS 16.0. Apple: \"Communicates to the user what happens after performing the view’s action.\"",
@@ -61,27 +54,18 @@ export default {
             "accessibilityRemoveTraits: `.accessibilityRemoveTraits(_:)`, iOS 14.0. Apple: \"Removes the given traits from this view.\"",
             "accessibilityRepresentation: `.accessibilityRepresentation(representation:)`, iOS 15.0. Apple: \"Replaces one or more accessibility elements for this view with new accessibility elements.\"",
             "accessibilityRespondsToUserInteraction: `.accessibilityRespondsToUserInteraction(_:)`, iOS 15.0. Apple: \"Explicitly set whether this Accessibility element responds to user interaction and would thus be interacted with by technologies such as Switch Control, Voice Control or Full Keyboard Access.\"",
-            "accessibilityRotor: `.accessibilityRotor(_:entries:)`, iOS 16.0. Apple: \"Create an Accessibility Rotor with the specified user-visible label, and entries generated from the content closure.\"",
-            "accessibilityRotorEntry: `.accessibilityRotorEntry(id:in:)`, iOS 15.0. Apple: \"Defines an explicit identifier tying an Accessibility element for this view to an entry in an Accessibility Rotor.\"",
-            "accessibilityScrollAction: `.accessibilityScrollAction(_:)`, iOS 13.0. Apple: \"Adds an accessibility scroll action to the view. Actions allow assistive technologies, such as the VoiceOver, to interact with the view by invoking the action.\"",
             "accessibilityScrollStatus: `.accessibilityScrollStatus(_:isEnabled:)`, iOS 26.0. Apple: \"Changes the announcement provided by accessibility technologies when a user scrolls a scroll view within this view.\"",
             "accessibilityShowsLargeContentViewer: `.accessibilityShowsLargeContentViewer()`, iOS 15.0. Apple: \"Adds a default large content view to be shown by the large content viewer.\"",
             "accessibilitySortPriority: `.accessibilitySortPriority(_:)`, iOS 14.0. Apple: \"Sets the sort priority order for this view’s accessibility element, relative to other elements at the same level.\"",
             "accessibilityTextContentType: `.accessibilityTextContentType(_:)`, iOS 15.0. Apple: \"Sets an accessibility text content type.\"",
             "accessibilityValue: `.accessibilityValue(_:)`, iOS 16.0. Apple: \"Adds a textual description of the value that the view contains.\"",
-            "accessibilityZoomAction: `.accessibilityZoomAction(_:)`, iOS 16.0. Apple: \"Adds an accessibility zoom action to the view. Actions allow assistive technologies, such as VoiceOver, to interact with the view by invoking the action.\"",
-            "assistiveAccessNavigationIcon: `.assistiveAccessNavigationIcon(_:)`, iOS 26.0. Apple: \"Configures the view’s icon for purposes of navigation.\"",
-            "speechAdjustedPitch: `.speechAdjustedPitch(_:)`, iOS 15.0. Apple: \"Raises or lowers the pitch of spoken text.\"",
-            "speechAlwaysIncludesPunctuation: `.speechAlwaysIncludesPunctuation(_:)`, iOS 15.0. Apple: \"Sets whether VoiceOver should always speak all punctuation in the text view.\"",
-            "speechAnnouncementsQueued: `.speechAnnouncementsQueued(_:)`, iOS 15.0. Apple: \"Controls whether to queue pending announcements behind existing speech rather than interrupting speech in progress.\"",
-            "speechSpellsOutCharacters: `.speechSpellsOutCharacters(_:)`, iOS 15.0. Apple: \"Sets whether VoiceOver should speak the contents of the text view character by character.\""
+            "assistiveAccessNavigationIcon: `.assistiveAccessNavigationIcon(_:)`, iOS 26.0. Apple: \"Configures the view’s icon for purposes of navigation.\""
           ]
         },
         {
           "type": "list",
           "style": "dont",
           "items": [
-            "Do not use: accessibilityQuickAction. Use accessibilityAction.",
             "Do not use: accessibility. Use accessibilityLabel."
           ]
         }

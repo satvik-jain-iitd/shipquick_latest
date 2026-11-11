@@ -229,10 +229,10 @@ IOS_DOC_FAMILY = {
                                       "siriTipViewStyle"],
     "Drag and drop": ["draggable", "dragConfiguration", "dragContainer", "dragContainerSelection", "dragPreviewsFormation",
                       "dropConfiguration", "dropDestination", "dropPreviewsFormation", "itemProvider", "onDrag",
-                      "onDragSessionUpdated", "onDrop", "onDropSessionUpdated", "reorderContainer", "springLoadingBehavior"],
+                      "onDragSessionUpdated", "onDrop", "onDropSessionUpdated", "reorderContainer", "springLoadingBehavior", "accessibilityDragPoint", "accessibilityDropPoint"],
     "edit-menus": ["copyable", "cuttable", "onCopyCommand", "onCutCommand", "onPasteCommand"],
     "Focus": ["defaultFocus", "focusable", "focused", "focusedObject", "focusedSceneObject", "focusedSceneValue", "focusedValue",
-              "focusEffectDisabled", "focusScope", "focusSection", "prefersDefaultFocus"],
+              "focusEffectDisabled", "focusScope", "focusSection", "prefersDefaultFocus", "accessibilityFocused", "accessibilityDefaultFocus"],
     "Gestures": ["allowsHitTesting", "allowsWindowActivationEvents", "contentShape", "defersSystemGestures", "directTouchSystemGesturesDisabled",
                  "gesture", "handGestureShortcut", "highPriorityGesture", "manipulable", "manipulationGesture", "onLongPressGesture",
                  "onLongTouchGesture", "onPencilDoubleTap", "onPencilSqueeze", "onTapGesture", "simultaneousGesture"],
@@ -275,6 +275,11 @@ IOS_DOC_FAMILY = {
                      "fileExporterFilenameLabel", "fileImporter", "fileMover"],
     "Contact access": ["contactAccessButtonCaption", "contactAccessButtonStyle", "contactAccessPicker"],
     "live-activities": ["activityBackgroundTint", "activitySystemActionForegroundColor"],
+    # Story #296 (4/6): AccessibilityModifiers split by task. It keeps only rows no doc fits.
+    "Speech": ["speechAdjustedPitch", "speechAlwaysIncludesPunctuation", "speechAnnouncementsQueued", "speechSpellsOutCharacters"],
+    "Accessibility rotors": ["accessibilityRotor", "accessibilityRotorEntry"],
+    "Accessibility actions": ["accessibilityAction", "accessibilityActions", "accessibilityAdjustableAction", "accessibilityScrollAction",
+                              "accessibilityZoomAction", "accessibilityQuickAction"],
 }
 
 HEADER = re.compile(r"^// shipquick: (\w+): (.*)$")
