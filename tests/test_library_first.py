@@ -20,10 +20,10 @@ def test_s181_rule_38_is_library_first_and_links_its_docs():
         assert (ROOT / link).is_file(), link
 
 
-def test_s181_rule_numbers_37_and_38_stay_in_order():
+def test_s181_rule_numbers_37_and_38_stay_in_order():   # later rules (39 and on) may follow
     nums = [int(n) for n in re.findall(r"^(\d+)\. ", CLAUDE, re.M)]
     assert nums == sorted(nums) and len(nums) == len(set(nums))
-    assert nums[-2:] == [37, 38]
+    assert nums[nums.index(37):nums.index(37) + 2] == [37, 38]
 
 
 def test_s181_request_template_has_every_field():
