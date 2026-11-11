@@ -1,0 +1,18 @@
+# The code files scripts/adopt.sh writes into a child, one exact path per line. `check_tdd.py` treats a diff made only of
+# these plus the knowledge/shipquick_latest pin as a kit bump (story #454). A test (tests/test_check_tdd.py) runs adopt.sh at
+# its widest and fails if it writes a code file that is not listed here. .md and .txt files are never code, so they are not listed.
+.gitattributes
+.github/workflows/roadmap-call.yml
+.github/workflows/shipquick-call.yml
+.pre-commit-config.yaml
+.shipquick/features.json
+.shipquick/roles.yml
+roadmap.json
+scripts/screens.sh
+ui/platforms/KIT_PIN
+ui/platforms/android-settings.snippet.kts
+ui/platforms/ios-package.snippet.swift
+ui/platforms/lint/UiRulesKonsistTest.kt
+ui/platforms/lint/detekt-ci.yml
+ui/platforms/lint/detekt.yml
+ui/platforms/lint/swiftlint.yml

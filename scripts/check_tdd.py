@@ -15,6 +15,7 @@ import argparse
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 RED = re.compile(r"^##\s+red\s*$", re.I | re.M)
 NEXT_H2 = re.compile(r"^##\s", re.M)
@@ -22,10 +23,12 @@ TEST_PATH = re.compile(r"[\w./-]*(?:test_\w*\.py|\w+\.test\.js)")   # pytest fil
 DOC_SUFFIXES = (".md", ".txt")
 DOC_DIRS = ("docs/", "pm/")
 # Story #454: a kit bump moves the pin and rewrites the files adopt.sh owns. There is nothing to put a test on.
+# The list of those files is one file, scripts/adopt_files.txt (exact paths); a test keeps it in step with adopt.sh.
 BUMP_PIN = "knowledge/shipquick_latest"
-BUMP_FILES = {BUMP_PIN, ".github/workflows/shipquick-call.yml", ".github/workflows/roadmap-call.yml", ".pre-commit-config.yaml",
-              ".gitattributes", "roadmap.json", ".claude/commands/mode.md", "CLAUDE.md"}
-BUMP_DIRS = (".shipquick/",)
+BUMP_FILES = {BUMP_PIN} | {
+    line.strip() for line in (Path(__file__).resolve().parent / "adopt_files.txt").read_text(encoding="utf-8").splitlines()
+    if line.strip() and not line.startswith("#")
+}
 SHAPE = "write a `## Red` section that names the test file you saw fail, for example `- tests/test_widget.py::test_widget_rejects_empty`"
 
 
@@ -34,7 +37,7 @@ def is_code(path: str) -> bool:
 
 
 def is_bump_file(path: str) -> bool:
-    return path in BUMP_FILES or path.startswith(BUMP_DIRS)
+    return path in BUMP_FILES
 
 
 def exempt_reason(changed, base_branch, head_branch):

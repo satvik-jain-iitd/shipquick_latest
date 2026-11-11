@@ -198,6 +198,32 @@ BUMP = {
 }
 
 
+def test_s454_the_bump_list_is_exact_paths_a_file_under_shipquick_is_code(tmp_path):
+    repo = make_repo(tmp_path, {"knowledge/shipquick_latest": "x\n", ".shipquick/hook.sh": "echo hi\n"})
+    r = run(tmp_path, repo, "chore: bump\n")
+    assert r.returncode == 1 and "## Red" in r.stdout, r.stdout
+
+
+def test_s454_every_code_file_adopt_writes_is_on_the_bump_list(tmp_path):
+    """One list, scripts/adopt_files.txt: adopt.sh at its widest writes nothing outside it (md and txt files are never code)."""
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import check_tdd
+    from test_adopt import adopt, with_origin, gh as _gh  # noqa: F401
+    child = tmp_path / "kid"
+    (child / ".github" / "workflows").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", "-b", "dev", str(child)], check=True)
+    for k, v in (("user.email", "t@example.com"), ("user.name", "t")):
+        subprocess.run(["git", "-C", str(child), "config", k, v], check=True)
+    r = adopt(child, "--platforms", "android,ios,web", "--coder", "a", "--reviewer", "b", "--owner", "c")
+    assert r.returncode == 0, r.stderr
+    written = subprocess.run(["git", "-C", str(child), "ls-files", "-o", "--exclude-standard"], capture_output=True, text=True).stdout.split()
+    code = [f for f in written if check_tdd.is_code(f)]
+    assert code, "adopt wrote no code file; the test is not looking at anything"
+    stray = [f for f in code if not check_tdd.is_bump_file(f)]
+    assert stray == [], "adopt.sh writes these but scripts/adopt_files.txt does not list them: %s" % stray
+
+
 def test_s454_a_diff_of_only_the_pin_and_adopt_files_is_exempt_without_a_red_section(tmp_path):
     repo = make_repo(tmp_path, BUMP)
     r = run(tmp_path, repo, "chore: bump\n", "--head-branch", "chore/shipquick-v0.13.0")

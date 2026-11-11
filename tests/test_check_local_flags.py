@@ -97,3 +97,30 @@ def test_s454_an_old_finding_below_the_base_does_not_block_a_clean_push(tmp_path
 def test_s454_a_finding_in_a_pushed_commit_still_fails(tmp_path):
     r = local(secrets_repo(tmp_path, old_secret=False, pushed_secret=True), "secrets")
     assert r.returncode == 1 and "FAIL secrets" in r.stdout, r.stdout + r.stderr
+
+
+def fake_gitleaks(tmp_path):
+    """A stand-in gitleaks that only records its arguments, so the range logic is tested on a machine without it."""
+    b = tmp_path / "fakebin"
+    b.mkdir()
+    g = b / "gitleaks"
+    g.write_text('#!/usr/bin/env bash\necho "$@" > "%s"\nexit 0\n' % (tmp_path / "gl.args"), encoding="utf-8")
+    g.chmod(0o755)
+    return b
+
+
+def test_s454_secrets_passes_the_pushed_range_to_gitleaks(tmp_path):
+    repo = secrets_repo(tmp_path, old_secret=False, pushed_secret=False)
+    env = {**__import__("os").environ, "PATH": f"{fake_gitleaks(tmp_path)}:{__import__('os').environ['PATH']}"}
+    r = subprocess.run(["bash", str(LOCAL), "secrets"], cwd=repo, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "--log-opts origin/dev..HEAD" in (tmp_path / "gl.args").read_text(encoding="utf-8")
+
+
+def test_s454_secrets_scans_the_whole_history_when_there_is_no_origin_base(tmp_path):
+    repo = tmp_path / "plain"
+    subprocess.run(["git", "init", "-q", "-b", "dev", str(repo)], check=True)
+    env = {**__import__("os").environ, "PATH": f"{fake_gitleaks(tmp_path)}:{__import__('os').environ['PATH']}"}
+    r = subprocess.run(["bash", str(LOCAL), "secrets"], cwd=repo, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "--log-opts" not in (tmp_path / "gl.args").read_text(encoding="utf-8")
