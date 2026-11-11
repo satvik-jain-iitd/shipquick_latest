@@ -70,12 +70,13 @@ def read(root, defaults=None):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="features.py")
+    ap = argparse.ArgumentParser(prog="features.py", add_help=False)   # -h must never print help and exit 0: 0 reads as "on"
     ap.add_argument("--root")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    g = sub.add_parser("get")
+    sub_parser = lambda name: sub.add_parser(name, add_help=False)
+    g = sub_parser("get")
     g.add_argument("id")
-    sub.add_parser("json")
+    sub_parser("json")
     a = ap.parse_args(argv)
     try:
         root = a.root
