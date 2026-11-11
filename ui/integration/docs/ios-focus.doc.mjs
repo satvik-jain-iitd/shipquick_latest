@@ -40,7 +40,9 @@ export default {
             "focusedSceneObject: `.focusedSceneObject(_:)`, iOS 16.0. Apple: \"Creates a new view that exposes the provided object to other views whose whose state depends on the active scene.\"",
             "focusedSceneValue: `.focusedSceneValue(_:_:)`, iOS 15.0. Apple: \"Modifies this view by injecting a value that you provide for use by other views whose state depends on the focused scene.\"",
             "focusedValue: `.focusedValue(_:_:)`, iOS 14.0. Apple: \"Modifies this view by injecting a value that you provide for use by other views whose state depends on the focused view hierarchy.\"",
-            "focusEffectDisabled: `.focusEffectDisabled(_:)`, iOS 17.0. Apple: \"Adds a condition that controls whether this view can display focus effects, such as a default focus ring or hover effect.\""
+            "focusEffectDisabled: `.focusEffectDisabled(_:)`, iOS 17.0. Apple: \"Adds a condition that controls whether this view can display focus effects, such as a default focus ring or hover effect.\"",
+            "accessibilityFocused: `.accessibilityFocused(_:)`, iOS 15.0. Apple: \"Modifies this view by binding its accessibility element’s focus state to the given boolean state value.\"",
+            "accessibilityDefaultFocus: `.accessibilityDefaultFocus(_:_:)`, iOS 26.0. Apple: \"Defines a region in which default accessibility focus is evaluated by assigning a value to a given accessibility focus state binding.\""
           ]
         },
         {
