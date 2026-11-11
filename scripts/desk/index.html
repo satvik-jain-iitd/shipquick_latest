@@ -141,8 +141,11 @@ h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 700; }
 
     fill("waiting", (data.waiting || []).map(function (p) {
       var label = "PR " + p.number + ": " + p.title + (p.draft ? " (draft)" : "");
-      return row(el("p", "item", label), el("span", p.checks === "failing" ? "chip error" : "chip", "Checks " + p.checks));
-    }), "Nothing waiting for you.");
+      var left = el("div", "stack");
+      left.appendChild(el("p", "item", label));
+      left.appendChild(el("p", "time", p.reason || ""));
+      return row(left, el("span", p.checks === "failing" ? "chip error" : "chip", "Checks " + p.checks));
+    }), "Nothing needs you.");
 
     fill("decided", (data.decided || []).map(function (r) {
       return row(el("p", "item", r.text), el("span", "time", r.contact));
@@ -166,9 +169,21 @@ h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 700; }
     }
     fill("spend", spendNodes, "No ledger yet: " + (sp.note || "nothing recorded") + ".");
 
-    fill("roadmap", (data.roadmap || []).map(function (i) {
-      return el("p", "item", "#" + i.number + " " + i.title);
-    }), "No open issues.");
+    var rl = data.roadmap_link || {};
+    var roadmapNodes = [];
+    if (rl.state === "link") {
+      var a = el("a", "item", "Open the live roadmap");
+      a.href = rl.url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      roadmapNodes.push(a);
+    } else if (rl.state === "no_branch") {
+      roadmapNodes.push(el("p", "time", "No roadmap branch yet: the live roadmap has not been built."));
+    }
+    (data.roadmap || []).forEach(function (i) {
+      roadmapNodes.push(el("p", "item", "#" + i.number + " " + i.title));
+    });
+    fill("roadmap", roadmapNodes, "No open issues.");
   }
 
   function load() {
