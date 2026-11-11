@@ -1594,49 +1594,6 @@ Scenario: adopt.sh writes, keeps and validates the milestone
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
 
-## Story #218: the two-tier iOS lint runner with a baseline
-```gherkin
-Scenario: the CI tier is strict and reads the baseline
-  Given a child with ui/tool/ios_lint.sh and CI=1 (or CI=true, as GitHub sets it)
-  When the runner lints a Swift file
-  Then swiftlint runs with --strict, --config ui/ios/lint/swiftlint.yml and --baseline ui/ios/lint/swiftlint-baseline.json
-  And swiftformat runs with --lint and ui/ios/.swiftformat, so a format change fails the job
-Scenario: the local tier only warns
-  Given no CI variable
-  When the runner lints a Swift file
-  Then swiftlint runs without --strict, still with the baseline, and swiftformat gets --lenient, and the exit code is 0
-Scenario: only the changed Swift files are linted
-  Given a repo where one committed Swift file changed, one Swift file is new and untracked, and a markdown file changed
-  When the runner runs with no file argument and LINT_BASE=HEAD
-  Then exactly the two Swift files reach swiftlint and swiftformat
-  And with nothing changed the runner prints "no Swift file changed" and runs no tool
-Scenario: a missing swiftlint fails CI and only warns locally
-  When swiftlint is not on PATH
-  Then the CI tier exits non-zero and the local tier exits 0, both saying "swiftlint is not installed"
-Scenario: a missing swiftformat alone fails CI and only warns locally (#366 review)
-  When swiftlint is on PATH but swiftformat is not
-  Then the CI tier exits non-zero and the local tier exits 0, both saying "swiftformat is not installed"
-Scenario: a missing base ref fails CI and only warns locally (#366 review)
-  Given a repo with no origin/dev (a shallow checkout) and a committed Swift change
-  When the runner runs with no file argument
-  Then the CI tier exits non-zero naming fetch-depth and LINT_BASE, and the local tier exits 0 with the same warning
-Scenario: an adopted child gets configs that exist (PR #366 review)
-  Given a child repo with only ui/platforms/lint/swiftlint.yml (what adopt.sh --platforms ios writes), no baseline, no .swiftformat
-  When the runner runs by its kit path in the CI tier
-  Then swiftlint gets --config ui/platforms/lint/swiftlint.yml, and every --config and --baseline path given to the tools exists (the kit's own files fill the gaps)
-Scenario: the baseline is committed empty and protected
-  Then ui/ios/lint/swiftlint-baseline.json is the JSON array [] and matches a glob in scripts/protected_paths.txt (*baseline*)
-Scenario: the Tokens file is the one place for raw colours and fixed fonts
-  Given tests/fixtures/ios/Good/Tokens.swift holds Color(red:, UIColor(red:, Font.system(size: and Font.custom(
-  Then the rule regexes match it, the token rules carry an excluded pattern that matches its path, and no other rule fires on it
-  And CI job ui-ios-lint passes the whole Good folder in strict mode with real SwiftLint
-Scenario: named snippets break their rule, good snippets break none
-  Then Color(red:, UIColor(red:, .font(.system(size:, Font.custom(, import SnapKit and import UIKit each match their rule id
-  And Color.red, Color("Brand"), .font(.body), Tokens.font, import SwiftUI, import Foundation and @testable import ShipQuickUI match no rule
-Scenario: CI runs both tiers through the runner
-  Then job ui-ios-lint fetches SwiftFormat 0.64.6 by SHA-256 like SwiftLint, runs `CI=1 bash ui/tool/ios_lint.sh` on Good and Bad, `CI= bash ui/tool/ios_lint.sh` on Bad, and the bad run names every rule id
-```
-Tests: `tests/test_ios_lint_tool.py` (s218). CI job: `ui-ios-lint` (macos-15).
 ## Story #188 (S10): a Design system board on the canvas
 ```gherkin
 Scenario: the registry renders a board with every component row, right after Design learnings
