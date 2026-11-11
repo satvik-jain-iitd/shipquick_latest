@@ -140,7 +140,9 @@ _81 of 95 stories done. Written by the ShipQuick roadmap workflow from the issue
 
 ## Next
 
-Nothing is queued.
+### Other work
+
+- D1: Desk shows every feature, read-only [#427](https://github.com/satvik-jain-iitd/shipquick_latest/issues/427)
 
 ## Board
 
