@@ -90,6 +90,8 @@ def check(diff_text: str, allow: list[str]) -> str | None:
     for path, n, text in added_lines(diff_text):
         if not WEB_EXT.search(path) or any(fnmatch.fnmatchcase(path, g) for g in allow):
             continue
+        if "fixtures" in path.split("/")[:-1]:   # test data, bad on purpose; a release PR diffs against main and would count it as added
+            continue
         css = path.endswith(".css")
         code = (BLOCK_COMMENT if css else COMMENT).sub("", text)
         extra = CSS_KINDS if css else (("font-family", FONT_MIXED),) if MIXED.search(path) else ()
