@@ -67,3 +67,33 @@ def test_a_broken_features_file_fails_the_run_never_reads_as_on(proj):
 
 def test_ci_prints_the_same_words_for_a_skipped_feature():
     assert 'print("skipped: %s is off" % k)' in CHECKS_YML
+
+
+# ---- story #454: the secrets check reads the commits being pushed, not the history below the base ----
+FAKE_PAT = "ghp_" + "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE3fG5"   # shaped like a GitHub token, made up
+
+
+def secrets_repo(tmp_path, old_secret, pushed_secret):
+    repo = tmp_path / "r"
+    repo.mkdir()
+    g = lambda *a: subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True)
+    g("init", "-q", "-b", "dev"); g("config", "user.email", "t@example.com"); g("config", "user.name", "t")
+    (repo / "old.py").write_text(f'token = "{FAKE_PAT}"\n' if old_secret else "x = 1\n", encoding="utf-8")
+    g("add", "-A"); g("commit", "-q", "-m", "chore: base")
+    g("update-ref", "refs/remotes/origin/dev", "HEAD")
+    g("checkout", "-q", "-b", "chore/bump")
+    (repo / "new.py").write_text(f'token = "{FAKE_PAT}"\n' if pushed_secret else "y = 2\n", encoding="utf-8")
+    g("add", "-A"); g("commit", "-q", "-m", "chore: pushed")
+    return repo
+
+
+@pytest.mark.skipif(not __import__("shutil").which("gitleaks"), reason="gitleaks is not installed")
+def test_s454_an_old_finding_below_the_base_does_not_block_a_clean_push(tmp_path):
+    r = local(secrets_repo(tmp_path, old_secret=True, pushed_secret=False), "secrets")
+    assert r.returncode == 0 and "ok   secrets" in r.stdout, r.stdout + r.stderr
+
+
+@pytest.mark.skipif(not __import__("shutil").which("gitleaks"), reason="gitleaks is not installed")
+def test_s454_a_finding_in_a_pushed_commit_still_fails(tmp_path):
+    r = local(secrets_repo(tmp_path, old_secret=False, pushed_secret=True), "secrets")
+    assert r.returncode == 1 and "FAIL secrets" in r.stdout, r.stdout + r.stderr

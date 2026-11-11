@@ -181,3 +181,36 @@ def test_s319_the_pr_template_has_a_red_section_above_test_output():
     assert "## Red" in text and "## Test Output" in text
     assert text.index("## Red") < text.index("## Test Output")
     assert "tests/test_widget.py::test_widget_rejects_empty" in text
+
+
+# ---- story #454: a kit bump (the pin plus files adopt.sh writes) is not code to test ----
+BUMP = {
+    "knowledge/shipquick_latest": "gitlink stand-in\n",
+    ".github/workflows/shipquick-call.yml": "name: ShipQuick checks\n",
+    ".github/workflows/roadmap-call.yml": "name: Roadmap\n",
+    ".shipquick/features.json": "{}\n",
+    ".shipquick/roles.yml": "coders: []\n",
+    ".pre-commit-config.yaml": "repos: []\n",
+    ".gitattributes": "docs/LEARNINGS.md merge=union\n",
+    "roadmap.json": "{}\n",
+    ".claude/commands/mode.md": "mode\n",
+    "CLAUDE.md": "pointer\n",
+}
+
+
+def test_s454_a_diff_of_only_the_pin_and_adopt_files_is_exempt_without_a_red_section(tmp_path):
+    repo = make_repo(tmp_path, BUMP)
+    r = run(tmp_path, repo, "chore: bump\n", "--head-branch", "chore/shipquick-v0.13.0")
+    assert r.returncode == 0 and "tdd exempt" in r.stdout and "kit bump" in r.stdout, r.stdout
+
+
+def test_s454_the_same_bump_plus_one_code_file_still_needs_a_red_section(tmp_path):
+    repo = make_repo(tmp_path, {**BUMP, "src/app.py": "x = 1\n"})
+    r = run(tmp_path, repo, "chore: bump\n", "--head-branch", "chore/shipquick-v0.13.0")
+    assert r.returncode == 1 and "## Red" in r.stdout, r.stdout
+
+
+def test_s454_adopt_files_without_the_pin_are_not_a_bump(tmp_path):
+    repo = make_repo(tmp_path, {k: v for k, v in BUMP.items() if k != "knowledge/shipquick_latest"})
+    r = run(tmp_path, repo, "chore: x\n")
+    assert r.returncode == 1 and "## Red" in r.stdout, r.stdout
