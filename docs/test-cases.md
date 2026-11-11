@@ -1594,30 +1594,6 @@ Scenario: adopt.sh writes, keeps and validates the milestone
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
 
-## Story #175: the story check reaches children
-```gherkin
-Scenario: the story job exists in checks.yml and the gate needs it
-  Then checks.yml has a `story` job that runs only on a pull request, asks for issues: read, runs check_story.py --pr-body-file with GH_TOKEN and the child's own GH_REPO, and the gate lists it and echoes its result
-Scenario: the caller adopt.sh writes grants issues: read
-  When adopt.sh runs on a fresh child, the written shipquick-call.yml has an `issues: read` line
-Scenario: --check reports a caller without issues: read
-  Given a correctly pinned child whose caller lost every `issues: read` line
-  When adopt.sh --check runs
-  Then it exits 1 and says "not adopted: shipquick-call.yml grants no issues: read"
-Scenario: --check accepts a caller that grants issues: write (review of #370)
-  Given a correctly pinned child whose caller says `issues: write` instead of `issues: read`
-  When adopt.sh --check runs
-  Then it exits 0 and says nothing about issues: read, since write lets the story job read issues
-Scenario: --check accepts a caller with `permissions: read-all` (review of #370, round 2)
-  Given a correctly pinned child whose caller's permissions block is the one line `permissions: read-all`
-  When adopt.sh --check runs
-  Then it exits 0 and says nothing about issues: read, since read-all grants issues: read too
-Scenario: --check accepts an `issues: read` line with a trailing comment (review of #370, round 2)
-  Given a correctly pinned child whose caller says `issues: read   # the story job reads the linked stories`
-  When adopt.sh --check runs
-  Then it exits 0 and says nothing about issues: read
-```
-Tests: `tests/test_checks_workflow.py::test_s175_checks_yml_has_a_story_job_that_runs_check_story_with_issues_read`, `test_s175_the_gate_needs_the_story_job_and_echoes_its_result`, `tests/test_adopt.py::test_s175_the_written_caller_grants_issues_read`, `test_s175_check_reports_a_caller_without_issues_read`, `test_s175_check_accepts_a_caller_that_grants_issues_write`, `test_s175_check_accepts_a_caller_with_permissions_read_all`, `test_s175_check_accepts_an_issues_read_line_with_a_trailing_comment`.
 ## Story #188 (S10): a Design system board on the canvas
 ```gherkin
 Scenario: the registry renders a board with every component row, right after Design learnings
