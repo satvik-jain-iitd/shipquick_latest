@@ -26,7 +26,10 @@ FAKE_PRECOMMIT = Path(tempfile.mkdtemp(prefix="fake-precommit-"))
 (FAKE_PRECOMMIT / "pre-commit").chmod(0o755)
 
 
-def adopt(child, *args, env=None, settings=None, ci=False, precommit=True):
+def adopt(child, *args, env=None, settings=None, ci=False, precommit=True, d0=True):
+    # --check reads a caller with no `milestone:` line as D1 (as CI does), so a test that is not about links adopts at D0
+    if d0 and "--check" not in args and "--milestone" not in args:
+        args = (*args, "--milestone", "D0")
     e = dict(os.environ if env is None else env)
     if precommit:
         e["PATH"] = f"{FAKE_PRECOMMIT}:{e['PATH']}"
@@ -655,7 +658,7 @@ def test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_ref
     r = adopt(child, "--milestone", "D2")
     assert r.returncode == 0, r.stdout + r.stderr
     assert milestone_lines(child) == ["      milestone: D2"]
-    assert adopt(child).returncode == 0                                   # a later run keeps the caller's own line, once
+    assert adopt(child, d0=False).returncode == 0                                   # a later run keeps the caller's own line, once
     assert milestone_lines(child) == ["      milestone: D2"]
     before = (child / CALL_FILE).read_bytes()
     bad = adopt(child, "--milestone", "X9")
@@ -664,7 +667,7 @@ def test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_ref
 
 
 def test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone(child):
-    assert adopt(child).returncode == 0
+    assert adopt(child, d0=False).returncode == 0
     assert milestone_lines(child) == []                                   # absence stays absence: the workflow default applies
 
 
@@ -675,7 +678,7 @@ def test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_drop
         text = "\n".join(("      " + bad) if l.strip().startswith("milestone:") else l
                          for l in path.read_text(encoding="utf-8").splitlines()) + "\n"
         path.write_text(text, encoding="utf-8")
-        r = adopt(child)
+        r = adopt(child, d0=False)
         assert r.returncode != 0, bad
         assert "milestone" in (r.stdout + r.stderr) and bad.split(": ", 1)[1].split(" #")[0].strip('"') in (r.stdout + r.stderr), bad
         assert path.read_text(encoding="utf-8") == text, bad              # nothing was written

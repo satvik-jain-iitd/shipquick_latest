@@ -199,6 +199,17 @@ def test_check_runs_environments_at_the_callers_milestone(child, gh):
     assert "not adopted: environments:" in r.stdout and "empty or placeholder" in r.stdout and "past D1" in r.stdout
 
 
+def test_check_with_no_milestone_line_uses_the_ci_default_d1(child, gh):
+    # CI gives a caller with no `milestone:` line D1 (checks.yml); --check must say the same, never skip (Miraya#2)
+    with_origin(child)
+    assert adopt(child, env=gh, d0=False).returncode == 0
+    add_fake_submodule(child, HEAD)
+    assert "milestone:" not in (child / ".github/workflows/shipquick-call.yml").read_text(encoding="utf-8")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1
+    assert "not adopted: environments:" in r.stdout and "past D1" in r.stdout
+
+
 def test_check_environments_passes_once_both_links_are_filled(child, gh):
     ready(child, gh, milestone="D1")
     md = child / "CLAUDE.md"
