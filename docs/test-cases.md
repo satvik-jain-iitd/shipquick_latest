@@ -1594,17 +1594,6 @@ Scenario: adopt.sh writes, keeps and validates the milestone
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
 
-## Story #174: a workflow file with zero jobs is named and failed
-
-**S174.1 Zero jobs is named and failed.**
-```gherkin
-Scenario: a workflow file in another indent style with no jobs is named and failed
-  Given a workflow file whose "jobs:" key is indented, so no job can be read
-  When check_timeouts.py checks that file
-  Then the output has a line "no timeout-minutes: <file>: no jobs found"
-  And the exit code is 1, never "timeouts OK"
-```
-Test: `tests/test_check_timeouts.py::test_s174_a_file_with_zero_jobs_is_named_and_failed`
 ## Story #188 (S10): a Design system board on the canvas
 ```gherkin
 Scenario: the registry renders a board with every component row, right after Design learnings
