@@ -151,3 +151,15 @@ test('S83 two milestones that wait on each other get two arrows apart, two label
   assert.equal(labels.length, 2);
   assert.notEqual(labels[0], labels[1]);
 });
+
+test('S83 nested arcs keep every label clear of every other arc', () => {
+  const s = storyIn(msOf(4));   // two needs M0->M3 around two needs M1->M2: both arcs share one middle y
+  const html = require('./render.js').mapSvg(build([s(1, 0), s(2, 0), s(3, 3, [1, 2]), s(4, 1), s(5, 1), s(6, 2, [4, 5])], []).map);
+  const groups = [...html.matchAll(/<g data-edge="[^"]*"><path d="M([\d.]+) ([\d.]+) C([\d.]+) [\d.]+ [\d.]+ ([\d.]+)[^>]*\/><text x="([\d.]+)" y="([\d.]+)"([^>]*)>([^<]*)</g)].map(m => {
+    const [x, y1, cx, y2, tx, ty] = m.slice(1, 7).map(Number), wide = m[8].length * 8, end = m[7].includes('text-anchor="end"');
+    return { midX: x + 0.75 * (cx - x) + 0.75, midY: (y1 + y2) / 2, x0: end ? tx - wide : tx, x1: end ? tx : tx + wide, y: ty - 5, text: m[8] };
+  });
+  assert.equal(groups.length, 2);
+  for (const l of groups) for (const a of groups) if (a !== l && Math.abs(a.midY - l.y) < 10)
+    assert.ok(a.midX < l.x0 - 2 || a.midX > l.x1 + 2, `arc at x ${a.midX} runs through label "${l.text}" at x ${l.x0}..${l.x1}`);
+});

@@ -1702,3 +1702,12 @@ Scenario: two milestones that wait on each other
   Then the solid and the dotted arrow get different arcs and their "1 need" labels sit at different places
 ```
 Tests: `roadmap/render.test.js` (`S83 the order search never turns a solid arrow up or a dotted arrow down`, `S83 two milestones that wait on each other get two arrows apart, two labels apart`).
+
+## PR #393 review fix round 2 (story #83 part b): nested arcs keep their labels clear
+```gherkin
+Scenario: nested arcs keep every label clear of every other arc
+  Given two needs from M0 to M3 and two needs from M1 to M2, so both arcs share one middle height
+  When the map draws its arcs
+  Then the outer arc runs past the inner arc's "2 needs" label, and no label sits on another arc
+```
+Tests: `roadmap/render.test.js` (`S83 nested arcs keep every label clear of every other arc`).

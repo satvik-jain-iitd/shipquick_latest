@@ -102,12 +102,22 @@ function clock(model, now, tz = model.tz || TZ) {
 // Colours are theme tokens, so the picture follows the Night theme.
 function mapSvg(mp) {
   const gap = 62, h = 40, w = 250, ys = Object.fromEntries(mp.nodes.map((t, i) => [t, 20 + i * gap])), pos = Object.fromEntries(mp.nodes.map((t, i) => [t, i]));
-  const height = 40 + Math.max(mp.nodes.length - 1, 0) * gap + h, width = 24 + w + 50 + 36 * Math.max(mp.nodes.length - 1, 1) + 90, x = 24 + w;
-  const twoWay = (e) => e.back && mp.edges.some(f => f.from === e.to && f.to === e.from);   // the dotted half of a pair that waits on each other
+  const height = 40 + Math.max(mp.nodes.length - 1, 0) * gap + h, x = 24 + w;
+  // Arcs get their width inner first: an arc that shares any height with an earlier one goes past that one's label,
+  // so no line runs through a label (nested arcs and a two-way pair included). An arc's middle sits at x + 0.75 * off.
+  // shortcut: label width is 8 px a letter at 14 px, measure the text if a wider font comes in.
+  const span = (e) => [pos[e.from], pos[e.to]].sort((a, b) => a - b), label = (e) => `${e.count} need${e.count === 1 ? '' : 's'}`;
+  const done = [], offOf = new Map();
+  for (const e of [...mp.edges].sort((a, b) => (span(a)[1] - span(a)[0]) - (span(b)[1] - span(b)[0]) || a.back - b.back)) {
+    const [lo, hi] = span(e);
+    const off = done.filter(f => f.lo < hi && f.hi > lo).reduce((m, f) => Math.max(m, f.off + (f.text.length * 8 + 12) / 0.75), 50 + 36 * (hi - lo));
+    offOf.set(e, off); done.push({ lo, hi, off, text: label(e) });
+  }
+  const width = Math.max(x + 140, ...mp.edges.map(e => x + offOf.get(e) * 0.75 + 6 + label(e).length * 8 + 12));
   const paths = mp.edges.map(e => {
-    const y1 = ys[e.from] + h / 2, y2 = ys[e.to] + h / 2, off = 50 + 36 * Math.abs(pos[e.from] - pos[e.to]) + (twoWay(e) ? 24 : 0);
+    const y1 = ys[e.from] + h / 2, y2 = ys[e.to] + h / 2, off = offOf.get(e);
     return `<g data-edge="${esc(e.from)} to ${esc(e.to)}"><path d="M${x} ${y1} C${x + off} ${y1} ${x + off} ${y2} ${x + 6} ${y2}" style="fill:none;stroke:var(--dark);stroke-width:2"${e.back ? ' stroke-dasharray="6 4"' : ''} marker-end="url(#ah)"/>`
-      + `<text x="${x + off * 0.75 + 6}" y="${(y1 + y2) / 2 + 5}" font-size="14" style="fill:var(--text)">${e.count} need${e.count === 1 ? '' : 's'}</text></g>`;
+      + `<text x="${x + off * 0.75 + 6}" y="${(y1 + y2) / 2 + 5}" font-size="14" style="fill:var(--text)">${label(e)}</text></g>`;
   }).join('');
   const boxes = mp.nodes.map(t => `<g><rect x="24" y="${ys[t]}" width="${w}" height="${h}" rx="6" style="fill:var(--alt);stroke:var(--dark)"/><text x="36" y="${ys[t] + 25}" font-size="15" style="fill:var(--text)">${esc(t.slice(0, 30))}</text></g>`).join('');
   const n = mp.crossings, hid = mp.hidden ? ` ${mp.hidden} arrow${mp.hidden === 1 ? '' : 's'} that only repeat a longer path ${mp.hidden === 1 ? 'is' : 'are'} left out.` : '';
