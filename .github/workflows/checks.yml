@@ -112,6 +112,33 @@ jobs:
           git -C project fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
           python3 .shipquick/scripts/check_disable_comments.py --base "origin/$BASE" --repo project --body-file "$RUNNER_TEMP/pr-body.md"
+  design-tokens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          fetch-depth: 0
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: No colour or font literal on an added web style line (story #133)
+        run: |
+          BASE="${{ github.base_ref }}"
+          git -C project fetch origin "$BASE"
+          python3 .shipquick/scripts/check_design_literals.py --base "origin/$BASE" --repo project
+      - name: stylelint on changed CSS, needless disables reported (story #133; run_stylelint_changed.sh: per package root, the project's own stylelint, pinned npx as the fallback)
+        run: |
+          BASE="${{ github.base_ref }}"
+          bash .shipquick/scripts/run_stylelint_changed.sh "origin/$BASE" project
   roles:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -362,13 +389,14 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [adoption, disable-comments, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, story]
+    needs: [adoption, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, story]
     if: always()
     steps:
       - name: Check all job results (story #131 -- review_merge.sh requires this exact check to be SUCCESS)
         run: |
           echo "adoption: ${{ needs.adoption.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
+          echo "design-tokens: ${{ needs.design-tokens.result }}"
           echo "roles: ${{ needs.roles.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
           echo "frontend-design: ${{ needs.frontend-design.result }}"
