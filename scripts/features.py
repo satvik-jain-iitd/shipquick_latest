@@ -5,6 +5,8 @@
   features.py [--root DIR] list       one line per feature: id on|off
   features.py [--root DIR] set <id> on|off   rewrites the file (features.sh is the owner's front door; refuses locked ids)
   features.py [--root DIR] sync       the file adopt.sh writes, on stdout: every kit id, the owner's values kept; notes on stderr
+  features.py remote <id> --repo OWNER/NAME --ref REF   the one flag as committed on REF of a GitHub repo (404 = default, other failure = exit 2)
+  features.py flags --git DIR --ref REF   CI: {id: true|false} from the file AS IT IS ON REF (the base branch), never the working tree
   features.py [--root DIR] json       the whole map: on, default, locked and the plain words, for CI and the Desk
 
 State lives in `<root>/.shipquick/features.json` (a protected path: only a PR the owner merges changes it).
@@ -12,6 +14,7 @@ The kit's list, defaults and plain words live in `scripts/features_default.json`
 every feature at its default. Locked features (adoption, gate) always read on. A file that is not valid JSON, or
 holds a non-boolean `on`, exits 2 with the reason and never falls back to defaults. Stdlib only. ADR-016."""
 import argparse
+import base64
 import json
 import os
 import subprocess
@@ -118,6 +121,66 @@ def sync_text(root):
     return json.dumps(data, indent=2) + "\n", notes
 
 
+def flags_at_ref(gitdir, ref):
+    """{id: bool} from `.shipquick/features.json` as committed at `ref`. No file there means every default; a bad ref or file is an error."""
+    def git(*a):
+        try:
+            return subprocess.run(["git", "-C", str(gitdir), *a], capture_output=True)
+        except OSError as e:
+            raise FeaturesError(f"cannot run git ({e})")
+    if git("rev-parse", "--verify", "-q", ref + "^{commit}").returncode != 0:
+        raise FeaturesError(f"no such ref `{ref}` in {gitdir}")
+    with tempfile.TemporaryDirectory() as t:
+        if git("ls-tree", ref, "--", ".shipquick/features.json").stdout.strip():
+            show = git("show", f"{ref}:.shipquick/features.json")
+            if show.returncode != 0:
+                raise FeaturesError(f"cannot read .shipquick/features.json at {ref}")
+            (Path(t) / ".shipquick").mkdir()
+            (Path(t) / ".shipquick" / "features.json").write_bytes(show.stdout)
+        return {k: v["on"] for k, v in read(t)["features"].items()}
+
+
+def remote_flag(repo, ref, feature):
+    """True or False for one feature as committed on `ref` of a GitHub repo (gh api). 404 = no file = the default.
+    Any other gh failure, a bad file or an unknown id raises FeaturesError: callers refuse, they never read an error as "on"."""
+    try:
+        p = subprocess.run(["gh", "api", f"repos/{repo}/contents/.shipquick/features.json?ref={ref}", "--jq", ".content"], capture_output=True, text=True)
+    except OSError as e:
+        raise FeaturesError(f"cannot run gh ({e})")
+    with tempfile.TemporaryDirectory() as t:
+        if p.returncode != 0:
+            if "404" not in p.stderr and "Not Found" not in p.stderr:
+                raise FeaturesError(f"cannot read .shipquick/features.json at {ref} of {repo}: {p.stderr.strip() or 'gh failed'}")
+        else:
+            try:
+                raw = base64.b64decode(p.stdout)
+            except ValueError as e:
+                raise FeaturesError(f".shipquick/features.json at {ref} of {repo} is not readable ({e})")
+            (Path(t) / ".shipquick").mkdir()
+            (Path(t) / ".shipquick" / "features.json").write_bytes(raw)
+        rows = read(t)["features"]
+    if feature not in rows:
+        raise FeaturesError(f"unknown feature `{feature}`; known: {', '.join(rows)}")
+    return rows[feature]["on"]
+
+
+def is_on(feature, root=None):
+    """True or False for one feature in the project at `root` (default: the git root of the current folder).
+    A broken file, an unknown id or a failed git lookup raises FeaturesError: callers fail, they never read an error as "on"."""
+    if root is None:
+        try:
+            p = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+        except OSError as e:
+            raise FeaturesError(f"cannot run git to find the project folder ({e})")
+        if p.returncode != 0 or not p.stdout.strip():
+            raise FeaturesError("not inside a git repository")
+        root = p.stdout.strip()
+    rows = read(root)["features"]
+    if feature not in rows:
+        raise FeaturesError(f"unknown feature `{feature}`; known: {', '.join(rows)}")
+    return rows[feature]["on"]
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="features.py", add_help=False)   # -h must never print help and exit 0: 0 reads as "on"
     ap.add_argument("--root")
@@ -125,6 +188,13 @@ def main(argv=None):
     sub_parser = lambda name: sub.add_parser(name, add_help=False)
     g = sub_parser("get")
     g.add_argument("id")
+    fl = sub_parser("flags")
+    fl.add_argument("--git", required=True)
+    fl.add_argument("--ref", required=True)
+    rm = sub_parser("remote")
+    rm.add_argument("id")
+    rm.add_argument("--repo", required=True)
+    rm.add_argument("--ref", required=True)
     sub_parser("json")
     sub_parser("list")
     sub_parser("sync")
@@ -132,6 +202,27 @@ def main(argv=None):
     st.add_argument("id")
     st.add_argument("word")
     a = ap.parse_args(argv)
+    if a.cmd == "flags":
+        try:
+            print(json.dumps(flags_at_ref(a.git, a.ref), separators=(",", ":")))
+            return 0
+        except FeaturesError as e:
+            print(f"features.py: {e}", file=sys.stderr)
+            return 2
+        except Exception as e:   # exit 1 means "off": no crash may ever leak as 1
+            print(f"features.py: unexpected {type(e).__name__}: {e}", file=sys.stderr)
+            return 2
+    if a.cmd == "remote":
+        try:
+            on = remote_flag(a.repo, a.ref, a.id)
+            print("on" if on else "off")
+            return 0 if on else 1
+        except FeaturesError as e:
+            print(f"features.py: {e}", file=sys.stderr)
+            return 2
+        except Exception as e:
+            print(f"features.py: unexpected {type(e).__name__}: {e}", file=sys.stderr)
+            return 2
     try:
         root = a.root
         if not root:

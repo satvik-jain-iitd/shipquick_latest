@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security commits pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
@@ -52,6 +52,8 @@ check_ui_tokens() { [ -f design/tokens.json ] || return 0; python3 "$HERE/emit_t
 check_ui_proof() { [ -d ui/components ] || return 0; python3 "$HERE/ui_proof.py" --check; report ui-proof $?; }   # story #217
 check_ui_contracts() { [ -d ui/components ] || return 0; python3 "$HERE/emit_contracts.py" --check; report ui-contracts $?; }   # story #222
 check_ui_coverage() { [ -d ui/components ] || return 0; python3 "$HERE/check_ui_coverage.py" --strict-api; report ui-coverage $?; }   # stories #216, #231; web part skips without ui/tool/node_modules
+check_features_wiring() { [ -f "$HERE/../.github/workflows/checks.yml" ] || return 0;   # the workflow the script reads sits in the kit, not in the cwd
+  python3 "$HERE/check_features_wiring.py"; report features-wiring $?; }   # story #422
 check_timeouts() { [ -d .github/workflows ] || return 0; python3 "$HERE/check_timeouts.py" .github/workflows; report timeouts $?; }
 check_commits() {
   have_base commits || return 0
@@ -144,9 +146,34 @@ check_roadmap() {   # story #81: the roadmap's node:test files, the same command
 check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
+# story #423: the feature flags (scripts/features.py) switch a check off. Off prints `skipped: <id> is off`, the same words CI's
+# features job prints. A broken features file fails the run: an error is never read as "on". The file is the project's own, here.
+feature_of() {   # feature_of <check> -- the feature id that switches the check, or nothing when it has none
+  case "$1" in
+    rule-copies) echo rule-copies ;;
+    disable-comments) echo disable-comments ;;
+    design-tokens) echo design-tokens ;;
+    frontend-design) echo frontend-design ;;
+    story) echo story ;;
+    roadmap) echo roadmap ;;
+    ui-registry) echo component-registry ;;
+  esac
+}
+feature_skip() {   # feature_skip <check>: returns 0 when the check must be skipped, 1 to run it, 2 when the features file is broken
+  local id out rc=0
+  id="$(feature_of "$1")"; [ -n "$id" ] || return 1
+  out="$(python3 "$HERE/features.py" get "$id" 2>&1)" || rc=$?
+  case "$rc" in
+    0) return 1 ;;
+    1) echo "skipped: $id is off"; return 0 ;;
+    *) echo "FAIL features: $out"; failed=1; return 2 ;;
+  esac
+}
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts commits pr-size frontend-design disable-comments design-tokens story tdd roadmap workflow-security secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits pr-size frontend-design disable-comments design-tokens story tdd roadmap workflow-security secrets)
 for c in "${checks[@]}"; do
+  feature_skip "$c" && continue
+  [ $? -eq 2 ] && continue
   case "$c" in
     sizes|markers|commits|secrets) "check_$c" ;;
     md-blocks) check_md_blocks ;;
@@ -160,6 +187,7 @@ for c in "${checks[@]}"; do
     ui-tokens) check_ui_tokens ;;
     ui-coverage) check_ui_coverage ;;
     timeouts) check_timeouts ;;
+    features-wiring) check_features_wiring ;;
     secrets-staged) check_secrets_staged ;;
     pr-size) check_pr_size ;;
     frontend-design) check_frontend_design ;;
@@ -170,7 +198,7 @@ for c in "${checks[@]}"; do
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts commits pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts

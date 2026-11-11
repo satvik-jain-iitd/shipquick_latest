@@ -34,6 +34,9 @@ case "$1" in
          *contents/.shipquick/freeze*)
            [ -f "$STUB_DIR/freeze_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
            [ -f "$STUB_DIR/freeze_b64" ] && { cat "$STUB_DIR/freeze_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
+         *contents/.shipquick/features.json*)
+           [ -f "$STUB_DIR/features_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
+           [ -f "$STUB_DIR/features_b64" ] && { cat "$STUB_DIR/features_b64"; exit 0; }; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
          *contents/.shipquick/roles.yml*)
            [ -f "$STUB_DIR/roles_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
            cat "$STUB_DIR/roles_yml_b64"; exit 0 ;;
@@ -76,7 +79,7 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False, screens=None, caller=None):
+    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False, screens=None, caller=None, features=None):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "calls.log").unlink(missing_ok=True)
         if caller is not None:   # story #225: the PR's own repo's shipquick-call.yml on its base; None = none (404)
@@ -88,6 +91,11 @@ def env(tmp_path):
         else:
             (stub / "screens_b64").unlink(missing_ok=True)
         (stub / "issue.log").unlink(missing_ok=True)
+        (stub / "features_b64").unlink(missing_ok=True); (stub / "features_unreadable").unlink(missing_ok=True)
+        if features == "rate":   # story #424: the flags are read from the PR's base branch on GitHub, never the local tree
+            (stub / "features_unreadable").write_text("1", encoding="utf-8")
+        elif features is not None:
+            (stub / "features_b64").write_text(base64.b64encode(features.encode()).decode(), encoding="utf-8")
         (stub / "protection.json").unlink(missing_ok=True)
         default_roles_yml = "coder:\n  - klickbae8yt-star\nreviewer:\n  - satvik-jain-iitd\nowner: satvik-jain-iitd\n"
         (stub / "roles_yml_b64").write_text(base64.b64encode((roles or default_roles_yml).encode()).decode(), encoding="utf-8")
@@ -794,3 +802,26 @@ def test_s318_an_approval_with_both_lines_merges(env):
     r, merged = env(pr=with_review(VERDICT_BODY))
     assert r.returncode == 0, r.stderr
     assert "pr merge 12" in merged
+
+
+def _flags(**f):
+    return json.dumps({"version": 1, "features": {k: {"on": v} for k, v in f.items()}})
+
+
+def test_s424_close_on_merge_off_at_the_base_ref_needs_no_closes_link(env):
+    pr = good(); pr["body"] = "## What\nNo link.\n"
+    r, merged = env(pr=pr, features=_flags(**{"close-on-merge": False}))
+    assert r.returncode == 0, r.stderr
+    assert "contents/.shipquick/features.json?ref=dev" in merged.calls
+
+
+def test_s424_a_local_features_file_saying_off_is_never_read(env, tmp_path):
+    pr = good(); pr["body"] = "## What\nNo link.\n"
+    (tmp_path / "repo" / ".shipquick").mkdir()
+    (tmp_path / "repo" / ".shipquick" / "features.json").write_text(_flags(**{"close-on-merge": False}), encoding="utf-8")
+    refused(*env(pr=pr), "no `Closes #n`")   # the base ref has no file: default on, so the link is required
+
+
+def test_s424_an_unreadable_or_broken_base_features_file_refuses(env):
+    refused(*env(features="rate"), "features")
+    refused(*env(features="{oops"), "features")
