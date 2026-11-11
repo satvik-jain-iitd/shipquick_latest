@@ -29,3 +29,10 @@ def test_rule_39_is_in_claude_md_and_points_to_the_doc():
     t = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
     m = re.search(r"^39\. \*\*(.+?)\*\*.*$", t, re.M)
     assert m and "docs/FEATURES.md" in m.group(0)
+
+
+def test_the_docs_say_what_is_true_today_not_what_will_be():
+    t = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    rule = re.search(r"^39\. .*$", t, re.M).group(0)
+    assert "Today only `adopt.sh` reads it" in rule and "F4 to F8" in rule and "nothing is skipped" in rule
+    assert "changes nothing, so nothing is skipped" in DOC and "recorded but not yet obeyed" not in DOC

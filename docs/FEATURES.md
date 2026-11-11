@@ -14,13 +14,13 @@ That rewrites `.shipquick/features.json`. The file is a protected path, so the c
 a pull request the owner merges. An agent that edits the file on its own branch changes nothing: the check that judges
 the pull request reads the file from the base branch, never from the branch under review.
 
-Turning a feature off always means the owner does more by hand. It never means a check is skipped without his say.
+Turning a feature off will always mean the owner does more by hand. It will never mean a check is skipped without his say.
 `adoption` and `gate` are locked: `features.sh set` refuses them and the reader always says they are on, because they
 guard every other feature.
 
-Today the file and the reader exist, and `adopt.sh` writes the file and honours `pre-commit` and `roadmap`. The CI jobs
-and scripts learn to read their own flags in the next stories of epic #86 (F4 to F8); until then a flag for them is
-recorded but not yet obeyed.
+What works today: the file, the reader, `features.sh get` and `set`, and `adopt.sh`, which writes the file and honours
+`pre-commit` and `roadmap`. What does not work yet: the CI jobs and the other scripts do not read the file. Until stories
+F4 to F8 of epic #86 land, turning any other flag off changes nothing, so nothing is skipped and no check is weaker.
 
 ## Roadmap and issues
 
