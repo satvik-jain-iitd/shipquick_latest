@@ -38,7 +38,6 @@ export default {
         {"name": "backgroundStyle", "note": "`.backgroundStyle(_:)`, iOS 16.0. Apple: \"Sets the specified style to render backgrounds within the view.\""},
         {"name": "border", "note": "`.border(_:width:)`, iOS 13.0. Apple: \"Adds a border to this view with the specified style and width.\""},
         {"name": "controlSize", "note": "`.controlSize(_:)`, iOS 15.0. Apple: \"Sets the size for controls within this view.\""},
-        {"name": "dynamicIsland", "note": "`.dynamicIsland(verticalPlacement:)`, iOS 16.1. Apple: \"Specifies the vertical placement for a view of an expanded Live Activity that appears in the Dynamic Island.\""},
         {"name": "foregroundStyle", "note": "`.foregroundStyle(_:)`, iOS 15.0. Apple: \"Sets a view’s foreground elements to use a given style.\""},
         {"name": "hidden", "note": "`.hidden()`, iOS 13.0. Apple: \"Hides this view unconditionally.\""},
         {"name": "labelsHidden", "note": "`.labelsHidden()`, iOS 13.0. Apple: \"Hides the labels of any controls contained within this view.\""},

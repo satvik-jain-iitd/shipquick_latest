@@ -275,7 +275,7 @@ IOS_DOC_FAMILY = {
                      "fileDialogImportsUnresolvedAliases", "fileDialogMessage", "fileDialogURLEnabled", "fileExporter",
                      "fileExporterFilenameLabel", "fileImporter", "fileMover"],
     "Contact access": ["contactAccessButtonCaption", "contactAccessButtonStyle", "contactAccessPicker"],
-    "live-activities": ["activityBackgroundTint", "activitySystemActionForegroundColor"],
+    "live-activities": ["activityBackgroundTint", "activitySystemActionForegroundColor", "dynamicIsland"],
     # Story #296 (4/6): AccessibilityModifiers split by task. It keeps only rows no doc fits.
     "Speech": ["speechAdjustedPitch", "speechAlwaysIncludesPunctuation", "speechAnnouncementsQueued", "speechSpellsOutCharacters"],
     "Accessibility rotors": ["accessibilityRotor", "accessibilityRotorEntry"],

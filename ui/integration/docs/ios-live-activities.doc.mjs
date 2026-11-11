@@ -35,6 +35,7 @@ export default {
           "items": [
             "activityBackgroundTint: `.activityBackgroundTint(_:)`, iOS 16.0. Apple: \"Sets the tint color for the background of a Live Activity that appears on the Lock Screen.\"",
             "activitySystemActionForegroundColor: `.activitySystemActionForegroundColor(_:)`, iOS 16.1. Apple: \"The text color for the auxiliary action button that the system shows next to a Live Activity on the Lock Screen.\"",
+            "dynamicIsland: `.dynamicIsland(verticalPlacement:)`, iOS 16.1. Apple: \"Specifies the vertical placement for a view of an expanded Live Activity that appears in the Dynamic Island.\"",
             "Activity: iOS 16.1. Apple: \"The object you use to start, update, and end a Live Activity.\"",
             "ActivityAttributes: iOS 16.1. Apple: \"The protocol you implement to describe the content of a Live Activity.\"",
             "ActivityConfiguration: iOS 16.1. Apple: \"An object that describes the content of a Live Activity.\""

@@ -65,7 +65,7 @@ SPLIT = {
         "redact": "Redaction", "privacysensitive": "Redaction", "invalidatable": "Redaction", "contentcapture": "Redaction",
         "spatial": "Spatial", "surroundings": "Spatial", "breakthrough": "Spatial", "upperlimb": "Spatial",
         "volumebaseplate": "Spatial",
-        "widget": "widgets", "containerbackground": "widgets",
+        "widget": "widgets", "containerbackground": "widgets", "dynamicisland": "live-activities",
     },
     # 6/6: GraphicsModifiers split by the effect each row applies (3D, shaders, color adjustments)
     "GraphicsModifiers": {
