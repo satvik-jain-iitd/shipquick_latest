@@ -240,3 +240,31 @@ def test_the_cli_reads_a_diff_file_and_exits_1_with_the_hits(tmp_path):
     d.write_text(diff_with_added("src/a.css", "color: var(--c);"), encoding="utf-8")
     r = subprocess.run([sys.executable, str(SCRIPT), "--diff-file", str(d), "--allowlist", none], capture_output=True, text=True)
     assert r.returncode == 0 and "no design literals" in r.stdout
+
+
+def test_a_quoted_non_ascii_path_header_is_still_checked():
+    # PR #374 review round 4: git quotes a path with a non-ASCII byte (`+++ "b/src/caf\303\251.css"`), so the path
+    # must be unquoted, or one accented letter in a file name lets any literal through.
+    diff = (
+        'diff --git "a/src/caf\\303\\251.css" "b/src/caf\\303\\251.css"\nindex 000..111 100644\n'
+        '--- "a/src/caf\\303\\251.css"\n+++ "b/src/caf\\303\\251.css"\n@@ -0,0 +1 @@\n+color: #ff0033;\n'
+    )
+    why = cdl.check(diff, [])
+    assert why and "src/café.css:1" in why, why
+
+
+def test_the_cli_reports_a_hex_in_a_non_ascii_file_name_from_git(tmp_path):
+    git(tmp_path, "init", "-q")
+    (tmp_path / "keep.txt").write_text("x\n", encoding="utf-8")
+    git(tmp_path, "add", "-A")
+    git(tmp_path, "commit", "-q", "-m", "base")
+    base = git(tmp_path, "rev-parse", "HEAD")
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "café.css").write_text("a { color: #ff0033; }\n", encoding="utf-8")
+    (tmp_path / "src" / "plain.css").write_text("a { color: #00ff33; }\n", encoding="utf-8")
+    git(tmp_path, "add", "-A")
+    git(tmp_path, "commit", "-q", "-m", "css")
+    none = str(tmp_path / "none.txt")
+    r = subprocess.run([sys.executable, str(SCRIPT), "--base", base, "--repo", str(tmp_path), "--allowlist", none],
+                       capture_output=True, text=True)
+    assert r.returncode == 1 and "src/café.css:1" in r.stdout and "src/plain.css:1" in r.stdout, r.stdout + r.stderr

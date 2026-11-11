@@ -10,6 +10,7 @@ Usage: python3 scripts/check_design_literals.py --base <ref> [--repo <path>] [--
 Exit 0 and "no design literals on added lines", or exit 1 and one `path:line: <kind> literal: <text>` per hit.
 """
 import argparse
+import codecs
 import fnmatch
 import re
 import subprocess
@@ -59,6 +60,10 @@ def added_lines(diff_text: str):
     for line in diff_text.splitlines():
         if line.startswith("+++ "):
             p = line[4:].strip()
+            # PR #374 review round 4: git quotes a path with a non-ASCII byte (`"b/src/caf\303\251.css"`); unquote
+            # it before the b/ strip, so a saved --diff-file with quoted headers is checked too.
+            if p.startswith('"') and p.endswith('"'):
+                p = codecs.escape_decode(p[1:-1])[0].decode("utf-8")
             path = None if p == "/dev/null" else re.sub(r"^b/", "", p)
             continue
         m = HUNK.match(line)
@@ -106,7 +111,8 @@ def main() -> int:
     if a.diff_file:
         diff = Path(a.diff_file).read_text(encoding="utf-8")
     else:
-        diff = subprocess.run(["git", "diff", "--unified=0", f"{a.base}...HEAD"], cwd=a.repo, capture_output=True, text=True, check=True).stdout
+        cmd = ["git", "-c", "core.quotePath=false", "diff", "--unified=0", f"{a.base}...HEAD"]
+        diff = subprocess.run(cmd, cwd=a.repo, capture_output=True, text=True, check=True).stdout
     files = a.allowlist or list(dict.fromkeys([str(HERE / "design_token_files.txt"), str(Path(a.repo).resolve() / ALLOWLIST_NAME)]))
     allow = [g for f in files for g in read_allowlist(f)]
     why = check(diff, allow)

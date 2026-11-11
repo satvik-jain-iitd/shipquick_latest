@@ -1642,5 +1642,10 @@ Scenario: an rgb or hsl call on a token is not a literal (PR #374 review round 3
   Given `color: rgb(var(--md-primary-rgb) / 0.12);` on a css line
   Then it passes, and `color: rgb(255, 0, 0);` is still an rgb/hsl hit
   Test: test_an_rgb_or_hsl_call_on_a_token_is_not_a_literal
+Scenario: a non-ASCII file name does not hide a literal (PR #374 review round 4)
+  Given a commit that adds `a { color: #ff0033; }` to `src/café.css`, so git writes a quoted header `+++ "b/src/caf\303\251.css"`
+  When the check runs with --base, or reads a saved diff with that quoted header
+  Then it reports `src/café.css:1`: git runs with `core.quotePath=false`, and a quoted header is unquoted before the `b/` strip
+  Test: test_a_quoted_non_ascii_path_header_is_still_checked, test_the_cli_reports_a_hex_in_a_non_ascii_file_name_from_git
 ```
 Tests: `tests/test_check_design_literals.py`.
