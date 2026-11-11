@@ -34,7 +34,7 @@ def test_set_rewrites_the_file_and_says_the_owner_merges_a_pr(repo):
     assert r.returncode == 0, r.stderr
     assert "protected path" in r.stdout and "owner merges" in r.stdout
     data = json.loads((repo / ".shipquick" / "features.json").read_text(encoding="utf-8"))
-    assert data["features"]["roadmap"]["on"] is False and data["features"]["roadmap"]["default"] is True
+    assert data["features"] == {"roadmap": {"on": False}}   # only the id being set: untouched ids keep following the kit
     assert sh(repo, "get", "roadmap").returncode == 1
     sh(repo, "set", "roadmap", "on")
     assert sh(repo, "get", "roadmap").returncode == 0
@@ -88,3 +88,38 @@ def test_features_sh_is_a_protected_path():
     import fnmatch
     globs = [l.strip() for l in (ROOT / "scripts" / "protected_paths.txt").read_text(encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
     assert any(fnmatch.fnmatchcase("scripts/features.sh", g) for g in globs)
+
+
+def test_set_pins_only_the_id_it_sets(repo):
+    sh(repo, "set", "roadmap", "off")
+    sh(repo, "set", "lanes", "off")
+    f = json.loads((repo / ".shipquick" / "features.json").read_text(encoding="utf-8"))["features"]
+    assert set(f) == {"roadmap", "lanes"}
+
+
+def test_set_writes_atomically_a_failed_replace_leaves_the_old_file_and_no_temp(repo, monkeypatch):
+    import os
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import features
+    sh(repo, "set", "roadmap", "off")
+    p = repo / ".shipquick" / "features.json"
+    before = p.read_text(encoding="utf-8")
+
+    def boom(*a, **k):
+        raise OSError("killed mid-write")
+    monkeypatch.setattr(features.os, "replace", boom)
+    try:
+        features.set_feature(str(repo), "lanes", "off")
+    except OSError:
+        pass
+    assert p.read_text(encoding="utf-8") == before
+    assert [x.name for x in p.parent.iterdir()] == ["features.json"], "a temp file was left behind"
+
+
+def test_a_null_row_is_an_error_for_get_and_set_alike(repo):
+    (repo / ".shipquick").mkdir()
+    (repo / ".shipquick" / "features.json").write_text(json.dumps({"version": 1, "features": {"roadmap": None}}), encoding="utf-8")
+    for args in (("get", "roadmap"), ("set", "roadmap", "off"), ("get",)):
+        r = sh(repo, *args)
+        assert r.returncode == 2 and r.stdout.strip() == "" and "Traceback" not in r.stderr, (args, r.stderr)
