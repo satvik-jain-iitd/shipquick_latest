@@ -34,7 +34,13 @@ It will add `.package(path: "knowledge/shipquick_latest/ui/ios")`.
 
 - Tokens: `Tokens.swift` comes from `design/tokens.json` in story S6. Until then the templates use the system
   spacing (`.padding()` with no number) and system colours.
-- Snapshots: a later story (#219). A text scan also checks the templates (`tests/test_ios_templates.py`).
+- A text scan also checks the templates (`tests/test_ios_templates.py`).
+
+## Snapshots (story #219)
+
+Job `ui-ios-snapshots` draws every template in light and dark, the smallest and the largest Dynamic Type size,
+on iPhone SE and iPhone Pro Max, and compares the pictures with `ShipQuickUITests/__Snapshots__/`.
+Prefire turns every `#Preview` into one more test. How the images are recorded and refreshed: `SNAPSHOTS.md`.
 
 ## What CI compiles (story #217)
 
@@ -69,3 +75,8 @@ stored (SwiftUI takes content as a view builder). Android props stay out; the Ko
 `python3 scripts/emit_contracts.py --check` fails when a struct is missing, stale or has no contract left; it runs in
 `scripts/check_local.sh` (`ui-contracts`) and in CI. CI compiles the folder with the templates, so a type name that is
 not real Swift fails the build.
+
+## Accessibility (story #220)
+
+One UI test per template runs Apple's accessibility audit on CI.
+What a person still checks by hand is in `ACCESSIBILITY.md`, tagged `review-only`.

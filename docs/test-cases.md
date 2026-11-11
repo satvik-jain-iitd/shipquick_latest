@@ -1625,6 +1625,35 @@ Scenario: a registry that is JSON but not a components object is a problem, not 
 ```
 Tests: `tests/test_canvas_stage.py::DesignSystem`.
 
+## Story #220 (S5e): XCUITest accessibility audit per iOS screen
+
+```gherkin
+Scenario: one audit test per template
+  Given ui/ios/templates holds N *Template.swift files
+  Then A11yAudit/Tests/TemplateAccessibilityAuditTests.swift has test<Name>() calling audit("<Name>") for each, and calls performAccessibilityAudit()
+  Test: test_s220_one_audit_test_per_template_calls_perform_accessibility_audit
+Scenario: the host app can show every template
+  Then A11yAudit/Host/A11yHostApp.swift has a case "<Name>": <Name>() for each template
+  Test: test_s220_the_host_app_shows_every_template_by_launch_argument
+Scenario: the XcodeGen spec makes an app and a UI test target on iOS 17
+  Then project.yml uses the local ShipQuickUI package at .., has an application and a bundle.ui-testing target, and no generated project is committed
+  Test: test_s220_the_xcodegen_spec_has_the_app_and_a_ui_test_target
+Scenario: the audit runs in the snapshot job
+  Then ui-ios-snapshots fetches XcodeGen by pinned release and SHA-256, generates the project, runs xcodebuild test on iPhone 16, iOS 18.5, and runs even after a red snapshot step
+  Test: test_s220_the_audit_runs_in_the_snapshot_job_with_a_pinned_xcodegen
+Scenario: the HIG items no machine checks are listed as review-only
+  Then ui/ios/ACCESSIBILITY.md tags navigation, gestures, VoiceOver order and Reduce Motion as `review-only`, and the README links it
+  Test: test_s220_the_review_only_list_names_what_no_machine_checks
+Scenario: only named findings on Apple's stock controls are let through (CI round 3)
+  Given the audit found 19 issues, all on stock controls in system colours
+  Then knownSystemFindings lists each as "<screen>|<check>|<label>", every screen exists, and ACCESSIBILITY.md has one row per entry
+  And any other finding still fails the test
+  Test: test_s220_every_known_system_finding_is_narrow_and_written_down
+Scenario: each story keeps its own Tests line (review of #390)
+  Then the #188 Tests line sits right after #188's closing fence, and the #220 section has exactly one Tests line
+  Test: test_s220_the_test_cases_rows_keep_each_story_with_its_own_tests_line
+```
+Tests: `tests/test_ios_a11y_audit.py`. The Swift UI tests (`ui/ios/A11yAudit/Tests/TemplateAccessibilityAuditTests.swift`, 5 tests) run only in the CI job `ui-ios-snapshots`.
 
 ## Story #174: a workflow file with zero jobs is named and failed
 

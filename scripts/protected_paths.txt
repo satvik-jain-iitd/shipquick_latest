@@ -37,3 +37,5 @@ scripts/kit_branch.py
 scripts/design_token_files.txt
 # PR #374 review: the stylelint step both gates run; a PR must not switch it off from inside itself
 scripts/run_stylelint_changed.sh
+# story #219: the iOS reference images; a changed image is a design change, so the owner merges it
+ui/ios/ShipQuickUITests/__Snapshots__/*
