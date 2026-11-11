@@ -82,3 +82,9 @@ def test_every_command_exits_2_on_an_invalid_utf8_file_never_1(repo):
     for args in (("get", "roadmap"), ("get",), ("set", "roadmap", "off")):
         r = sh(repo, *args)
         assert r.returncode == 2 and r.stdout.strip() == "" and "Traceback" not in r.stderr, (args, r.returncode, r.stderr)
+
+
+def test_features_sh_is_a_protected_path():
+    import fnmatch
+    globs = [l.strip() for l in (ROOT / "scripts" / "protected_paths.txt").read_text(encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")]
+    assert any(fnmatch.fnmatchcase("scripts/features.sh", g) for g in globs)
