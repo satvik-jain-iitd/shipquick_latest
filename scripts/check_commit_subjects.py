@@ -3,13 +3,18 @@
 
   check_commit_subjects.py --base origin/dev [--max 72]
 
-Looks at `<base>..HEAD`, merge commits left out (and subjects that start with "Merge ", as check_commit_msg.py does). Prints
+Looks at `<base>..HEAD`, merge commits left out (`--no-merges`; a plain commit that merely starts with "Merge " is checked) and
+the exact form git writes for a revert, `Revert "<subject>"`, which quotes a subject that may itself be long. Prints
 every long subject with its commit and length and exits 1; prints `commit subjects OK` and exits 0 when none is long; a base
 that does not exist is exit 2 (an error is never a pass). Stdlib only. The same rule as the commit-msg hook, run on the
 commits already made: CI runs it on a pull request, check_local.sh runs it before a push."""
 import argparse
+import re
 import subprocess
 import sys
+
+
+REVERT = re.compile(r'^Revert ".+"$')   # git revert's own title; nothing looser is exempt
 
 
 def main(argv=None):
@@ -32,7 +37,7 @@ def main(argv=None):
     bad = []
     for line in log.stdout.splitlines():
         h, _, subject = line.partition("\t")
-        if not subject.startswith("Merge ") and len(subject) > a.max:
+        if len(subject) > a.max and not REVERT.match(subject):
             bad.append((h, subject))
     for h, subject in bad:
         print(f"commit subject over {a.max} characters ({len(subject)}): {h} {subject}")

@@ -434,7 +434,12 @@ jobs:
       - name: No commit subject over 72 characters (story 446)
         env:
           TARGET: ${{ github.base_ref }}
-        run: cd project && python3 ../.shipquick/scripts/check_commit_subjects.py --base "origin/$TARGET"
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          case "$PR_AUTHOR" in
+            dependabot\[bot\]|app/dependabot) echo "Dependabot: commit-subjects exempt (its titles cannot be reworded)"; exit 0 ;;
+          esac
+          cd project && python3 ../.shipquick/scripts/check_commit_subjects.py --base "origin/$TARGET"
   story:
     # Story #175: every user story the PR links names who does it and how it is done (check_story.py, story #155).
     # The job asks for issues: read; a reusable workflow gets it only when the caller grants it (adopt.sh writes that).

@@ -39,9 +39,26 @@ def test_72_characters_passes_and_73_fails_naming_the_commit(repo):
     assert r.returncode == 1 and "over 72 characters (73)" in r.stdout and "c" * 20 in r.stdout
 
 
-def test_merge_subjects_are_ignored(repo):
-    git(repo, "commit", "-q", "--allow-empty", "-m", "Merge " + "m" * 100)
+def test_real_merge_commits_are_ignored_but_a_plain_commit_titled_merge_is_not(repo):
+    git(repo, "switch", "-q", "-c", "side")
+    git(repo, "commit", "-q", "--allow-empty", "-m", "chore: side")
+    git(repo, "switch", "-q", "dev")
+    git(repo, "commit", "-q", "--allow-empty", "-m", "chore: main")
+    git(repo, "merge", "-q", "--no-ff", "-m", "Merge branch side " + "m" * 100, "side")   # a real merge: skipped by --no-merges
+    git(repo, "update-ref", "refs/remotes/origin/dev", "HEAD~1")
     assert run(repo, "--base", "origin/dev").returncode == 0
+    git(repo, "commit", "-q", "--allow-empty", "-m", "Merge " + "m" * 100)   # not a merge commit: no free pass for its title
+    r = run(repo, "--base", "origin/dev")
+    assert r.returncode == 1 and "over 72 characters" in r.stdout
+
+
+def test_the_exact_git_revert_form_is_exempt_and_nothing_near_it_is(repo):
+    git(repo, "commit", "-q", "--allow-empty", "-m", 'Revert "feat(x): ' + "r" * 80 + '"')
+    assert run(repo, "--base", "origin/dev").returncode == 0
+    for bad in ('Revert "feat(x): ' + "r" * 80, "Revert " + "r" * 80, 'revert "feat(x): ' + "r" * 80 + '"'):
+        git(repo, "commit", "-q", "--allow-empty", "-m", bad)
+    r = run(repo, "--base", "origin/dev")
+    assert r.returncode == 1 and r.stdout.count("over 72 characters") == 3
 
 
 def test_a_missing_base_is_an_error_never_a_pass(repo):
@@ -65,6 +82,7 @@ def test_checks_yml_has_the_job_behind_the_flag_with_full_history():
     assert "needs.features.result == 'success'" in j and "github.event_name == 'pull_request'" in j
     assert "fetch-depth: 0" in j and "check_commit_subjects.py" in j and "github.base_ref" in j
     assert "timeout-minutes:" in j
+    assert "dependabot" in j and "exit 0" in j and "github.event.pull_request.user.login" in j   # their long subjects cannot be reworded
 
 
 def test_the_gate_waits_for_the_job_and_prints_it():
