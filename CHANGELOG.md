@@ -16,6 +16,12 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 - Children warning, for the next release notes: after the pin bump the `adoption` job fails any child job with no `timeout-minutes`. Fix: add `timeout-minutes: 10` per job; `python3 knowledge/shipquick_latest/scripts/check_timeouts.py .github/workflows` lists them (#174).
 - `check_timeouts.py` names and fails a workflow file that has zero jobs (for example a root-indented `jobs:`), instead of passing it silently (#174).
 
+### Added
+- `checks.yml` gains a `story` job, in the gate: every user story a child's PR links must carry `Who does it:` (and `Done when:` for stories made from 10 Nov 2026). `adopt.sh --check` reports a caller without `issues: read` (#175).
+
+### Children, read this before you bump
+- The `story` job needs `issues: read` from your caller. Without it the whole ShipQuick checks run fails at startup with `The nested job 'story' is requesting 'issues: read', but is only allowed 'issues: none'`, and no gate check appears. Run `bash knowledge/shipquick_latest/scripts/adopt.sh .` after the bump to fix it. A story without `Who does it:` turns the gate red too: add the line to the issue, then re-run the job.
+
 ## [0.11.1] - 2026-11-10
 Tag `v0.11.1`, "a child sets its milestone". Notes: `docs/RELEASE_NOTES_v0.11.1.md`.
 
