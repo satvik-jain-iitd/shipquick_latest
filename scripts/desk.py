@@ -25,6 +25,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import roles  # noqa: E402  the one roles parser (story #140)
 import features  # noqa: E402  the one features reader (story #427); the Desk never parses the file itself
 DEFAULT_PORT = 8765
 TTL_SECONDS = 60
@@ -82,6 +83,23 @@ def propose_feature(repo_dir, fid, on, base="dev"):
             raise DeskError("`%s` is locked: it guards every other feature and always stays on" % fid)
         if cur["on"] == on:
             return {"unchanged": True}
+        env = dict(os.environ)   # story #456: the account that opens the PR is named, and never the review account
+        build = os.environ.get("SHIPQUICK_BUILD_USER")
+        if build:
+            t = subprocess.run(["gh", "auth", "token", "--user", build], capture_output=True, text=True)
+            if t.returncode == 0 and t.stdout.strip():
+                env["GH_TOKEN"] = t.stdout.strip()
+        try:
+            who = subprocess.run(["gh", "api", "user", "--jq", ".login"], cwd=repo, capture_output=True, text=True, timeout=GH_TIMEOUT, env=env).stdout.strip()
+        except (OSError, subprocess.TimeoutExpired):
+            who = ""
+        if not who:
+            raise DeskError("cannot tell which gh account would open the PR; log in, or set SHIPQUICK_BUILD_USER to a coder account")
+        rf = wt / roles.DEFAULT_FILE
+        if rf.is_file():
+            r = roles.parse(rf.read_text(encoding="utf-8"))
+            if who in r.get("reviewer", []) and who not in r.get("coder", []):
+                raise DeskError("gh would open this PR as the review account `%s`; set SHIPQUICK_BUILD_USER to a coder account" % who)
         p = subprocess.run(["bash", str(HERE / "features.sh"), "set", fid, word], cwd=wt, capture_output=True, text=True, timeout=30)
         if p.returncode:
             raise DeskError("features.sh set failed: %s" % (p.stderr.strip() or "exit %d" % p.returncode))
@@ -92,13 +110,7 @@ def propose_feature(repo_dir, fid, on, base="dev"):
         title = "chore(features): turn %s %s" % (fid, word)
         git(*ident, "commit", "-q", "-m", title + "\n\nProposed from the ShipQuick Desk. `.shipquick/features.json` is a protected path: the owner merges.", cwd=wt)
         git("push", "-q", "origin", branch, cwd=wt)
-        env = dict(os.environ)
-        build = os.environ.get("SHIPQUICK_BUILD_USER")
-        if build:
-            t = subprocess.run(["gh", "auth", "token", "--user", build], capture_output=True, text=True)
-            if t.returncode == 0 and t.stdout.strip():
-                env["GH_TOKEN"] = t.stdout.strip()
-        body = "Proposed from the ShipQuick Desk: set `%s` to `%s` in `.shipquick/features.json`.\n\nThis is a protected path: the owner merges it.\n" % (fid, word)
+        body = "Proposed from the ShipQuick Desk: set `%s` to `%s` in `.shipquick/features.json`.\n\nOpened by `%s`. This is a protected path: the owner merges it.\n" % (fid, word, who)
         try:
             c = subprocess.run(["gh", "pr", "create", "--base", base, "--head", branch, "--title", title, "--body", body],
                                cwd=repo, capture_output=True, text=True, timeout=GH_TIMEOUT * 2, env=env)
@@ -114,6 +126,7 @@ def propose_feature(repo_dir, fid, on, base="dev"):
     finally:
         subprocess.run(["git", "worktree", "remove", "--force", str(wt)], cwd=repo, capture_output=True)
         shutil.rmtree(tmp, ignore_errors=True)
+        subprocess.run(["git", "branch", "-D", branch], cwd=repo, capture_output=True)   # story #456: never left behind, on any path (a pushed branch lives on origin)
 
 
 def checks_summary(rollup):
