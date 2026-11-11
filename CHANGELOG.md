@@ -12,6 +12,24 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-11
+Tag `v0.13.0`, "features as switches, the Desk with working switches, and a preflight for a child's bump". Notes: `docs/RELEASE_NOTES_v0.13.0.md`.
+
+### Added
+- Feature switches (epic #86): `.shipquick/features.json` holds one on or off per ShipQuick feature; one reader (`scripts/features.py`), the owner's setter (`scripts/features.sh`), plain words per feature in `scripts/features_default.json`, rule 39 and ADR-016. `adoption` and `gate` are locked on. CI reads the flags from the base branch (the `features` job, then every gated job); `check_local.sh`, the roadmap workflow, `check_closes.py`, `close_linked_issues.py`, `mode.sh` and `review_merge.sh` read them too, and off is always the safe side (#418 to #426).
+- The Desk on the approved frame D (epic #91): every feature in groups, an error card when the file is broken, owner cards, the roadmap link, and working switches. A switch opens a PR for the owner's merge through one guarded write route (same origin plus a per-start token, `features.sh set` in a throwaway worktree); the page shows "Turning off, merge PR N" until it lands (#427, #428, #430).
+- `adopt.sh` preflight (#446): it writes `.shipquick/features.json` and installs the git hooks when they are configured and missing; `adopt.sh --check` also fails on uninstalled hooks, on commit subjects over 72 characters since the base, and on empty or placeholder Dev and Production links at the caller's milestone. The plugin's session-start hook warns about uninstalled hooks.
+- `checks.yml` gains a `commit-subjects` job, in the gate, behind its own feature flag `commit-subjects` (default on): no commit subject over 72 characters on the PR's own commits (`check_commit_subjects.py`; Dependabot and git's exact `Revert "<subject>"` form are exempt). `check_local.sh` runs it too.
+- Bench results (#312): the full kit-against-no-kit run and the vibe baseline are recorded in `docs/research/experiments.md`.
+
+### Changed
+- `close-on-merge` and `merge-gate` are read at the PR's base ref through `features.py remote`, never from the checkout; an unreadable or broken file refuses the merge (#440, #442).
+
+### Children, read this before you bump
+- New `commit-subjects` job in the gate: a PR with a commit subject over 72 characters fails. Reword it before you push, or switch the feature off (`scripts/features.sh set commit-subjects off`, a PR the owner merges). Dependabot and `Revert "..."` titles are exempt.
+- `adopt.sh` now writes `.shipquick/features.json` (a protected path) and installs the git hooks. Run `adopt.sh . --check` before you push a bump branch and paste its output in the PR.
+- `adopt.sh --check` now fails on uninstalled hooks, on a subject over 72 since the base, and on empty Dev or Production links past milestone D0.
+
 ## [0.12.0] - 2026-11-11
 Tag `v0.12.0`, "D7: the iOS library, the live roadmap and the design checks". Notes: `docs/RELEASE_NOTES_v0.12.0.md`.
 
