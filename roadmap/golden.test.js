@@ -1,12 +1,11 @@
 // Story #81 (epic #80, S1): the golden fixture. One synthetic GitHub answer (roadmap/fixtures/golden-issues.json) went once through the
 // reference Python roadmap (roadmap/fixtures/expected.py captured roadmap/fixtures/golden-expected.json). The JS model must equal it field by field.
-// Run: node --test roadmap/*.test.js          ROADMAP_STRICT=1 runs the todo tests as real failures (the red run; stories #82 and #83 turn them green).
+// Run: node --test roadmap/*.test.js
 const test = require('node:test'), assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path');
 const { build, fromGraphql, clock } = require('./render.js');
 
 const read = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', f), 'utf8'));
 const resp = read('golden-issues.json'), want = read('golden-expected.json'), d = fromGraphql(resp), model = build(d.issues, d.prs);
-const later = (story, what) => process.env.ROADMAP_STRICT ? {} : { todo: `story ${story}: ${what}` };
 const pick = (o, keys) => Object.fromEntries(keys.map(k => [k, o[k] === undefined ? null : o[k]]));   // a field the JS does not have yet reads as null, so the diff names it
 const nums = (rows) => (rows || []).map(s => s.number);
 
@@ -53,17 +52,17 @@ test('golden: the page renders the board, timeline, you are here, Next, older wo
   assert.ok(sec('next').indexOf('#' + want.next[0]) < sec('next').indexOf('#' + want.next[1]));
 });
 
-test('golden: the milestones have the same due date, counts, days left and late flag', later('#83', 'model.milestones and clock(model, now)'), () => {
+test('golden: the milestones have the same due date, counts, days left and late flag', () => {
   clock(model, new Date(want.now));
   const keys = ['title', 'due', 'done', 'total', 'daysLeft', 'late'];
   assert.deepEqual((model.milestones || []).map(m => pick(m, keys)), want.milestones);
 });
 
-test('golden: the dependency map has the same nodes, edges, hidden arrows and crossings', later('#83', 'model.map with measured crossings'), () => {
+test('golden: the dependency map has the same nodes, edges, hidden arrows and crossings', () => {
   assert.deepEqual(model.map, want.map);
 });
 
-test('golden: the longest chain of open work is the same', later('#83', 'model.chain'), () => {
+test('golden: the longest chain of open work is the same', () => {
   assert.deepEqual(nums(model.chain), want.chain);
 });
 

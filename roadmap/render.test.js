@@ -118,3 +118,18 @@ test('S83 the model owns the zone: a different project.timezone never splits the
   assert.ok(tl.includes('closed 01:30'), tl);       // the row shows the same day, not "24 Oct 22:00"
   assert.ok(out.includes('updated 09:05'));         // the clock line uses the same zone
 });
+
+test('S83 the map order search finds the order with the fewest crossings', () => {
+  const ms = ['A', 'B', 'C', 'D'].map((t, i) => ({ title: 'M' + i + ' ' + t, dueOn: `2026-11-0${i + 1}T18:29:00Z` }));
+  const s = (n, m, needs) => ({ number: n, title: 'Story ' + n, body: '## Business\nS.\n' + (needs ? 'Needs: #' + needs : ''), state: 'OPEN', labels: ['story'], closedAt: null, parent: null, milestone: ms[m] });
+  const mp = build([s(1, 0), s(2, 1), s(3, 2, 1), s(4, 3, 2)], []).map;   // M0 to M2 and M1 to M3 interleave in due order: 1 crossing
+  assert.equal(require('./render.js').crossings([[0, 2], [1, 3]]), 1);
+  assert.equal(mp.crossings, 0);
+  assert.deepEqual(mp.nodes.slice().sort(), ms.map(m => m.title));   // every milestone is still drawn once
+});
+
+test('S83 the page has no project text of its own: only the title and the vision change it', () => {
+  const a = render(model, { title: 'Alpha', vision: 'First words.' }, NOW), b = render(model, { title: 'Beta', vision: 'Other words.' }, NOW);
+  assert.equal(a.split('Alpha').join('X').split('First words.').join('V'), b.split('Beta').join('X').split('Other words.').join('V'));
+  assert.ok(a.includes('id="milestones"') && a.includes('id="map"'));
+});

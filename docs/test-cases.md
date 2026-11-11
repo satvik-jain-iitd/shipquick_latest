@@ -1662,3 +1662,31 @@ Scenario: the model owns the zone
   Then the heading says "25 Oct", the row says "closed 01:30" and the clock line says 09:05
 ```
 Tests: `roadmap/ported.test.js` (`S1 the timeline groups closed stories by India close day, newest first`, `S1 the start is the first doing label and the cycle time is close minus start`, `S1 You are here shows the time, the story in progress and the next ready story`, `S1 Next is sorted by milestone, then priority, then number, and marks blocked stories`, `S1 stories without a ready or blocked label are older work and stay out of Next`, `S1 delivered epics show their date range and stay folded`), `roadmap/golden.test.js` (`golden: the timeline groups closed stories by India close day, newest first`, `golden: you are here, the Next order and the older work are the same`, `golden: the page renders the board, timeline, you are here, Next, older work and delivered ranges (#83 part a)`), `roadmap/render.test.js` (`S83 the close day follows the timezone input, default Asia/Kolkata`, `S83 the model owns the zone: a different project.timezone never splits the heading day from the row day`).
+
+## Story #83 part (b) (epic #80, S1): milestone bars, dependency map, longest chain, Night theme, phone
+```gherkin
+Scenario: milestone bars
+  Given stories in two milestones with due dates
+  When the page is drawn on 26 Oct
+  Then each bar shows "3 of 8", "due 27 Oct" and "1 day left", earliest due first
+  And a milestone past its due date with work left is red and says "late by 2 days"
+Scenario: the dependency map
+  Given Needs lines between stories in different milestones
+  Then there is one edge per pair of milestones with the number of needs, a need on a later milestone is a dotted backward edge,
+  And an arrow that only repeats a longer path is hidden and counted
+Scenario: crossings are measured and the order search keeps the fewest
+  Given two arcs that interleave in due order
+  Then crossings() counts 1, nested or touching arcs count 0
+  And the map picks a milestone order with 0 crossings and still draws every milestone once
+Scenario: the longest chain
+  Given open stories that wait on each other
+  Then the longest chain is listed, ties go to the lowest numbers
+Scenario: Night theme and phone
+  Given a phone in dark mode at 360 px
+  Then the page carries the color-scheme meta, every token the body paints with changes at night, the map uses theme tokens only,
+  And board columns may shrink and wrap long words, so the page never scrolls sideways
+Scenario: no project text of its own
+  Given the same model rendered with two titles and two visions
+  Then the two pages differ only in the title and the vision
+```
+Tests: `roadmap/ported.test.js` (`S1 milestone bars count done over total, with the due date and the days left`, `S1 a milestone past its due date with work left is late and red`, `S1 the map has one edge per pair of milestones with the number of needs`, `S1 a need on a later milestone is a backward edge`, `S1 crossings are measured, not guessed`, `S1 the svg labels every arrow and names the crossings`, `S1 an arrow that only repeats a longer path is hidden and counted`, `S1 the longest chain of open work is listed, ties go to the lowest numbers`, `S1 the page has a night theme that follows the phone, and a phone-width layout`, `S1 board columns may shrink and wrap long words, so a phone does not scroll sideways`, `S1 the map svg uses theme colours, so it follows night`), `roadmap/golden.test.js` (`golden: the milestones have the same due date, counts, days left and late flag`, `golden: the dependency map has the same nodes, edges, hidden arrows and crossings`, `golden: the longest chain of open work is the same`), `roadmap/render.test.js` (`S83 the map order search finds the order with the fewest crossings`, `S83 the page has no project text of its own: only the title and the vision change it`).
