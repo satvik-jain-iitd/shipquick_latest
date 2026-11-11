@@ -268,3 +268,15 @@ def test_the_cli_reports_a_hex_in_a_non_ascii_file_name_from_git(tmp_path):
     r = subprocess.run([sys.executable, str(SCRIPT), "--base", base, "--repo", str(tmp_path), "--allowlist", none],
                        capture_output=True, text=True)
     assert r.returncode == 1 and "src/café.css:1" in r.stdout and "src/plain.css:1" in r.stdout, r.stdout + r.stderr
+
+
+def test_a_literal_in_a_fixtures_folder_is_test_data_and_passes():
+    """A release PR into main diffs against main, so an old bad-on-purpose fixture counts as an added line there."""
+    d = diff_with_added("tests/fixtures/web/bad/BadScreen.tsx", "<div style={{ background: '#112233' }} />")
+    assert cdl.check(d, []) is None
+    assert cdl.check(diff_with_added("test/fixtures/Bad.css", "color: #112233;"), []) is None
+
+
+def test_a_fixtures_folder_outside_tests_is_not_skipped():
+    for path in ("src/fixtures/Theme.tsx", "app/fixtures/Bad.css", "packages/app/fixtures/Bad.css", "fixtures/Bad.css", "src/app.css"):
+        assert cdl.check(diff_with_added(path, "color: #112233;"), []), path
