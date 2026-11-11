@@ -2,7 +2,13 @@
   "name": "Card",
   "baseTarget": "root",
   "types": {},
-  "core": {},
+  "core": {
+    "content": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
   "platforms": {
     "android": {
       "onClick": {
@@ -17,11 +23,6 @@
           "kind": "boolean"
         },
         "optional": true
-      },
-      "content": {
-        "type": {
-          "kind": "content"
-        }
       }
     },
     "ios": {
@@ -31,11 +32,6 @@
           "name": "LocalizedStringKey"
         },
         "optional": true
-      },
-      "content": {
-        "type": {
-          "kind": "content"
-        }
       },
       "label": {
         "type": {
