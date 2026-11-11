@@ -216,6 +216,24 @@ def test_check_with_no_milestone_line_uses_the_ci_default_d1(child, gh):
     assert "not adopted: environments:" in r.stdout and "past D1" in r.stdout
 
 
+def test_check_fails_when_the_child_has_no_claude_md(child, gh):
+    ready(child, gh, milestone="D0")
+    (child / "CLAUDE.md").unlink()
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1
+    assert "not adopted: environments: no CLAUDE.md" in r.stdout
+
+
+@pytest.mark.parametrize("line", ['milestone: "D0"', "milestone: D0  # nothing deployed", "milestone: D9"])
+def test_check_refuses_a_milestone_line_that_is_not_plain_d0_to_d6(child, gh, line):
+    ready(child, gh)
+    call = child / ".github/workflows/shipquick-call.yml"
+    t = call.read_text(encoding="utf-8").replace("      shipquick_ref:", f"      {line}\n      shipquick_ref:", 1)
+    call.write_text(t, encoding="utf-8")
+    r = adopt(child, "--check", env=gh, d0=False)
+    assert r.returncode == 2 and "is not 'milestone: D0' to 'milestone: D6'" in r.stderr
+
+
 def test_check_environments_passes_once_both_links_are_filled(child, gh):
     ready(child, gh, milestone="D1")
     md = child / "CLAUDE.md"
