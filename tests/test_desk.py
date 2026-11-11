@@ -18,7 +18,8 @@ import desk  # noqa: E402
 PRS = json.dumps([{
     "number": 101, "title": "Add the Desk", "isDraft": False, "url": "https://example.test/101",
     "statusCheckRollup": [{"status": "COMPLETED", "conclusion": "SUCCESS"}],
-}])
+    "files": [{"path": "scripts/mode.sh"}], "baseRefName": "dev", "headRefName": "feat/x", "body": "", "reviewDecision": "",
+}])   # story #429: PR 101 touches a protected path, so it waits for the owner
 ISSUES = json.dumps([{"number": 91, "title": "ShipQuick Desk", "labels": [{"name": "epic"}]}])
 
 
@@ -31,6 +32,10 @@ def fake_runner(calls, fail=None):
             return PRS
         if args[:2] == ["issue", "list"]:
             return ISSUES
+        if args[:2] == ["repo", "view"]:
+            return json.dumps({"url": "https://github.com/acme/proj"})
+        if args[:1] == ["api"]:
+            return "{}"   # the roadmap branch exists (story #430)
         raise AssertionError("unexpected gh call: %r" % (args,))
     return run
 
