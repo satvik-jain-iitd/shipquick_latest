@@ -51,16 +51,12 @@ def _kill_group(proc):
         proc.kill()
 
 
-def run_cell(tid, arm, model, run_no, out_dir: Path, claude: str, timeout: int, rules: str | None) -> dict:
-    """One headless claude -p in its own folder. The agent writes into work/; logs sit beside it, so the
-    score never sees them."""
-    name = f"{tid}__{arm}__{model}__{run_no}"
-    cell = out_dir / name
+def call_claude(prompt: str, model: str, cell: Path, claude: str, timeout: int, rules: str | None) -> dict:
+    """One headless claude -p in cell/work. The agent writes into work/; logs sit beside it, so a score never
+    sees them. Returns the run facts (killed, returncode, seconds, cost, tokens, turns). Shared with bench/vibe.py."""
     work = cell / "work"
     work.mkdir(parents=True, exist_ok=True)
-    for fn, content in tasks_module().TASKS[tid].get("seed", {}).items():
-        _write(work / fn, content)
-    cmd = [claude, "-p", tasks_module().TASKS[tid]["prompt"], "--model", MODELS[model], *BASE_FLAGS]
+    cmd = [claude, "-p", prompt, "--model", MODELS[model], *BASE_FLAGS]
     if rules:
         cmd += ["--append-system-prompt", rules]
     env = {**os.environ, **CELL_ENV}
@@ -75,9 +71,20 @@ def run_cell(tid, arm, model, run_no, out_dir: Path, claude: str, timeout: int, 
             _kill_group(proc)
             proc.wait()
             se.write(f"\n[KILLED after {timeout}s timeout]".encode())
-    cell_meta = {"name": name, "arm": arm, "model": model, "run": run_no, "task": tid,
-                 "killed": killed, "returncode": proc.returncode, "seconds": round(time.monotonic() - t0, 1),
-                 **read_metrics(cell / "claude.json")}
+    return {"killed": killed, "returncode": proc.returncode, "seconds": round(time.monotonic() - t0, 1),
+            **read_metrics(cell / "claude.json")}
+
+
+def run_cell(tid, arm, model, run_no, out_dir: Path, claude: str, timeout: int, rules: str | None) -> dict:
+    """One bench task cell: seed the work folder, call claude, score the result."""
+    name = f"{tid}__{arm}__{model}__{run_no}"
+    cell = out_dir / name
+    work = cell / "work"
+    work.mkdir(parents=True, exist_ok=True)
+    for fn, content in tasks_module().TASKS[tid].get("seed", {}).items():
+        _write(work / fn, content)
+    facts = call_claude(tasks_module().TASKS[tid]["prompt"], model, cell, claude, timeout, rules)
+    cell_meta = {"name": name, "arm": arm, "model": model, "run": run_no, "task": tid, **facts}
     (cell / "cell.json").write_text(json.dumps(cell_meta, indent=2), encoding="utf-8")
     return {**cell_meta, **score_work(tid, work)}
 

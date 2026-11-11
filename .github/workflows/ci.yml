@@ -3,6 +3,7 @@ on:
   push:
     branches: [dev, main]
   pull_request:
+    types: [opened, synchronize, reopened, edited]   # story #92: an edited body re-runs team-block, tdd and uat
 permissions:
   contents: read
   pull-requests: read   # story #140: the roles job reads commit authors via `gh api .../pulls/.../commits`
