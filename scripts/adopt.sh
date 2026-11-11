@@ -92,6 +92,22 @@ if [ -z "$kit" ] && [ -f "$call" ]; then
   fi
 fi
 
+# story #420: one way to ask the features reader. feat_val <id> [ref]: returns 0 on, 1 off, 2 the reader failed (message in $FEAT_MSG).
+# With a ref, the file is read from that commit of the child (the kit branch), never from the working tree. A reader error is never "on".
+feat_val() {
+  local root="$child" d="" out rc
+  if [ "${2:-HEAD}" != HEAD ]; then
+    d="$(mktemp -d)"; mkdir -p "$d/.shipquick"
+    git -C "$child" show "$2:.shipquick/features.json" > "$d/.shipquick/features.json" 2>/dev/null || rm -f "$d/.shipquick/features.json"
+    root="$d"
+  fi
+  out="$(python3 "$HERE/features.py" --root "$root" get "$1" 2>&1)"; rc=$?
+  [ -z "$d" ] || rm -rf "$d"
+  FEAT_MSG="$out"
+  case "$rc" in 0) return 0 ;; 1) return 1 ;; *) return 2 ;; esac
+}
+feat_on() { local rc=0; feat_val "$1" || rc=$?; case $rc in 0) return 0 ;; 1) return 1 ;; *) echo "adopt.sh: $FEAT_MSG" >&2; exit 2 ;; esac; }
+
 gh_repo="$(git -C "$child" remote get-url origin 2>/dev/null | sed -n 's#.*github\.com[:/]\([^/]*/[^/]*\)$#\1#p' | sed 's#\.git$##')"
 
 if [ -n "$check_mode" ]; then
@@ -147,7 +163,14 @@ if [ -n "$check_mode" ]; then
   fi
   if [ "$kref" = HEAD ]; then hooks="$(cat "$child/.pre-commit-config.yaml" 2>/dev/null || true)"
   else hooks="$(git -C "$child" show "$kref:.pre-commit-config.yaml" 2>/dev/null || true)"; fi
-  if ! printf '%s' "$hooks" | grep -q "check_local.sh"; then
+  hooks_skipped=""
+  feat_val pre-commit "$kref" && fv=0 || fv=$?   # not a bare call: set -e would exit on a 1
+  if [ "$fv" = 2 ]; then
+    echo "not adopted: .shipquick/features.json$([ "$kref" = HEAD ] || echo " $at"): $FEAT_MSG"
+    ok=0
+  elif [ "$fv" = 1 ]; then
+    hooks_skipped=1; echo "hooks skipped: pre-commit is off"
+  elif ! printf '%s' "$hooks" | grep -q "check_local.sh"; then
     echo "not adopted: .pre-commit-config.yaml$([ "$kref" = HEAD ] || echo " $at") has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
     ok=0
   fi
@@ -181,10 +204,11 @@ sys.exit(0 if on else 1)' "$ponytail_settings"; then
     echo "  /plugin install ponytail@ponytail"
   fi
   if [ "$ok" = 1 ]; then
-    if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, pre-commit hooks present"
+    hooks_say="pre-commit hooks present"; [ -z "$hooks_skipped" ] || hooks_say="pre-commit hooks skipped (feature off)"
+    if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, $hooks_say"
     else
       echo "$here: adopted, shipquick-call.yml pinned to $pinned, kit_branch $kit"
-      echo "$kit: adopted, submodule at $sub_sha, pre-commit hooks present"
+      echo "$kit: adopted, submodule at $sub_sha, $hooks_say"
     fi
   fi
   exit $((1 - ok))
@@ -206,7 +230,6 @@ put() {
 
 # 0a. story #420 (F3): the features file. A broken one stops the run before anything is written. Flags read here steer steps 2 and 5.
 python3 "$HERE/features.py" --root "$child" sync > "$tmp/features" 2> "$tmp/features.notes" || { echo "adopt.sh: $(cat "$tmp/features.notes")" >&2; exit 2; }
-feat_on() { [ "$(python3 "$HERE/features.py" --root "$child" get "$1" 2>/dev/null)" != off ]; }
 
 # 0. broken shipquick-rules markers in the child's CLAUDE.md stop the run before anything is written (story #316).
 if [ -f "$child/CLAUDE.md" ] && ! python3 - "$child/CLAUDE.md" <<'PYEOF'
