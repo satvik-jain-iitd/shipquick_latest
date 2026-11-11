@@ -92,6 +92,22 @@ if [ -z "$kit" ] && [ -f "$call" ]; then
   fi
 fi
 
+# story #420: one way to ask the features reader. feat_val <id> [ref]: returns 0 on, 1 off, 2 the reader failed (message in $FEAT_MSG).
+# With a ref, the file is read from that commit of the child (the kit branch), never from the working tree. A reader error is never "on".
+feat_val() {
+  local root="$child" d="" out rc
+  if [ "${2:-HEAD}" != HEAD ]; then
+    d="$(mktemp -d)"; mkdir -p "$d/.shipquick"
+    git -C "$child" show "$2:.shipquick/features.json" > "$d/.shipquick/features.json" 2>/dev/null || rm -f "$d/.shipquick/features.json"
+    root="$d"
+  fi
+  out="$(python3 "$HERE/features.py" --root "$root" get "$1" 2>&1)"; rc=$?
+  [ -z "$d" ] || rm -rf "$d"
+  FEAT_MSG="$out"
+  case "$rc" in 0) return 0 ;; 1) return 1 ;; *) return 2 ;; esac
+}
+feat_on() { local rc=0; feat_val "$1" || rc=$?; case $rc in 0) return 0 ;; 1) return 1 ;; *) echo "adopt.sh: $FEAT_MSG" >&2; exit 2 ;; esac; }
+
 gh_repo="$(git -C "$child" remote get-url origin 2>/dev/null | sed -n 's#.*github\.com[:/]\([^/]*/[^/]*\)$#\1#p' | sed 's#\.git$##')"
 
 if [ -n "$check_mode" ]; then
@@ -147,9 +163,45 @@ if [ -n "$check_mode" ]; then
   fi
   if [ "$kref" = HEAD ]; then hooks="$(cat "$child/.pre-commit-config.yaml" 2>/dev/null || true)"
   else hooks="$(git -C "$child" show "$kref:.pre-commit-config.yaml" 2>/dev/null || true)"; fi
-  if ! printf '%s' "$hooks" | grep -q "check_local.sh"; then
+  hooks_skipped=""
+  feat_val pre-commit "$kref" && fv=0 || fv=$?   # not a bare call: set -e would exit on a 1
+  if [ "$fv" = 2 ]; then
+    echo "not adopted: .shipquick/features.json$([ "$kref" = HEAD ] || echo " $at"): $FEAT_MSG"
+    ok=0
+  elif [ "$fv" = 1 ]; then
+    hooks_skipped=1; echo "hooks skipped: pre-commit is off"
+  elif ! printf '%s' "$hooks" | grep -q "check_local.sh"; then
     echo "not adopted: .pre-commit-config.yaml$([ "$kref" = HEAD ] || echo " $at") has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
     ok=0
+  fi
+  # story #446: the same three things the child's CI will check on a bump PR, found before the push.
+  # (a) the hooks are configured: they must also be installed here, or the commit-msg guard never ran
+  if [ -z "$hooks_skipped" ]; then
+    hs_rc=0; hs="$(python3 "$SQ/plugin/hooks/hooks_state.py" "$child")" || hs_rc=$?
+    case "$hs" in
+      missing) echo "not adopted: the git hooks are configured but not installed, so the commit checks never ran here (run: pre-commit install, or: bash $HERE/adopt.sh $child)"; ok=0 ;;
+      error) echo "not adopted: cannot tell whether the git hooks are installed (hooks_state.py exit $hs_rc)"; ok=0 ;;
+    esac
+  fi
+  # (b) no commit subject over 72 characters since the base branch (the rule of check_commit_msg.py)
+  base=""
+  for cand in ${kit:+"origin/$kit"} origin/dev origin/main origin/master; do
+    base="$(git -C "$child" rev-parse -q --verify "$cand^{commit}" 2>/dev/null || true)"
+    [ -z "$base" ] || break
+  done
+  if [ -n "$base" ]; then
+    while IFS=$'\t' read -r h subj; do
+      [ -n "$h" ] || continue
+      case "$subj" in "Merge "*) continue ;; esac
+      if [ "${#subj}" -gt 72 ]; then echo "not adopted: commit subject over 72 characters (${#subj}): $h $subj (reword it before pushing)"; ok=0; fi
+    done < <(git -C "$child" log --no-merges --format='%h%x09%s' "$base..HEAD" 2>/dev/null)
+  fi
+  # (c) environments at the caller's milestone, with the words CI uses
+  cms="$(sed -nE 's/^[[:space:]]+milestone:[[:space:]]*(D[0-6])[[:space:]]*$/\1/p' "$call" 2>/dev/null | head -1)"
+  if [ -n "$cms" ] && [ -f "$child/CLAUDE.md" ]; then
+    if ! why="$(bash "$HERE/check_environments.sh" --claude-md "$child/CLAUDE.md" --milestone "$cms" 2>&1)"; then
+      echo "not adopted: environments: ${why#check_environments.sh: }"; ok=0
+    fi
   fi
   if [ -n "$plat_list" ]; then
     miss=""
@@ -181,10 +233,11 @@ sys.exit(0 if on else 1)' "$ponytail_settings"; then
     echo "  /plugin install ponytail@ponytail"
   fi
   if [ "$ok" = 1 ]; then
-    if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, pre-commit hooks present"
+    hooks_say="pre-commit hooks present"; [ -z "$hooks_skipped" ] || hooks_say="pre-commit hooks skipped (feature off)"
+    if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, $hooks_say"
     else
       echo "$here: adopted, shipquick-call.yml pinned to $pinned, kit_branch $kit"
-      echo "$kit: adopted, submodule at $sub_sha, pre-commit hooks present"
+      echo "$kit: adopted, submodule at $sub_sha, $hooks_say"
     fi
   fi
   exit $((1 - ok))
@@ -204,6 +257,9 @@ put() {
   else cp "$tmp/new" "$dest"; echo "updated   $rel"; fi
 }
 
+# 0a. story #420 (F3): the features file. A broken one stops the run before anything is written. Flags read here steer steps 2 and 5.
+python3 "$HERE/features.py" --root "$child" sync > "$tmp/features" 2> "$tmp/features.notes" || { echo "adopt.sh: $(cat "$tmp/features.notes")" >&2; exit 2; }
+
 # 0. broken shipquick-rules markers in the child's CLAUDE.md stop the run before anything is written (story #316).
 if [ -f "$child/CLAUDE.md" ] && ! python3 - "$child/CLAUDE.md" <<'PYEOF'
 import sys
@@ -213,6 +269,10 @@ ok = (t.count(S) == 0 and t.count(E) == 0) or (t.count(S) == 1 and t.count(E) ==
 sys.exit(0 if ok else 1)
 PYEOF
 then echo "adopt.sh: CLAUDE.md has broken shipquick-rules markers (one start line above one end line, or neither). Nothing was written. Fix it by hand and run again." >&2; exit 2; fi
+
+# 0b. the features file itself (computed in 0a)
+put .shipquick/features.json < "$tmp/features"
+sed 's/^/note      /' "$tmp/features.notes"
 
 # 1. .gitattributes: keep the child's lines, add ours once
 { [ -f "$child/.gitattributes" ] && cat "$child/.gitattributes"; true; } > "$tmp/attrs"
@@ -225,7 +285,8 @@ for line in "docs/process-trace.md merge=union" "docs/LEARNINGS.md merge=union";
 done
 put .gitattributes < "$tmp/attrs"
 
-# 2. the roadmap caller: ShipQuick's own caller, pinned, with the child's CI name
+# 2. the roadmap caller (story #420: only when the `roadmap` feature is on)
+if feat_on roadmap; then
 ci_name=""
 if [ -f "$child/.github/workflows/ci.yml" ]; then
   ci_name="$(sed -n "s/^name: *[\"']\{0,1\}\([^\"']*[^\"' ]\)[\"']\{0,1\} *\$/\1/p" "$child/.github/workflows/ci.yml" | head -1)"
@@ -254,6 +315,7 @@ print("\n".join(out))
 PYEOF
 put .github/workflows/roadmap-call.yml < "$tmp/call"
 [ -n "$ci_name" ] || echo "note: no name: found in .github/workflows/ci.yml, so the caller has no workflow_run trigger. Add one by hand if you want Review to update when the checks finish."
+else echo "skipped: roadmap is off (no roadmap-call.yml written)"; fi
 
 # 2b. the ShipQuick checks caller (story #124): same pinning, triggered on every pull_request
 ms="$milestone"
@@ -307,6 +369,7 @@ else
 fi
 
 # 5. the pre-commit hooks
+if ! feat_on pre-commit; then echo "skipped: pre-commit is off (no hooks written)"; else
 hooks="  - repo: local
     hooks:
       - id: check-local
@@ -338,6 +401,27 @@ elif [ -e "$child/.pre-commit-config.yaml" ]; then
   echo "$hooks"
 else
   printf 'default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]\nrepos:\n%s\n' "$hooks" | put .pre-commit-config.yaml
+fi
+fi
+
+# 5b. story #446: install the git hooks themselves when they are configured and not installed (it only writes the hooks folder).
+# Without them the commit-msg guard never runs here and a bad subject first shows up in CI.
+hs_rc=0; hs="$(python3 "$SQ/plugin/hooks/hooks_state.py" "$child")" || hs_rc=$?
+case "$hs" in
+  installed) echo "unchanged git hooks (pre-commit and commit-msg are installed)" ;;
+  missing)
+    if ! command -v pre-commit > /dev/null 2>&1; then
+      echo "note: the git hooks are not installed and pre-commit is not on this machine. Install it (pip install pre-commit), then run in $child: pre-commit install"
+    elif hs_err="$(cd "$child" && pre-commit install 2>&1)"; then
+      echo "installed  git hooks (pre-commit install)"
+    else
+      echo "note: could not install the git hooks ($(printf '%s' "$hs_err" | tail -1)). Run in $child: pre-commit install"
+    fi ;;
+  error) echo "note: could not tell whether the git hooks are installed (hooks_state.py exit $hs_rc)" ;;
+esac
+# the config must also ask for the commit-msg hook type, or `pre-commit install` leaves the subject guard out
+if [ "$hs" != not-configured ] && [ "$hs" != off ] && ! grep -qE '^default_install_hook_types:.*commit-msg' "$child/.pre-commit-config.yaml" 2>/dev/null; then
+  echo "note: .pre-commit-config.yaml has no commit-msg hook type, so the commit subject guard will not run. Add this line at the top: default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]"
 fi
 
 # 6. CLAUDE.md: one pointer line to the protocol. A new file starts from the template; yours keeps every line.

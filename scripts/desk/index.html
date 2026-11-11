@@ -3,29 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="desk-token" content="__DESK_TOKEN__">
 <title>ShipQuick Desk</title>
 <style>
-/* Tokens from design/tokens.json (light). Dark values swap the same tokens; the token file has no dark set. */
+/* Tokens from design/tokens.json (light), same as approved board desk-frame-b.html. Measured pairs:
+   ink on bg 17.4:1, ink on card 15.96:1, muted on bg 7.0:1, muted on card 6.42:1, on-primary on primary 17.4:1.
+   Dark: ink on bg 17.4:1, muted on bg 5.18:1, on-primary on primary 17.4:1. Line is borders only (3.36:1 / 5.18:1). */
 :root {
-  --backdrop: #F5F5F5;   /* surface token; no text sits here */
-  --bg: #FFFFFF;         /* background token */
-  --card: #F5F5F5;       /* surface token, text on it: ink 15.96:1, muted 6.42:1 */
-  --ink: #1A1A1A;        /* onSurface: 17.4:1 on bg, 15.96:1 on card */
-  --muted: #595959;      /* onSurfaceMuted: 7.0:1 on bg, 6.42:1 on card */
-  --line: #8C8C8C;       /* outline: 3.36:1 on bg, borders only, never text */
-  --primary: #1A1A1A;    /* primary token: the main button fill */
-  --on-primary: #FFFFFF; /* onPrimary: 17.4:1 on primary */
-  --error: #B3261E;      /* error token: a fill only, with onError text (6.54:1) */
-  --on-error: #FFFFFF;   /* onError: 6.54:1 on error */
+  --backdrop: #F5F5F5; --bg: #FFFFFF; --card: #F5F5F5;
+  --ink: #1A1A1A; --muted: #595959; --line: #8C8C8C;
+  --primary: #1A1A1A; --on-primary: #FFFFFF;
+  --error: #B3261E; --on-error: #FFFFFF;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --backdrop: #1A1A1A; --bg: #1A1A1A;
-    --card: #1A1A1A;     /* cards are the bg with a line border */
-    --ink: #FFFFFF;      /* 17.4:1 on bg */
-    --muted: #8C8C8C;    /* 5.18:1 on bg */
-    --line: #8C8C8C;     /* 5.18:1 on bg, borders only */
-    --primary: #FFFFFF; --on-primary: #1A1A1A; /* 17.4:1 */
+    --backdrop: #1A1A1A; --bg: #1A1A1A; --card: #1A1A1A;
+    --ink: #FFFFFF; --muted: #8C8C8C; --line: #8C8C8C;
+    --primary: #FFFFFF; --on-primary: #1A1A1A;
   }
 }
 :root[data-theme="dark"] {
@@ -34,69 +28,153 @@
   --primary: #FFFFFF; --on-primary: #1A1A1A;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--backdrop); font-family: system-ui, sans-serif; color: var(--ink); }
+html, body { height: 100%; }
+body { margin: 0; background: var(--backdrop); font-family: system-ui, sans-serif; color: var(--ink); font-size: 14px; line-height: 20px; padding: 16px; }
+p, h1, h2, h3 { margin: 0; }
 .board {
-  width: 100%; max-width: 390px; min-height: 844px; margin: 0 auto;
-  background: var(--bg); border: 1px solid var(--line); border-radius: 16px;
-  padding: 16px; display: flex; flex-direction: column; gap: 16px;
+  height: 100%; min-height: 720px; max-width: 1408px; margin: 0 auto;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 16px 24px;
+  display: grid; grid-template-rows: auto auto auto 1fr auto; gap: 12px; overflow: hidden;
 }
-.rule { font-size: 12px; color: var(--muted); margin: 0; }          /* rule line sits on the board bg: 7.0:1 */
-h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 700; }
-.sub { font-size: 14px; color: var(--muted); margin: 0; }
-.chip { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 9999px; border: 1px solid var(--line); color: var(--ink); }
+.rule { font-size: 12px; line-height: 16px; color: var(--muted); }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+h1 { font-size: 22px; line-height: 28px; font-weight: 700; }
+.sub { color: var(--muted); }
+.chip { display: inline-block; font-size: 12px; line-height: 16px; padding: 4px 8px; border-radius: 9999px; border: 1px solid var(--line); color: var(--ink); background: var(--bg); white-space: nowrap; }
 .chip.primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
-.chip.error { background: var(--error); color: var(--on-error); border-color: var(--error); } /* never red text: #B3261E on dark is 2.66:1 */
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-.card h2 { font-size: 16px; margin: 0; font-weight: 700; }
-.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 16px; }
-.time { font-size: 12px; color: var(--muted); }                       /* 6.42:1 on card */
-.item { font-size: 16px; line-height: 22px; margin: 0; }
-.foot { margin-top: auto; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
-.btn { display: block; width: 100%; height: 48px; border: 0; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 16px; font-weight: 700; }
+.muted { color: var(--muted); }
 
-.stack { display: flex; flex-direction: column; gap: 8px; }
-.pill { font-size: 12px; color: var(--muted); }
+/* Intro: three plain-word boxes */
+.intro { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.intro > div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13px; line-height: 18px; }
+.intro h2 { font-size: 14px; line-height: 20px; font-weight: 700; margin-bottom: 2px; }
+
+/* Body: groups as a nav on the left, the chosen group on the right */
+.body { display: grid; grid-template-columns: 300px 1fr; gap: 16px; min-height: 0; }
+.nav { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.nav h2, .pane-head h2 { font-size: 16px; line-height: 22px; font-weight: 700; }
+.group { display: block; width: 100%; text-align: left; font: inherit; color: var(--ink); background: var(--card);
+         border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+.group[aria-current="true"] { border: 2px solid var(--ink); padding: 9px 11px; background: var(--bg); }
+.group b { display: block; font-size: 15px; }
+.group .muted { font-size: 13px; }
+.mini { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: auto; }
+.mini h3 { font-size: 13px; font-weight: 700; }
+
+.pane { border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; }
+.pane-head { padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.list { overflow: auto; min-height: 0; }
+.feat { display: grid; grid-template-columns: 210px 1fr 150px; gap: 16px; align-items: center; padding: 6px 16px; border-bottom: 1px solid var(--line); }
+.feat:last-child { border-bottom: 0; }
+.feat .name { font-weight: 700; font-size: 15px; }
+.feat .id { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); }
+.feat .off { color: var(--muted); }
+.state { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.state .word { font-weight: 700; min-width: 64px; text-align: right; }
+
+/* The switch: a real checkbox with role=switch */
+.sw { appearance: none; -webkit-appearance: none; margin: 0; width: 44px; height: 24px; border-radius: 9999px; position: relative; cursor: pointer;
+      border: 2px solid var(--ink); background: var(--bg); flex: none; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); transition: left .15s; }
+.sw:checked { background: var(--primary); border-color: var(--primary); }
+.sw:checked::after { left: 22px; background: var(--on-primary); }
+.sw:disabled { cursor: not-allowed; }
+.sw:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.lock { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+
+/* Confirm step, inside the row it belongs to */
+.feat.confirming { border: 2px solid var(--ink); border-radius: 12px; margin: 4px 8px; padding: 8px 8px; }
+.feat .chip { margin-top: 4px; }
+.confirm { grid-column: 1 / -1; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px;
+           display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; }
+.confirm .say { font-weight: 700; }
+.confirm .btns { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 8px; }
+.btn { height: 40px; padding: 0 18px; border-radius: 10px; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+       background: var(--primary); color: var(--on-primary); border: 1px solid var(--primary); }
+.btn.outline { background: var(--bg); color: var(--ink); border: 1px solid var(--line); }
+code { font-family: ui-monospace, monospace; font-size: 13px; }
+
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.foot .btn { height: 44px; min-width: 160px; } /* main button: last, bottom right, same place in frame E */
+
+@media (max-width: 1340px) {
+  .body { grid-template-columns: 260px 1fr; }
+  .feat { grid-template-columns: 180px 1fr 130px; gap: 12px; }
+}
+
+/* Overview rows (story #437): one line each, above the feature groups; same row pattern as a group, smaller */
+.nav h2.over { margin-top: 0; }
+.group.sm { padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.group.sm[aria-current="true"] { padding: 5px 11px; }
+.group.sm b { display: inline; font-size: 14px; }
+.group.sm .muted { font-size: 12px; white-space: nowrap; }
+.rowline { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.rowline:last-child { border-bottom: 0; }
+.rowline .name { font-weight: 700; font-size: 15px; }
+.asof { font-size: 12px; color: var(--muted); }
+a.link { color: var(--ink); font-weight: 700; text-decoration: underline; }
+
+.chip.error { background: var(--error); color: var(--on-error); border-color: var(--error); } /* a fill with onError text, never red text */
+.err { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.sw[disabled] { opacity: 1; }
+nav.nav { overflow: auto; padding-right: 2px; }   /* at 1280 the left column scrolls too when the groups do not fit */
+.note { font-size: 12px; line-height: 16px; color: var(--muted); }
+.rowline .sub2 { color: var(--muted); font-size: 13px; }
 </style>
 </head>
 <body>
 <main class="board">
-  <header>
-    <h1>ShipQuick Desk</h1>
-    <p class="sub" id="repo">This project, on this Mac</p>
+  <header class="top">
+    <div>
+      <h1>ShipQuick Desk</h1>
+      <p class="sub" id="repo">This project, on this Mac</p>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center">
+      <span class="chip" id="count">Loading</span>
+      <span class="chip" id="live">Loading</span>
+    </div>
   </header>
-  <div id="status"><span class="chip" id="live">Loading</span></div>
-  <div id="errorBox"></div>
 
-  <section class="card" aria-labelledby="w">
-    <h2 id="w">Waiting for you</h2>
-    <div class="stack" id="waiting"></div>
+  <section class="intro" aria-label="About this page">
+    <div>
+      <h2>What is ShipQuick?</h2>
+      <p>A helper kit for your project. It checks each change before it goes live. It keeps people and agents (AI helpers) in step.</p>
+    </div>
+    <div>
+      <h2>What is this page?</h2>
+      <p>Your Desk. It runs only on your computer. It shows what ShipQuick does in your project, and what waits for you.</p>
+    </div>
+    <div>
+      <h2>What can I do here?</h2>
+      <p>Pick a group on the left. Read what each feature does. A lock means it must stay on.</p>
+    </div>
   </section>
 
-  <section class="card" aria-labelledby="d">
-    <h2 id="d">Agents decided for you</h2>
-    <div class="stack" id="decided"></div>
-  </section>
+  <div class="body">
+    <nav class="nav" aria-label="Overview and feature groups">
+      <h2 class="over">Overview</h2>
+      <div id="overview" class="nav" style="gap:8px"></div>
+      <h2 style="margin-top:6px">Feature groups</h2>
+      <div id="groups" class="nav" style="gap:8px"></div>
+    </nav>
+    <section class="pane" aria-labelledby="ptitle">
+      <div class="pane-head">
+        <h2 id="ptitle">Loading</h2>
+        <p class="muted" id="pwhat"></p>
+        <p class="asof" id="pasof"></p>
+      </div>
+      <div class="list" id="plist"></div>
+    </section>
+  </div>
 
-  <section class="card" aria-labelledby="f">
-    <h2 id="f">Switches read from files</h2>
-    <div class="stack" id="switches"></div>
-  </section>
-
-  <section class="card" aria-labelledby="s">
-    <h2 id="s">Spend</h2>
-    <div class="stack" id="spend"></div>
-  </section>
-
-  <section class="card" aria-labelledby="r">
-    <h2 id="r">Roadmap</h2>
-    <div class="stack" id="roadmap"></div>
-  </section>
-
-  <div class="foot"><button class="btn" type="button" id="refresh">Refresh now</button></div>
+  <footer class="foot">
+    <p class="muted">A switch opens a PR for your merge. A change starts only after you merge it.</p>
+    <button class="btn" type="button" id="refresh">Refresh now</button>
+  </footer>
 </main>
 <script>
 (function () {
-  var asOf = null;
+  var data = null, asOf = null, selected = { kind: "overview", key: "waiting" };
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -104,87 +182,215 @@ h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 700; }
     if (text !== undefined && text !== null) e.textContent = String(text);
     return e;
   }
-  function row(left, right) {
-    var r = el("div", "row");
-    r.appendChild(left);
-    r.appendChild(right);
-    return r;
-  }
-  function empty(box, text) {
-    box.replaceChildren(el("p", "time", text));
-  }
-  function fill(id, nodes, none) {
-    var box = document.getElementById(id);
-    if (!nodes.length) return empty(box, none);
-    box.replaceChildren.apply(box, nodes);
-  }
   function ago() {
     if (!asOf) return "";
     var s = Math.max(0, Math.round((Date.now() - asOf) / 1000));
     return s < 90 ? "checked " + s + " s ago" : "checked " + Math.round(s / 60) + " min ago";
   }
+  function navButton(title, meta, current, onclick) {
+    var b = el("button", "group sm");
+    b.type = "button";
+    if (current) b.setAttribute("aria-current", "true");
+    b.appendChild(el("b", "", title));
+    b.appendChild(el("span", "muted", meta));
+    b.addEventListener("click", onclick);
+    return b;
+  }
+  function groupButton(title, meta, current, onclick) {
+    var b = navButton(title, meta, current, onclick);
+    b.className = "group";
+    return b;
+  }
+  function rowline(title, text, chip) {
+    var r = el("div", "rowline");
+    var left = el("div");
+    left.appendChild(el("p", "name", title));
+    if (text) left.appendChild(el("p", "", text));
+    r.appendChild(left);
+    r.appendChild(chip ? el("span", "chip", chip) : el("span"));
+    return r;
+  }
+  function overviewCounts() {
+    var sp = data.spend || {};
+    var spendShown = !!(sp.rows && sp.rows.length) || !!sp.totals;
+    var rl = data.roadmap_link || {};
+    return [
+      { key: "waiting", title: "Waiting for you", meta: (data.waiting || []).length ? (data.waiting.length + " need you") : "nothing" },
+      { key: "decided", title: "Decided for you", meta: (data.decided || []).length + " recent" },
+      { key: "roadmap", title: "Roadmap", meta: rl.state === "off" ? "off" : (rl.state === "link" ? "live page" : "no branch") }
+    ].concat(spendShown ? [{ key: "spend", title: "Spend", meta: "$" + Number((sp.totals || { cost: 0 }).cost).toFixed(2) + " total" }] : []);
+  }
 
-  function render(data, httpStatus) {
-    asOf = Date.parse(data.as_of) || null;
+  var confirming = null, busy = false, rowError = {};   // story #428: one inline confirm at a time, errors stay on their row
+
+  function token() { var m = document.querySelector('meta[name="desk-token"]'); return m ? m.content : ""; }
+
+  function propose(f, want) {
+    busy = true; delete rowError[f.id]; render();
+    fetch("/api/features", { method: "POST", headers: { "Content-Type": "application/json", "X-Desk-Token": token() },
+                             body: JSON.stringify({ id: f.id, on: want }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (x) {
+        busy = false;
+        if (!x.ok) { rowError[f.id] = x.d.error || "The Desk could not open the PR."; render(); return; }
+        confirming = null;
+        if (x.d.unchanged) rowError[f.id] = "Already " + (want ? "on" : "off") + " on the base branch. Nothing to change.";
+        load();
+      })
+      .catch(function () { busy = false; rowError[f.id] = "The Desk server is not reachable."; render(); });
+  }
+
+  function featureRow(f) {
+    var pend = ((data.features || {}).pending || {})[f.id];
+    var r = el("div", "feat" + (confirming === f.id ? " confirming" : ""));
+    var a = el("div");
+    a.appendChild(el("p", "name", f.name));
+    a.appendChild(el("p", "id", f.id));
+    if (f.changed) a.appendChild(el("span", "chip", "Changed from default"));
+    r.appendChild(a);
+    var t = el("p", "", f.what + " ");
+    t.appendChild(el("span", "off", f.if_off));
+    r.appendChild(t);
+    var st = el("div", "state");
+    if (f.locked) {
+      st.appendChild(el("span", "lock", "Always on"));
+    } else if (pend) {
+      var link = el("a", "link", "Turning " + (pend.on ? "on" : "off") + ", merge PR " + pend.pr);
+      link.href = pend.url; link.target = "_blank"; link.rel = "noopener noreferrer";
+      st.appendChild(link);
+    } else {
+      st.appendChild(el("span", "word", f.on ? "On" : "Off"));
+    }
+    var sw = el("input", "sw");
+    sw.type = "checkbox";
+    sw.setAttribute("role", "switch");
+    sw.checked = confirming === f.id ? !f.on : !!f.on;
+    sw.disabled = !!f.locked || !!pend || busy;
+    sw.setAttribute("aria-label", f.name);
+    sw.addEventListener("change", function () { confirming = confirming === f.id ? null : f.id; render(); });
+    st.appendChild(sw);
+    r.appendChild(st);
+    if (confirming === f.id && !f.locked && !pend) {
+      var want = !f.on, c = el("div", "confirm");
+      c.appendChild(el("p", "say", "Turn " + f.name + " " + (want ? "on" : "off") + "?"));
+      c.appendChild(el("p", "muted", "The Desk opens a PR. The change starts only after you merge it."));
+      var btns = el("div", "btns");
+      var cancel = el("button", "btn outline", "Cancel");
+      cancel.type = "button"; cancel.disabled = busy;
+      cancel.addEventListener("click", function () { confirming = null; render(); });
+      var go = el("button", "btn", busy ? "Opening the PR" : "Open the PR");
+      go.type = "button"; go.disabled = busy;
+      go.addEventListener("click", function () { propose(f, want); });
+      btns.appendChild(cancel); btns.appendChild(go);
+      c.appendChild(btns);
+      r.appendChild(c);
+    }
+    if (rowError[f.id]) {
+      var e = el("div", "err");
+      e.style.gridColumn = "1 / -1";
+      e.appendChild(el("p", "", rowError[f.id]));
+      e.appendChild(el("span", "chip error", "Error"));
+      r.appendChild(e);
+    }
+    return r;
+  }
+
+  function setPane(title, what, nodes, none) {
+    document.getElementById("ptitle").textContent = title;
+    document.getElementById("pwhat").textContent = what;
+    document.getElementById("pasof").textContent = ago().replace(/^checked/, "Checked");
+    var list = document.getElementById("plist");
+    if (!nodes.length) list.replaceChildren(el("p", "muted", none)); else list.replaceChildren.apply(list, nodes);
+    list.firstChild && (list.firstChild.style.padding = nodes.length ? "" : "12px 16px");
+  }
+
+  function render() {
     var live = document.getElementById("live");
     live.className = "chip" + (data.stale ? "" : " primary");
     live.textContent = (data.stale ? "Stale, last good answer" : "Live") + " · " + ago();
 
-    var errorBox = document.getElementById("errorBox");
-    errorBox.replaceChildren();
-    if (data.error) {
-      var card = el("section", "card");
-      card.appendChild(el("h2", "", "gh could not answer"));
-      card.appendChild(row(el("p", "item", data.error), el("span", "chip error", "Error")));
-      errorBox.appendChild(card);
-    }
+    var f = data.features || { groups: [], error: null };
+    var all = [];
+    f.groups.forEach(function (g) { all = all.concat(g.items); });
+    document.getElementById("count").textContent = f.error ? "Features unreadable" : (all.filter(function (i) { return i.on; }).length + " of " + all.length + " features on");
 
-    fill("waiting", (data.waiting || []).map(function (p) {
-      var label = "PR " + p.number + ": " + p.title + (p.draft ? " (draft)" : "");
-      return row(el("p", "item", label), el("span", p.checks === "failing" ? "chip error" : "chip", "Checks " + p.checks));
-    }), "Nothing waiting for you.");
-
-    fill("decided", (data.decided || []).map(function (r) {
-      return row(el("p", "item", r.text), el("span", "time", r.contact));
-    }), "No agent decisions in the trace yet.");
-
-    var sw = data.switches || {};
-    fill("switches", [
-      row(el("span", "", "Mode"), el("span", "", sw.mode || "not set")),
-      row(el("span", "", "Freeze"), el("span", "", sw.freeze || "Off")),
-      row(el("span", "", "Dev link"), el("span", "", sw.dev_link || "not set"))
-    ], "No switches.");
-
-    var sp = data.spend || {};
-    var spendNodes = (sp.rows || []).map(function (r) {
-      return row(el("p", "item", r.task || "(no name)"),
-        el("span", "", "$" + Number(r.cost).toFixed(2)));
+    var ov = overviewCounts();
+    if (selected.kind === "overview" && !ov.some(function (o) { return o.key === selected.key; })) selected = { kind: "overview", key: "waiting" };
+    var ovBox = document.getElementById("overview");
+    ovBox.replaceChildren.apply(ovBox, ov.map(function (o) {
+      return navButton(o.title, o.meta, selected.kind === "overview" && selected.key === o.key, function () { selected = { kind: "overview", key: o.key }; render(); });
+    }));
+    var gBox = document.getElementById("groups");
+    var gNodes = f.groups.map(function (g) {
+      var on = g.items.filter(function (i) { return i.on; }).length, changed = g.items.filter(function (i) { return i.changed; }).length;
+      var meta = on + " of " + g.items.length + " on" + (changed ? " · " + changed + " changed by you" : "");
+      return groupButton(g.name, meta, selected.kind === "group" && selected.key === g.name, function () { selected = { kind: "group", key: g.name }; render(); });
     });
-    if (sp.totals) {
-      spendNodes.push(el("p", "time", "Total $" + Number(sp.totals.cost).toFixed(2) + " · " +
-        Math.round(sp.totals.tokens) + " tokens · " + Math.round(sp.totals.agent_minutes) + " agent min"));
-    }
-    fill("spend", spendNodes, "No ledger yet: " + (sp.note || "nothing recorded") + ".");
+    gBox.replaceChildren.apply(gBox, gNodes);
 
-    fill("roadmap", (data.roadmap || []).map(function (i) {
-      return el("p", "item", "#" + i.number + " " + i.title);
-    }), "No open issues.");
+    if (selected.kind === "group") {
+      var g = f.groups.filter(function (x) { return x.name === selected.key; })[0];
+      if (g) return setPane(g.name, "Each feature has a plain name, what it does, and what happens if it is off.", g.items.map(featureRow), "");
+      selected = { kind: "overview", key: "waiting" };
+    }
+    if (f.error && selected.key === "waiting") { /* the error card shows on top of the panel below */ }
+
+    if (selected.key === "waiting") {
+      setPane("Waiting for you", "This is what only you can do. A PR (pull request) is one change asking to join the main branch. Agents do the rest by themselves.",
+        (data.waiting || []).map(function (p) {
+          return rowline("PR " + p.number + ": " + p.title + (p.draft ? " (draft)" : ""), "Reason: " + (p.reason || ""), "Checks " + p.checks);
+        }), "Nothing needs you.");
+    } else if (selected.key === "decided") {
+      setPane("Decided for you", "Choices the agents made without asking you. Read them to check you agree.",
+        (data.decided || []).map(function (r) { return rowline(r.text, "", r.contact); }), "No agent decisions in the trace yet.");
+    } else if (selected.key === "roadmap") {
+      var rl = data.roadmap_link || {}, nodes = [];
+      if (rl.state === "link") {
+        var r1 = rowline("", "Opens ROADMAP.md on the roadmap branch.", "Link");
+        var a = el("a", "link", "Open the live roadmap");
+        a.href = rl.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+        r1.firstChild.firstChild.appendChild(a);
+        nodes.push(r1);
+      } else if (rl.state === "off") {
+        nodes.push(rowline("Roadmap is off", "The roadmap feature is turned off in this project.", ""));
+      } else if (rl.state === "no_branch") {
+        nodes.push(rowline("No roadmap branch yet", "The live roadmap has not been built.", ""));
+      }
+      (data.roadmap || []).forEach(function (i) { nodes.push(rowline("#" + i.number + " " + i.title, (i.labels || []).join(", "), "open")); });
+      setPane("Roadmap", "The live plan: what is done, what is now, what is next. It is built from your issues and PRs.", nodes, "No open issues.");
+    } else if (selected.key === "spend") {
+      var sp = data.spend || {}, sn = (sp.rows || []).map(function (r) {
+        return rowline(r.task || "(no name)", Math.round(r.tokens) + " tokens", "$" + Number(r.cost).toFixed(2));
+      });
+      if (sp.totals) sn.push(el("p", "note", "Total $" + Number(sp.totals.cost).toFixed(2) + " · " + Math.round(sp.totals.tokens) + " tokens · " + Math.round(sp.totals.agent_minutes) + " agent min"));
+      setPane("Spend", "What the agents' work cost, task by task, from the Ponytail ledger on this Mac.", sn, "No ledger yet.");
+    }
+    if (f.error) {
+      var card = el("div", "err");
+      card.appendChild(el("p", "", "The features file cannot be read: " + f.error));
+      card.appendChild(el("span", "chip error", "Error"));
+      var list = document.getElementById("plist");
+      list.insertBefore(card, list.firstChild);
+    }
+    if (data.error) {
+      var c2 = el("div", "err");
+      c2.appendChild(el("p", "", "gh could not answer: " + data.error));
+      c2.appendChild(el("span", "chip error", "Error"));
+      var l2 = document.getElementById("plist");
+      l2.insertBefore(c2, l2.firstChild);
+    }
   }
 
   function load() {
     fetch("/api/state.json", { cache: "no-store" })
-      .then(function (r) { return r.json().then(function (d) { render(d, r.status); }); })
-      .catch(function () {
-        document.getElementById("live").textContent = "Desk server not reachable";
-      });
+      .then(function (r) { return r.json().then(function (d) { data = d; asOf = Date.parse(d.as_of) || null; render(); }); })
+      .catch(function () { document.getElementById("live").textContent = "Desk server not reachable"; });
   }
 
   document.getElementById("refresh").addEventListener("click", load);
   load();
   setInterval(load, 60000);
-  setInterval(function () {
-    if (asOf) document.getElementById("live").textContent = document.getElementById("live").textContent.replace(/· .*$/, "· " + ago());
-  }, 15000);
+  setInterval(function () { if (data) render(); }, 15000);
 })();
 </script>
 </body>

@@ -121,6 +121,7 @@ A child refuses hand-drawn UI with lint. The kit ships the configs. Wiring them 
 ## Checklist for each child
 
 Do these in order, in the child repo. One step at a time.
+0. Run `bash knowledge/shipquick_latest/scripts/adopt.sh . --check` first (story #446) and keep its output for the PR.
 1. Bump the submodule to the release tag: `git -C knowledge/shipquick_latest fetch --tags && git -C knowledge/shipquick_latest checkout <release tag>`, then `git add knowledge/shipquick_latest`.
 2. Run `bash knowledge/shipquick_latest/scripts/adopt.sh . --ref <release tag>`. A rule-24 child adds `--kit-branch <branch>` and runs it on that branch.
 3. Commit and push the files through a PR. A rule-24 child also copies `shipquick-call.yml` to `main` in a PR.
@@ -128,6 +129,15 @@ Do these in order, in the child repo. One step at a time.
 5. If the caller names a kit branch, protect that branch and require pull request reviews there.
 6. A private child: add a fine-grained token that can read it to ShipQuick's `SHIPQUICK_CHILD_TOKEN`, or the daily scan names it as skipped.
 7. Wait for one PR whose `shipquick-checks / gate` is green. Then run `adopt.sh . --check`. It must print `adopted`.
+
+## Run `adopt.sh . --check` before you push a bump (story #446)
+
+A bump PR once went red in CI on two things a local run could have caught: commit subjects over 72 characters, and empty Dev and Production links past milestone D1. The git hooks were configured but never installed in that repo, so the commit-msg guard never ran. `adopt.sh . --check` now checks what the child's CI will check, so run it **before every push of a bump branch**, and paste its output in the PR:
+- **Hooks.** The ShipQuick hooks are in `.pre-commit-config.yaml` and the git hooks folder is empty: it fails and prints `pre-commit install`. A normal `adopt.sh` run installs them itself (it writes only the hooks folder). Without `pre-commit` on the machine it prints the install line and `--check` keeps failing. The `pre-commit` feature off means nothing to install.
+- **Commit subjects.** Every non-merge commit since the base branch (`origin/<kit branch>`, else `origin/dev`, `origin/main`, `origin/master`) must have a subject of 72 characters or fewer. The line names the commit and its length. With no base branch the check is skipped.
+- **Environments.** `check_environments.sh` runs on the child's `CLAUDE.md` with the milestone in its caller, so empty or placeholder links fail here with the same words as CI.
+
+Every session in a project with configured but uninstalled hooks also sees one warning line at start (the plugin's session-start hook), so the gap shows up before the first commit.
 
 ## Adding a child
 

@@ -44,6 +44,15 @@ repo="${2:-$(gh repo view --json nameWithOwner --jq .nameWithOwner)}"
 json=$(gh pr view "$pr" -R "$repo" --json state,isDraft,mergeable,baseRefName,headRefOid,title,author,body,reviews,statusCheckRollup) || refuse "cannot read pull request $pr"
 field() { jq -r "$1" <<<"$json"; }
 
+# story #425: the `merge-gate` feature, read as committed on the PR's base branch (never this checkout, which a PR could
+# change). Off means no agent merges: the owner merges by hand. An unreadable or broken file takes the same safe side.
+gate_rc=0; gate_err=$(python3 "$HERE/features.py" remote merge-gate --repo "$repo" --ref "$(field .baseRefName)" 2>&1 >/dev/null) || gate_rc=$?
+case "$gate_rc" in
+  0) ;;
+  1) refuse "merge gate is off: the owner merges by hand" ;;
+  *) refuse "the features file on $(field .baseRefName) cannot be read ($gate_err): the owner merges by hand" ;;
+esac
+
 { [ "$(field .state)" = OPEN ] && [ "$(field .isDraft)" = false ]; } || refuse "pull request is not open, or is a draft"
 [ "$(field .mergeable)" != CONFLICTING ] || refuse "pull request has conflicts"
 
@@ -157,7 +166,16 @@ gate_concl=$(jq -r --arg n "$gate_name" '
 ' <<<"$json" | head -1)
 [ "$gate_concl" = SUCCESS ] || refuse "required check $gate_name is $gate_concl, not SUCCESS"
 
-why=$(field .body | python3 "$HERE/check_closes.py" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
+# story #424: the `close-on-merge` flag is read as committed on the PR's base branch, never from this checkout; any error refuses.
+base_ref=$(field .baseRefName); cm_rc=0
+python3 "$HERE/features.py" remote close-on-merge --repo "$repo" --ref "$base_ref" >/dev/null 2>"${TMPDIR:-/tmp}/rm_feat.$$" || cm_rc=$?
+case "$cm_rc" in
+  0) cm=on ;;
+  1) cm=off ;;
+  *) why=$(cat "${TMPDIR:-/tmp}/rm_feat.$$"); rm -f "${TMPDIR:-/tmp}/rm_feat.$$"; refuse "the features file on $base_ref cannot be read, so close-on-merge is unknown: $why" ;;
+esac
+rm -f "${TMPDIR:-/tmp}/rm_feat.$$"
+why=$(field .body | python3 "$HERE/check_closes.py" --close-on-merge "$cm" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
 
 token=$(gh auth token --user "$reviewer_account") || refuse "no token for $reviewer_account on this machine"
 

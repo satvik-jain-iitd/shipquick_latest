@@ -763,3 +763,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the shape of vasyl-bilous/component-library-mcp: a search tool ranked by token overlap, a get tool, and both text and `structuredContent` in every reply. No code copied (its parser reads React and Vue sources; ours are JSON docs).
 - Decision: a stdlib Python stdio server (`scripts/ui_mcp.py`) over the docs `scripts/check_ui_docs.py` already reads, reusing its `read_doc`. No MCP SDK is a dependency under `ui/tool/`, and the Astryx CLI search needs Node, so neither is reused at run time.
 - Confidence that nothing fits better: 0.75 (Carbon's server fits the idea but serves only Carbon and is hosted).
+
+## 11 Nov 2026, story #446: preflight a child's bump like its CI (hooks installed, commit subjects, environments)
+- Need: check that a project's git hooks are installed, that no commit subject is over 72 characters, and that the Dev and Production links are filled, before a bump branch is pushed.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "check git hooks are installed and commit subject length before pushing a bump branch"` printed `no repos found`.
+- Reused: the `pre-commit` framework the kit already adopts (we only call `pre-commit install`) and the rule of `scripts/check_commit_msg.py` (72 characters) and `scripts/check_environments.sh`. Nothing new in the checks themselves; `plugin/hooks/hooks_state.py` is the one new file (a state check, about 60 lines).
+- Decision: build the small state check ourselves; no repo fits the "hooks configured but not installed" question.
+- Confidence that nothing fits better: 0.7.

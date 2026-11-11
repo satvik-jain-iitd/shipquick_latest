@@ -39,3 +39,5 @@ scripts/design_token_files.txt
 scripts/run_stylelint_changed.sh
 # story #219: the iOS reference images; a changed image is a design change, so the owner merges it
 ui/ios/ShipQuickUITests/__Snapshots__/*
+# story #418 (F1): the features file, its reader and the owner's setter. A PR must never switch off the check that judges it.
+scripts/features*
