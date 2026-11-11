@@ -204,6 +204,10 @@ put() {
   else cp "$tmp/new" "$dest"; echo "updated   $rel"; fi
 }
 
+# 0a. story #420 (F3): the features file. A broken one stops the run before anything is written. Flags read here steer steps 2 and 5.
+python3 "$HERE/features.py" --root "$child" sync > "$tmp/features" 2> "$tmp/features.notes" || { echo "adopt.sh: $(cat "$tmp/features.notes")" >&2; exit 2; }
+feat_on() { [ "$(python3 "$HERE/features.py" --root "$child" get "$1" 2>/dev/null)" != off ]; }
+
 # 0. broken shipquick-rules markers in the child's CLAUDE.md stop the run before anything is written (story #316).
 if [ -f "$child/CLAUDE.md" ] && ! python3 - "$child/CLAUDE.md" <<'PYEOF'
 import sys
@@ -213,6 +217,10 @@ ok = (t.count(S) == 0 and t.count(E) == 0) or (t.count(S) == 1 and t.count(E) ==
 sys.exit(0 if ok else 1)
 PYEOF
 then echo "adopt.sh: CLAUDE.md has broken shipquick-rules markers (one start line above one end line, or neither). Nothing was written. Fix it by hand and run again." >&2; exit 2; fi
+
+# 0b. the features file itself (computed in 0a)
+put .shipquick/features.json < "$tmp/features"
+sed 's/^/note      /' "$tmp/features.notes"
 
 # 1. .gitattributes: keep the child's lines, add ours once
 { [ -f "$child/.gitattributes" ] && cat "$child/.gitattributes"; true; } > "$tmp/attrs"
@@ -225,7 +233,8 @@ for line in "docs/process-trace.md merge=union" "docs/LEARNINGS.md merge=union";
 done
 put .gitattributes < "$tmp/attrs"
 
-# 2. the roadmap caller: ShipQuick's own caller, pinned, with the child's CI name
+# 2. the roadmap caller (story #420: only when the `roadmap` feature is on)
+if feat_on roadmap; then
 ci_name=""
 if [ -f "$child/.github/workflows/ci.yml" ]; then
   ci_name="$(sed -n "s/^name: *[\"']\{0,1\}\([^\"']*[^\"' ]\)[\"']\{0,1\} *\$/\1/p" "$child/.github/workflows/ci.yml" | head -1)"
@@ -254,6 +263,7 @@ print("\n".join(out))
 PYEOF
 put .github/workflows/roadmap-call.yml < "$tmp/call"
 [ -n "$ci_name" ] || echo "note: no name: found in .github/workflows/ci.yml, so the caller has no workflow_run trigger. Add one by hand if you want Review to update when the checks finish."
+else echo "skipped: roadmap is off (no roadmap-call.yml written)"; fi
 
 # 2b. the ShipQuick checks caller (story #124): same pinning, triggered on every pull_request
 ms="$milestone"
@@ -307,6 +317,7 @@ else
 fi
 
 # 5. the pre-commit hooks
+if ! feat_on pre-commit; then echo "skipped: pre-commit is off (no hooks written)"; else
 hooks="  - repo: local
     hooks:
       - id: check-local
@@ -338,6 +349,7 @@ elif [ -e "$child/.pre-commit-config.yaml" ]; then
   echo "$hooks"
 else
   printf 'default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]\nrepos:\n%s\n' "$hooks" | put .pre-commit-config.yaml
+fi
 fi
 
 # 6. CLAUDE.md: one pointer line to the protocol. A new file starts from the template; yours keeps every line.
