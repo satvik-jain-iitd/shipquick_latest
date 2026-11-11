@@ -21,7 +21,6 @@ D8 ships as a minor release (`pm/agile/RELEASE_GUIDE.md`). Every ShipQuick featu
 
 - The two Desk follow-ups: delete the local branch on the unchanged and error paths, and name the GitHub account a Desk PR is opened with (`docs/follow-ups.md`).
 - A live run of the new `commit-subjects` job and of `adopt.sh` with the real `pre-commit` on a child. The tests use a stand-in.
-- The GitHub Release object for v0.12.0 is the owner's.
 
 ## How a child moves up
 
