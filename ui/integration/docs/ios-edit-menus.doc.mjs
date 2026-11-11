@@ -34,7 +34,18 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
+            "copyable: `.copyable(_:)`, iOS 27.0. Apple: \"Specifies a list of items to copy in response to the system’s Copy command.\"",
+            "cuttable: `.cuttable(for:action:)`, iOS 27.0. Apple: \"Specifies an action that moves items to the Clipboard in response to the system’s Cut command.\"",
             "UIEditMenuInteraction: iOS 16.0. Apple: \"An interaction that provides edit operations using a menu.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: onCopyCommand. Use copyable.",
+            "Do not use: onCutCommand. Use cuttable.",
+            "Do not use: onPasteCommand. Use pasteDestination."
           ]
         }
       ]
