@@ -313,6 +313,13 @@ def render(root):
             if spec is None:
                 bad.append(f"{platform} {name}: no spec in scripts/ui_proof.py (doc names {api})")
                 continue
+            # #215: the shared content slot lives in core, not in platforms.<p>, but a platform that has an API still
+            # passes it: Android in its default argument list, iOS where the spec routes it into a hole.
+            # ponytail: only core props of kind "content"; other core props (Button's onClick) have a literal in the spec.
+            if api and spec is not None:
+                routed = {n for names in spec.get("g", {}).values() for n in names}
+                props = {**{n: p for n, p in contract.get("core", {}).items()
+                            if p.get("type", {}).get("kind") == "content" and (platform == "android" or n in routed)}, **props}
             try:
                 call = render_call(platform, spec, props)
             except KeyError as e:
