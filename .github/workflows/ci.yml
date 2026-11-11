@@ -507,8 +507,8 @@ jobs:
           env -u SHIPQUICK_SNAPSHOTS xcodebuild test -project ui/ios/A11yAudit/A11yAudit.xcodeproj -scheme A11yHost \
             -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath "$RUNNER_TEMP/a11y.xcresult" > "$RUNNER_TEMP/a11y.log" 2>&1 || {
-            grep -E "error:|Test Case|Failed|failed" "$RUNNER_TEMP/a11y.log" | tail -80
-            xcrun xcresulttool get test-results tests --path "$RUNNER_TEMP/a11y.xcresult" | head -300
+            grep -E -A40 "error:" "$RUNNER_TEMP/a11y.log" | grep -vE "^Test Case .* started" | head -250
+            xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/a11y.xcresult"
             exit 1
           }
       - name: Upload the recorded reference images (record=true only)

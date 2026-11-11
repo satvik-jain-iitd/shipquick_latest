@@ -17,6 +17,13 @@ final class TemplateAccessibilityAuditTests: XCTestCase {
         app.launchArguments = ["-screen", screen]
         app.launch()
         XCTAssertFalse(app.staticTexts["Unknown screen"].exists, "the host app has no case for \(screen)")
-        try app.performAccessibilityAudit()
+        // Every issue is collected first, so one red run names all of them: the check, the element type and its label.
+        var found: [String] = []
+        try app.performAccessibilityAudit(for: .all) { issue in
+            let element = issue.element.map { "type \($0.elementType.rawValue) '\($0.label)' id '\($0.identifier)'" } ?? "no element"
+            found.append("\(issue.compactDescription): \(element)")
+            return true
+        }
+        XCTAssertTrue(found.isEmpty, "\(screen): \(found.count) accessibility issues\n" + found.joined(separator: "\n"))
     }
 }
