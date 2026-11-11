@@ -64,3 +64,8 @@ In a child, `lint/swiftlint.yml` does this job (story #185): every rule is a war
 `Sources/ShipQuickUI/Tokens.swift` is written by `python3 scripts/emit_tokens.py` from `design/tokens.json`. Do not edit it.
 It holds `ShipQuickTokens`: `Colors` (light and dark), `Fonts`, `Spacing`, `Radius`, `Motion`, `Haptics` and `touchTarget`.
 The feel tokens match Android's. CI compiles it with the templates.
+
+## Accessibility (story #220)
+
+One UI test per template runs Apple's accessibility audit on CI.
+What a person still checks by hand is in `ACCESSIBILITY.md`, tagged `review-only`.

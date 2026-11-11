@@ -493,6 +493,25 @@ jobs:
           # clean JSON once Prefire is resolved, so the scheme is named, never parsed from xcodebuild output)
           xcodebuild test -scheme ShipQuickUI -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
             -skipPackagePluginValidation -skipMacroValidation -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO -quiet
+      - name: Run the accessibility audit on iPhone 16, iOS 18.5 (story #220)
+        if: ${{ !cancelled() }}
+        run: |
+          # performAccessibilityAudit() needs an app and a UI test target, so XcodeGen 2.45.4 (pinned SHA-256) makes the
+          # project from ui/ios/A11yAudit/project.yml. It runs after a red snapshot step too, so one red never hides the other.
+          curl -sSfL -o "$RUNNER_TEMP/xcodegen.zip" https://github.com/yonaskolb/XcodeGen/releases/download/2.45.4/xcodegen.zip
+          echo "090ec29491aad50aec10631bf6e62253fed733c50f3aab0f5ffc86bc170bdbef  $RUNNER_TEMP/xcodegen.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/xcodegen.zip" -d "$RUNNER_TEMP"
+          export PATH="$RUNNER_TEMP/xcodegen/bin:$PATH"
+          xcodegen generate --spec ui/ios/A11yAudit/project.yml
+          # without SHIPQUICK_SNAPSHOTS the local ShipQuickUI package resolves with no test packages
+          # on a red run, print each failing test and the audit issue it names (the full log is too long to read)
+          env -u SHIPQUICK_SNAPSHOTS xcodebuild test -project ui/ios/A11yAudit/A11yAudit.xcodeproj -scheme A11yHost \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath "$RUNNER_TEMP/a11y.xcresult" > "$RUNNER_TEMP/a11y.log" 2>&1 || {
+            grep -E -A40 "error:" "$RUNNER_TEMP/a11y.log" | grep -vE "^Test Case .* started" | head -250
+            xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/a11y.xcresult"
+            exit 1
+          }
       - name: Upload the recorded reference images (record=true only)
         if: always() && inputs.record == true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
