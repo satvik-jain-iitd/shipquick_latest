@@ -1594,44 +1594,6 @@ Scenario: adopt.sh writes, keeps and validates the milestone
 ```
 Tests: `tests/test_check_environments.py::test_s357_checks_yml_environments_job_reads_the_milestone_input`, `tests/test_adopt.py::test_s357_milestone_is_written_once_kept_over_two_runs_and_a_bad_flag_is_refused`, `test_s357_a_run_without_the_flag_and_without_a_line_writes_no_milestone`, `test_s357_an_existing_milestone_line_that_does_not_match_is_refused_not_dropped`.
 
-## Story #189 (S11): vibe tests, ten fixed screen prompts per platform
-```gherkin
-Scenario: the selftest scores the fixtures with zero model calls
-  Given a fake claude on PATH that logs every call
-  When `bench/vibe.py --selftest` runs
-  Then it prints "selftest 3/3 platforms pass", exits 0, and the log is absent
-  Test: test_selftest_scores_the_fixtures_and_makes_no_claude_call
-Scenario: the good fixture is clean and the bad fixture is raw on every platform
-  Then score_dir gives clean=1 for android, ios and web good fixtures and clean=0 with hits for the bad ones
-  Test: test_good_fixture_is_clean_and_bad_fixture_is_raw_on_every_platform
-Scenario: a cell that wrote no screen file scores zero
-  Test: test_a_cell_with_no_screen_file_scores_zero
-Scenario: the prompts are the same ten generic screens on three platforms
-  Then each platform has exactly ten prompts with the fixed screen ids, and the task text is identical across platforms
-  Test: test_prompts_are_the_same_ten_generic_screens_on_three_platforms
-Scenario: the smoke runs exactly four calls and only the kit arm gets the agent block
-  Given a fake claude that copies good fixture screens into its work folder
-  When `--run --smoke` runs
-  Then 4 calls are made on claude-haiku-5-5 with Bash disallowed, 2 carry --append-system-prompt with SELF-CHECK, and results.json scores kit 2/2 and no-kit 2/2
-  Test: test_smoke_runs_exactly_four_calls_and_only_the_kit_arm_gets_the_agent_block
-Scenario: a run folder inside a work tree is refused before any call
-  Test: test_run_folder_inside_a_git_tree_is_refused_before_any_call
-Scenario: a full run needs --full, so a typo never burns sixty calls
-  Test: test_a_full_run_needs_the_full_flag_so_a_typo_never_burns_sixty_calls
-Scenario: a web screen with JSX but no library import is raw (PR #371 review)
-  Given a Screen.tsx that renders a plain div and imports nothing from @astryxdesign/core
-  Then score_dir hits exactly no_library_import, and the bad fixture PlainScreen.tsx carries the same case for --selftest
-  Test: test_a_web_screen_with_jsx_but_no_library_import_is_raw
-Scenario: a web screen that imports a library subpath is clean (PR #371 review, round 2)
-  Given a Screen.tsx that imports Button from "@astryxdesign/core/Button", the form the component docs teach
-  Then it scores clean, while PlainScreen.tsx with no library import still hits no_library_import
-  Test: test_a_web_screen_that_imports_a_library_subpath_is_clean
-Scenario: an issue number after a colon in a web comment is not a hex colour (PR #371 review)
-  Given the good web screen with a first line "// Story: #189 sign in"
-  Then it scores clean, while a CSS file with "color: #fff;" still hits no_hex_colour
-  Test: test_an_issue_number_after_a_colon_in_a_web_comment_is_not_a_hex_colour
-```
-Tests: `tests/test_vibe.py`.
 ## Story #188 (S10): a Design system board on the canvas
 ```gherkin
 Scenario: the registry renders a board with every component row, right after Design learnings
