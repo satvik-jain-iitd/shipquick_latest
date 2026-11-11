@@ -11,6 +11,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -18,6 +19,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import features  # noqa: E402  the one features reader (story #427); the Desk never parses the file itself
 DEFAULT_PORT = 8765
 TTL_SECONDS = 60
 GH_TIMEOUT = 20
@@ -117,6 +120,20 @@ def owner_reason(p, globs, mode):
     return None
 
 
+def read_features(repo_dir):
+    """Every feature, in groups, from the one reader. A broken file is an error and an empty list, never a wrong list."""
+    try:
+        m = features.read(repo_dir)["features"]
+    except features.FeaturesError as e:
+        return {"error": str(e), "groups": []}
+    groups = {}
+    for fid, f in m.items():
+        groups.setdefault(f["group"], []).append({
+            "id": fid, "name": f["name"], "what": f["what"], "if_off": f["if_off"], "on": f["on"], "default": f["default"],
+            "locked": bool(f.get("locked")), "changed": f["on"] != f["default"]})
+    return {"error": None, "groups": [{"name": g, "items": items} for g, items in groups.items()]}
+
+
 def default_band_path(repo_dir):
     # The Ponytail ledger for this project: one CSV per repo folder name, written on this Mac.
     # The writer's rule is ASCII only (JS \w), so re.ASCII. The config root follows XDG_CONFIG_HOME, like the writer.
@@ -187,8 +204,10 @@ def gather(run, repo_dir, now, band=None):
         errors.append(str(e))
     except (ValueError, KeyError):
         errors.append("gh returned bad JSON for issues")
+    feats = read_features(repo_dir)
+    roadmap_on = next((i["on"] for g in feats["groups"] for i in g["items"] if i["id"] == "roadmap"), True)
     try:
-        roadmap_link = read_roadmap_link(run)
+        roadmap_link = read_roadmap_link(run) if roadmap_on else {"state": "off"}   # story #427: the card says "Roadmap is off", no link
     except DeskError as e:
         errors.append(str(e))
     except (ValueError, KeyError):
@@ -200,6 +219,7 @@ def gather(run, repo_dir, now, band=None):
         "switches": read_switches(repo_dir),
         "roadmap": roadmap,
         "roadmap_link": roadmap_link,
+        "features": feats,
         "spend": spend,
         "error": "; ".join(errors) or None,
         "stale": False,
