@@ -223,6 +223,7 @@ jobs:
       PR_BODY: ${{ github.event.pull_request.body }}
       PR_TITLE: ${{ github.event.pull_request.title }}
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      CLOSE_ON_MERGE: ${{ fromJSON(needs.features.outputs.flags)['close-on-merge'] }}
     steps:
       - name: Check out the ShipQuick scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -240,7 +241,13 @@ jobs:
           printf '%s\n' "$PR_BODY" | awk '/^## For the reviewer/{f=1;next} /^## /{f=0} f' | python3 .shipquick/scripts/check_block.py
       - name: Check the PR body links its issue (Closes #n)
         run: |
-          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
+          # story #424: the `close-on-merge` flag comes from the features job (the base branch's file)
+          case "$CLOSE_ON_MERGE" in
+            true) word=on ;;
+            false) word=off ;;
+            *) echo "the close-on-merge flag is '$CLOSE_ON_MERGE', not true or false: failing, never guessing"; exit 1 ;;
+          esac
+          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --close-on-merge "$word" --title "$PR_TITLE" --author "$PR_AUTHOR"
   frontend-design:
     runs-on: ubuntu-latest
     timeout-minutes: 10
