@@ -287,6 +287,11 @@ IOS_DOC_FAMILY = {
     "Redaction and privacy": ["redacted", "unredacted", "privacySensitive", "invalidatableContent", "contentCaptureProtected"],
     "Spatial appearance": ["spatialOverlay", "spatialOverlayPreferenceValue", "preferredSurroundingsEffect", "breakthroughEffect",
                            "upperLimbVisibility", "volumeBaseplateVisibility"],
+    # Story #296 (6/6): GraphicsModifiers split by the effect each row applies. It keeps only rows no doc fits.
+    "3D transforms": ["aspectRatio3D", "scaledToFill3D", "scaledToFit3D", "perspectiveRotationEffect", "projectionEffect", "rotation3DEffect",
+                      "rotation3DLayout", "transform3DEffect", "visualEffect3D"],
+    "Shader effects": ["colorEffect", "distortionEffect", "layerEffect", "visualEffect"],
+    "Color adjustments": ["brightness", "contrast", "colorInvert", "colorMultiply", "grayscale", "hueRotation", "luminanceToAlpha", "saturation"],
 }
 
 HEADER = re.compile(r"^// shipquick: (\w+): (.*)$")
