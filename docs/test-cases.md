@@ -1636,7 +1636,7 @@ Scenario: the host app can show every template
   Then A11yAudit/Host/A11yHostApp.swift has a case "<Name>": <Name>() for each template
   Test: test_s220_the_host_app_shows_every_template_by_launch_argument
 Scenario: the XcodeGen spec makes an app and a UI test target on iOS 17
-  Then project.yml uses the local ShipQuickUI package at .., has an application and a bundle.ui-testing target, and the generated project is git-ignored
+  Then project.yml uses the local ShipQuickUI package at .., has an application and a bundle.ui-testing target, and no generated project is committed
   Test: test_s220_the_xcodegen_spec_has_the_app_and_a_ui_test_target
 Scenario: the audit runs in the snapshot job
   Then ui-ios-snapshots fetches XcodeGen by pinned release and SHA-256, generates the project, runs xcodebuild test on iPhone 16, iOS 18.5, and runs even after a red snapshot step

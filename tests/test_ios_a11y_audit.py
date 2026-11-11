@@ -43,8 +43,8 @@ def test_s220_the_xcodegen_spec_has_the_app_and_a_ui_test_target():
     assert "type: application" in spec and "type: bundle.ui-testing" in spec
     assert 'iOS: "17.0"' in spec  # performAccessibilityAudit needs iOS 17
     assert "- target: A11yHost" in spec
-    # the generated project is never committed
-    assert "ui/ios/A11yAudit/*.xcodeproj/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    # the generated project is never committed (no .gitignore entry: check_disable_comments refuses a new one without an ADR)
+    assert not list(AUDIT.glob("*.xcodeproj")), "the generated project is committed"
 
 
 def test_s220_the_audit_runs_in_the_snapshot_job_with_a_pinned_xcodegen():
