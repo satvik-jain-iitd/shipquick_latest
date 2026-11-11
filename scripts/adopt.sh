@@ -174,6 +174,35 @@ if [ -n "$check_mode" ]; then
     echo "not adopted: .pre-commit-config.yaml$([ "$kref" = HEAD ] || echo " $at") has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
     ok=0
   fi
+  # story #446: the same three things the child's CI will check on a bump PR, found before the push.
+  # (a) the hooks are configured: they must also be installed here, or the commit-msg guard never ran
+  if [ -z "$hooks_skipped" ]; then
+    hs_rc=0; hs="$(python3 "$SQ/plugin/hooks/hooks_state.py" "$child")" || hs_rc=$?
+    case "$hs" in
+      missing) echo "not adopted: the git hooks are configured but not installed, so the commit checks never ran here (run: pre-commit install, or: bash $HERE/adopt.sh $child)"; ok=0 ;;
+      error) echo "not adopted: cannot tell whether the git hooks are installed (hooks_state.py exit $hs_rc)"; ok=0 ;;
+    esac
+  fi
+  # (b) no commit subject over 72 characters since the base branch (the rule of check_commit_msg.py)
+  base=""
+  for cand in ${kit:+"origin/$kit"} origin/dev origin/main origin/master; do
+    base="$(git -C "$child" rev-parse -q --verify "$cand^{commit}" 2>/dev/null || true)"
+    [ -z "$base" ] || break
+  done
+  if [ -n "$base" ]; then
+    while IFS=$'\t' read -r h subj; do
+      [ -n "$h" ] || continue
+      case "$subj" in "Merge "*) continue ;; esac
+      if [ "${#subj}" -gt 72 ]; then echo "not adopted: commit subject over 72 characters (${#subj}): $h $subj (reword it before pushing)"; ok=0; fi
+    done < <(git -C "$child" log --no-merges --format='%h%x09%s' "$base..HEAD" 2>/dev/null)
+  fi
+  # (c) environments at the caller's milestone, with the words CI uses
+  cms="$(sed -nE 's/^[[:space:]]+milestone:[[:space:]]*(D[0-6])[[:space:]]*$/\1/p' "$call" 2>/dev/null | head -1)"
+  if [ -n "$cms" ] && [ -f "$child/CLAUDE.md" ]; then
+    if ! why="$(bash "$HERE/check_environments.sh" --claude-md "$child/CLAUDE.md" --milestone "$cms" 2>&1)"; then
+      echo "not adopted: environments: ${why#check_environments.sh: }"; ok=0
+    fi
+  fi
   if [ -n "$plat_list" ]; then
     miss=""
     while read -r f; do [ -f "$child/$f" ] || miss="$miss $f"; done < <(platform_files)
@@ -374,6 +403,22 @@ else
   printf 'default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]\nrepos:\n%s\n' "$hooks" | put .pre-commit-config.yaml
 fi
 fi
+
+# 5b. story #446: install the git hooks themselves when they are configured and not installed (it only writes the hooks folder).
+# Without them the commit-msg guard never runs here and a bad subject first shows up in CI.
+hs_rc=0; hs="$(python3 "$SQ/plugin/hooks/hooks_state.py" "$child")" || hs_rc=$?
+case "$hs" in
+  installed) echo "unchanged git hooks (pre-commit and commit-msg are installed)" ;;
+  missing)
+    if ! command -v pre-commit > /dev/null 2>&1; then
+      echo "note: the git hooks are not installed and pre-commit is not on this machine. Install it (pip install pre-commit), then run in $child: pre-commit install"
+    elif hs_err="$(cd "$child" && pre-commit install 2>&1)"; then
+      echo "installed  git hooks (pre-commit install)"
+    else
+      echo "note: could not install the git hooks ($(printf '%s' "$hs_err" | tail -1)). Run in $child: pre-commit install"
+    fi ;;
+  error) echo "note: could not tell whether the git hooks are installed (hooks_state.py exit $hs_rc)" ;;
+esac
 
 # 6. CLAUDE.md: one pointer line to the protocol. A new file starts from the template; yours keeps every line.
 ptr="follow $rel/CLAUDE.md"
