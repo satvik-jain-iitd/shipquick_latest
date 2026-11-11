@@ -95,3 +95,32 @@ def test_the_three_files_are_protected_paths():
 def test_the_decision_record_exists():
     adr = (ROOT / "docs" / "decisions" / "ADR-016.md").read_text(encoding="utf-8")
     assert "features" in adr.lower() and "locked" in adr.lower()
+
+
+def test_an_invalid_utf8_byte_exits_2_with_empty_stdout_never_1(tmp_path):
+    """Exit 1 means off, so a crash must never leak as 1 (review of #431)."""
+    (tmp_path / ".shipquick").mkdir()
+    (tmp_path / ".shipquick" / "features.json").write_bytes(b'{"version": 1, "features": {"roadmap": {"on": true}}}\n\xff')
+    for args in (("get", "roadmap"), ("json",)):
+        r = run(tmp_path, *args)
+        assert r.returncode == 2 and r.stdout.strip() == "" and "Traceback" not in r.stderr, (args, r.returncode, r.stderr)
+
+
+def test_a_bad_defaults_file_is_an_error_not_a_crash(tmp_path):
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import features
+    for bad in ('{}', '{"features": {"a": {"name": "A"}}}', '{"features": []}', '{"features": {"a": {"default": "yes"}}}'):
+        d = tmp_path / "d.json"
+        d.write_text(bad, encoding="utf-8")
+        try:
+            features.read(tmp_path, defaults=d)
+        except features.FeaturesError:
+            continue
+        raise AssertionError(f"accepted {bad}")
+
+
+def test_any_unexpected_crash_still_exits_2(tmp_path):
+    (tmp_path / ".shipquick").mkdir()
+    (tmp_path / ".shipquick" / "features.json").write_text('{"features": {"roadmap": 5}}', encoding="utf-8")
+    r = run(tmp_path, "get", "roadmap")
+    assert r.returncode == 2 and r.stdout.strip() == ""

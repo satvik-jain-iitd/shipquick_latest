@@ -26,13 +26,26 @@ def _load(path, what):
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
         raise FeaturesError(f"{what} is not valid JSON: line {e.lineno}, column {e.colno}: {e.msg}")
-    except OSError as e:
+    except UnicodeDecodeError as e:
+        raise FeaturesError(f"{what} is not valid UTF-8: byte {e.start}")
+    except (OSError, ValueError) as e:
         raise FeaturesError(f"cannot read {what}: {e}")
 
 
-def read(root):
+def _defaults(path):
+    data = _load(path, "scripts/features_default.json")
+    feats = data.get("features") if isinstance(data, dict) else None
+    if not isinstance(feats, dict) or not feats:
+        raise FeaturesError("scripts/features_default.json needs a non-empty `features` object")
+    for fid, d in feats.items():
+        if not isinstance(d, dict) or not isinstance(d.get("default"), bool):
+            raise FeaturesError(f"scripts/features_default.json: `{fid}` needs a true or false `default`")
+    return feats
+
+
+def read(root, defaults=None):
     """The merged map {"features": {id: {...}}, "unknown": [ids the kit does not know]}."""
-    defaults = _load(HERE / "features_default.json", "scripts/features_default.json")["features"]
+    defaults = _defaults(defaults or HERE / "features_default.json")
     f = Path(root) / ".shipquick" / "features.json"
     mine = {}
     if f.is_file():
@@ -70,6 +83,9 @@ def main(argv=None):
         m = read(root)
     except FeaturesError as e:
         print(f"features.py: {e}", file=sys.stderr)
+        return 2
+    except Exception as e:   # exit 1 means "off": no crash may ever leak as 1
+        print(f"features.py: unexpected {type(e).__name__}: {e}", file=sys.stderr)
         return 2
     if a.cmd == "json":
         print(json.dumps(m, indent=2))
