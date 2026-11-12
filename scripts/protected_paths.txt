@@ -25,6 +25,9 @@ scripts/review_merge.sh
 scripts/mode.sh
 scripts/has_dev_link.sh
 scripts/check_*.py
+# story #485: the one change map and its reader; a PR that changes them turns every area on, and the owner merges it
+scripts/change_map.json
+scripts/change_map.py
 scripts/check_*.sh
 # story #231 review 2: the generator of the UI API lists the coverage gate counts against
 scripts/ui_api_lists.py

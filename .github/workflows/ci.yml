@@ -323,48 +323,44 @@ jobs:
           bash scripts/ui.sh docs android-button --dense | grep -q "androidx.compose.material3.Button"
           bash scripts/ui.sh docs ios-button --json | grep -q '"type": "docs.detail"'
   ui-changes:
-    # Story #217: the two compile jobs below run only when ui/** changes. A skipped job is not a failure,
-    # so the gate still passes on a PR that does not touch ui/.
+    # Story #485 (ADR-018): one change map (scripts/change_map.json) decides which slow jobs run. The reader is read from the
+    # base branch, so a PR cannot weaken the rule it is judged by; a PR that changes the map or the reader turns every area on.
+    # Any doubt (not a pull request, a diff that cannot be read, a missing or broken map) turns every area on: fail closed.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
     outputs:
-      ui: ${{ steps.diff.outputs.ui }}
+      android: ${{ steps.diff.outputs.android }}
       ios: ${{ steps.diff.outputs.ios }}
+      decision: ${{ steps.diff.outputs.decision }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Did ui/** change?
+      - name: Which slow jobs must run? (story #485, one map)
         id: diff
         env:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.base_ref }}
-          BEFORE: ${{ github.event.before }}
         run: |
-          if [ "$EVENT" = "pull_request" ]; then
-            git fetch -q origin "$BASE" || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
-            range="origin/$BASE...HEAD"
-          elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            range="$BEFORE..HEAD"
-          else
-            echo "ui=true" >> "$GITHUB_OUTPUT"; echo "ios=true" >> "$GITHUB_OUTPUT"; exit 0   # first push of a branch: compile to be safe
+          base="origin/${BASE:-dev}"
+          git fetch -q origin "${BASE:-dev}" 2>/dev/null || true
+          mkdir -p "$RUNNER_TEMP/change-map"
+          for f in change_map.py change_map.json; do
+            git show "$base:scripts/$f" > "$RUNNER_TEMP/change-map/$f" 2>/dev/null || rm -f "$RUNNER_TEMP/change-map/$f"
+          done
+          if [ -f "$RUNNER_TEMP/change-map/change_map.py" ] && python3 "$RUNNER_TEMP/change-map/change_map.py" decide \
+              --base "$base" --head HEAD --event "$EVENT" --map "$RUNNER_TEMP/change-map/change_map.json" --outputs "$GITHUB_OUTPUT"; then
+            exit 0
           fi
-          # Captured first: a failing git diff inside the `if` below would have written ui=false. --no-renames lists the old path of a move.
-          names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
-          # Story #484: this file is not in either rule. A PR that only edits ci.yml waited 40 minutes for a macOS machine it did
-          # not need. Known gap: an edit to the steps of a ui-* job no longer runs that job, on the PR or on the push to dev. The
-          # reviewer asks for one manual run (workflow_dispatch), reads it on its own run page, and a PR-event run must be the last
-          # run before approval: a manual run skips the PR-only jobs and would show a green gate (docs/PR_RULES.md section 14).
-          if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_contracts\.py|scripts/emit_tokens\.py|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
-          # Story #219 (#375 review): the macOS snapshot job waits on `ios`, not on `ui`, so an Android-only or fixture-only PR never runs it.
-          if grep -qE '^(ui/ios/|design/|scripts/emit_tokens\.py)' <<< "$names"; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
+          echo "the change map could not run here, so every slow job runs (fails closed)"
+          printf 'android=true\nios=true\ndecision={"all":true}\n' >> "$GITHUB_OUTPUT"
   ui-android-compile:
     # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
     # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: needs.ui-changes.outputs.android == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -390,7 +386,7 @@ jobs:
   ui-ios-compile:
     # Story #217: compile every template and the generated proof/ApiProof.swift for iOS. Compile only.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: needs.ui-changes.outputs.ios == 'true'
     runs-on: macos-15
     timeout-minutes: 30
     permissions:
@@ -412,7 +408,7 @@ jobs:
     # bad one must fail with every rule named. detekt 1.23.8, Konsist 0.17.3, Gradle from the pin in ui/android. CI only.
     # Gradle checks every downloaded jar and pom against tests/fixtures/android/gradle/verification-metadata.xml; a missing or wrong sum fails the build.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: needs.ui-changes.outputs.android == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -468,7 +464,7 @@ jobs:
     # Story #218: both tiers run through ui/tool/ios_lint.sh (CI=1 strict, else warn-only) with the committed baseline
     # ui/ios/lint/swiftlint-baseline.json, and SwiftFormat 0.64.6 (pinned the same way) checks the format in lint mode.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: needs.ui-changes.outputs.ios == 'true'
     runs-on: macos-15
     timeout-minutes: 20
     permissions:
@@ -521,7 +517,7 @@ jobs:
     # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
     needs: [ui-changes]
     # ios is empty after a fail-safe exit above (only ui=true is written), so the job runs then too.
-    if: needs.ui-changes.outputs.ios != 'false'
+    if: needs.ui-changes.outputs.ios == 'true'
     runs-on: macos-15
     timeout-minutes: 45
     permissions:
@@ -672,6 +668,15 @@ jobs:
     needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, design-tokens, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, ui-ios-snapshots, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Every phone job matches the change map (story #485, the gate proves it)
+        env:
+          DECISION: ${{ needs.ui-changes.outputs.decision }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          printf '%s' "$DECISION" > "$RUNNER_TEMP/decision.json"
+          printf '%s' "$NEEDS" > "$RUNNER_TEMP/needs.json"
+          python3 scripts/change_map.py gate --decision "$RUNNER_TEMP/decision.json" --needs "$RUNNER_TEMP/needs.json" --map scripts/change_map.json
       - name: Check all job results
         run: |
           echo "pre-commit: ${{ needs.pre-commit.result }}"

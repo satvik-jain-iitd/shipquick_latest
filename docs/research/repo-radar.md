@@ -783,3 +783,11 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Reused: GitHub's own `concurrency` key with `cancel-in-progress` (the platform feature), and the path rule the `ui-changes` job already has. No new code: one block and two shorter patterns.
 - Decision: no repo needed; no ADR (no change of architecture or scope, the gate is untouched).
 - Confidence that nothing fits better: 0.9.
+
+## 13 Nov 2026, story #485: one change map for the slow CI jobs
+- Need: decide which CI jobs must run from the changed paths of a pull request, fail closed, one map file read by CI and local checks.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "decide which CI jobs must run from the changed paths of a pull request, fail closed, one map file read by CI and local checks"` printed `no repos found`. GitHub topic search (`github-actions`, `path-filter`) found `step-security/paths-filter` (a fork of dorny) and `chainguard-actions/dorny-paths-filter` (a fork).
+- Read: dorny/paths-filter (MIT, pushed 27 Sep 2026, not archived; filters may be a file, base rules per event, a boolean per filter) and step-security/paths-filter (MIT, a fork, pushed 9 Nov 2026, the same text).
+- Borrowed: the filter file idea and the base rule per event. Not borrowed: the action itself, which runs only inside a workflow and adds a third-party action to a protected file.
+- Decision: a stdlib reader over one JSON map, used by CI, the gate and (PR 4) check_local.sh. ADR-018.
+- Confidence that nothing fits better: 0.8.

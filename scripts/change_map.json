@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "_about": "Story #485 (ADR-018). Which slow CI jobs run for a pull request. Read by scripts/change_map.py. A path that no row names turns every area on and the run prints the line to add. Paths are globs: 'dir/**' is everything under dir; a pattern without a slash matches a root-level name only.",
+  "areas": {
+    "android": {
+      "jobs": ["ui-android-compile", "ui-android-lint"],
+      "paths": ["ui/**", "design/**", "scripts/emit_tokens.py", "scripts/emit_contracts.py", "scripts/ui_proof.py", "tests/fixtures/**"],
+      "except": ["ui/ios/**"]
+    },
+    "ios": {
+      "jobs": ["ui-ios-compile", "ui-ios-lint", "ui-ios-snapshots"],
+      "paths": ["ui/**", "design/**", "scripts/emit_tokens.py", "scripts/emit_contracts.py", "scripts/ui_proof.py", "tests/fixtures/**"],
+      "except": ["ui/android/**"]
+    }
+  },
+  "free": [
+    "docs/**", "pm/**", "plugin/**", "roadmap/**", "tests/**", "scripts/**", ".github/**", "knowledge/**",
+    "*.md", ".gitignore", ".gitattributes", ".pre-commit-config.yaml", "roadmap.json", "CLAUDE.md"
+  ]
+}
