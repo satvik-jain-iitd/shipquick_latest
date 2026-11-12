@@ -198,10 +198,14 @@ if [ -n "$check_mode" ]; then
   fi
   # (c) environments at the caller's milestone, with the words CI uses
   cms="$(sed -nE 's/^[[:space:]]+milestone:[[:space:]]*(D[0-6])[[:space:]]*$/\1/p' "$call" 2>/dev/null | head -1)"
-  if [ -n "$cms" ] && [ -f "$child/CLAUDE.md" ]; then
-    if ! why="$(bash "$HERE/check_environments.sh" --claude-md "$child/CLAUDE.md" --milestone "$cms" 2>&1)"; then
-      echo "not adopted: environments: ${why#check_environments.sh: }"; ok=0
+  cms="${cms:-D1}"   # a caller with no `milestone:` line gets D1 in CI (checks.yml); --check says the same
+  if [ ! -f "$child/CLAUDE.md" ]; then   # CI's environments job fails on a missing file, so --check does too
+    # ponytail: on a rule-24 branch that carries only the caller (kit branch elsewhere) the file sits on the kit branch; not read there yet
+    if [ -z "$kit" ] || [ "$kit" = "$here" ]; then
+      echo "not adopted: environments: no CLAUDE.md in the child (CI reads Dev link and Production link from it)"; ok=0
     fi
+  elif ! why="$(bash "$HERE/check_environments.sh" --claude-md "$child/CLAUDE.md" --milestone "$cms" 2>&1)"; then
+    echo "not adopted: environments: ${why#check_environments.sh: }"; ok=0
   fi
   if [ -n "$plat_list" ]; then
     miss=""

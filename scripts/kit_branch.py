@@ -70,7 +70,7 @@ def gate_gap(repo: str, branch: str, protection, rules) -> str | None:
     """protection: branches/<b>/protection (None = none or unreadable); rules: rules/branches/<b> (rulesets,
     None = the read failed). The gate counts only with its exact name, pinned to the GitHub Actions app."""
     if rules is None:
-        return f"cannot read rules (403/404) of {repo} branch {branch}, so the gate cannot be checked. Run: {gate_command(repo)}"
+        return f"cannot read rules (403/404) of {repo} branch {branch}, so the gate cannot be checked. This is one test only: every other --check test still ran, each failure prints its own 'not adopted:' line, and no other line means they passed. Run: {gate_command(repo)}"
     rsc = (protection or {}).get("required_status_checks") or {}
     pinned = [c.get("app_id") for c in rsc.get("checks") or [] if c.get("context") == GATE]
     for rule in rules:

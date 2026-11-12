@@ -69,6 +69,11 @@ def test_state_configured_with_an_empty_hooks_folder_is_missing_and_exit_1(child
     assert state(child) == (1, "missing")
 
 
+def test_a_stand_in_pre_commit_on_the_path_gets_the_hooks_installed_by_adopt(child):
+    adopt(child)   # FAKE_PRECOMMIT first on PATH, as on any machine that has pre-commit
+    assert state(child) == (0, "installed")
+
+
 def test_state_one_hook_missing_is_still_missing(child):
     adopt(child, precommit=False)
     real_hooks(child)
@@ -132,8 +137,9 @@ def test_adopt_with_pre_commit_off_installs_no_hooks(child):
 def test_a_failing_pre_commit_is_said_in_one_line_and_adopt_still_finishes(child, tmp_path):
     bad = tmp_path / "bad"; bad.mkdir()
     (bad / "pre-commit").write_text('#!/usr/bin/env bash\necho "boom" >&2\nexit 1\n', encoding="utf-8"); (bad / "pre-commit").chmod(0o755)
-    env = {**os.environ, "PATH": f"{bad}:{os.environ['PATH']}"}
-    r = adopt(child, env=env, precommit=False)
+    path = os.pathsep.join(d for d in os.environ["PATH"].split(os.pathsep) if not os.access(os.path.join(d, "pre-commit"), os.X_OK))
+    env = {**os.environ, "PATH": f"{bad}:{path}"}
+    r = adopt(child, env=env, precommit=None)
     assert r.returncode == 0, r.stderr
     assert "could not install the git hooks" in r.stdout and "pre-commit install" in r.stdout
     assert state(child) == (1, "missing")
@@ -197,6 +203,35 @@ def test_check_runs_environments_at_the_callers_milestone(child, gh):
     r = adopt(child, "--check", env=gh)
     assert r.returncode == 1
     assert "not adopted: environments:" in r.stdout and "empty or placeholder" in r.stdout and "past D1" in r.stdout
+
+
+def test_check_with_no_milestone_line_uses_the_ci_default_d1(child, gh):
+    # CI gives a caller with no `milestone:` line D1 (checks.yml); --check must say the same, never skip
+    with_origin(child)
+    assert adopt(child, env=gh, d0=False).returncode == 0
+    add_fake_submodule(child, HEAD)
+    assert "milestone:" not in (child / ".github/workflows/shipquick-call.yml").read_text(encoding="utf-8")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1
+    assert "not adopted: environments:" in r.stdout and "past D1" in r.stdout
+
+
+def test_check_fails_when_the_child_has_no_claude_md(child, gh):
+    ready(child, gh, milestone="D0")
+    (child / "CLAUDE.md").unlink()
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1
+    assert "not adopted: environments: no CLAUDE.md" in r.stdout
+
+
+@pytest.mark.parametrize("line", ['milestone: "D0"', "milestone: D0  # nothing deployed", "milestone: D9"])
+def test_check_refuses_a_milestone_line_that_is_not_plain_d0_to_d6(child, gh, line):
+    ready(child, gh)
+    call = child / ".github/workflows/shipquick-call.yml"
+    t = call.read_text(encoding="utf-8").replace("      shipquick_ref:", f"      {line}\n      shipquick_ref:", 1)
+    call.write_text(t, encoding="utf-8")
+    r = adopt(child, "--check", env=gh, d0=False)
+    assert r.returncode == 2 and "is not 'milestone: D0' to 'milestone: D6'" in r.stderr
 
 
 def test_check_environments_passes_once_both_links_are_filled(child, gh):
