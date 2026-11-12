@@ -311,3 +311,11 @@ def test_s485_a_map_job_with_no_block_in_head_ci_yml_turns_every_area_on(tmp_pat
     repo = make_repo(tmp_path)
     edit_ci(repo, "  ui-ios-lint:\n", "  ui-ios-lint-renamed:\n")
     assert on(decide(repo)) == {"android": True, "ios": True}, decide(repo)
+
+
+def test_s485_a_path_with_a_space_is_one_path_split_on_nul(tmp_path):
+    """#499 review point 4: the diff is split on NUL (git diff -z). A space in a name must not cut the path in two,
+    which would turn Android on for an iOS-only change."""
+    repo = make_repo(tmp_path)
+    change(repo, "ui/ios/templates/Screen One.swift", text="s\n")
+    assert on(decide(repo)) == {"android": False, "ios": True}, decide(repo)
