@@ -770,3 +770,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Reused: the `pre-commit` framework the kit already adopts (we only call `pre-commit install`) and the rule of `scripts/check_commit_msg.py` (72 characters) and `scripts/check_environments.sh`. Nothing new in the checks themselves; `plugin/hooks/hooks_state.py` is the one new file (a state check, about 60 lines).
 - Decision: build the small state check ourselves; no repo fits the "hooks configured but not installed" question.
 - Confidence that nothing fits better: 0.7.
+
+## 13 Nov 2026, story #484: skip the phone jobs on a ci.yml-only PR, cancel a replaced run
+- Need: skip macOS jobs when only the workflow file changed, and cancel a PR run that a newer run replaced.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "GitHub Actions skip macOS jobs when workflow file changes, cancel superseded pull request runs"` printed `no repos found`.
+- Reused: GitHub's own `concurrency` key with `cancel-in-progress` (the platform feature), and the path rule the `ui-changes` job already has. No new code: one block and two shorter patterns.
+- Decision: no repo needed; no ADR (no change of architecture or scope, the gate is untouched).
+- Confidence that nothing fits better: 0.9.

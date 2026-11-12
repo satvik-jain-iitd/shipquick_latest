@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Changed
+- `ci.yml`: a PR that only edits `ci.yml` no longer runs the phone jobs (`ui=false`, `ios=false`), and a new run of a PR cancels the old one (one concurrency group per PR; push and manual runs are never cancelled). A PR that edits the steps of a `ui-*` job needs one manual full run until #485 (#484).
+
 ### Fixed
 - `plugin/hooks/git_guard.py` refuses a command that sets `PRE_COMMIT_ALLOW_NO_CONFIG` (as a prefix, with `export` or with `env`) and a `pre-commit` call with `--allow-missing-config`. Both let a commit pass with no hook run, the same as `--no-verify`. The same words as text (a `grep`, a quoted message) pass (#480, feedback #478).
 
