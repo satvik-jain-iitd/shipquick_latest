@@ -12,6 +12,17 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-12
+Tag `v0.13.1`, "a kit bump passes the child's pre-push hook, `--check` reads the caller's milestone, and the Desk follow-ups". Notes: `docs/RELEASE_NOTES_v0.13.1.md`.
+
+### Fixed
+- `adopt.sh --check` runs the environments test at the caller's `milestone:` and, when the caller has none, at D1 (as `checks.yml` does); a bad `milestone:` line is refused. A child with no `CLAUDE.md` now fails the environments test, unless the child carries the rule-24 kit branch elsewhere. The "gate" message says it is one test only (#452, #453).
+- A kit bump passes the child's pre-push hook with no `SKIP`: `check_tdd.py` exempts a PR whose only code changes are the ShipQuick pin and the files `adopt.sh` writes (the exact list is `scripts/adopt_files.txt`, a protected path); `check_local.sh secrets` scans only the commits since `origin/<base>` (#454, #455).
+- The Desk deletes its throwaway local branch on every path, names the GitHub account in the PR body, and refuses the review-only account (`.shipquick/roles.yml`) (#456, #457).
+
+### Changed
+- `docs/children.md` records the four v0.13.0 bumps, and `docs/follow-ups.md` has the row for the rule-24 `CLAUDE.md` read in `--check` (#458, #459).
+
 ## [0.13.0] - 2026-11-11
 Tag `v0.13.0`, "features as switches, the Desk with working switches, and a preflight for a child's bump". Notes: `docs/RELEASE_NOTES_v0.13.0.md`.
 
