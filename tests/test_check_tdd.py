@@ -299,3 +299,51 @@ def test_s491_a_missing_list_file_exits_one_with_one_line_naming_it(tmp_path):
     assert "Traceback" not in r.stdout + r.stderr
     lines = r.stdout.strip().splitlines()
     assert len(lines) == 1 and "gate_files.txt" in lines[0], lines
+
+
+# ---- story #502 (feedback #501): the test names of other runners are accepted, one list in the script ----
+
+def _red(*names):
+    return "Summary.\n\n## Red\n\n" + "".join(f"- {n} (failed first)\n" for n in names) + "\n## Local proof\nran it\n"
+
+
+@pytest.mark.parametrize("name", [
+    "app/tests/unit/x.test.ts",          # TypeScript unit test (feedback #501)
+    "app/tests/e2e/x.spec.ts",           # TypeScript e2e spec (feedback #501)
+    "web/src/Button.test.tsx",
+    "web/src/Button.spec.jsx",
+    "lib/index.test.mjs",
+    "lib/index.spec.cjs",
+    "internal/parser_test.go",           # Go
+    "src/test/kotlin/ParserTest.kt",     # Kotlin
+    "src/test/kotlin/ParserTests.kt",
+    "Tests/ParserTest.swift",            # Swift
+    "Tests/ParserTests.swift",
+    "pkg/x_test.py",                     # pytest or unittest, another folder
+])
+def test_s502_a_known_test_file_name_in_red_passes(tmp_path, name):
+    repo = make_repo(tmp_path, {"app/src/x.ts": "x\n", name: "red\n"})
+    r = run(tmp_path, repo, _red(name))
+    assert r.returncode == 0 and "tdd OK" in r.stdout, r.stdout + r.stderr
+
+
+def test_s502_a_typescript_red_test_that_is_not_in_the_diff_still_fails(tmp_path):
+    repo = make_repo(tmp_path, {"app/src/x.ts": "x\n"})
+    r = run(tmp_path, repo, _red("app/tests/unit/x.test.ts"))
+    assert r.returncode == 1 and "not in the PR diff" in r.stdout, r.stdout
+
+
+def test_s502_a_fixture_in_a_tests_folder_is_not_a_test_and_says_so(tmp_path):
+    repo = make_repo(tmp_path, {"app/src/x.ts": "x\n", "tests/fixtures/data.json": "{}\n"})
+    r = run(tmp_path, repo, _red("tests/fixtures/data.json"))
+    assert r.returncode == 1, r.stdout
+    assert "tests/fixtures/data.json" in r.stdout and "not a known test file name" in r.stdout, r.stdout
+
+
+def test_s502_the_name_list_is_one_line_per_runner_in_the_script():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("check_tdd", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert len(mod.TEST_NAMES) >= 8, mod.TEST_NAMES
+    assert all(isinstance(p, str) and p for p in mod.TEST_NAMES)
