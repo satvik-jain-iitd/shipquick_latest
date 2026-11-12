@@ -734,3 +734,66 @@ def test_s175_check_accepts_an_issues_read_line_with_a_trailing_comment(child, g
     r = adopt(child, "--check", env=gh)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert "issues: read" not in r.stdout
+
+
+# ---- story #470 (feedback #359): a mode.md the child changed on purpose is kept; an older kit copy is updated ----
+MODE = ".claude/commands/mode.md"
+
+
+def kit_with_history(tmp_path, old_mode="# /mode (an older kit copy)\n"):
+    """A tmp copy of the kit with two commits: the first carries an older mode.md, the second the current one (a CI checkout is shallow, so the real history cannot be used)."""
+    import shutil
+    kit = tmp_path / "kit"
+    for d in ("scripts", ".github", ".claude/commands", "plugin", "ui", "docs"):
+        shutil.copytree(ROOT / d, kit / d, ignore=shutil.ignore_patterns("__pycache__", "research", "decisions", "demos", "discussions", "screens"))
+    shutil.copy(ROOT / "CLAUDE.md", kit / "CLAUDE.md")
+    current = (kit / MODE).read_text(encoding="utf-8")
+    (kit / MODE).write_text(old_mode, encoding="utf-8")
+    for a in (["init", "-q", "-b", "main"], ["add", "-A"], ["commit", "-q", "-m", "old"]):
+        subprocess.run(["git", "-C", str(kit), "-c", "user.email=t@t", "-c", "user.name=t", *a], check=True, capture_output=True)
+    (kit / MODE).write_text(current, encoding="utf-8")
+    for a in (["add", "-A"], ["commit", "-q", "-m", "current"]):
+        subprocess.run(["git", "-C", str(kit), "-c", "user.email=t@t", "-c", "user.name=t", *a], check=True, capture_output=True)
+    return kit, old_mode, current
+
+
+def adopt_from(kit, child, *args):
+    e = dict(os.environ)
+    e["PATH"] = f"{FAKE_PRECOMMIT}:{e['PATH']}"
+    e["SHIPQUICK_CLAUDE_SETTINGS"] = str(PONYTAIL_ON)
+    e.pop("CI", None)
+    a = args if ("--check" in args or "--milestone" in args) else (*args, "--milestone", "D0")
+    return subprocess.run(["bash", str(kit / "scripts" / "adopt.sh"), str(child), *a], capture_output=True, text=True, env=e)
+
+
+def test_s359_a_mode_md_the_child_changed_on_purpose_is_kept(child, tmp_path):
+    kit, old, current = kit_with_history(tmp_path)
+    (child / MODE).parent.mkdir(parents=True)
+    (child / MODE).write_text("# /mode - the child's own title\nbody\n", encoding="utf-8")
+    r = adopt_from(kit, child)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "kept      .claude/commands/mode.md (yours; differs from the kit copy)" in r.stdout
+    assert (child / MODE).read_text(encoding="utf-8") == "# /mode - the child's own title\nbody\n"
+
+
+def test_s359_a_mode_md_equal_to_an_older_kit_copy_is_updated(child, tmp_path):
+    kit, old, current = kit_with_history(tmp_path)
+    (child / MODE).parent.mkdir(parents=True)
+    (child / MODE).write_text(old, encoding="utf-8")
+    r = adopt_from(kit, child)
+    assert "updated   .claude/commands/mode.md" in r.stdout and (child / MODE).read_text(encoding="utf-8") == current, r.stdout + r.stderr
+
+
+def test_s359_a_missing_mode_md_is_created_and_an_identical_one_is_unchanged(child, tmp_path):
+    kit, old, current = kit_with_history(tmp_path)
+    r = adopt_from(kit, child)
+    assert "created   .claude/commands/mode.md" in r.stdout and (child / MODE).read_text(encoding="utf-8") == current
+    assert "unchanged .claude/commands/mode.md" in adopt_from(kit, child).stdout
+
+
+def test_s359_check_says_nothing_new_about_a_kept_mode_md(child, tmp_path):
+    kit, old, current = kit_with_history(tmp_path)
+    adopt_from(kit, child)
+    (child / MODE).write_text("# /mode - mine\n", encoding="utf-8")
+    r = adopt_from(kit, child, "--check")
+    assert "mode.md" not in r.stdout + r.stderr, r.stdout + r.stderr
