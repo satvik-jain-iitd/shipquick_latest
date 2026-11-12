@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-13
+Tag `v0.14.0`, "gate files on every code branch of a kit-branch child, the no-config guard, and CI that does not wait for a macOS machine it does not need". Notes: `docs/RELEASE_NOTES_v0.14.0.md`.
+
 ### Added
 - `adopt.sh --gate-files`: on a code branch of a kit-branch child (rule 24) it copies the gate files ("group A", one list in `scripts/gate_files.txt`) from the kit branch and stages them. No document is written. The git hooks then run on that branch instead of stopping every commit (#479, feedback #478, ADR-017).
 
