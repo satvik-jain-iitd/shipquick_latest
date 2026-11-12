@@ -92,3 +92,68 @@ def test_s357_checks_yml_environments_job_reads_the_milestone_input():
     assert "MILESTONE: ${{ inputs.milestone }}" in text and '--milestone "$MILESTONE"' in text
     assert "--milestone D1" not in text and "--milestone ${{" not in text    # never expanded inside run:
     assert "exempts" in text and "blocks a project" not in text
+
+
+# ---- story #463: the environments job reads CLAUDE.md from the caller's kit_branch when set (as rule-copies does) ----
+def _env_step():
+    """The `run:` text of the environments job's last step, read as text (the CI test job has no PyYAML)."""
+    text = (ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
+    job = text.split("\n  environments:\n", 1)[1].split("\n  component-registry:", 1)[0]
+    lines = job.split("\n        run: |\n", 1)[1].split("\n")
+    return "\n".join(l[10:] for l in lines if l.startswith(" " * 10) or not l.strip())
+
+
+def _git(cwd, *a):
+    subprocess.run(["git", "-C", str(cwd), "-c", "user.email=t@t", "-c", "user.name=t", *a], check=True, capture_output=True)
+
+
+def _env_run(tmp_path, *, kit, target, branch_claude, kit_claude):
+    """Run the job's real shell step: a project checkout on `target` plus an origin that has a kit branch `documents`."""
+    origin, work = tmp_path / "origin.git", tmp_path / "project"
+    subprocess.run(["git", "init", "-q", "-b", "documents", str(origin)], check=True)
+    if kit_claude is not None:
+        (origin / "CLAUDE.md").write_text(kit_claude, encoding="utf-8")
+        _git(origin, "add", "-A")
+    _git(origin, "commit", "-q", "--allow-empty", "-m", "kit")
+    if target != "documents":
+        _git(origin, "branch", "-q", target)
+    subprocess.run(["git", "clone", "-q", "--single-branch", "-b", target, str(origin), str(work)], check=True)   # like CI: only the target branch is there until the job fetches the kit branch
+    if branch_claude is not None:
+        (work / "CLAUDE.md").write_text(branch_claude, encoding="utf-8")
+    elif (work / "CLAUDE.md").exists():
+        (work / "CLAUDE.md").unlink()
+    (tmp_path / ".shipquick").mkdir()
+    (tmp_path / ".shipquick" / "scripts").symlink_to(ROOT / "scripts")
+    env = {"PATH": "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin", "HOME": str(tmp_path), "MILESTONE": "D1",
+           "KIT_BRANCH": kit, "TARGET": target, "RUNNER_TEMP": str(tmp_path)}
+    return subprocess.run(["bash", "-c", _env_step()], cwd=tmp_path, env=env, capture_output=True, text=True)
+
+
+def test_s463_a_pr_into_a_branch_with_no_claude_md_reads_the_kit_branch_file(tmp_path):
+    r = _env_run(tmp_path, kit="documents", target="main", branch_claude=None, kit_claude=FILLED)
+    assert r.returncode == 0 and "environments OK" in r.stdout, r.stdout + r.stderr
+
+
+def test_s463_the_kit_branch_file_decides_not_the_unfilled_copy_on_the_target_branch(tmp_path):
+    r = _env_run(tmp_path, kit="documents", target="dev", branch_claude=EMPTY_DEV, kit_claude=FILLED)
+    assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_s463_an_unfilled_kit_branch_file_still_fails(tmp_path):
+    r = _env_run(tmp_path, kit="documents", target="main", branch_claude=FILLED, kit_claude=EMPTY_DEV)
+    assert r.returncode == 1 and "Dev link" in r.stderr
+
+
+def test_s463_no_claude_md_on_the_kit_branch_fails_and_names_the_fix(tmp_path):
+    r = _env_run(tmp_path, kit="documents", target="main", branch_claude=None, kit_claude=None)
+    assert r.returncode == 1 and "no CLAUDE.md on kit branch documents" in r.stdout + r.stderr
+
+
+def test_s463_without_a_kit_branch_the_job_reads_the_checkout_as_before(tmp_path):
+    r = _env_run(tmp_path, kit="", target="main", branch_claude=EMPTY_DEV, kit_claude=FILLED)
+    assert r.returncode == 1 and "Dev link" in r.stderr
+
+
+def test_s463_a_pr_into_the_kit_branch_itself_reads_its_own_checkout(tmp_path):
+    r = _env_run(tmp_path, kit="documents", target="documents", branch_claude=EMPTY_DEV, kit_claude=FILLED)
+    assert r.returncode == 1 and "Dev link" in r.stderr
