@@ -298,3 +298,9 @@ def test_s485_a_change_to_the_decision_job_or_the_top_of_ci_yml_turns_every_area
     repo2 = make_repo(tmp_path / "top")
     edit_ci(repo2, 'name: "shipquick_latest CI"', 'name: "shipquick_latest CI (edited)"')
     assert on(decide(repo2)) == {"android": True, "ios": True}
+
+
+def test_s485_all_true_turns_every_area_on_in_the_gate(tmp_path):
+    """#499 review point 2 (fail open): decision={"all": true} is the fail-closed answer; the gate must read it as every area on."""
+    r = gate(tmp_path, {"all": True}, needs({"ui-android-compile": "skipped", "ui-ios-lint": "skipped"}))
+    assert r.returncode == 1 and "ui-android-compile" in r.stdout + r.stderr, r.stdout + r.stderr
