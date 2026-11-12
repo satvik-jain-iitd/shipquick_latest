@@ -124,3 +124,77 @@ def test_s454_secrets_scans_the_whole_history_when_there_is_no_origin_base(tmp_p
     r = subprocess.run(["bash", str(LOCAL), "secrets"], cwd=repo, capture_output=True, text=True, env=env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "--log-opts" not in (tmp_path / "gl.args").read_text(encoding="utf-8")
+
+
+# ---- story #469 (feedback #462): in a kit-branch child the hook compares with the kit branch the pushed branch was cut from ----
+CALL = ".github/workflows/shipquick-call.yml"
+
+
+def _g(cwd, *a):
+    return subprocess.run(["git", "-C", str(cwd), "-c", "user.email=t@t", "-c", "user.name=t", *a], check=True, capture_output=True, text=True).stdout
+
+
+def kit_child(tmp_path, kit_line="      kit_branch: documents\n"):
+    """origin with dev and a kit branch `documents` that is ahead of dev (it holds the caller); a clone on a bump branch cut from documents."""
+    origin, work = tmp_path / "origin.git", tmp_path / "work"
+    subprocess.run(["git", "init", "-q", "-b", "dev", str(origin)], check=True)
+    (origin / "a.txt").write_text("a\n", encoding="utf-8")
+    _g(origin, "add", "-A"); _g(origin, "commit", "-q", "-m", "chore: first")
+    _g(origin, "checkout", "-q", "-b", "documents")
+    (origin / ".github" / "workflows").mkdir(parents=True)
+    (origin / CALL).write_text("jobs:\n  c:\n    with:\n      shipquick_ref: abc\n" + kit_line, encoding="utf-8")
+    _g(origin, "add", "-A"); _g(origin, "commit", "-q", "-m", "chore: the caller")
+    _g(origin, "checkout", "-q", "dev")
+    subprocess.run(["git", "clone", "-q", str(origin), str(work)], check=True)
+    return work
+
+
+def local_env(cwd, *checks, **env):
+    import os
+    e = {k: v for k, v in os.environ.items() if k != "BASE"}
+    e.update(env)
+    return subprocess.run(["bash", str(LOCAL), *checks], cwd=cwd, capture_output=True, text=True, env=e)
+
+
+def test_s469_a_branch_cut_from_the_kit_branch_compares_with_it(tmp_path):
+    work = kit_child(tmp_path)
+    _g(work, "checkout", "-q", "-b", "chore/bump", "origin/documents")
+    r = local_env(work, "md-blocks")
+    assert "base: origin/documents" in r.stdout, r.stdout + r.stderr
+
+
+def test_s469_a_branch_cut_from_dev_keeps_dev(tmp_path):
+    work = kit_child(tmp_path)
+    _g(work, "checkout", "-q", "-b", "feat/x", "origin/dev")
+    (work / CALL).parent.mkdir(parents=True)
+    (work / CALL).write_text("jobs:\n  c:\n    with:\n      kit_branch: documents\n", encoding="utf-8")
+    r = local_env(work, "md-blocks")
+    assert "base: origin/documents" not in r.stdout and r.returncode == 0, r.stdout + r.stderr
+
+
+def test_s469_an_explicit_base_always_wins(tmp_path):
+    work = kit_child(tmp_path)
+    _g(work, "checkout", "-q", "-b", "chore/bump", "origin/documents")
+    r = local_env(work, "md-blocks", BASE="dev")
+    assert "base: origin/documents" not in r.stdout, r.stdout + r.stderr
+
+
+def test_s469_a_caller_that_cannot_be_parsed_fails_closed(tmp_path):
+    work = kit_child(tmp_path, kit_line="      kit_branch: ${{ github.ref }}\n")
+    _g(work, "checkout", "-q", "-b", "chore/bump", "origin/documents")
+    r = local_env(work, "md-blocks")
+    assert r.returncode != 0 and "kit_branch must be a plain branch name" in r.stdout + r.stderr, r.stdout + r.stderr
+
+
+def test_s469_a_project_with_no_caller_keeps_dev(tmp_path):
+    work = kit_child(tmp_path)
+    _g(work, "checkout", "-q", "-b", "feat/y", "origin/dev")
+    r = local_env(work, "md-blocks")
+    assert "base: origin/" not in r.stdout and r.returncode == 0, r.stdout + r.stderr
+
+
+def test_s469_a_caller_with_no_kit_branch_keeps_dev(tmp_path):
+    work = kit_child(tmp_path, kit_line="")
+    _g(work, "checkout", "-q", "-b", "chore/bump", "origin/documents")
+    r = local_env(work, "md-blocks")
+    assert "base: origin/" not in r.stdout and r.returncode == 0, r.stdout + r.stderr
