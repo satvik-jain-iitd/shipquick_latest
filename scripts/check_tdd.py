@@ -6,7 +6,7 @@ Exit 0 with "tdd OK" or "tdd exempt: <why>"; exit 1 with the reason.
 
 Assumptions (docs/assumptions.md, rows for story #319):
 - A code file is any changed file that is not a .md or .txt file and not under docs/ or pm/.
-- A PR with no code file is docs-only and exempt. A kit bump (story #454: the `knowledge/shipquick_latest` pin plus only files adopt.sh writes) is exempt too. A PR into main (promotion) or from main (back-merge) is exempt.
+- A PR with no code file is docs-only and exempt. A kit bump (story #454: the `knowledge/shipquick_latest` pin plus only files adopt.sh writes) and a gate-files PR (story #491: only files in scripts/gate_files.txt) are exempt too. The exempt set is the pin plus both list files, read from those files. A PR into main (promotion) or from main (back-merge) is exempt.
 - The `## Red` section runs to the next `## ` heading. A test is named by its path, `tests/test_x.py`, optionally
   followed by `::test_name`, or a node:test file `roadmap/x.test.js` (story #81); the path must equal a file in the diff
   (added, modified or renamed, not deleted).
@@ -25,10 +25,31 @@ DOC_DIRS = ("docs/", "pm/")
 # Story #454: a kit bump moves the pin and rewrites the files adopt.sh owns. There is nothing to put a test on.
 # The list of those files is one file, scripts/adopt_files.txt (exact paths); a test keeps it in step with adopt.sh.
 BUMP_PIN = "knowledge/shipquick_latest"
-BUMP_FILES = {BUMP_PIN} | {
-    line.strip() for line in (Path(__file__).resolve().parent / "adopt_files.txt").read_text(encoding="utf-8").splitlines()
-    if line.strip() and not line.startswith("#")
-}
+# Story #491 (feedback #490): the gate files of a kit-branch child (scripts/gate_files.txt, ADR-017) are copied by
+# `adopt.sh --gate-files`, a PR with no code of its own, so they are exempt too. Both lists are read here, never typed again.
+
+
+class ListError(Exception):
+    """A list file is missing, unreadable or empty. The check stops with one line; it never guesses the exempt set."""
+
+
+def _list(name):
+    try:
+        text = (Path(__file__).resolve().parent / name).read_text(encoding="utf-8")
+    except OSError:
+        raise ListError(f"tdd: cannot read scripts/{name}; restore it, the exempt list is not guessed") from None
+    paths = {line.strip() for line in text.splitlines() if line.strip() and not line.startswith("#")}
+    if not paths:
+        raise ListError(f"tdd: scripts/{name} lists no paths; the exempt list is not guessed")
+    return paths
+
+
+try:
+    BUMP_FILES = {BUMP_PIN} | _list("adopt_files.txt") | _list("gate_files.txt")
+    LIST_ERROR = ""
+except ListError as err:
+    BUMP_FILES = {BUMP_PIN}
+    LIST_ERROR = str(err)
 SHAPE = "write a `## Red` section that names the test file you saw fail, for example `- tests/test_widget.py::test_widget_rejects_empty`"
 
 
@@ -97,6 +118,9 @@ def main() -> int:
     ap.add_argument("--base-branch", default="")
     ap.add_argument("--head-branch", default="")
     args = ap.parse_args()
+    if LIST_ERROR:
+        print(LIST_ERROR)
+        return 1
     with open(args.body_file, encoding="utf-8") as f:
         body = f.read()
     ok, msg = check(body, changed_files(args.base, args.repo), args.base_branch, args.head_branch)
