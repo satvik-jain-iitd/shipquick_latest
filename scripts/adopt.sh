@@ -6,7 +6,7 @@
 #   .github/workflows/roadmap-call.yml  the roadmap caller, pinned to this checkout's commit (or --ref), with your ci.yml's `name:` for workflow_run
 #   .github/workflows/shipquick-call.yml the PR checks caller (story #124), pinned the same way, triggered on every pull_request
 #   roadmap.json                        a stub (title, vision) only if you have none; yours is never overwritten
-#   .claude/commands/mode.md            the /mode command
+#   .claude/commands/mode.md            the /mode command; one you changed on purpose is kept (an older kit copy is updated)
 #   .pre-commit-config.yaml             the check_local.sh hooks, only if you have none (it prints the hook to add if yours lacks them)
 #   CLAUDE.md                           the one pointer line to the protocol, and the kit rule block between the shipquick-rules markers (rewritten on every run); a new file starts from docs/CLAUDE.project.template.md, yours keeps every line outside the markers
 #   .shipquick/roles.yml                 which accounts may code, review, and own this project (story #140), only if you have none
@@ -355,8 +355,18 @@ else
   echo "note: roadmap.json is a stub. Write the vision line before the page goes live."
 fi
 
-# 4. the /mode command
-put .claude/commands/mode.md < "$SQ/.claude/commands/mode.md"
+# 4. the /mode command (story #470): written when missing or equal to any older kit copy; a file the child changed on purpose is kept.
+# shortcut: the older copies come from the kit's own git history; a kit with no history (a shallow clone) keeps every differing file.
+mode=.claude/commands/mode.md
+if [ -e "$child/$mode" ] && ! cmp -s "$child/$mode" "$SQ/$mode"; then
+  older=0
+  for h in $(git -C "$SQ" log --format=%H -- "$mode" 2>/dev/null); do
+    git -C "$SQ" show "$h:$mode" 2>/dev/null | cmp -s - "$child/$mode" && { older=1; break; }
+  done
+  if [ "$older" = 0 ]; then echo "kept      $mode (yours; differs from the kit copy)"; else put "$mode" < "$SQ/$mode"; fi
+else
+  put "$mode" < "$SQ/$mode"
+fi
 
 # 4b. scripts/screens.sh (story #146, docs/SCREENS.md): generic, always kept in sync like mode.md.
 # docs/screens.txt is a stub only if there is none -- its content (which screens, which viewport) is

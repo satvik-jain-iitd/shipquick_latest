@@ -14,6 +14,7 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ### Fixed
 - `check_local.sh` (the pre-push hook): with `BASE` not set, a branch that descends from the caller's `kit_branch` is compared with `origin/<kit_branch>`, not `dev`, so a rule-24 child's bump pushes without a hand-set `BASE` or `SKIP`. An explicit `BASE` still wins; a caller whose `kit_branch` cannot be parsed fails the run (#469, feedback #462).
+- `adopt.sh` keeps a `.claude/commands/mode.md` that the child changed on purpose (`kept      .claude/commands/mode.md (yours; differs from the kit copy)`), as it keeps `roadmap.json`; a file equal to an older kit copy is still updated, and `--check` says nothing new (#470, feedback #359).
 
 ## [0.13.2] - 2026-11-12
 Tag `v0.13.2`, "the environments job reads CLAUDE.md from the kit branch". Notes: `docs/RELEASE_NOTES_v0.13.2.md`.
