@@ -75,9 +75,18 @@ def load_map(path):
     return areas, free
 
 
+def readable_commit(ref):
+    return subprocess.run(["git", "rev-parse", "--verify", "-q", f"{ref}^{{commit}}"], capture_output=True).returncode == 0
+
+
 def decide(base, head, event, map_path):
-    if event != "pull_request":
-        return all_on(f"the event is {event!r}, not a pull request")
+    if event not in ("pull_request", "push"):
+        return all_on(f"the event is {event!r}, not a pull request or a push")
+    if event == "push":   # a push decides from its own diff, base = github.event.before; an unreadable before is a doubt
+        if not readable_commit(base):
+            return all_on(f"the before commit {base[:12]} of this push cannot be read; every area runs")
+        if subprocess.run(["git", "merge-base", "--is-ancestor", base, head], capture_output=True).returncode != 0:
+            return all_on(f"the push is not a fast-forward of {base[:12]} (a force push); every area runs")
     try:
         areas, free = load_map(map_path)
     except Exception as e:  # missing, empty, broken or wrong shape: every area on

@@ -159,10 +159,10 @@ def test_s485_a_docs_only_change_turns_nothing_on(tmp_path):
 
 
 # ---- fail closed (done-when 4): every doubt turns every area on, each case with its own test ----
-def test_s485_fail_closed_when_the_event_is_not_a_pull_request(tmp_path):
+def test_s485_fail_closed_when_the_event_is_not_a_pull_request_or_a_push(tmp_path):
     repo = make_repo(tmp_path)
     change(repo, "docs/x.md", text="more\n")
-    d = decide(repo, event="push")
+    d = decide(repo, event="schedule")
     assert d["android"] and d["ios"] and d["all"]
 
 
