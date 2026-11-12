@@ -12,8 +12,12 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-11-13
+Tag `v0.14.1`, "a gate-files PR passes the tdd check, and a missing list file stops the check in one line". Notes: `docs/RELEASE_NOTES_v0.14.1.md`.
+
 ### Fixed
 - `scripts/check_tdd.py`: a gate-files PR (only the files in `scripts/gate_files.txt`) is exempt from the tdd check, as a kit bump is. The exemption reads both lists, so none is typed twice (#491, feedback #490).
+- `scripts/check_tdd.py`: a missing or empty `scripts/adopt_files.txt` or `scripts/gate_files.txt` stops the check with one line that names the file, not a traceback (#492 review).
 
 ## [0.14.0] - 2026-11-13
 Tag `v0.14.0`, "gate files on every code branch of a kit-branch child, the no-config guard, and CI that does not wait for a macOS machine it does not need". Notes: `docs/RELEASE_NOTES_v0.14.0.md`.
