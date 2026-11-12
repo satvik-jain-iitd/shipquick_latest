@@ -330,3 +330,9 @@ def test_s485_a_push_is_decided_from_its_own_diff_and_an_unreadable_before_turns
     assert on(d) == {"android": False, "ios": False}, d
     assert on(decide(repo, event="push", base="0" * 40)) == {"android": True, "ios": True}
     assert on(decide(repo, event="workflow_dispatch", base="origin/dev")) == {"android": True, "ios": True}
+
+
+def test_s485_the_ui_changes_step_decides_a_push_from_github_event_before():
+    """#499 review point 1, the workflow side: a push passes github.event.before as the base, not origin/dev."""
+    step = re.search(r"- name: Which slow jobs must run.*?(?=\n      - name:|\Z)", CI, re.S).group(0)
+    assert "github.event.before" in step and "BEFORE" in step, step
