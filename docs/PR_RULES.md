@@ -159,3 +159,11 @@ its own gate off from inside itself:
   pinned `npx` as the fallback, since a config's `extends` and `plugins` resolve from the project's node_modules.
   It skips when no CSS changed or the project has no stylelint config (a file or a `stylelint` key in package.json).
   Comment text on a line (`// story #133`, `/* ... */`) is never a literal.
+
+## 14. CI runs what a change can break (story #484)
+
+- `ci.yml` has one run per PR. A new run of the same PR (a push, an edited body) cancels the old one. A push run on `dev` or `main` and a manual run are never cancelled.
+- The phone jobs (`ui-android-*`, `ui-ios-*`) run only when a path in the two rules of the `ui-changes` job changes. `ci.yml` itself is not in those rules, so a PR that only edits `ci.yml` does not wait for a macOS machine.
+- Known gap: a PR that edits the steps of a `ui-*` job inside `ci.yml` no longer runs that job by itself. The push run on `dev` after the merge skips the phone jobs too. On such a PR the reviewer asks for one manual full run (Actions, "shipquick_latest CI", Run workflow, on the PR branch). Nothing enforces this manual run; it is the reviewer's own step. The change-map story (#485) closes this gap.
+- How to read the manual run: on its own run page, never on the PR's checks list. A manual run puts checks with the same names on the head commit, skips every PR-only job (`tdd`, `roles`, `team-block` and others) and starts later, so on the PR it can show a green `gate` over a red PR run. So after the manual run, a PR-event run (a push or a body edit) must be the last run before the approval, and `scripts/review_merge.sh` then reads that one.
+- The `gate` job keeps `if: always()` and fails on a cancelled job. GitHub counts a skipped required check as passed, so a gate that did not run would let a run with a cancelled job look green.

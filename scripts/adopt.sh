@@ -24,17 +24,22 @@
 # --kit-branch <b> (story #225, rule-24 children): writes `kit_branch: <b>` into shipquick-call.yml. The checks
 #   then read the submodule pin, .pre-commit-config.yaml and .shipquick/roles.yml from branch <b>, so `main` can
 #   carry only the caller. --check reads `kit_branch:` from the caller and prints one verdict per branch.
+# --gate-files (story #479, ADR-017): on a code branch of a kit-branch child, copies the gate files (scripts/gate_files.txt)
+#   from the kit branch and stages them. No document is written. --check on such a branch fails for each gate file that is
+#   missing, different from the kit branch copy, or only on this branch. It compares the file on disk and reads the hook
+#   config from this branch. A bump branch cut from the kit branch is read at HEAD and not compared.
 # Needs git and python3. It never commits.
 set -eu
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQ="$(cd "$HERE/.." && pwd -P)"
-usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--platforms android,ios[,web]] [--milestone D0..D6] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
-child=""; ref=HEAD; check_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""; platforms=""; milestone=""
+usage() { echo "usage: adopt.sh <child-path> [--ref <tag-or-sha>] [--kit-branch <branch>] [--check] [--gate-files] [--platforms android,ios[,web]] [--milestone D0..D6] [--coder <acct[,acct]> --reviewer <acct[,acct]> --owner <acct>]" >&2; exit 2; }
+child=""; ref=HEAD; check_mode=""; gate_mode=""; coder=""; reviewer=""; owner_acct=""; kit=""; platforms=""; milestone=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --ref) [ -n "${2:-}" ] || usage; ref="$2"; shift 2 ;;
     --kit-branch) [ -n "${2:-}" ] || usage; kit="$2"; shift 2 ;;
     --check) check_mode=1; shift ;;
+    --gate-files) gate_mode=1; shift ;;
     --milestone) [ -n "${2:-}" ] || usage; milestone="$2"; shift 2 ;;
     --platforms) [ -n "${2:-}" ] || usage; platforms="$2"; shift 2 ;;
     --coder) [ -n "${2:-}" ] || usage; coder="$2"; shift 2 ;;
@@ -108,6 +113,81 @@ feat_val() {
 }
 feat_on() { local rc=0; feat_val "$1" || rc=$?; case $rc in 0) return 0 ;; 1) return 1 ;; *) echo "adopt.sh: $FEAT_MSG" >&2; exit 2 ;; esac; }
 
+[ -z "$check_mode" ] || [ -z "$gate_mode" ] || usage
+here="$(git -C "$child" symbolic-ref -q --short HEAD || echo HEAD)"
+SUB=knowledge/shipquick_latest
+# the kit branch as origin has it; a local branch only when origin's is not here (a local one can be stale). Sets kref and kit_from.
+resolve_kit() {
+  kit_from="origin/$kit"
+  kref="$(git -C "$child" rev-parse -q --verify "refs/remotes/origin/$kit^{commit}" || true)"
+  [ -n "$kref" ] && return 0
+  kit_from="the local branch $kit, origin/$kit is not fetched"
+  kref="$(git -C "$child" rev-parse -q --verify "refs/heads/$kit^{commit}" || true)"
+}
+# story #479: the gate files list. A missing or empty list is never "nothing to check".
+GATE_LIST="$HERE/gate_files.txt"
+gate_files() { grep -vE '^(#|[[:space:]]*$)' "$GATE_LIST"; }
+if [ -n "$check_mode$gate_mode" ] && { [ ! -r "$GATE_LIST" ] || [ -z "$(gate_files)" ]; }; then
+  echo "adopt.sh: $GATE_LIST is missing or lists no file, so the gate files cannot be checked or copied (restore it: git -C $SQ checkout -- scripts/gate_files.txt)" >&2; exit 2
+fi
+gate_fix="run: bash $HERE/adopt.sh $child --gate-files"
+# gate_ids <path>: K = the kit branch copy, H = the copy here, as ids to compare. H is what the hooks read: the file on
+# disk. The submodule pin is the index entry. .gitmodules is only its kit entry, so a branch may list its own submodules too.
+# shortcut: the kit entry is found by the section name git gives it (the path); a renamed section reads as missing.
+gate_ids() {
+  case "$1" in
+    "$SUB") K="$(git -C "$child" rev-parse -q --verify "$kref:$1" 2>/dev/null || true)"
+            H="$(git -C "$child" ls-files -s -- "$1" | awk '{print $2}')" ;;
+    .gitmodules) K="$(git -C "$child" config --blob "$kref:$1" --get-regexp "^submodule\.$SUB\." 2>/dev/null | sort || true)"
+            H="$(git config -f "$child/$1" --get-regexp "^submodule\.$SUB\." 2>/dev/null | sort || true)" ;;
+    *) K="$(git -C "$child" rev-parse -q --verify "$kref:$1" 2>/dev/null || true)"
+       H=""; [ ! -f "$child/$1" ] || H="$(git -C "$child" hash-object -- "$1")" ;;
+  esac
+}
+
+# story #479: put the gate files of the kit branch on this code branch. Staged, never committed; no document is written.
+if [ -n "$gate_mode" ]; then
+  if [ -z "$kit" ] || [ "$kit" = "$here" ]; then
+    echo "adopt.sh: --gate-files is for a code branch of a child whose caller names another kit_branch (this branch: $here, kit_branch: ${kit:-none}). Pass --kit-branch <branch> when this branch has no caller yet." >&2; exit 2
+  fi
+  resolve_kit
+  [ -n "$kref" ] || { echo "adopt.sh: kit branch $kit not found (run: git fetch origin $kit)" >&2; exit 2; }
+  # first pass: a path with an uncommitted change that the copy would overwrite stops the run; nothing is written
+  dirty=""
+  while read -r f; do
+    gate_ids "$f"
+    { [ -n "$K" ] && [ -n "$H" ] && [ "$K" != "$H" ]; } || continue
+    # an edit = the copy on disk is not HEAD's copy (git status would miss a gitignored file); for the pin, a staged change
+    if [ "$f" = "$SUB" ]; then git -C "$child" diff --cached --quiet -- "$f" || dirty="$dirty $f"
+    elif [ "$f" = .gitmodules ]; then [ "$H" = "$(git -C "$child" config --blob "HEAD:$f" --get-regexp "^submodule\.$SUB\." 2>/dev/null | sort || true)" ] || dirty="$dirty $f"
+    elif [ "$H" != "$(git -C "$child" rev-parse -q --verify "HEAD:$f" 2>/dev/null || true)" ]; then dirty="$dirty $f"; fi
+  done < <(gate_files)
+  [ -z "$dirty" ] || { echo "adopt.sh: uncommitted changes in:$dirty. The copy from $kit would overwrite them. Commit them or put them back (git restore --staged --worktree <path>), then run again. Nothing was written." >&2; exit 2; }
+  while read -r f; do
+    gate_ids "$f"
+    if [ -z "$K" ]; then
+      if [ -n "$H" ]; then echo "kept      $f (only on $here, not on $kit: --check calls that a drift)"; else echo "skipped   $f (not on $kit)"; fi
+      continue
+    fi
+    [ "$K" != "$H" ] || { echo "unchanged $f"; continue; }
+    word=copied; [ -z "$H" ] || word=replaced; note=""
+    case "$f" in
+      "$SUB") git -C "$child" update-index --add --cacheinfo "160000,$K,$f" ;;   # checkout does not stage a submodule pin
+      .gitmodules)
+        if [ ! -f "$child/$f" ]; then git -C "$child" checkout -q "$kref" -- "$f"
+        else   # keep the branch's own entries; write the kit entry whole (a key only here would differ for ever)
+          git config -f "$child/$f" --remove-section "submodule.$SUB" 2>/dev/null || true
+          while read -r key val; do git config -f "$child/$f" "$key" "$val"; done <<< "$K"
+          git -C "$child" add -- "$f"; note="; only the $SUB entry, your other entries stay"
+        fi ;;
+      *) git -C "$child" checkout -q "$kref" -- "$f" ;;
+    esac
+    printf '%-9s %s (from %s%s)\n' "$word" "$f" "$kit_from" "$note"
+  done < <(gate_files)
+  echo "Next: run git submodule update --init, then commit these files on $here. The git hooks now run on this branch."
+  exit 0
+fi
+
 gh_repo="$(git -C "$child" remote get-url origin 2>/dev/null | sed -n 's#.*github\.com[:/]\([^/]*/[^/]*\)$#\1#p' | sed 's#\.git$##')"
 
 if [ -n "$check_mode" ]; then
@@ -130,14 +210,43 @@ if [ -n "$check_mode" ]; then
       ok=0
     fi
   fi
-  here="$(git -C "$child" symbolic-ref -q --short HEAD || echo HEAD)"
-  kref=HEAD; at="at HEAD"
+  kref=HEAD; at="at HEAD"; kit_from=""
   if [ -n "$kit" ] && [ "$kit" != "$here" ]; then
-    at="on $kit"
-    kref="$(git -C "$child" rev-parse -q --verify "refs/heads/$kit^{commit}" || git -C "$child" rev-parse -q --verify "refs/remotes/origin/$kit^{commit}" || true)"
+    resolve_kit
     if [ -z "$kref" ]; then
       echo "not adopted: kit branch $kit not found (run: git fetch origin $kit)"
       exit 1
+    fi
+    # Kit-branch work (a bump, for example) changes the pin on purpose, so it is read at HEAD like the kit branch and not
+    # compared with it. It fails closed: a branch is kit-branch work only when the kit tip is an ancestor of HEAD and no
+    # commit in <kit>..HEAD is on another remote branch (every origin branch but the kit branch and this branch's own).
+    # Anything else is a code branch and is compared. Never by commit counts (second review of PR #483).
+    # shortcut: a clone that fetched only one branch cannot see the other remote branches (docs/follow-ups.md).
+    kit_work=""
+    if git -C "$child" merge-base --is-ancestor "$kref" HEAD 2>/dev/null; then
+      others="$(git -C "$child" for-each-ref --format='%(refname)' refs/remotes/origin/ | grep -vxF -e "refs/remotes/origin/$kit" -e "refs/remotes/origin/$here" -e "refs/remotes/origin/HEAD" || true)"
+      n_all="$(git -C "$child" rev-list --count "$kref..HEAD")"
+      n_own="$(git -C "$child" rev-list --count HEAD --not "$kref" $others)"
+      [ "$n_all" != "$n_own" ] || kit_work=1
+    fi
+    if [ -n "$kit_work" ]; then
+      echo "$here: kit-branch work (cut from $kit_from), read at HEAD like the kit branch"
+      kref=HEAD
+    else
+      at="on $kit"
+      # story #479: one rule for every gate file (the pin, the callers, the switches, the roles): the copy here equals
+      # the kit branch copy. CI and review_merge.sh read some of them from the kit branch, the hooks read them here.
+      while read -r f; do
+        gate_ids "$f"
+        [ "$K" != "$H" ] || continue
+        if [ -z "$H" ]; then echo "not adopted: gate file $f is not on $here, so the git hooks cannot run here ($gate_fix)"
+        elif [ -z "$K" ]; then echo "not adopted: gate file $f is on $here but not on kit branch $kit (read from $kit_from). Remove it here, or add it on $kit and then $gate_fix"
+        else
+          pins=""; [ "$f" != "$SUB" ] || pins=" (the pin here is $H, on $kit $K)"
+          echo "not adopted: gate file $f on $here differs from kit branch $kit$pins (read from $kit_from; $gate_fix)"
+        fi
+        ok=0
+      done < <(gate_files)
     fi
   fi
   sub_sha="$(git -C "$child" rev-parse -q --verify "$kref:knowledge/shipquick_latest" 2>/dev/null || true)"
@@ -161,17 +270,20 @@ if [ -n "$check_mode" ]; then
     echo "not adopted: shipquick-call.yml grants no issues: read, so the story job cannot read the linked stories (run: bash $HERE/adopt.sh $child)"
     ok=0
   fi
-  if [ "$kref" = HEAD ]; then hooks="$(cat "$child/.pre-commit-config.yaml" 2>/dev/null || true)"
-  else hooks="$(git -C "$child" show "$kref:.pre-commit-config.yaml" 2>/dev/null || true)"; fi
+  # story #479: the hooks and the switches are read from this branch, where git runs them, never from the kit branch
+  hooks="$(cat "$child/.pre-commit-config.yaml" 2>/dev/null || true)"
   hooks_skipped=""
-  feat_val pre-commit "$kref" && fv=0 || fv=$?   # not a bare call: set -e would exit on a 1
+  feat_val pre-commit && fv=0 || fv=$?   # not a bare call: set -e would exit on a 1
   if [ "$fv" = 2 ]; then
-    echo "not adopted: .shipquick/features.json$([ "$kref" = HEAD ] || echo " $at"): $FEAT_MSG"
+    echo "not adopted: .shipquick/features.json: $FEAT_MSG"
     ok=0
   elif [ "$fv" = 1 ]; then
     hooks_skipped=1; echo "hooks skipped: pre-commit is off"
   elif ! printf '%s' "$hooks" | grep -q "check_local.sh"; then
-    echo "not adopted: .pre-commit-config.yaml$([ "$kref" = HEAD ] || echo " $at") has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
+    echo "not adopted: .pre-commit-config.yaml has no ShipQuick hooks (run: bash $HERE/adopt.sh $child)"
+    ok=0
+  elif ! printf '%s' "$hooks" | grep -q "id: shipquick-kit"; then
+    echo "not adopted: .pre-commit-config.yaml has no shipquick-kit hook, so a kit folder that is not checked out stops a commit with a bare shell error (run: bash $HERE/adopt.sh $child)"
     ok=0
   fi
   # story #446: the same three things the child's CI will check on a bump PR, found before the push.
@@ -240,7 +352,7 @@ sys.exit(0 if on else 1)' "$ponytail_settings"; then
     hooks_say="pre-commit hooks present"; [ -z "$hooks_skipped" ] || hooks_say="pre-commit hooks skipped (feature off)"
     if [ "$kref" = HEAD ]; then echo "adopted: pinned to $sub_sha, $hooks_say"
     else
-      echo "$here: adopted, shipquick-call.yml pinned to $pinned, kit_branch $kit"
+      echo "$here: adopted, shipquick-call.yml pinned to $pinned, kit_branch $kit, gate files equal to $kit (read from $kit_from)"
       echo "$kit: adopted, submodule at $sub_sha, $hooks_say"
     fi
   fi
@@ -384,8 +496,17 @@ fi
 
 # 5. the pre-commit hooks
 if ! feat_on pre-commit; then echo "skipped: pre-commit is off (no hooks written)"; else
+kit_guard="      - id: shipquick-kit
+        name: The ShipQuick kit folder is checked out
+        entry: bash -c 'test -f $rel/scripts/check_local.sh || { echo \"ShipQuick, the kit folder $rel is not checked out here. Run this, then try again -- git submodule update --init\"; exit 1; }'
+        language: system
+        pass_filenames: false
+        always_run: true
+        fail_fast: true
+        stages: [pre-commit, pre-push, prepare-commit-msg]"
 hooks="  - repo: local
     hooks:
+$kit_guard
       - id: check-local
         name: ShipQuick hygiene checks on this Mac
         entry: bash $rel/scripts/check_local.sh sizes markers md-blocks secrets-staged
@@ -407,7 +528,15 @@ hooks="  - repo: local
         always_run: true
         stages: [prepare-commit-msg]"
 if [ -e "$child/.pre-commit-config.yaml" ] && grep -q "check_local.sh" "$child/.pre-commit-config.yaml"; then
-  echo "unchanged .pre-commit-config.yaml (has the ShipQuick hooks)"
+  if grep -q "id: shipquick-kit" "$child/.pre-commit-config.yaml"; then
+    echo "unchanged .pre-commit-config.yaml (has the ShipQuick hooks)"
+  elif grep -qxF "      - id: check-local" "$child/.pre-commit-config.yaml"; then   # story #479: a config written by an older kit gets the guard, first
+    KIT_GUARD="$kit_guard" python3 -c 'import os,sys; t=open(sys.argv[1],encoding="utf-8").read(); open(sys.argv[1],"w",encoding="utf-8").write(t.replace("      - id: check-local\n", os.environ["KIT_GUARD"]+"\n      - id: check-local\n", 1))' "$child/.pre-commit-config.yaml"
+    echo "updated   .pre-commit-config.yaml (added the shipquick-kit hook)"
+  else
+    echo "kept      .pre-commit-config.yaml (yours). Add this hook first under the ShipQuick hooks, so an empty kit folder says how to fix it:"
+    echo "$kit_guard"
+  fi
 elif [ -e "$child/.pre-commit-config.yaml" ]; then
   echo "kept      .pre-commit-config.yaml (yours). Add this line at the top so pre-commit install sets every stage:"
   echo "default_install_hook_types: [pre-commit, commit-msg, pre-push, prepare-commit-msg]"

@@ -33,6 +33,8 @@ scripts/ui_api_lists.py
 CLAUDE.md
 # story #225: the one kit_branch parser the gate (adopt.sh, adoption scan, review_merge.sh) reads
 scripts/kit_branch.py
+# story #479: the gate files list adopt.sh --check reads; a PR must not shorten its own list
+scripts/gate_files.txt
 # story #133: the allowlist check_design_literals.py reads; a PR must not allowlist its own file
 scripts/design_token_files.txt
 # PR #374 review: the stylelint step both gates run; a PR must not switch it off from inside itself
