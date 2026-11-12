@@ -108,6 +108,8 @@ def decide(base, head, event, map_path):
         return all_on(f"{CI_PATH}: the header or the ui-changes job changed, so nothing is skipped on this run")
     for area, spec in areas.items():
         for job in spec["jobs"]:
+            if job_block(head_ci, job) is None or job_block(base_ci, job) is None:
+                return all_on(f"{CI_PATH}: job {job} is not in one of the two copies, so nothing is judged; every area runs")
             if job_block(base_ci, job) != job_block(head_ci, job):
                 on[area] = True
                 reasons.append(f"{job}: its own steps changed in ci.yml, so area {area} runs")
