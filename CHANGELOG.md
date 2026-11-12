@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Fixed
+- `scripts/check_tdd.py`: a gate-files PR (only the files in `scripts/gate_files.txt`) is exempt from the tdd check, as a kit bump is. The exemption reads both lists, so none is typed twice (#491, feedback #490).
+
 ## [0.14.0] - 2026-11-13
 Tag `v0.14.0`, "gate files on every code branch of a kit-branch child, the no-config guard, and CI that does not wait for a macOS machine it does not need". Notes: `docs/RELEASE_NOTES_v0.14.0.md`.
 

@@ -2210,3 +2210,14 @@ Scenario: the gate
   Then the gate job keeps if: always() and fails on a cancelled job
 ```
 Tests: `tests/test_ios_snapshots.py` (`test_s484_a_pr_that_only_edits_ci_yml_gets_ui_false_and_ios_false`, `test_s484_every_other_row_of_the_two_path_rules_stays`, `test_s484_one_run_per_pr_and_a_new_run_cancels_the_old_one`, `test_s484_the_gate_always_runs_and_fails_on_a_cancelled_job`), `tests/test_ui_proof.py` (`test_s217_the_ui_filter_covers_what_decides_the_compile_and_nothing_unrelated`, changed).
+
+## Story #491 (feedback #490): a gate-files PR is exempt from the tdd check, from the lists
+```gherkin
+Scenario: a PR that only copies the gate files of a kit-branch child
+  Then check_tdd exempts it, because every changed path is in scripts/gate_files.txt
+Scenario: the bump exemption still reads adopt_files.txt
+  Then a kit bump that changes only adopt_files.txt paths stays exempt
+Scenario: a code change is not exempt
+  Then a PR with a changed code file and no ## Red section still fails
+```
+Tests: `tests/test_check_tdd.py` (the `s491` tests: `GATE_PATHS` is read from `scripts/gate_files.txt`, and the exemption set is built from both lists).

@@ -25,10 +25,16 @@ DOC_DIRS = ("docs/", "pm/")
 # Story #454: a kit bump moves the pin and rewrites the files adopt.sh owns. There is nothing to put a test on.
 # The list of those files is one file, scripts/adopt_files.txt (exact paths); a test keeps it in step with adopt.sh.
 BUMP_PIN = "knowledge/shipquick_latest"
-BUMP_FILES = {BUMP_PIN} | {
-    line.strip() for line in (Path(__file__).resolve().parent / "adopt_files.txt").read_text(encoding="utf-8").splitlines()
-    if line.strip() and not line.startswith("#")
-}
+# Story #491 (feedback #490): the gate files of a kit-branch child (scripts/gate_files.txt, ADR-017) are copied by
+# `adopt.sh --gate-files`, a PR with no code of its own, so they are exempt too. Both lists are read here, never typed again.
+
+
+def _list(name):
+    return {line.strip() for line in (Path(__file__).resolve().parent / name).read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.startswith("#")}
+
+
+BUMP_FILES = {BUMP_PIN} | _list("adopt_files.txt") | _list("gate_files.txt")
 SHAPE = "write a `## Red` section that names the test file you saw fail, for example `- tests/test_widget.py::test_widget_rejects_empty`"
 
 
