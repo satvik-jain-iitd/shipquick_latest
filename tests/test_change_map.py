@@ -97,18 +97,31 @@ def test_s485_the_map_is_json_with_two_areas_and_the_free_paths_and_no_yaml_read
     assert "import yaml" not in READER.read_text(encoding="utf-8")
 
 
-def test_s485_every_path_that_turned_a_job_on_before_still_turns_it_on_ci_yml_aside(tmp_path):
-    """Table test (#485 review point 2): today's two regexes, as one table. A drop needs a reason in ADR-018."""
-    repo = make_repo(tmp_path)
-    for path in TODAY_UI:
-        change(repo, path)
-    d = decide(repo)
-    assert d["android"] and d["ios"], d
+# #499 review point 5: one repo per path, with the areas (jobs) that path turns on. Today's rule, row by row.
+TABLE = [
+    ("ui/android/build.gradle.kts", {"android": True, "ios": False}),
+    ("ui/ios/templates/ListTemplate.swift", {"android": False, "ios": True}),
+    ("ui/tool/package.json", {"android": True, "ios": True}),
+    ("tests/fixtures/ios/Bad/BadScreen.swift", {"android": True, "ios": True}),
+    ("scripts/ui_proof.py", {"android": True, "ios": True}),
+    ("scripts/emit_contracts.py", {"android": True, "ios": True}),
+    ("scripts/emit_tokens.py", {"android": True, "ios": True}),
+    ("design/tokens.json", {"android": True, "ios": True}),
+    ("docs/x.md", {"android": False, "ios": False}),
+    ("scripts/other.py", {"android": False, "ios": False}),
+    ("tests/test_ui_proof.py", {"android": False, "ios": False}),
+    (".github/workflows/ci.yml", {"android": False, "ios": False}),
+    ("CHANGELOG.md", {"android": False, "ios": False}),
+]
 
-    for i, path in enumerate(TODAY_IOS):
-        repo2 = make_repo(tmp_path / f"ios{i}")
-        change(repo2, path)
-        assert decide(repo2)["ios"], path
+
+@pytest.mark.parametrize("path,want", TABLE)
+def test_s485_each_path_turns_on_the_areas_it_turned_on_before(tmp_path, path, want):
+    """One repo per path. A row that changes needs a reason in ADR-018 and a new row here."""
+    repo = make_repo(tmp_path)
+    change(repo, path)
+    assert on(decide(repo)) == want, (path, decide(repo))
+
 
 
 def test_s485_no_path_that_was_free_before_turns_a_job_on(tmp_path):
