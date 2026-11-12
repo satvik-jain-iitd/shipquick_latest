@@ -777,3 +777,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Reused: the `pre-commit` framework as it is (a per-hook `fail_fast` for the kit guard) and git itself (`git checkout <branch> -- <path>`, `git ls-files -s`) for the copy and the compare. `plugin/hooks/git_guard.py` (story #320, idea from ECC) is extended for story #480, not rebuilt.
 - Decision: a list file and about 40 lines in `adopt.sh`; no repo fits. ADR-017.
 - Confidence that nothing fits better: 0.7.
+## 13 Nov 2026, story #484: skip the phone jobs on a ci.yml-only PR, cancel a replaced run
+- Need: skip macOS jobs when only the workflow file changed, and cancel a PR run that a newer run replaced.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "GitHub Actions skip macOS jobs when workflow file changes, cancel superseded pull request runs"` printed `no repos found`.
+- Reused: GitHub's own `concurrency` key with `cancel-in-progress` (the platform feature), and the path rule the `ui-changes` job already has. No new code: one block and two shorter patterns.
+- Decision: no repo needed; no ADR (no change of architecture or scope, the gate is untouched).
+- Confidence that nothing fits better: 0.9.

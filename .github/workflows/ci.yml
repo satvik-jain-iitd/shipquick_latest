@@ -10,6 +10,12 @@ on:
         description: "Story #219: record new iOS reference images and upload them as the artifact ios-snapshots (ui/ios/SNAPSHOTS.md)"
         type: boolean
         default: false
+# Story #484: one run per PR. A new run of the same PR (a push, an edited body) cancels the old one, so a replaced run
+# never keeps a macOS job in the queue. A push run and a manual run have no PR number: their group is their own run id,
+# so nothing ever cancels them.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 permissions:
   contents: read
   pull-requests: read   # story #140: the roles job reads commit authors via `gh api .../pulls/.../commits`
@@ -347,9 +353,13 @@ jobs:
           fi
           # Captured first: a failing git diff inside the `if` below would have written ui=false. --no-renames lists the old path of a move.
           names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
-          if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_contracts\.py|scripts/emit_tokens\.py|\.github/workflows/ci\.yml|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
+          # Story #484: this file is not in either rule. A PR that only edits ci.yml waited 40 minutes for a macOS machine it did
+          # not need. Known gap: an edit to the steps of a ui-* job no longer runs that job, on the PR or on the push to dev. The
+          # reviewer asks for one manual run (workflow_dispatch), reads it on its own run page, and a PR-event run must be the last
+          # run before approval: a manual run skips the PR-only jobs and would show a green gate (docs/PR_RULES.md section 14).
+          if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_contracts\.py|scripts/emit_tokens\.py|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
           # Story #219 (#375 review): the macOS snapshot job waits on `ios`, not on `ui`, so an Android-only or fixture-only PR never runs it.
-          if grep -qE '^(ui/ios/|design/|scripts/emit_tokens\.py|\.github/workflows/ci\.yml)' <<< "$names"; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
+          if grep -qE '^(ui/ios/|design/|scripts/emit_tokens\.py)' <<< "$names"; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
   ui-android-compile:
     # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
     # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
@@ -506,7 +516,7 @@ jobs:
   ui-ios-snapshots:
     # Story #219: swift-snapshot-testing and Prefire compare every template with its reference images (light and dark,
     # smallest and largest Dynamic Type, iPhone SE and Pro Max) on one pinned simulator. Runs only when ui/ios/**, design/**,
-    # scripts/emit_tokens.py or this file changes (ui-changes.outputs.ios), never for an Android-only PR. SHIPQUICK_SNAPSHOTS adds the test
+    # or scripts/emit_tokens.py changes (ui-changes.outputs.ios), never for an Android-only PR or a ci.yml-only PR (story #484). SHIPQUICK_SNAPSHOTS adds the test
     # target and its two packages to Package.swift; a child never resolves them. A workflow_dispatch run with record=true
     # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
     needs: [ui-changes]

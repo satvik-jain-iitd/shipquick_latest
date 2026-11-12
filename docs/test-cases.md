@@ -2198,3 +2198,15 @@ Scenario: the real pre-commit
 Tests: `tests/test_adopt.py` (`test_s479_the_list_is_one_file_named_in_the_adoption_doc_and_protected`, `test_s479_check_on_a_code_branch_names_each_missing_gate_file_and_the_fix`, `test_s479_gate_files_puts_group_a_on_a_code_branch_and_writes_no_documents`, `test_s479_gate_files_is_refused_where_there_is_no_other_kit_branch`, `test_s479_a_pin_on_the_code_branch_that_differs_from_the_kit_branch_fails_with_the_fix`, `test_s479_a_switch_that_differs_from_the_kit_branch_fails`, `test_s479_the_hook_checks_pass_on_a_branch_with_no_claude_md`, `test_s479_adopt_adds_the_kit_guard_hook_to_a_config_from_an_older_kit_and_check_wants_it`, `test_s479_the_real_pre_commit_runs_the_hooks_on_a_code_branch_once_the_gate_files_are_there`, `test_s479_the_real_pre_commit_says_how_to_fix_a_kit_that_is_not_checked_out`). The stand-in `pre-commit` of the other tests now writes hooks that fail when the config is absent, as the real ones do.
 Review fix (#483): `test_s479_a_bump_branch_cut_from_the_kit_branch_is_read_like_the_kit_branch`, `test_s479_check_compares_the_files_on_disk_that_the_hooks_read_not_the_index`, `test_s479_a_gate_file_only_on_the_code_branch_is_a_drift_too`, `test_s479_a_missing_list_stops_both_modes_and_names_the_file`, `test_s479_the_kit_branch_is_read_from_origin_before_a_stale_local_branch_and_the_ref_is_printed`, `test_s479_gate_files_refuses_to_overwrite_an_uncommitted_edit_and_says_replaced_for_a_committed_one`, `test_s479_only_the_kit_entry_of_gitmodules_is_compared_and_copied`, `test_s479_check_and_gate_files_together_is_a_usage_error`. The two real `pre-commit` tests fail, not skip, when `CI` is set and the tool is absent.
 Second review (#483): `test_s479_with_no_origin_dev_a_branch_cut_from_main_is_a_code_branch_and_is_compared`, `test_s479_a_branch_cut_from_dev_that_merged_the_kit_branch_is_a_code_branch_whatever_the_counts`, `test_s479_a_pushed_bump_branch_is_still_kit_branch_work`, `test_s479_gate_files_writes_the_kit_entry_of_gitmodules_whole`, `test_s479_gate_files_refuses_to_overwrite_a_gitignored_file_on_disk`.
+## Story #484: a ci.yml edit does not force the phone jobs, and a new run cancels the old one
+```gherkin
+Scenario: a PR that only edits ci.yml
+  Then the ui-changes job writes ui=false and ios=false, so no macOS job runs
+Scenario: the other rows stay
+  Then ui/ios/, design/ and scripts/emit_tokens.py still give ios=true
+Scenario: one run per PR
+  Then ci.yml has one concurrency group, the PR number or the run id, with cancel-in-progress: true
+Scenario: the gate
+  Then the gate job keeps if: always() and fails on a cancelled job
+```
+Tests: `tests/test_ios_snapshots.py` (`test_s484_a_pr_that_only_edits_ci_yml_gets_ui_false_and_ios_false`, `test_s484_every_other_row_of_the_two_path_rules_stays`, `test_s484_one_run_per_pr_and_a_new_run_cancels_the_old_one`, `test_s484_the_gate_always_runs_and_fails_on_a_cancelled_job`), `tests/test_ui_proof.py` (`test_s217_the_ui_filter_covers_what_decides_the_compile_and_nothing_unrelated`, changed).
