@@ -84,7 +84,7 @@ def decide(base, head, event, map_path):
         return all_on(f"the map {map_path} is missing, empty or broken ({e.__class__.__name__})")
     try:
         mb = git("merge-base", base, head).strip()
-        names = git("diff", "--name-only", "--no-renames", mb, head).split()
+        names = [n for n in git("diff", "-z", "--name-only", "--no-renames", mb, head).split("\0") if n]
     except subprocess.CalledProcessError:
         return all_on(f"the diff of {base} and {head} cannot be read")
     if any(n in GUARDED for n in names):
