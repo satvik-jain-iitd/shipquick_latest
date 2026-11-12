@@ -375,3 +375,69 @@ def test_s502_a_test_path_that_ends_a_sentence_still_passes(tmp_path, sentence):
     repo = make_repo(tmp_path, files)
     r = run(tmp_path, repo, "Summary.\n\n## Red\n\n" + sentence + "\n\n## Local proof\nran it\n")
     assert r.returncode == 0 and "tdd OK" in r.stdout, r.stdout + r.stderr
+
+
+# ---- #505 round three (QA): match the changed test paths in the section, not the section's words ----
+
+import importlib.util  # noqa: E402
+import time  # noqa: E402
+
+_spec = importlib.util.spec_from_file_location("check_tdd_mod", SCRIPT)
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+
+
+def _body(*lines):
+    return "Summary.\n\n## Red\n\n" + "\n".join(lines) + "\n\n## Local proof\nran it\n"
+
+
+def test_s502r3_gap_a_an_older_subject_naming_a_deleted_test_does_not_fail_the_push():
+    changed = list(CODE)
+    ok, msg = _mod.check(_body("- web/x.test.ts (older commit: delete the old one)",
+                               "- tests/test_widget.py::test_widget_rejects_empty"), changed)
+    assert ok, msg
+
+
+def test_s502r3_gap_a_pasted_go_output_naming_a_test_does_not_fail_the_push():
+    changed = list(CODE)
+    ok, msg = _mod.check(_body("- tests/test_widget.py::test_widget_rejects_empty",
+                               "log: parser_test.go:42 failed in an older run"), changed)
+    assert ok, msg
+
+
+@pytest.mark.parametrize("path", [
+    "app/src/[id]/page.test.tsx",
+    "app/src/(auth)/login.test.tsx",
+    "app/src/+page.test.ts",
+    "app/src/$id.test.tsx",
+    "app/@scope/x.test.ts",
+    "app/my folder/x.test.ts",
+])
+def test_s502r3_gap_b_a_changed_test_path_with_brackets_or_symbols_passes(path):
+    ok, msg = _mod.check(_body(f"- {path}"), ["app/src/x.ts", path])
+    assert ok, msg
+
+
+def test_s502r3_gap_c_a_very_long_word_is_checked_in_under_a_second():
+    body = _body("- tests/test_widget.py::test_widget_rejects_empty", "w" * 5000 + ".py")
+    start = time.perf_counter()
+    ok, msg = _mod.check(body, list(CODE))
+    elapsed = time.perf_counter() - start
+    assert ok and elapsed < 1.0, (ok, msg, elapsed)
+
+
+def test_s502r3_a_named_test_not_in_the_diff_with_no_other_test_still_fails():
+    ok, msg = _mod.check(_body("- tests/test_other.py::test_other"), list(CODE))
+    assert not ok and "not in the PR diff" in msg, msg
+
+
+def test_s502r3_a_fixture_still_fails():
+    changed = ["app/src/x.ts", "tests/fixtures/data.json"]
+    ok, msg = _mod.check(_body("- tests/fixtures/data.json"), changed)
+    assert not ok and "not a known test file name" in msg, msg
+
+
+def test_s502r3_a_dot_slash_fixture_gets_the_not_a_test_message():
+    changed = ["app/src/x.ts", "tests/fixtures/data.json"]
+    ok, msg = _mod.check(_body("- ./tests/fixtures/data.json"), changed)
+    assert not ok and "not a known test file name" in msg, msg
