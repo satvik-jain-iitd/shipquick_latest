@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.13.3] - 2026-11-12
+Tag `v0.13.3`, "the pre-push hook knows the kit branch, adopt.sh keeps a customised mode.md, and md-blocks ignores ignored files". Notes: `docs/RELEASE_NOTES_v0.13.3.md`.
+
 ### Fixed
 - `check_local.sh` (the pre-push hook): with `BASE` not set, a branch that descends from the caller's `kit_branch` is compared with `origin/<kit_branch>`, not `dev`, so a rule-24 child's bump pushes without a hand-set `BASE` or `SKIP`. An explicit `BASE` still wins; a caller whose `kit_branch` cannot be parsed fails the run (#469, feedback #462).
 - `check_md_blocks.py` reads only the markdown files git knows (tracked, or new and not ignored), so a gitignored file with a broken block no longer fails the local hook while CI passes; outside a git repo it reads every `.md` as before (#79).
