@@ -341,10 +341,20 @@ jobs:
           path: .shipquick
           sparse-checkout: scripts
           persist-credentials: false
-      - name: Check Dev link / Production link are filled past D0 (story #120)
+      - name: Check Dev link / Production link are filled past D0 (story #120, #463)
         env:
           MILESTONE: ${{ inputs.milestone }}
-        run: bash .shipquick/scripts/check_environments.sh --claude-md project/CLAUDE.md --milestone "$MILESTONE"
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          child_file=project/CLAUDE.md
+          # a rule-24 child keeps CLAUDE.md on its kit branch (its main has none); a PR into another branch reads it from there, as rule-copies does.
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo (the caller's kit_branch)."; exit 1; }
+            git -C project show "origin/$KIT_BRANCH:CLAUDE.md" > "$RUNNER_TEMP/CLAUDE.md" 2>/dev/null || { echo "no CLAUDE.md on kit branch $KIT_BRANCH. Run adopt.sh there to write it."; exit 1; }
+            child_file="$RUNNER_TEMP/CLAUDE.md"
+          fi
+          bash .shipquick/scripts/check_environments.sh --claude-md "$child_file" --milestone "$MILESTONE"
   component-registry:
     # Story #186: every custom component in the child's ui/registry.json has the owner's recorded yes, read live from the issue.
     runs-on: ubuntu-latest
