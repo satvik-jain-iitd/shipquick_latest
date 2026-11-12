@@ -19,11 +19,15 @@ cd "$(git rev-parse --show-toplevel)" || exit 2
 if [ -z "${BASE:-}" ]; then
   BASE=dev
   # story #469: a rule-24 child cuts its bump branch from the kit branch; compare with that branch, not dev. An explicit BASE wins.
-  # ponytail: a branch that descends from both dev and the kit branch uses the kit branch; add a nearest-base rule if that ever misleads.
+  # ponytail: counts commits ahead of each base; a branch whose merge history makes both counts equal keeps dev.
   if [ -f .github/workflows/shipquick-call.yml ]; then
     kit=$(python3 "$HERE/kit_branch.py" parse < .github/workflows/shipquick-call.yml) || { echo "FAIL kit-branch: $kit"; exit 2; }
+    # the nearer base wins: the kit branch only when HEAD is fewer commits ahead of it than of origin/dev (a missing origin/dev is far)
     if [ -n "$kit" ] && git merge-base --is-ancestor "origin/$kit" HEAD 2>/dev/null; then
-      BASE="$kit"; echo "base: origin/$kit (the kit branch this branch was cut from; set BASE to override)"
+      ahead_kit=$(git rev-list --count "origin/$kit..HEAD"); ahead_dev=$(git rev-list --count "origin/dev..HEAD" 2>/dev/null || echo 999999999)
+      if [ "$ahead_kit" -lt "$ahead_dev" ]; then
+        BASE="$kit"; echo "base: origin/$kit (the kit branch this branch was cut from; set BASE to override)"
+      fi
     fi
   fi
 fi
