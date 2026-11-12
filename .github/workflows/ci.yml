@@ -343,9 +343,15 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
         run: |
-          base="origin/${BASE:-dev}"
-          git fetch -q origin "${BASE:-dev}" 2>/dev/null || true
+          # a pull request is judged against its base branch; a push against the commit before it (github.event.before)
+          if [ "$EVENT" = "push" ]; then
+            base="$BEFORE"
+          else
+            base="origin/${BASE:-dev}"
+            git fetch -q origin "${BASE:-dev}" 2>/dev/null || true
+          fi
           mkdir -p "$RUNNER_TEMP/change-map"
           for f in change_map.py change_map.json; do
             git show "$base:scripts/$f" > "$RUNNER_TEMP/change-map/$f" 2>/dev/null || rm -f "$RUNNER_TEMP/change-map/$f"
