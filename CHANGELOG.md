@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Fixed
+- `docs/SCREENS.md`: the "Wiring CI" example runs `screens.sh --check` before the upload step, as `check_screens_wired.py` requires, and says how to split a shared e2e run. The check's message names that section. A test runs the example through the check (#503, feedback #500).
+
 ## [0.14.1] - 2026-11-13
 Tag `v0.14.1`, "a gate-files PR passes the tdd check, and a missing list file stops the check in one line". Notes: `docs/RELEASE_NOTES_v0.14.1.md`.
 
