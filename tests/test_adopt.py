@@ -356,7 +356,11 @@ def with_origin(child):
     return child
 
 
-def rule24_child(child, kit_sha=HEAD, hooks=True, kit_line="dev", gate=True):
+KIT_MODULE = '[submodule "knowledge/shipquick_latest"]\n\tpath = knowledge/shipquick_latest\n\turl = https://github.com/owner/kit.git\n'
+OTHER_MODULE = '[submodule "vendor/other"]\n\tpath = vendor/other\n\turl = https://github.com/owner/other.git\n'
+
+
+def rule24_child(child, kit_sha=HEAD, hooks=True, kit_line="dev", gate=True, gitmodules=False):
     """dev is the kit branch and carries everything; main is a code branch. With gate (story #479) main carries the
     gate files too, as a commit. Without it main has only the caller, staged: a commit there is what the hooks refuse."""
     with_origin(child)
@@ -364,6 +368,8 @@ def rule24_child(child, kit_sha=HEAD, hooks=True, kit_line="dev", gate=True):
     add_kit_line(child, kit_line)
     if not hooks:
         (child / ".pre-commit-config.yaml").write_text("repos: []\n", encoding="utf-8")
+    if gitmodules:
+        (child / ".gitmodules").write_text(KIT_MODULE, encoding="utf-8")
     subprocess.run(["git", "add", "-A"], cwd=child, check=True)
     add_fake_submodule(child, kit_sha)
     caller = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
@@ -811,7 +817,8 @@ GATE_FILES = [l for l in (ROOT / "scripts" / "gate_files.txt").read_text(encodin
     if (ROOT / "scripts" / "gate_files.txt").exists() else []
 ON_THE_KIT_BRANCH = [".pre-commit-config.yaml", "knowledge/shipquick_latest", ".github/workflows/roadmap-call.yml", ".shipquick/features.json", "roadmap.json"]
 REAL_PRECOMMIT = shutil.which("pre-commit")
-needs_real_precommit = pytest.mark.skipif(not REAL_PRECOMMIT, reason="pre-commit is not installed on this machine (pip install pre-commit); CI installs it")
+# skipped on a Mac without the tool; in CI the tool must be there, so the test runs and fails instead (review of PR #483)
+needs_real_precommit = pytest.mark.skipif(not REAL_PRECOMMIT and not os.environ.get("CI"), reason="pre-commit is not installed on this machine (pip install pre-commit); CI installs it")
 
 
 def index_id(child, path):
@@ -911,6 +918,7 @@ def commit(child, msg):
 
 @needs_real_precommit
 def test_s479_the_real_pre_commit_runs_the_hooks_on_a_code_branch_once_the_gate_files_are_there(child):
+    assert REAL_PRECOMMIT, "CI must install pre-commit (ci.yml, Install dependencies)"
     assert adopt(child, precommit=None).returncode == 0
     add_kit_line(child, "dev")
     subprocess.run(["git", "add", "-A"], cwd=child, check=True)
@@ -932,6 +940,7 @@ def test_s479_the_real_pre_commit_runs_the_hooks_on_a_code_branch_once_the_gate_
 
 @needs_real_precommit
 def test_s479_the_real_pre_commit_says_how_to_fix_a_kit_that_is_not_checked_out(child):
+    assert REAL_PRECOMMIT, "CI must install pre-commit (ci.yml, Install dependencies)"
     assert adopt(child, precommit=None).returncode == 0
     cfg = child / ".pre-commit-config.yaml"
     rel = os.path.relpath(ROOT, child.resolve())
@@ -943,3 +952,108 @@ def test_s479_the_real_pre_commit_says_how_to_fix_a_kit_that_is_not_checked_out(
     assert r.returncode != 0, out
     assert "ShipQuick" in out and "git submodule update --init" in out
     assert "No such file" not in out
+
+
+# ---- review of PR #483 ----
+def git(child, *args):
+    subprocess.run(["git", *args], cwd=child, check=True, capture_output=True)
+
+
+def test_s479_a_bump_branch_cut_from_the_kit_branch_is_read_like_the_kit_branch(child, gh):
+    rule24_child(child)
+    other = "1234567890abcdef1234567890abcdef12345678"
+    git(child, "switch", "-q", "dev"); git(child, "switch", "-q", "-c", "chore/bump")
+    call = child / ".github" / "workflows" / "shipquick-call.yml"
+    call.write_text(call.read_text(encoding="utf-8").replace(HEAD, other), encoding="utf-8")
+    git(child, "add", "-A"); git(child, "update-index", "--cacheinfo", f"160000,{other},knowledge/shipquick_latest")
+    git(child, "commit", "-q", "-m", "chore: bump the kit")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert f"adopted: pinned to {other}" in r.stdout and "differs" not in r.stdout and "--gate-files" not in r.stdout
+    assert "chore/bump: kit-branch work" in r.stdout
+
+
+def test_s479_check_compares_the_files_on_disk_that_the_hooks_read_not_the_index(child, gh):
+    rule24_child(child)
+    f = child / ".shipquick" / "features.json"
+    data = json.loads(f.read_text(encoding="utf-8"))
+    data.setdefault("features", {})["pre-commit"] = {"on": False}
+    f.write_text(json.dumps(data), encoding="utf-8")   # not staged
+    (child / ".pre-commit-config.yaml").unlink()         # not staged
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1, r.stdout
+    assert "not adopted: gate file .shipquick/features.json on main differs from kit branch dev" in r.stdout
+    assert "not adopted: gate file .pre-commit-config.yaml is not on main" in r.stdout
+
+
+def test_s479_a_gate_file_only_on_the_code_branch_is_a_drift_too(child, gh):
+    rule24_child(child)
+    (child / ".shipquick" / "roles.yml").write_text("coder:\n  - someone\n", encoding="utf-8")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1 and "not adopted: gate file .shipquick/roles.yml is on main but not on kit branch dev" in r.stdout, r.stdout
+
+
+def test_s479_a_missing_list_stops_both_modes_and_names_the_file(child, tmp_path, gh):
+    rule24_child(child)
+    kit = tmp_path / "kit"
+    shutil.copytree(ROOT / "scripts", kit / "scripts")
+    (kit / "scripts" / "gate_files.txt").unlink()
+    for flag in ("--check", "--gate-files"):
+        r = subprocess.run(["bash", str(kit / "scripts" / "adopt.sh"), str(child), flag], capture_output=True, text=True, env=gh)
+        assert r.returncode == 2 and "gate_files.txt" in r.stderr, (flag, r.stdout, r.stderr)
+    (kit / "scripts" / "gate_files.txt").write_text("# nothing\n", encoding="utf-8")
+    r = subprocess.run(["bash", str(kit / "scripts" / "adopt.sh"), str(child), "--gate-files"], capture_output=True, text=True, env=gh)
+    assert r.returncode == 2 and "gate_files.txt" in r.stderr
+
+
+def test_s479_the_kit_branch_is_read_from_origin_before_a_stale_local_branch_and_the_ref_is_printed(child, gh):
+    rule24_child(child)
+    git(child, "switch", "-q", "dev")
+    (child / "roadmap.json").write_text('{"title": "New", "vision": "A newer line."}\n', encoding="utf-8")
+    git(child, "commit", "-q", "-am", "docs: a newer vision")
+    git(child, "update-ref", "refs/remotes/origin/dev", "HEAD")
+    git(child, "reset", "-q", "--hard", "HEAD~1")   # the local kit branch is now one commit behind origin's
+    git(child, "switch", "-q", "main")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1 and "gate file roadmap.json on main differs from kit branch dev" in r.stdout, r.stdout
+    assert "origin/dev" in r.stdout
+    g = adopt(child, "--gate-files")
+    assert g.returncode == 0 and "replaced  roadmap.json (from origin/dev)" in g.stdout, (g.stdout, g.stderr)
+    assert "A newer line." in (child / "roadmap.json").read_text(encoding="utf-8")
+
+
+def test_s479_gate_files_refuses_to_overwrite_an_uncommitted_edit_and_says_replaced_for_a_committed_one(child):
+    rule24_child(child)
+    mine = '{"title": "Mine", "vision": "My edit."}\n'
+    (child / "roadmap.json").write_text(mine, encoding="utf-8")
+    before = snapshot(child)
+    r = adopt(child, "--gate-files")
+    assert r.returncode == 2 and "roadmap.json" in r.stderr and "uncommitted" in r.stderr, (r.stdout, r.stderr)
+    assert snapshot(child) == before and "copied" not in r.stdout and "replaced" not in r.stdout
+    git(child, "commit", "-q", "-am", "docs: my vision")
+    r = adopt(child, "--gate-files")
+    assert r.returncode == 0, r.stderr
+    assert "replaced  roadmap.json" in r.stdout and "unchanged .pre-commit-config.yaml" in r.stdout
+    assert (child / "roadmap.json").read_text(encoding="utf-8") != mine
+
+
+def test_s479_only_the_kit_entry_of_gitmodules_is_compared_and_copied(child, gh):
+    rule24_child(child, gitmodules=True)
+    gm = child / ".gitmodules"
+    gm.write_text(gm.read_text(encoding="utf-8") + OTHER_MODULE, encoding="utf-8")   # the code branch has its own second submodule
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    gm.write_text(OTHER_MODULE, encoding="utf-8")   # the kit entry is gone
+    git(child, "commit", "-q", "-am", "chore: drop the kit entry")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1 and "gate file .gitmodules is not on main" in r.stdout, r.stdout
+    g = adopt(child, "--gate-files")
+    assert g.returncode == 0, (g.stdout, g.stderr)
+    text = gm.read_text(encoding="utf-8")
+    assert "vendor/other" in text and "path = knowledge/shipquick_latest" in text and "https://github.com/owner/kit.git" in text
+    assert adopt(child, "--check", env=gh).returncode == 0
+
+
+def test_s479_check_and_gate_files_together_is_a_usage_error(child):
+    r = adopt(child, "--check", "--gate-files")
+    assert r.returncode == 2 and "usage" in r.stderr
