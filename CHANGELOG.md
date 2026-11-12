@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Fixed
+- The `environments` job in `checks.yml` reads `CLAUDE.md` from the caller's `kit_branch` when one is set and differs from the PR's base branch (as `rule-copies` does), so a PR into a rule-24 child's `main`, which has no `CLAUDE.md`, or into a branch with an unfilled copy, is not failed for it (#463).
+
 ## [0.13.1] - 2026-11-12
 Tag `v0.13.1`, "a kit bump passes the child's pre-push hook, `--check` reads the caller's milestone, and the Desk follow-ups". Notes: `docs/RELEASE_NOTES_v0.13.1.md`.
 
