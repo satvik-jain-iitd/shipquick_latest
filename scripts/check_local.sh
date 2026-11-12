@@ -9,14 +9,28 @@
 #   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
 #   shortcuts (story #327): warn only, prints the count of shortcut:/ponytail: comments; runs after the checks when no argument is given
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
-#   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
+#   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing. Not set: dev, or the caller's kit_branch when the branch descends from it (story #469)
 #   secrets    the commits since origin/$BASE (push; the whole history when there is no origin/$BASE); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
 #   markers    checks tracked files; an untracked file with a marker passes here, CI scans the whole checkout
 # Wired into .pre-commit-config.yaml: the fast checks on commit, all of them on push.
 set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$(git rev-parse --show-toplevel)" || exit 2
-BASE="${BASE:-dev}"
+if [ -z "${BASE:-}" ]; then
+  BASE=dev
+  # story #469: a rule-24 child cuts its bump branch from the kit branch; compare with that branch, not dev. An explicit BASE wins.
+  # ponytail: counts commits ahead of each base; a branch whose merge history makes both counts equal keeps dev.
+  if [ -f .github/workflows/shipquick-call.yml ]; then
+    kit=$(python3 "$HERE/kit_branch.py" parse < .github/workflows/shipquick-call.yml) || { echo "FAIL kit-branch: $kit"; exit 2; }
+    # the nearer base wins: the kit branch only when HEAD is fewer commits ahead of it than of origin/dev (a missing origin/dev is far)
+    if [ -n "$kit" ] && git merge-base --is-ancestor "origin/$kit" HEAD 2>/dev/null; then
+      ahead_kit=$(git rev-list --count "origin/$kit..HEAD"); ahead_dev=$(git rev-list --count "origin/dev..HEAD" 2>/dev/null || echo 999999999)
+      if [ "$ahead_kit" -lt "$ahead_dev" ]; then
+        BASE="$kit"; echo "base: origin/$kit (the kit branch this branch was cut from; set BASE to override)"
+      fi
+    fi
+  fi
+fi
 MARKERS='^(<<<<<<< |=======$|>>>>>>> )'
 CONVENTIONAL='^(feat|fix|docs|design|test|chore|refactor|style|perf|ci|build|release)(\(.+\))?: .+'
 failed=0
