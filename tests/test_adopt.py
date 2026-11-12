@@ -1057,3 +1057,76 @@ def test_s479_only_the_kit_entry_of_gitmodules_is_compared_and_copied(child, gh)
 def test_s479_check_and_gate_files_together_is_a_usage_error(child):
     r = adopt(child, "--check", "--gate-files")
     assert r.returncode == 2 and "usage" in r.stderr
+
+
+# ---- second review of PR #483: kit-branch work is decided by who else has the commits, never by counts ----
+def documents_child(child):
+    """The kit branch is `documents`, four commits, with origin/documents at its tip. Returns the first commit (the fork point)."""
+    with_origin(child)
+    adopt(child)
+    add_kit_line(child, "documents")
+    git(child, "add", "-A"); git(child, "commit", "-q", "-m", "chore: adopt the kit")
+    fork = subprocess.run(["git", "rev-parse", "HEAD"], cwd=child, capture_output=True, text=True).stdout.strip()
+    add_fake_submodule(child, HEAD)
+    git(child, "commit", "-q", "--allow-empty", "-m", "docs: one"); git(child, "commit", "-q", "--allow-empty", "-m", "docs: two")
+    git(child, "branch", "-m", "documents"); git(child, "update-ref", "refs/remotes/origin/documents", "HEAD")
+    return fork
+
+
+def change_roadmap(child, msg):
+    (child / "roadmap.json").write_text('{"title": "Other", "vision": "Not the kit branch line."}\n', encoding="utf-8")
+    git(child, "add", "roadmap.json"); git(child, "commit", "-q", "-m", msg)   # not -a: that would drop the pin of the empty kit folder
+
+
+def test_s479_with_no_origin_dev_a_branch_cut_from_main_is_a_code_branch_and_is_compared(child, gh):
+    documents_child(child)
+    git(child, "switch", "-q", "-c", "main"); git(child, "commit", "-q", "--allow-empty", "-m", "feat: code"); git(child, "update-ref", "refs/remotes/origin/main", "HEAD")
+    git(child, "switch", "-q", "-c", "feat/change")
+    change_roadmap(child, "feat: a change")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1 and "not adopted: gate file roadmap.json on feat/change differs from kit branch documents" in r.stdout, r.stdout
+    assert "kit-branch work" not in r.stdout
+
+
+def test_s479_a_branch_cut_from_dev_that_merged_the_kit_branch_is_a_code_branch_whatever_the_counts(child, gh):
+    fork = documents_child(child)
+    git(child, "switch", "-q", "-c", "dev", fork); git(child, "commit", "-q", "--allow-empty", "-m", "feat: code"); git(child, "update-ref", "refs/remotes/origin/dev", "HEAD")
+    git(child, "switch", "-q", "-c", "feat/change"); git(child, "merge", "-q", "--no-edit", "documents")
+    change_roadmap(child, "feat: a change")   # 3 commits ahead of the kit branch, 5 ahead of origin/dev: the old count rule said kit work
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1 and "not adopted: gate file roadmap.json on feat/change differs from kit branch documents" in r.stdout, r.stdout
+    assert "kit-branch work" not in r.stdout
+
+
+def test_s479_a_pushed_bump_branch_is_still_kit_branch_work(child, gh):
+    documents_child(child)
+    git(child, "switch", "-q", "-c", "main"); git(child, "commit", "-q", "--allow-empty", "-m", "feat: code"); git(child, "update-ref", "refs/remotes/origin/main", "HEAD")
+    git(child, "switch", "-q", "-c", "chore/bump", "documents")
+    change_roadmap(child, "chore: bump")
+    git(child, "update-ref", "refs/remotes/origin/chore/bump", "HEAD")   # its own remote branch does not count as "another branch"
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 0 and "chore/bump: kit-branch work" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_s479_gate_files_writes_the_kit_entry_of_gitmodules_whole(child, gh):
+    rule24_child(child, gitmodules=True)
+    gm = child / ".gitmodules"
+    gm.write_text(KIT_MODULE + "\tbranch = main\n" + OTHER_MODULE, encoding="utf-8")   # a key the kit branch entry does not have
+    git(child, "commit", "-q", "-am", "chore: an extra key")
+    assert adopt(child, "--check", env=gh).returncode == 1
+    g = adopt(child, "--gate-files")
+    assert g.returncode == 0, (g.stdout, g.stderr)
+    assert "branch = main" not in gm.read_text(encoding="utf-8") and "vendor/other" in gm.read_text(encoding="utf-8")
+    c = adopt(child, "--check", env=gh)
+    assert c.returncode == 0, c.stdout
+
+
+def test_s479_gate_files_refuses_to_overwrite_a_gitignored_file_on_disk(child):
+    rule24_child(child, gate=False)
+    (child / ".gitignore").write_text("roadmap.json\n", encoding="utf-8")
+    mine = '{"title": "Mine", "vision": "Ignored, on disk only."}\n'
+    (child / "roadmap.json").write_text(mine, encoding="utf-8")
+    r = adopt(child, "--gate-files")
+    assert r.returncode == 2 and "roadmap.json" in r.stderr and "uncommitted" in r.stderr, (r.stdout, r.stderr)
+    assert (child / "roadmap.json").read_text(encoding="utf-8") == mine and not (child / ".pre-commit-config.yaml").exists()
+
