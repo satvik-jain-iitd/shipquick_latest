@@ -157,8 +157,10 @@ if [ -n "$gate_mode" ]; then
   while read -r f; do
     gate_ids "$f"
     { [ -n "$K" ] && [ -n "$H" ] && [ "$K" != "$H" ]; } || continue
+    # an edit = the copy on disk is not HEAD's copy (git status would miss a gitignored file); for the pin, a staged change
     if [ "$f" = "$SUB" ]; then git -C "$child" diff --cached --quiet -- "$f" || dirty="$dirty $f"
-    elif [ -n "$(git -C "$child" status --porcelain -- "$f")" ]; then dirty="$dirty $f"; fi
+    elif [ "$f" = .gitmodules ]; then [ "$H" = "$(git -C "$child" config --blob "HEAD:$f" --get-regexp "^submodule\.$SUB\." 2>/dev/null | sort || true)" ] || dirty="$dirty $f"
+    elif [ "$H" != "$(git -C "$child" rev-parse -q --verify "HEAD:$f" 2>/dev/null || true)" ]; then dirty="$dirty $f"; fi
   done < <(gate_files)
   [ -z "$dirty" ] || { echo "adopt.sh: uncommitted changes in:$dirty. The copy from $kit would overwrite them. Commit them or put them back (git restore --staged --worktree <path>), then run again. Nothing was written." >&2; exit 2; }
   while read -r f; do
@@ -173,7 +175,8 @@ if [ -n "$gate_mode" ]; then
       "$SUB") git -C "$child" update-index --add --cacheinfo "160000,$K,$f" ;;   # checkout does not stage a submodule pin
       .gitmodules)
         if [ ! -f "$child/$f" ]; then git -C "$child" checkout -q "$kref" -- "$f"
-        else   # keep the branch's own entries; write only the kit entry
+        else   # keep the branch's own entries; write the kit entry whole (a key only here would differ for ever)
+          git config -f "$child/$f" --remove-section "submodule.$SUB" 2>/dev/null || true
           while read -r key val; do git config -f "$child/$f" "$key" "$val"; done <<< "$K"
           git -C "$child" add -- "$f"; note="; only the $SUB entry, your other entries stay"
         fi ;;
@@ -214,13 +217,17 @@ if [ -n "$check_mode" ]; then
       echo "not adopted: kit branch $kit not found (run: git fetch origin $kit)"
       exit 1
     fi
-    # A branch cut from the kit branch and nearer to it than to dev (the rule of story #469) is kit-branch work, a bump
-    # for example: it changes the pin on purpose, so it is read at HEAD like the kit branch and not compared with it.
+    # Kit-branch work (a bump, for example) changes the pin on purpose, so it is read at HEAD like the kit branch and not
+    # compared with it. It fails closed: a branch is kit-branch work only when the kit tip is an ancestor of HEAD and no
+    # commit in <kit>..HEAD is on another remote branch (every origin branch but the kit branch and this branch's own).
+    # Anything else is a code branch and is compared. Never by commit counts (second review of PR #483).
+    # shortcut: a clone that fetched only one branch cannot see the other remote branches (docs/follow-ups.md).
     kit_work=""
     if git -C "$child" merge-base --is-ancestor "$kref" HEAD 2>/dev/null; then
-      ahead_kit="$(git -C "$child" rev-list --count "$kref..HEAD")"
-      ahead_dev="$(git -C "$child" rev-list --count "origin/dev..HEAD" 2>/dev/null || echo 999999999)"
-      if [ "$kit" = dev ] || [ "$ahead_kit" -lt "$ahead_dev" ]; then kit_work=1; fi
+      others="$(git -C "$child" for-each-ref --format='%(refname)' refs/remotes/origin/ | grep -vxF -e "refs/remotes/origin/$kit" -e "refs/remotes/origin/$here" -e "refs/remotes/origin/HEAD" || true)"
+      n_all="$(git -C "$child" rev-list --count "$kref..HEAD")"
+      n_own="$(git -C "$child" rev-list --count HEAD --not "$kref" $others)"
+      [ "$n_all" != "$n_own" ] || kit_work=1
     fi
     if [ -n "$kit_work" ]; then
       echo "$here: kit-branch work (cut from $kit_from), read at HEAD like the kit branch"
