@@ -5,7 +5,8 @@
       Prints one JSON line {"android", "ios", "all", "reasons"}. With --outputs it appends android=, ios= and decision=.
       Fails closed: every doubt turns every area on. Doubts: not a pull request; the diff cannot be read; the map is
       missing, empty or broken; the map or this file changed in the PR; a changed path no row names (the reason names
-      the path and says which row to add). A change to one phone job's own steps in ci.yml turns that job's area on.
+      the path and says which row to add). A change to one phone job's own steps in ci.yml turns that job's area on;
+      a change to the ui-changes job or the header of ci.yml turns every area on.
   change_map.py gate --decision <file> --needs <file> [--map <file>]
       Exit 0 when every job of an on area has result success, and every job of an off area has skipped or success.
       Exit 1 and one line per wrong job otherwise. A job with no result is wrong. --needs is toJSON(needs) of the gate.
@@ -59,6 +60,11 @@ def job_block(text, name):
     return "\n".join(out) if inside else None
 
 
+def decision_parts(text):
+    """The header of ci.yml (before `jobs:`) and the ui-changes job, the two parts that decide which jobs run."""
+    return text.split("\njobs:", 1)[0], job_block(text, "ui-changes")
+
+
 def load_map(path):
     m = json.loads(Path(path).read_text(encoding="utf-8"))
     areas, free = m["areas"], m["free"]
@@ -98,6 +104,8 @@ def decide(base, head, event, map_path):
         head_ci = git("show", f"{head}:{CI_PATH}")
     except subprocess.CalledProcessError:
         return all_on(f"{CI_PATH} cannot be read at {mb} or {head}")
+    if decision_parts(base_ci) != decision_parts(head_ci):
+        return all_on(f"{CI_PATH}: the header or the ui-changes job changed, so nothing is skipped on this run")
     for area, spec in areas.items():
         for job in spec["jobs"]:
             if job_block(base_ci, job) != job_block(head_ci, job):
