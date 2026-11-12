@@ -117,7 +117,7 @@ def decide(base, head, event, map_path):
 def gate(decision, needs, areas):
     wrong = []
     for area, spec in areas.items():
-        on = bool(decision.get(area))
+        on = bool(decision.get(area)) or bool(decision.get("all"))   # all: true means every area on (fail closed)
         for job in spec["jobs"]:
             res = (needs.get(job) or {}).get("result")
             if res is None:
