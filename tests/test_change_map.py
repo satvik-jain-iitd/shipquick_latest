@@ -304,3 +304,10 @@ def test_s485_all_true_turns_every_area_on_in_the_gate(tmp_path):
     """#499 review point 2 (fail open): decision={"all": true} is the fail-closed answer; the gate must read it as every area on."""
     r = gate(tmp_path, {"all": True}, needs({"ui-android-compile": "skipped", "ui-ios-lint": "skipped"}))
     assert r.returncode == 1 and "ui-android-compile" in r.stdout + r.stderr, r.stdout + r.stderr
+
+
+def test_s485_a_map_job_with_no_block_in_head_ci_yml_turns_every_area_on(tmp_path):
+    """#499 review point 3: a job the map names but head ci.yml does not have cannot be judged; every area turns on."""
+    repo = make_repo(tmp_path)
+    edit_ci(repo, "  ui-ios-lint:\n", "  ui-ios-lint-renamed:\n")
+    assert on(decide(repo)) == {"android": True, "ios": True}, decide(repo)
