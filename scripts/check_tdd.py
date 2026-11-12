@@ -29,7 +29,7 @@ TEST_NAMES = [
     r"\w+Tests?\.kt",                                  # kotlin (junit, kotest)
     r"\w+Tests?\.swift",                               # swift (XCTest)
 ]
-TEST_PATH = re.compile(r"[\w./-]*(?:" + "|".join(TEST_NAMES) + r")(?![\w.])")   # FooTest.kts and x.test.tsx.snap are not tests
+TEST_PATH = re.compile(r"[\w./-]*(?:" + "|".join(TEST_NAMES) + r")(?!\w|\.\w)")   # FooTest.kts and x.test.tsx.snap are not tests; "x.test.ts." ends a sentence
 TOKEN = re.compile(r"[\w./-]+\.\w+")   # a file-like word in the `## Red` section
 DOC_SUFFIXES = (".md", ".txt")
 DOC_DIRS = ("docs/", "pm/")
