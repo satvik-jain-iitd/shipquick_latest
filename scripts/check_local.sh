@@ -10,7 +10,7 @@
 #   shortcuts (story #327): warn only, prints the count of shortcut:/ponytail: comments; runs after the checks when no argument is given
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing
-#   secrets    the whole history (push); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
+#   secrets    the commits since origin/$BASE (push; the whole history when there is no origin/$BASE); secrets-staged only what is staged (commit, fast). Both need gitleaks: brew install gitleaks
 #   markers    checks tracked files; an untracked file with a marker passes here, CI scans the whole checkout
 # Wired into .pre-commit-config.yaml: the fast checks on commit, all of them on push.
 set -u
@@ -133,7 +133,10 @@ check_tdd() {   # story #319 (A15): the commit log stands in for the PR body bef
 }
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
-  gitleaks git --no-banner --no-color --redact --verbose .
+  # story #454: a push is judged on the commits it adds. History below origin/$BASE was already pushed; an old finding there is not this push's.
+  local range=()
+  git rev-parse --verify -q "origin/$BASE" >/dev/null && range=(--log-opts "origin/$BASE..HEAD")
+  gitleaks git --no-banner --no-color --redact --verbose ${range[@]+"${range[@]}"} .
   report secrets $?
 }
 check_secrets_staged() {

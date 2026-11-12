@@ -206,7 +206,7 @@ def test_check_runs_environments_at_the_callers_milestone(child, gh):
 
 
 def test_check_with_no_milestone_line_uses_the_ci_default_d1(child, gh):
-    # CI gives a caller with no `milestone:` line D1 (checks.yml); --check must say the same, never skip (Miraya#2)
+    # CI gives a caller with no `milestone:` line D1 (checks.yml); --check must say the same, never skip
     with_origin(child)
     assert adopt(child, env=gh, d0=False).returncode == 0
     add_fake_submodule(child, HEAD)
