@@ -29,7 +29,7 @@ TEST_NAMES = [
     r"\w+Tests?\.kt",                                  # kotlin (junit, kotest)
     r"\w+Tests?\.swift",                               # swift (XCTest)
 ]
-TEST_PATH = re.compile(r"[\w./-]*(?:" + "|".join(TEST_NAMES) + r")")
+TEST_PATH = re.compile(r"[\w./-]*(?:" + "|".join(TEST_NAMES) + r")(?![\w.])")   # FooTest.kts and x.test.tsx.snap are not tests
 TOKEN = re.compile(r"[\w./-]+\.\w+")   # a file-like word in the `## Red` section
 DOC_SUFFIXES = (".md", ".txt")
 DOC_DIRS = ("docs/", "pm/")
@@ -103,11 +103,11 @@ def check(body, changed, base_branch="", head_branch=""):
     if section is None:
         return False, f"the PR changes code but has no `## Red` section; {SHAPE}"
     named = [m.group(0).lstrip("./") for m in TEST_PATH.finditer(section)]
-    for tok in dict.fromkeys(TOKEN.findall(section)):   # story #502 point 4: a file in the diff that no name accepts says so
-        if tok in changed and not TEST_PATH.fullmatch(tok):
-            return False, (f"the `## Red` section names {tok}, which is in the PR diff but is not a known test file name "
-                           f"(see TEST_NAMES in scripts/check_tdd.py); name the test file, not a fixture or data file")
     if not named:
+        for tok in dict.fromkeys(TOKEN.findall(section)):   # story #502 point 4: only when the section names no test at all
+            if tok in changed and not TEST_PATH.fullmatch(tok):
+                return False, (f"the `## Red` section names {tok}, which is in the PR diff but is not a known test file name "
+                               f"(see TEST_NAMES in scripts/check_tdd.py); name the test file, not a fixture or data file")
         return False, f"the `## Red` section names no test; {SHAPE}"
     missing = [n for n in dict.fromkeys(named) if n not in changed]
     if missing:
