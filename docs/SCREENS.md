@@ -108,8 +108,8 @@ reads your config, never ships a renderer). After your existing e2e step:
     retention-days: 14
 ```
 
-The check step comes before the upload, and it is the step `scripts/check_screens_wired.py` looks for (the adoption job
-fails a project whose workflows never run `screens.sh --check`).
+The check step comes before the upload. `scripts/check_screens_wired.py` (the adoption job) fails a project when no
+workflow has a step that runs `screens.sh --check`, so keep that step in your workflow.
 
 `always()` matters: the renders and diff images are most useful exactly when the job is red.
 
@@ -117,11 +117,17 @@ fails a project whose workflows never run `screens.sh --check`).
 
 If your normal e2e step runs every spec (a command with no path, for example `npx playwright test`), the screens spec
 runs twice: once there and once in `screens.sh --check`. Leave it out of the e2e step and let `screens.sh --check` run it
-once. Any runner works: name the spec's folder or tag in the e2e command's exclude option. Playwright example: tag the
-screens spec's `describe` title with `@screens`, and run the e2e step with `npx playwright test --grep-invert @screens`.
+once. Playwright's way is `--grep-invert`: tag the screens spec's `describe` title with `@screens`, and run the e2e step
+with `npx playwright test --grep-invert @screens`. Another runner has its own exclude option; use that.
 
-Prove the split once, on CI: the number of tests the e2e step reports ("N passed") plus the number `screens.sh --check`
-reports must add up to the number the single run reported before the split. Put both numbers in the PR.
+Prove the split on CI with the runner's own list, not with a test run. `screens.sh` runs the `chromium` project only, so
+compare the counts for that project, before and after the split:
+
+1. Before the split: `npx playwright test --list --project=chromium` prints `Total: N tests`. Keep that N.
+2. After the split: `npx playwright test --list --project=chromium --grep-invert @screens` (the e2e step) and
+   `npx playwright test --list --project=chromium --grep @screens` (the screens spec) print two `Total:` lines.
+3. The two numbers from step 2 must add up to the N from step 1. Put the three numbers in the PR.
+
 
 ## The PR body: `Render:`
 

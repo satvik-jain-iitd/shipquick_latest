@@ -13,7 +13,7 @@ REAL_SCREENS = "welcome | /welcome | 390x844 | welcome\n"
 
 def wiring_section():
     text = (ROOT / "docs" / "SCREENS.md").read_text(encoding="utf-8")
-    m = re.search(r"^## Wiring CI\n(.*?)(?=^## )", text, re.S | re.M)
+    m = re.search(r"^## Wiring CI\n(.*?)(?=^## |\Z)", text, re.S | re.M)
     assert m, "docs/SCREENS.md has no `## Wiring CI` section"
     return m.group(1)
 
@@ -37,3 +37,20 @@ def test_s503_the_section_says_how_to_split_a_shared_e2e_run():
     section = wiring_section()
     assert "exclude" in section.lower() and "once" in section.lower(), "must say how the screens spec runs once"
     assert "add up" in section.lower(), "must say how to prove the two test counts add up"
+
+
+def test_s503_the_check_step_comes_before_the_upload_step_in_the_example():
+    """#506 QA point 2: order by text position, no YAML library."""
+    example = yaml_examples(wiring_section())[0]
+    check = example.find("bash scripts/screens.sh --check")
+    upload = example.find("uses: actions/upload-artifact")
+    assert check != -1 and upload != -1 and check < upload, (check, upload)
+
+
+def test_s503_the_section_regex_ends_at_the_end_of_the_file_too(tmp_path, monkeypatch):
+    """#506 QA point 3: a `## Wiring CI` that is the last section still counts."""
+    fake = tmp_path / "docs"
+    fake.mkdir()
+    (fake / "SCREENS.md").write_text("# x\n\n## Wiring CI\n\n```yaml\nrun: bash scripts/screens.sh --check\n```\n", encoding="utf-8")
+    monkeypatch.setattr(sys.modules[__name__], "ROOT", tmp_path)
+    assert "screens.sh --check" in wiring_section()
