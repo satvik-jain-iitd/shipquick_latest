@@ -240,3 +240,62 @@ def test_s454_adopt_files_without_the_pin_are_not_a_bump(tmp_path):
     repo = make_repo(tmp_path, {k: v for k, v in BUMP.items() if k != "knowledge/shipquick_latest"})
     r = run(tmp_path, repo, "chore: x\n")
     assert r.returncode == 1 and "## Red" in r.stdout, r.stdout
+
+
+# ---- story #491 (feedback #490): the gate-files PR is exempt from tdd, read from the same lists as the gate files ----
+GATE_PATHS = [l.strip() for l in (ROOT / "scripts" / "gate_files.txt").read_text(encoding="utf-8").splitlines()
+              if l.strip() and not l.startswith("#")]
+
+
+def _check_tdd():
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import check_tdd
+    return check_tdd
+
+
+def test_s491_a_gate_files_pr_with_the_pin_and_gitmodules_is_exempt_without_a_red_section():
+    """Feedback #490: the gate files of a kit-branch child include .gitmodules, which the bump list did not have."""
+    ct = _check_tdd()
+    changed = [ct.BUMP_PIN] + [p for p in GATE_PATHS if p != ct.BUMP_PIN]
+    assert ".gitmodules" in changed
+    assert ct.exempt_reason(changed, "dev", "feat/491-x"), "a gate-files PR must be exempt, as a kit bump is"
+
+
+def test_s491_every_path_of_gate_files_is_on_the_exempt_list():
+    ct = _check_tdd()
+    missing = [p for p in GATE_PATHS if not ct.is_bump_file(p)]
+    assert missing == [], "scripts/gate_files.txt lists these, but check_tdd.py does not exempt them: %s" % missing
+
+
+def test_s491_gate_files_plus_one_other_code_file_still_needs_a_red_section():
+    ct = _check_tdd()
+    changed = [ct.BUMP_PIN] + GATE_PATHS + ["scripts/other.py"]
+    assert ct.exempt_reason(changed, "dev", "feat/491-x") is None
+
+
+def test_s491_gate_files_without_the_pin_still_need_a_red_section():
+    ct = _check_tdd()
+    changed = [p for p in GATE_PATHS if p != ct.BUMP_PIN]
+    assert ct.exempt_reason(changed, "dev", "feat/491-x") is None
+
+
+def test_s491_the_exempt_list_reads_the_gate_file_and_types_no_path_twice():
+    src = (ROOT / "scripts" / "check_tdd.py").read_text(encoding="utf-8")
+    assert "gate_files.txt" in src and "adopt_files.txt" in src
+    assert ".gitmodules" not in src, "the gate files live in scripts/gate_files.txt only"
+
+
+def test_s491_a_missing_list_file_exits_one_with_one_line_naming_it(tmp_path):
+    # Round two of #492 (QA): a missing list is a clear one-line stop, never a traceback and never a guessed exempt set.
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "check_tdd.py").write_text((ROOT / "scripts" / "check_tdd.py").read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "scripts" / "adopt_files.txt").write_text((ROOT / "scripts" / "adopt_files.txt").read_text(encoding="utf-8"), encoding="utf-8")
+    body = tmp_path / "body.md"
+    body.write_text("no red\n", encoding="utf-8")
+    r = subprocess.run(["python3", str(tmp_path / "scripts" / "check_tdd.py"), "--body-file", str(body), "--base", "origin/dev"],
+                       capture_output=True, text=True)
+    assert r.returncode == 1, (r.stdout, r.stderr)
+    assert "Traceback" not in r.stdout + r.stderr
+    lines = r.stdout.strip().splitlines()
+    assert len(lines) == 1 and "gate_files.txt" in lines[0], lines

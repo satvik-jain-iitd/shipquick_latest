@@ -2233,3 +2233,13 @@ Scenario: the gate proves it
   And a PR that sets a job's if: to false fails the gate
 ```
 Tests: `tests/test_change_map.py` (`test_s485_every_path_that_turned_a_job_on_before_still_turns_it_on_ci_yml_aside`, `test_s485_no_path_that_was_free_before_turns_a_job_on`, `test_s485_an_android_only_change_leaves_ios_off`, `test_s485_fail_closed_*`, `test_s485_a_renamed_file_counts_under_its_old_path_and_its_new_path`, `test_s485_a_change_to_a_phone_job_s_own_steps_turns_its_area_on`, `test_s485_gate_*`, `test_s485_a_pr_that_sets_a_job_if_to_false_fails_the_gate`); `tests/test_ui_proof.py` (`test_s485_the_change_map_step_fails_closed_and_reads_the_reader_from_the_base_branch`); `tests/test_ios_snapshots.py` (`test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout`, changed to the ios output). The grep-form tests of stories #217, #219 and #484 are replaced by these.
+## Story #491 (feedback #490): a gate-files PR is exempt from the tdd check, from the lists
+```gherkin
+Scenario: a PR that only copies the gate files of a kit-branch child
+  Then check_tdd exempts it, because every changed path is in scripts/gate_files.txt
+Scenario: the bump exemption still reads adopt_files.txt
+  Then a kit bump that changes only adopt_files.txt paths stays exempt
+Scenario: a code change is not exempt
+  Then a PR with a changed code file and no ## Red section still fails
+```
+Tests: `tests/test_check_tdd.py` (the `s491` tests: `GATE_PATHS` is read from `scripts/gate_files.txt`, and the exemption set is built from both lists).
