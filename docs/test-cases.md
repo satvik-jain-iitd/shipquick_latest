@@ -1501,7 +1501,7 @@ Scenario: a bypass hidden by a line continuation, an env var, or a long-option p
   When the PreToolUse hook runs
   Then it exits 2 with the reason on stderr
 ```
-Tests: `tests/test_git_guard.py` (`test_bypass_is_blocked_with_reason` (eight cases added for the review round: continuation, env vars, --config-env, --no-veri), `test_harmless_command_passes_silently`, `test_bypass_text_inside_a_quoted_argument_passes`, `test_other_tools_and_broken_input_pass`, `test_hook_is_registered_for_bash_pre_tool_use`).
+Tests: `tests/test_git_guard.py` (`test_bypass_is_blocked_with_reason` (eight cases added for the review round: continuation, env vars, --config-env, --no-veri), `test_harmless_command_passes_silently`, `test_bypass_text_inside_a_quoted_argument_passes`, `test_other_tools_and_broken_input_pass`, `test_hook_is_registered_for_bash_pre_tool_use`). Story #480: `test_s480_running_pre_commit_with_no_config_is_blocked_with_reason` (nine cases: `PRE_COMMIT_ALLOW_NO_CONFIG` as a prefix, with `export`, with `env`; `pre-commit ... --allow-missing-config`), `test_s480_the_same_words_as_text_pass`.
 ## Story #315: the loop and cost guard
 ```gherkin
 Scenario: four different calls are not a loop

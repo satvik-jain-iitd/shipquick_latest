@@ -2,7 +2,8 @@
 """PreToolUse (Bash): block git hook bypasses (story #320, A5a).
 
 Blocks `git commit --no-verify` (and `-n`), `git push --no-verify`, and any `core.hooksPath` redirect
-(`git -c core.hooksPath=... ` or `git config core.hooksPath`). Exit 2 with the reason on stderr is how
+(`git -c core.hooksPath=... ` or `git config core.hooksPath`). Story #480: also blocks setting
+`PRE_COMMIT_ALLOW_NO_CONFIG` and `pre-commit ... --allow-missing-config`, which pass with no hook run. Exit 2 with the reason on stderr is how
 Claude Code blocks a tool call. Everything else exits 0 and prints nothing. Any error exits 0 (fail open).
 
 Idea borrowed from ECC `scripts/hooks/block-no-verify.js` (MIT, read in the study clone, 10 Nov 2026):
@@ -18,6 +19,20 @@ SEPARATORS = {";", "&&", "||", "|", "&", "(", ")"}
 GIT_VALUE_OPTIONS = {"-C", "--git-dir", "--work-tree", "--namespace"}
 CONFIG_READ_OPTIONS = {"--get", "--get-all", "--get-regexp", "--get-urlmatch", "--list", "-l",
                        "--show-origin", "--show-scope"}
+NO_CONFIG_VAR = "PRE_COMMIT_ALLOW_NO_CONFIG="
+ASSIGNERS = {"export", "env", "declare", "typeset"}
+
+
+def no_config_reason(seg):
+    """Story #480: a segment that lets pre-commit pass with no config, so no hook runs."""
+    for tok in seg:   # only the leading VAR=value words, with or without export / env in front
+        if tok.startswith(NO_CONFIG_VAR):
+            return "PRE_COMMIT_ALLOW_NO_CONFIG lets a commit pass with no config, so no hook runs"
+        if tok not in ASSIGNERS and ("=" not in tok or tok.startswith("-")):
+            break
+    if "--allow-missing-config" in seg and any(os.path.basename(t) in ("pre-commit", "pre_commit") for t in seg):
+        return "pre-commit --allow-missing-config installs hooks that pass with no config, so no hook runs"
+    return None
 
 
 def tokens_of(command):
@@ -89,6 +104,9 @@ def is_hooks_redirect(setting):
 
 def block_reason(command):
     for seg in segments_of(tokens_of(command)):
+        reason = no_config_reason(seg)
+        if reason:
+            return reason
         args, prefixes = git_args_of(seg)
         if args is None:
             continue
