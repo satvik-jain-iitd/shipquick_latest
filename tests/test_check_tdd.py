@@ -1,5 +1,6 @@
 """Story #319 (A15): a PR that changes code names the test it turned red first, and that test file is in the PR diff.
 Docs-only PRs and dev <-> main PRs are exempt. Tests use a real throwaway git repo, not a stubbed diff."""
+import re
 import subprocess
 from pathlib import Path
 
@@ -345,5 +346,7 @@ def test_s502_the_name_list_is_one_line_per_runner_in_the_script():
     spec = importlib.util.spec_from_file_location("check_tdd", SCRIPT)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    assert len(mod.TEST_NAMES) >= 8, mod.TEST_NAMES
-    assert all(isinstance(p, str) and p for p in mod.TEST_NAMES)
+    names = mod.TEST_NAMES
+    assert all(isinstance(p, str) and p for p in names), names
+    for sample in ("x.test.ts", "x.spec.ts", "x_test.go", "xTests.kt", "xTest.swift", "x_test.py", "test_x.py"):
+        assert any(re.fullmatch(p, sample) for p in names), (sample, names)

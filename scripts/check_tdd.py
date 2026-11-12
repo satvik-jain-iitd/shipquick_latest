@@ -19,7 +19,18 @@ from pathlib import Path
 
 RED = re.compile(r"^##\s+red\s*$", re.I | re.M)
 NEXT_H2 = re.compile(r"^##\s", re.M)
-TEST_PATH = re.compile(r"[\w./-]*(?:test_\w*\.py|\w+\.test\.js)")   # pytest files, and node:test files (story #81, roadmap/*.test.js)
+# Story #502 (feedback #501): the test file names the `## Red` section may name, one line per runner. Add a line to add a runner.
+TEST_NAMES = [
+    r"test_\w*\.py",                                   # pytest (story #319)
+    r"\w+_test\.py",                                   # pytest or unittest, any folder
+    r"\w+\.test\.(?:jsx|tsx|mjs|cjs|js|ts)(?![\w])",     # node:test, jest, vitest (story #81, roadmap/*.test.js)
+    r"\w+\.spec\.(?:jsx|tsx|mjs|cjs|js|ts)(?![\w])",     # playwright, jasmine, angular (TypeScript children, #501)
+    r"\w+_test\.go",                                   # go test
+    r"\w+Tests?\.kt",                                  # kotlin (junit, kotest)
+    r"\w+Tests?\.swift",                               # swift (XCTest)
+]
+TEST_PATH = re.compile(r"[\w./-]*(?:" + "|".join(TEST_NAMES) + r")")
+TOKEN = re.compile(r"[\w./-]+\.\w+")   # a file-like word in the `## Red` section
 DOC_SUFFIXES = (".md", ".txt")
 DOC_DIRS = ("docs/", "pm/")
 # Story #454: a kit bump moves the pin and rewrites the files adopt.sh owns. There is nothing to put a test on.
@@ -92,6 +103,10 @@ def check(body, changed, base_branch="", head_branch=""):
     if section is None:
         return False, f"the PR changes code but has no `## Red` section; {SHAPE}"
     named = [m.group(0).lstrip("./") for m in TEST_PATH.finditer(section)]
+    for tok in dict.fromkeys(TOKEN.findall(section)):   # story #502 point 4: a file in the diff that no name accepts says so
+        if tok in changed and not TEST_PATH.fullmatch(tok):
+            return False, (f"the `## Red` section names {tok}, which is in the PR diff but is not a known test file name "
+                           f"(see TEST_NAMES in scripts/check_tdd.py); name the test file, not a fixture or data file")
     if not named:
         return False, f"the `## Red` section names no test; {SHAPE}"
     missing = [n for n in dict.fromkeys(named) if n not in changed]
