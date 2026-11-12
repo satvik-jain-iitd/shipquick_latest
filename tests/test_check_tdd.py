@@ -284,3 +284,18 @@ def test_s491_the_exempt_list_reads_the_gate_file_and_types_no_path_twice():
     src = (ROOT / "scripts" / "check_tdd.py").read_text(encoding="utf-8")
     assert "gate_files.txt" in src and "adopt_files.txt" in src
     assert ".gitmodules" not in src, "the gate files live in scripts/gate_files.txt only"
+
+
+def test_s491_a_missing_list_file_exits_one_with_one_line_naming_it(tmp_path):
+    # Round two of #492 (QA): a missing list is a clear one-line stop, never a traceback and never a guessed exempt set.
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "check_tdd.py").write_text((ROOT / "scripts" / "check_tdd.py").read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "scripts" / "adopt_files.txt").write_text((ROOT / "scripts" / "adopt_files.txt").read_text(encoding="utf-8"), encoding="utf-8")
+    body = tmp_path / "body.md"
+    body.write_text("no red\n", encoding="utf-8")
+    r = subprocess.run(["python3", str(tmp_path / "scripts" / "check_tdd.py"), "--body-file", str(body), "--base", "origin/dev"],
+                       capture_output=True, text=True)
+    assert r.returncode == 1, (r.stdout, r.stderr)
+    assert "Traceback" not in r.stdout + r.stderr
+    lines = r.stdout.strip().splitlines()
+    assert len(lines) == 1 and "gate_files.txt" in lines[0], lines
