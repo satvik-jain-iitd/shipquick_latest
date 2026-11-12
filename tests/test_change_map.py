@@ -285,3 +285,16 @@ def test_s485_the_gate_job_reads_the_decision_and_the_needs_and_keeps_always_and
     assert "if: always()" in gate_job
     assert "change_map.py gate" in gate_job and "toJSON(needs)" in gate_job
     assert "contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')" in gate_job
+
+
+def test_s485_a_change_to_the_decision_job_or_the_top_of_ci_yml_turns_every_area_on(tmp_path):
+    """#485 PR 1 review (fail closed): the ui-changes job and the file header decide the others; a change there can skip
+    a needed job, so nothing is skipped on that run. A change to another job (the gate) still turns nothing on."""
+    repo = make_repo(tmp_path)
+    edit_ci(repo, "Which slow jobs must run? (story #485, one map)", "Which slow jobs must run? (story #485, one map) edited")
+    d = decide(repo)
+    assert on(d) == {"android": True, "ios": True}, d
+    assert any("ci.yml" in r for r in d["reasons"]), d["reasons"]
+    repo2 = make_repo(tmp_path / "top")
+    edit_ci(repo2, 'name: "shipquick_latest CI"', 'name: "shipquick_latest CI (edited)"')
+    assert on(decide(repo2)) == {"android": True, "ios": True}
