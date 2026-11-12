@@ -55,6 +55,47 @@ def test_bypass_is_blocked_with_reason(command):
     assert p.stdout == ""
 
 
+# story #480: the two switches that let pre-commit pass with no config, so no hook runs at all.
+NO_CONFIG = [
+    "PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -m fix",
+    "PRE_COMMIT_ALLOW_NO_CONFIG=1 git push origin dev",
+    "export PRE_COMMIT_ALLOW_NO_CONFIG=1",
+    "export PRE_COMMIT_ALLOW_NO_CONFIG=1; git commit -m fix",
+    "cd repo && env PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -m fix",
+    "PRE_COMMIT_ALLOW_NO_CONFIG=1 bash scripts/release.sh v1.0.0",
+    "pre-commit install --allow-missing-config",
+    "python3 -m pre_commit install --allow-missing-config",
+    "pre-commit init-templatedir --allow-missing-config ~/.git-template",
+]
+
+
+@pytest.mark.parametrize("command", NO_CONFIG)
+def test_s480_running_pre_commit_with_no_config_is_blocked_with_reason(command):
+    p = run_guard(command)
+    assert p.returncode == 2, command
+    assert p.stderr.startswith("git_guard: blocked"), p.stderr
+    assert "no config" in p.stderr, p.stderr
+    assert p.stdout == ""
+
+
+NO_CONFIG_TEXT = [
+    "grep -rn PRE_COMMIT_ALLOW_NO_CONFIG docs/",
+    "grep -rn 'PRE_COMMIT_ALLOW_NO_CONFIG=1' docs/",
+    'echo "never set PRE_COMMIT_ALLOW_NO_CONFIG=1"',
+    'git commit -m "docs: never use --allow-missing-config"',
+    "grep -rn -- --allow-missing-config docs/",
+    "pre-commit install",
+    "unset PRE_COMMIT_ALLOW_NO_CONFIG",
+]
+
+
+@pytest.mark.parametrize("command", NO_CONFIG_TEXT)
+def test_s480_the_same_words_as_text_pass(command):
+    p = run_guard(command)
+    assert p.returncode == 0, command
+    assert p.stderr == ""
+
+
 HARMLESS = [
     'git commit -m "fix the parser"',
     "git push origin dev",
