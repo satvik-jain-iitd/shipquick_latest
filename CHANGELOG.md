@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Fixed
+- `adopt.sh` keeps a `.claude/commands/mode.md` that the child changed on purpose (`kept      .claude/commands/mode.md (yours; differs from the kit copy)`), as it keeps `roadmap.json`; a file equal to an older kit copy is still updated, and `--check` says nothing new (#470, feedback #359).
+
 ## [0.13.2] - 2026-11-12
 Tag `v0.13.2`, "the environments job reads CLAUDE.md from the kit branch". Notes: `docs/RELEASE_NOTES_v0.13.2.md`.
 
