@@ -770,3 +770,10 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Reused: the `pre-commit` framework the kit already adopts (we only call `pre-commit install`) and the rule of `scripts/check_commit_msg.py` (72 characters) and `scripts/check_environments.sh`. Nothing new in the checks themselves; `plugin/hooks/hooks_state.py` is the one new file (a state check, about 60 lines).
 - Decision: build the small state check ourselves; no repo fits the "hooks configured but not installed" question.
 - Confidence that nothing fits better: 0.7.
+
+## 12 Nov 2026, story #479 (feedback #478): the hook config and gate files on every branch
+- Need: keep the pre-commit hook config and the other gate files on every branch of a repository whose kit lives on one branch, and check they are present and equal.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "keep pre-commit hook config and quality gate files on every branch of a git repository, check they are present"` printed `no repos found`. `scout.py --need "pre-commit config missing on branch hooks fail multi-branch repository"` printed `no repos found`. `gh search repos --topic pre-commit "config sync branches"` returned nothing.
+- Reused: the `pre-commit` framework as it is (a per-hook `fail_fast` for the kit guard) and git itself (`git checkout <branch> -- <path>`, `git ls-files -s`) for the copy and the compare. `plugin/hooks/git_guard.py` (story #320, idea from ECC) is extended for story #480, not rebuilt.
+- Decision: a list file and about 40 lines in `adopt.sh`; no repo fits. ADR-017.
+- Confidence that nothing fits better: 0.7.

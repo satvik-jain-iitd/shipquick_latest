@@ -423,7 +423,7 @@ def test_s225_check_strips_a_trailing_comment_after_kit_branch(child, gh):
 
 
 def test_s225_check_refuses_an_expression_as_kit_branch(child, gh):
-    r = adopt(rule24_child(child, kit_line="${{ github.base_ref }}"), "--check", env=gh)
+    r = adopt(rule24_child(child, kit_line="${{ github.base_ref }}", gate=False), "--check", env=gh)
     assert r.returncode == 1 and "expression" in r.stdout
 
 

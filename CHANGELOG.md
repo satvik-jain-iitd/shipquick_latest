@@ -12,6 +12,13 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Added
+- `adopt.sh --gate-files`: on a code branch of a kit-branch child (rule 24) it copies the gate files ("group A", one list in `scripts/gate_files.txt`) from the kit branch and stages them. No document is written. The git hooks then run on that branch instead of stopping every commit (#479, feedback #478, ADR-017).
+
+### Changed
+- `adopt.sh --check` on a code branch of a kit-branch child fails for each gate file that is missing or differs from the kit branch (the pin, the callers, the switches, the roles), and names the fix. It reads the hook config and the switches from the checked-out branch, never from the kit branch. A child that kept only the caller on `main` reads "not adopted" until it runs `--gate-files` (#479).
+- The hook config `adopt.sh` writes starts with a `shipquick-kit` hook: a kit folder that is not checked out stops the commit with one line that says `git submodule update --init`. `adopt.sh` adds it to a config from an older kit; `--check` fails until it is there (#479).
+
 ## [0.13.3] - 2026-11-12
 Tag `v0.13.3`, "the pre-push hook knows the kit branch, adopt.sh keeps a customised mode.md, and md-blocks ignores ignored files". Notes: `docs/RELEASE_NOTES_v0.13.3.md`.
 

@@ -1,0 +1,13 @@
+# Story #479 (feedback #478, ADR-017): the gate files, "group A". In a child that keeps the kit on its own branch
+# (`kit_branch` in the caller, rule 24) these live on every code branch too, equal to the kit branch copy. The git
+# hooks read them from the checked-out branch, so a branch without them cannot commit. Documents stay on the kit branch.
+# Read by `adopt.sh --gate-files` (copies them from the kit branch) and `adopt.sh --check` (missing or different = not
+# adopted). One path per line; `#` comments and blank lines are ignored. Why each one is here: docs/ADOPTION.md.
+.pre-commit-config.yaml
+.gitmodules
+knowledge/shipquick_latest
+.github/workflows/shipquick-call.yml
+.github/workflows/roadmap-call.yml
+.shipquick/features.json
+.shipquick/roles.yml
+roadmap.json

@@ -2177,3 +2177,22 @@ Scenario: llms.txt generated from the registries
 ```
 Tests: `tests/test_ui_mcp.py` (`test_s190_the_server_names_itself_and_lists_two_annotated_tools_with_described_inputs`, `test_s190_search_returns_ranked_matches_with_pagination`, `test_s190_search_filters_by_platform_and_reports_no_match_plainly`, `test_s190_get_returns_the_doc_and_the_contract`, `test_s190_an_unknown_name_gives_an_actionable_error_over_mcp`, `test_s190_search_over_mcp_returns_text_and_structured_content`, `test_s190_bad_input_and_unknown_tool_are_errors_that_name_the_fix`, `test_s190_llms_txt_is_current_and_the_check_catches_drift`).
 Review fix (#414): `test_s190_a_punctuation_only_query_matches_nothing`, `test_s190_an_offset_past_the_total_gives_an_empty_last_page`, `test_s190_limit_and_offset_out_of_range_are_errors_naming_the_field`, `test_s190_a_parse_error_gives_32700_and_the_session_goes_on`, `test_s190_an_unknown_method_gives_32601_and_as_a_notification_gets_no_reply`, `test_s190_a_client_response_gets_no_reply_and_a_non_object_gets_32600`, `test_s190_malformed_params_and_arguments_get_an_error_with_the_id_and_the_session_goes_on`, `test_s190_a_non_object_registry_row_is_skipped`.
+
+## Story #479 (feedback #478): gate files on every code branch of a kit-branch child
+```gherkin
+Scenario: a code branch without the gate files is not adopted
+  Given a child whose caller names kit_branch dev, and main carries only the caller
+  When adopt.sh . --check runs on main
+  Then it exits 1 and prints "not adopted: gate file <path> is not on main" for each gate file the kit branch has, with the --gate-files fix
+Scenario: --gate-files puts group A on the code branch
+  When adopt.sh . --gate-files runs on main
+  Then every gate file of the kit branch is staged, the submodule pin included, and no document is written
+  And adopt.sh . --check passes and says "gate files equal to dev"
+Scenario: a pin or a switch that differs from the kit branch fails
+  Then --check prints "gate file <path> on main differs from kit branch dev", with both pins for the submodule
+Scenario: the real pre-commit
+  Given pre-commit is installed (the test is skipped with a clear line when it is not)
+  Then a commit on a code branch with only the caller is refused, and after --gate-files the hooks run and it passes
+  And a kit folder that is not checked out stops the commit with one ShipQuick line that says git submodule update --init
+```
+Tests: `tests/test_adopt.py` (`test_s479_the_list_is_one_file_named_in_the_adoption_doc_and_protected`, `test_s479_check_on_a_code_branch_names_each_missing_gate_file_and_the_fix`, `test_s479_gate_files_puts_group_a_on_a_code_branch_and_writes_no_documents`, `test_s479_gate_files_is_refused_where_there_is_no_other_kit_branch`, `test_s479_a_pin_on_the_code_branch_that_differs_from_the_kit_branch_fails_with_the_fix`, `test_s479_a_switch_that_differs_from_the_kit_branch_fails`, `test_s479_the_hook_checks_pass_on_a_branch_with_no_claude_md`, `test_s479_adopt_adds_the_kit_guard_hook_to_a_config_from_an_older_kit_and_check_wants_it`, `test_s479_the_real_pre_commit_runs_the_hooks_on_a_code_branch_once_the_gate_files_are_there`, `test_s479_the_real_pre_commit_says_how_to_fix_a_kit_that_is_not_checked_out`). The stand-in `pre-commit` of the other tests now writes hooks that fail when the config is absent, as the real ones do.
