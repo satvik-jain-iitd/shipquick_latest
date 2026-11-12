@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Fixed
+- `check_md_blocks.py` reads only the markdown files git knows (tracked, or new and not ignored), so a gitignored file with a broken block no longer fails the local hook while CI passes; outside a git repo it reads every `.md` as before (#79).
+
 ## [0.13.2] - 2026-11-12
 Tag `v0.13.2`, "the environments job reads CLAUDE.md from the kit branch". Notes: `docs/RELEASE_NOTES_v0.13.2.md`.
 
