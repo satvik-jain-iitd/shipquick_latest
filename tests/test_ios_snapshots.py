@@ -134,3 +134,43 @@ def test_s219_the_doc_states_the_real_precision_of_the_compare():
     assert f"perceptualPrecision {precision}" in doc, f"the doc never names perceptualPrecision {precision}"
     assert "TemplateSnapshotTests.swift" in doc
     assert "changed pixel" not in doc.lower()
+
+
+# ---- story #484: a ci.yml edit no longer forces the phone jobs, and a new run cancels the old one ----
+def path_rules():
+    changes = job("ui-changes")
+    ui = re.search(r"grep -qE '(\^\([^']*\))' <<< \"\$names\"; then echo \"ui=true\"", changes)
+    ios = re.search(r"grep -qE '(\^\([^']*\))' <<< \"\$names\"; then echo \"ios=true\"", changes)
+    assert ui and ios, "ui-changes must write ui and ios from a grep over the changed names"
+    return re.compile(ui.group(1)), re.compile(ios.group(1))
+
+
+def test_s484_a_pr_that_only_edits_ci_yml_gets_ui_false_and_ios_false():
+    ui, ios = path_rules()
+    assert not ui.search(".github/workflows/ci.yml") and not ios.search(".github/workflows/ci.yml")
+
+
+def test_s484_every_other_row_of_the_two_path_rules_stays():
+    ui, ios = path_rules()
+    for path in ("ui/ios/templates/ListTemplate.swift", "design/tokens.json", "scripts/emit_tokens.py"):
+        assert ios.search(path) and ui.search(path), path
+    for path in ("ui/android/build.gradle.kts", "tests/fixtures/ios/Bad/BadScreen.swift", "scripts/ui_proof.py", "scripts/emit_contracts.py"):
+        assert ui.search(path) and not ios.search(path), path
+
+
+def test_s484_one_run_per_pr_and_a_new_run_cancels_the_old_one():
+    """A push run and a manual run have no PR number, so their group is the run id: nothing shares it, nothing cancels them."""
+    m = re.search(r"^concurrency:\n  group: (.+)\n  cancel-in-progress: true\n", CI, re.M)
+    assert m, "ci.yml needs a top-level concurrency block with cancel-in-progress: true"
+    assert "github.event.pull_request.number || github.run_id" in m.group(1)
+    assert CI.count("\nconcurrency:") == 1
+
+
+def test_s484_the_gate_always_runs_and_fails_on_a_cancelled_job():
+    """GitHub counts a skipped required check as passed. So the gate must run even when a job it needs was cancelled
+    (`if: always()`), and must then fail, or a run with a cancelled macOS job would look green."""
+    g = job("gate")
+    assert re.search(r"^    if: always\(\)$", g, re.M)
+    assert "contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')" in g
+    assert re.search(r"failed or were cancelled\"\n\s+exit 1", g)
+

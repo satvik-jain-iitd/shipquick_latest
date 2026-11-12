@@ -97,9 +97,10 @@ def ui_changes_step():
 
 def test_s217_the_ui_filter_covers_what_decides_the_compile_and_nothing_unrelated():
     pattern = re.search(r"grep -qE '([^']+)'", ui_changes_step()).group(1)
-    for path in ("ui/android/build.gradle.kts", "scripts/ui_proof.py", ".github/workflows/ci.yml", "design/tokens.json"):
+    for path in ("ui/android/build.gradle.kts", "scripts/ui_proof.py", "design/tokens.json"):
         assert re.search(pattern, path), f"{path} must run the compile jobs"
-    for path in ("docs/x.md", "scripts/other.py", "tests/test_ui_proof.py"):
+    # story #484: an edit to ci.yml alone no longer forces the phone jobs (a PR that only added a pip package waited 40 minutes for a macOS machine)
+    for path in ("docs/x.md", "scripts/other.py", "tests/test_ui_proof.py", ".github/workflows/ci.yml"):
         assert not re.search(pattern, path), f"{path} must not run the compile jobs"
 
 
