@@ -365,3 +365,13 @@ def test_s502_a_script_or_snapshot_file_named_as_a_test_is_not_a_test(tmp_path, 
     repo = make_repo(tmp_path, {"app/src/x.ts": "x\n", name: "not a test\n"})
     r = run(tmp_path, repo, _red(name))
     assert r.returncode == 1 and "not a known test file name" in r.stdout, r.stdout + r.stderr
+
+
+@pytest.mark.parametrize("sentence", ["- tests/test_widget.py.", "- app/x.test.ts."])
+def test_s502_a_test_path_that_ends_a_sentence_still_passes(tmp_path, sentence):
+    """#505 QA: a dot that ends the sentence after a test path is not part of the name."""
+    files = dict(CODE)
+    files["app/x.test.ts"] = "red\n"
+    repo = make_repo(tmp_path, files)
+    r = run(tmp_path, repo, "Summary.\n\n## Red\n\n" + sentence + "\n\n## Local proof\nran it\n")
+    assert r.returncode == 0 and "tdd OK" in r.stdout, r.stdout + r.stderr
