@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Fixed
+- `plugin/hooks/git_guard.py` refuses a command that sets `PRE_COMMIT_ALLOW_NO_CONFIG` (as a prefix, with `export` or with `env`) and a `pre-commit` call with `--allow-missing-config`. Both let a commit pass with no hook run, the same as `--no-verify`. The same words as text (a `grep`, a quoted message) pass (#480, feedback #478).
+
 ## [0.13.3] - 2026-11-12
 Tag `v0.13.3`, "the pre-push hook knows the kit branch, adopt.sh keeps a customised mode.md, and md-blocks ignores ignored files". Notes: `docs/RELEASE_NOTES_v0.13.3.md`.
 
