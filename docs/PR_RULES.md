@@ -159,3 +159,10 @@ its own gate off from inside itself:
   pinned `npx` as the fallback, since a config's `extends` and `plugins` resolve from the project's node_modules.
   It skips when no CSS changed or the project has no stylelint config (a file or a `stylelint` key in package.json).
   Comment text on a line (`// story #133`, `/* ... */`) is never a literal.
+
+## 14. CI runs what a change can break (story #484)
+
+- `ci.yml` has one run per PR. A new run of the same PR (a push, an edited body) cancels the old one. A push run on `dev` or `main` and a manual run are never cancelled.
+- The phone jobs (`ui-android-*`, `ui-ios-*`) run only when a path in the two rules of the `ui-changes` job changes. `ci.yml` itself is not in those rules, so a PR that only edits `ci.yml` does not wait for a macOS machine.
+- Known gap: a PR that edits the steps of a `ui-*` job inside `ci.yml` no longer runs that job by itself. On such a PR the reviewer asks for one manual full run (Actions, "shipquick_latest CI", Run workflow, on the PR branch) and reads its result before approving. The change-map story (#485) closes this gap.
+- The `gate` job keeps `if: always()` and fails on a cancelled job. GitHub counts a skipped required check as passed, so a gate that did not run would let a run with a cancelled job look green.
