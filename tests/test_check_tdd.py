@@ -350,3 +350,18 @@ def test_s502_the_name_list_is_one_line_per_runner_in_the_script():
     assert all(isinstance(p, str) and p for p in names), names
     for sample in ("x.test.ts", "x.spec.ts", "x_test.go", "xTests.kt", "xTest.swift", "x_test.py", "test_x.py"):
         assert any(re.fullmatch(p, sample) for p in names), (sample, names)
+
+
+# ---- #505 review (QA): a real test named with a source file passes; .kts and .snap files are not tests ----
+
+def test_s502_a_real_red_test_named_with_a_changed_source_file_passes(tmp_path):
+    repo = make_repo(tmp_path, CODE)
+    r = run(tmp_path, repo, _red("tests/test_widget.py::test_widget_rejects_empty", "scripts/widget.py"))
+    assert r.returncode == 0 and "tdd OK" in r.stdout, r.stdout + r.stderr
+
+
+@pytest.mark.parametrize("name", ["app/src/main/kotlin/FooTest.kts", "web/src/x.test.tsx.snap"])
+def test_s502_a_script_or_snapshot_file_named_as_a_test_is_not_a_test(tmp_path, name):
+    repo = make_repo(tmp_path, {"app/src/x.ts": "x\n", name: "not a test\n"})
+    r = run(tmp_path, repo, _red(name))
+    assert r.returncode == 1 and "not a known test file name" in r.stdout, r.stdout + r.stderr
