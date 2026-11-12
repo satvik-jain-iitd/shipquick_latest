@@ -198,3 +198,26 @@ def test_s469_a_caller_with_no_kit_branch_keeps_dev(tmp_path):
     _g(work, "checkout", "-q", "-b", "chore/bump", "origin/documents")
     r = local_env(work, "md-blocks")
     assert "base: origin/" not in r.stdout and r.returncode == 0, r.stdout + r.stderr
+
+
+# ---- #472 review: the nearer base wins; a dev that already holds the kit branch tip must not make every feature branch use the kit branch ----
+def test_s469_a_dev_that_already_holds_the_kit_branch_keeps_dev_for_a_feature_branch(tmp_path):
+    work = kit_child(tmp_path)
+    origin = tmp_path / "origin.git"
+    _g(origin, "checkout", "-q", "dev")
+    _g(origin, "merge", "-q", "--ff-only", "documents")     # dev now contains the kit branch tip ...
+    (origin / "later.txt").write_text("x\n", encoding="utf-8")
+    _g(origin, "add", "-A"); _g(origin, "commit", "-q", "-m", "chore: later work on dev")   # ... and has moved on
+    _g(work, "fetch", "-q", "origin")
+    _g(work, "checkout", "-q", "-b", "feat/z", "origin/dev")
+    (work / "f.txt").write_text("f\n", encoding="utf-8"); _g(work, "add", "-A"); _g(work, "commit", "-q", "-m", "feat: z")
+    r = local_env(work, "md-blocks")
+    assert "base: origin/documents" not in r.stdout and r.returncode == 0, r.stdout + r.stderr
+
+
+def test_s469_a_missing_origin_dev_counts_as_far(tmp_path):
+    work = kit_child(tmp_path)
+    _g(work, "checkout", "-q", "-b", "chore/bump", "origin/documents")
+    _g(work, "update-ref", "-d", "refs/remotes/origin/dev")
+    r = local_env(work, "md-blocks")
+    assert "base: origin/documents" in r.stdout, r.stdout + r.stderr
