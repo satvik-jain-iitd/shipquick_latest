@@ -113,8 +113,8 @@ def test_check_accepts_pre_commit_off_and_says_hooks_skipped(child, gh):
 def test_check_still_fails_a_missing_hook_when_pre_commit_is_on(child, gh):
     with_origin(child)
     adopt(child)
-    (child / ".pre-commit-config.yaml").unlink()
     add_fake_submodule(child, HEAD)
+    (child / ".pre-commit-config.yaml").unlink()   # after the commit: with no config the hooks refuse one (story #479)
     r = adopt(child, "--check", env=gh)
     assert r.returncode == 1 and "no ShipQuick hooks" in r.stdout
 

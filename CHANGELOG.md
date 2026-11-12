@@ -12,7 +12,12 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Added
+- `adopt.sh --gate-files`: on a code branch of a kit-branch child (rule 24) it copies the gate files ("group A", one list in `scripts/gate_files.txt`) from the kit branch and stages them. No document is written. The git hooks then run on that branch instead of stopping every commit (#479, feedback #478, ADR-017).
+
 ### Changed
+- `adopt.sh --check` on a code branch of a kit-branch child fails for each gate file that is missing or differs from the kit branch (the pin, the callers, the switches, the roles), and names the fix. It reads the hook config and the switches from the checked-out branch, never from the kit branch. A gate file only on the code branch is a drift too. The compare uses the file on disk (the index for the submodule pin, only the kit entry of `.gitmodules`), and reads the kit branch from `origin` before a local branch. A bump branch cut from the kit branch is read at HEAD and not compared. A child that kept only the caller on `main` reads "not adopted" until it runs `--gate-files` (#479).
+- The hook config `adopt.sh` writes starts with a `shipquick-kit` hook: a kit folder that is not checked out stops the commit with one line that says `git submodule update --init`. `adopt.sh` adds it to a config from an older kit; `--check` fails until it is there (#479).
 - `ci.yml`: a PR that only edits `ci.yml` no longer runs the phone jobs (`ui=false`, `ios=false`), and a new run of a PR cancels the old one (one concurrency group per PR; push and manual runs are never cancelled). A PR that edits the steps of a `ui-*` job needs one manual full run until #485 (#484).
 
 ### Fixed

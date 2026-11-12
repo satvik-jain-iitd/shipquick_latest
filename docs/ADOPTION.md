@@ -38,7 +38,7 @@ Layer 1 only fires once a child is wired enough to have the caller running. A ch
 
 Some children keep `main` small. Only the code that runs goes there (rule 24). The submodule and the rule files live on another branch, for example `dev` or `documents`. We call it the kit branch.
 
-Such a child puts only one file on `main`: `.github/workflows/shipquick-call.yml`. That file names the kit branch:
+Such a child puts the caller, `.github/workflows/shipquick-call.yml`, and the other gate files on `main` (see "Gate files on every code branch" below). The documents stay on the kit branch. The caller names the kit branch:
 
 ```yaml
     with:
@@ -46,13 +46,51 @@ Such a child puts only one file on `main`: `.github/workflows/shipquick-call.yml
       kit_branch: dev
 ```
 
-Write it with `bash knowledge/shipquick_latest/scripts/adopt.sh . --kit-branch dev`. Run it on the kit branch. Then copy only the caller file to `main`.
+Write it with `bash knowledge/shipquick_latest/scripts/adopt.sh . --kit-branch dev`. Run it on the kit branch. Then, on each code branch, run `adopt.sh . --kit-branch dev --gate-files` and commit what it staged.
 
 **The kit branch must be protected.** Its roles file says who may code and who may review. A direct push could add a name to it. So protect the kit branch on GitHub, and require pull request reviews there. `adopt.sh --check` and the daily scan both read `branches/<kit branch>/protection`. They fail when the branch has no protection, or when it does not require pull request reviews. For a private child, the `SHIPQUICK_CHILD_TOKEN` also needs `Administration: read` to see the protection.
 
 `kit_branch` must be a plain branch name. A trailing `# comment` is fine. A `${{ ... }}` expression is refused. One script reads it for everyone: `scripts/kit_branch.py`.
 
 If you run `adopt.sh` again without `--kit-branch`, it keeps the kit branch your caller already names.
+
+## Gate files on every code branch (story #479, ADR-017)
+
+The git hooks run on the branch you have checked out. They read their files from that branch. So a code branch that has no hook config stops every commit with "No .pre-commit-config.yaml file was found". Never get past that with `PRE_COMMIT_ALLOW_NO_CONFIG` or `--allow-missing-config`: both skip every hook. Stop and tell the reviewer.
+
+The fix is a layout. A short list of gate files lives on every code branch, equal to the copy on the kit branch. We call it group A. The one list is `scripts/gate_files.txt`. `adopt.sh --gate-files` and `adopt.sh --check` both read it.
+
+| Gate file | Who reads it, and which copy |
+|---|---|
+| `.pre-commit-config.yaml` | The git hooks: this branch. CI's `adoption` job: the kit branch. |
+| `.gitmodules` and `knowledge/shipquick_latest` (the pin) | The git hooks run the kit's scripts from this folder: this branch. CI's `adoption` job reads the pin on the kit branch. |
+| `.github/workflows/shipquick-call.yml` | GitHub runs it from the PR's branch. `check_local.sh` reads `kit_branch` from this branch. |
+| `.github/workflows/roadmap-call.yml` and `roadmap.json` | The roadmap workflow runs from the default branch and reads `roadmap.json` from that checkout. |
+| `.shipquick/features.json` | The hooks: this branch. A missing file means every default, so a switch that is off on the kit branch would be on here. CI reads the base branch. |
+| `.shipquick/roles.yml` | The hook's `ui-registry` check: this branch. CI's `roles` job and `review_merge.sh`: the kit branch. |
+
+Not gate files, they stay on the kit branch: `CLAUDE.md`, `.gitattributes`, `.claude/commands/mode.md`, `docs/`, `scripts/screens.sh`. The hook's `rule-copies` check reads only the kit's own `CLAUDE.md`, so it passes on a branch that has none. CI reads the child's `CLAUDE.md` from the kit branch.
+
+How to put them on a code branch:
+
+```bash
+git fetch origin <kit branch>
+bash knowledge/shipquick_latest/scripts/adopt.sh . --gate-files   # add --kit-branch <kit branch> when this branch has no caller yet
+git submodule update --init
+git commit -m "chore: the ShipQuick gate files on this branch"
+```
+
+It copies each gate file from the kit branch and stages it. It writes no document. A file the kit branch does not have is skipped. It prints `copied`, `replaced` or `unchanged` for each one. A path whose copy on disk is not the committed one (an edit, a new file, a gitignored file) and that the copy would overwrite stops the run, names the path, and writes nothing. In `.gitmodules` only the `knowledge/shipquick_latest` entry is written, whole, so a code branch keeps its own submodules.
+
+The kit branch is read from `origin/<kit branch>`. A local branch is used only when origin's is not fetched, because a local one can be old. The output says which one was read.
+
+`adopt.sh . --check` on a code branch fails for each gate file that is missing (`gate file <path> is not on <branch>`) or that differs from the kit branch (`gate file <path> on <branch> differs from kit branch <kit>`). A pin that differs prints both pins. The fix is the same for both: run `--gate-files` again. A gate file that is on the code branch and not on the kit branch fails too (`is on <branch> but not on kit branch <kit>`): remove it, or add it on the kit branch first. `--check` compares the file on disk, because that is what the hooks read; for the submodule pin it compares the index. In `.gitmodules` it compares only the `knowledge/shipquick_latest` entry. It reads the hook config and the switches from the branch you are on, never from another branch.
+
+**How a bump reaches the code branches.** (1) Cut the bump branch from the kit branch and run `adopt.sh . --ref <tag>` there. `--check` reads such a branch at HEAD, like the kit branch, and does not compare it with the kit branch. A branch counts as kit-branch work only when the kit branch tip is one of its ancestors and none of its own commits is on another remote branch (every `origin` branch but the kit branch and its own). Any other branch is a code branch and is compared. So fetch all branches before you run `--check`. (2) Merge the bump PR into the kit branch. (3) On each code branch: `git fetch origin <kit branch>`, `adopt.sh . --gate-files`, `git submodule update --init`, commit, open a PR. Until step 3 is done `--check` on that code branch says which gate files differ.
+
+A missing or empty `scripts/gate_files.txt` stops `--check` and `--gate-files` with exit 2 and names the file. `--check` and `--gate-files` together is a usage error.
+
+A kit folder that is not checked out (a fresh clone, a new git worktree) stops the commit with one ShipQuick line that says `git submodule update --init`. The first hook, `shipquick-kit`, does that. `adopt.sh` adds it to a config written by an older kit, and `--check` fails until it is there.
 
 ## The milestone (story #357)
 

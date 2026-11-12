@@ -649,7 +649,7 @@ jobs:
       - name: Install dependencies
         timeout-minutes: 5
         run: |
-          pip install pytest==9.0.2 pillow==12.3.0   # pillow: scripts/qa/ flow map and audit report (story #162)
+          pip install pytest==9.0.2 pillow==12.3.0 pre-commit==4.7.0   # pillow: scripts/qa/ flow map and audit report (story #162); pre-commit: the real hooks in tests/test_adopt.py (story #479)
       - name: Run tests
         run: |
           mkdir -p logs
