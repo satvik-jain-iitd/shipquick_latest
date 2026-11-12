@@ -96,9 +96,11 @@ def test_s357_checks_yml_environments_job_reads_the_milestone_input():
 
 # ---- story #463: the environments job reads CLAUDE.md from the caller's kit_branch when set (as rule-copies does) ----
 def _env_step():
-    import yaml
-    wf = yaml.safe_load((ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8"))
-    return next(s for s in wf["jobs"]["environments"]["steps"] if "check_environments.sh" in s.get("run", ""))["run"]
+    """The `run:` text of the environments job's last step, read as text (the CI test job has no PyYAML)."""
+    text = (ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
+    job = text.split("\n  environments:\n", 1)[1].split("\n  component-registry:", 1)[0]
+    lines = job.split("\n        run: |\n", 1)[1].split("\n")
+    return "\n".join(l[10:] for l in lines if l.startswith(" " * 10) or not l.strip())
 
 
 def _git(cwd, *a):
@@ -115,7 +117,7 @@ def _env_run(tmp_path, *, kit, target, branch_claude, kit_claude):
     _git(origin, "commit", "-q", "--allow-empty", "-m", "kit")
     if target != "documents":
         _git(origin, "branch", "-q", target)
-    subprocess.run(["git", "clone", "-q", "-b", target, str(origin), str(work)], check=True)
+    subprocess.run(["git", "clone", "-q", "--single-branch", "-b", target, str(origin), str(work)], check=True)   # like CI: only the target branch is there until the job fetches the kit branch
     if branch_claude is not None:
         (work / "CLAUDE.md").write_text(branch_claude, encoding="utf-8")
     elif (work / "CLAUDE.md").exists():
