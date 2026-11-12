@@ -319,3 +319,14 @@ def test_s485_a_path_with_a_space_is_one_path_split_on_nul(tmp_path):
     repo = make_repo(tmp_path)
     change(repo, "ui/ios/templates/Screen One.swift", text="s\n")
     assert on(decide(repo)) == {"android": False, "ios": True}, decide(repo)
+
+
+def test_s485_a_push_is_decided_from_its_own_diff_and_an_unreadable_before_turns_all_on(tmp_path):
+    """#499 review point 1: a push to dev or main decides from github.event.before, like a PR. Only an unreadable
+    before (all zeros, not in the repo, not an ancestor) turns every area on. Without this, every push waits for macOS."""
+    repo = make_repo(tmp_path)
+    change(repo, "docs/x.md", text="doc two\n")
+    d = decide(repo, event="push", base="origin/dev")
+    assert on(d) == {"android": False, "ios": False}, d
+    assert on(decide(repo, event="push", base="0" * 40)) == {"android": True, "ios": True}
+    assert on(decide(repo, event="workflow_dispatch", base="origin/dev")) == {"android": True, "ios": True}
