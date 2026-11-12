@@ -80,9 +80,15 @@ git submodule update --init
 git commit -m "chore: the ShipQuick gate files on this branch"
 ```
 
-It copies each gate file from the kit branch and stages it. It writes no document. A file the kit branch does not have is skipped.
+It copies each gate file from the kit branch and stages it. It writes no document. A file the kit branch does not have is skipped. It prints `copied`, `replaced` or `unchanged` for each one. A path with an uncommitted change that the copy would overwrite stops the run, names the path, and writes nothing. In `.gitmodules` only the `knowledge/shipquick_latest` entry is written, so a code branch keeps its own submodules.
 
-`adopt.sh . --check` on a code branch fails for each gate file that is missing (`gate file <path> is not on <branch>`) or that differs from the kit branch (`gate file <path> on <branch> differs from kit branch <kit>`). A pin that differs prints both pins. The fix is the same for all of them: run `--gate-files` again. So a bump is two steps: bump on the kit branch, then `--gate-files` on each code branch. `--check` reads the hook config and the switches from the branch you are on, never from another branch.
+The kit branch is read from `origin/<kit branch>`. A local branch is used only when origin's is not fetched, because a local one can be old. The output says which one was read.
+
+`adopt.sh . --check` on a code branch fails for each gate file that is missing (`gate file <path> is not on <branch>`) or that differs from the kit branch (`gate file <path> on <branch> differs from kit branch <kit>`). A pin that differs prints both pins. The fix is the same for both: run `--gate-files` again. A gate file that is on the code branch and not on the kit branch fails too (`is on <branch> but not on kit branch <kit>`): remove it, or add it on the kit branch first. `--check` compares the file on disk, because that is what the hooks read; for the submodule pin it compares the index. In `.gitmodules` it compares only the `knowledge/shipquick_latest` entry. It reads the hook config and the switches from the branch you are on, never from another branch.
+
+**How a bump reaches the code branches.** (1) Cut the bump branch from the kit branch and run `adopt.sh . --ref <tag>` there. `--check` reads such a branch at HEAD, like the kit branch: it descends from the kit branch and is nearer to it than to `dev`, so it is not compared with the kit branch. (2) Merge the bump PR into the kit branch. (3) On each code branch: `git fetch origin <kit branch>`, `adopt.sh . --gate-files`, `git submodule update --init`, commit, open a PR. Until step 3 is done `--check` on that code branch says which gate files differ.
+
+A missing or empty `scripts/gate_files.txt` stops `--check` and `--gate-files` with exit 2 and names the file. `--check` and `--gate-files` together is a usage error.
 
 A kit folder that is not checked out (a fresh clone, a new git worktree) stops the commit with one ShipQuick line that says `git submodule update --init`. The first hook, `shipquick-kit`, does that. `adopt.sh` adds it to a config written by an older kit, and `--check` fails until it is there.
 

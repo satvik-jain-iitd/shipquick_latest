@@ -965,7 +965,7 @@ def test_s479_a_bump_branch_cut_from_the_kit_branch_is_read_like_the_kit_branch(
     git(child, "switch", "-q", "dev"); git(child, "switch", "-q", "-c", "chore/bump")
     call = child / ".github" / "workflows" / "shipquick-call.yml"
     call.write_text(call.read_text(encoding="utf-8").replace(HEAD, other), encoding="utf-8")
-    git(child, "add", "-A"); git(child, "update-index", "--cacheinfo", f"160000,{other},knowledge/shipquick_latest")
+    git(child, "add", "-A"); git(child, "update-index", "--add", "--cacheinfo", f"160000,{other},knowledge/shipquick_latest")   # --add: add -A dropped the pin of the empty folder
     git(child, "commit", "-q", "-m", "chore: bump the kit")
     r = adopt(child, "--check", env=gh)
     assert r.returncode == 0, (r.stdout, r.stderr)
