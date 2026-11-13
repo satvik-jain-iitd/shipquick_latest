@@ -60,7 +60,7 @@ def test_s219_every_template_has_a_preview_for_prefire():
 
 def test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout():
     j = job("ui-ios-snapshots")
-    assert "needs: [ui-changes]" in j and "needs.ui-changes.outputs.ios != 'false'" in j  # #375 review: ios, not ui
+    assert "needs: [ui-changes]" in j and "needs.ui-changes.outputs.snapshot != 'false'" in j  # #485 and #499: the snapshot area of the map
     assert "runs-on: macos-15" in j
     assert re.search(r"^    timeout-minutes: \d+$", j, re.M)
     assert "xcode-select -s /Applications/Xcode_16.4.app" in j
@@ -106,25 +106,6 @@ def test_s219_the_reference_folder_holds_one_png_per_template_and_matrix_cell():
     assert have == expected, f"missing {sorted(expected - have)[:3]}..., extra {sorted(have - expected)[:3]}"
 
 
-def test_s219_the_snapshot_job_runs_only_when_ios_paths_change():
-    """#375 review: ui-changes.outputs.ui is also true for ui/android/** and tests/fixtures/**, so an Android-only PR
-    ran the 45-minute macOS job. The job now waits on its own `ios` output, and that grep names no Android path."""
-    changes = job("ui-changes")
-    assert re.search(r"^      ios: \$\{\{ steps\.diff\.outputs\.ios \}\}$", changes, re.M), "ui-changes has no ios output"
-    m = re.search(r"grep -qE '(\^\([^']*\))' <<< \"\$names\"; then echo \"ios=true\"", changes)
-    assert m, "ui-changes never writes ios=true from a grep over the changed names"
-    pattern = re.compile(m.group(1))
-    assert pattern.search("ui/ios/templates/ListTemplate.swift")
-    assert pattern.search("design/tokens.json")
-    assert not pattern.search("ui/android/templates/ListTemplate.kt")
-    assert not pattern.search("tests/fixtures/ios/Bad/BadScreen.swift")
-    j = job("ui-ios-snapshots")
-    # #375 round 3: the fail-safe exits write only ui=true (story #217 pins those lines), so an empty ios must run the job
-    assert "if: needs.ui-changes.outputs.ios != 'false'" in j
-    assert "needs.ui-changes.outputs.ui == 'true'" not in j
-    assert 'echo ios=true >> "$GITHUB_OUTPUT"; exit 0; }' not in changes, "leave the #217 fail-safe lines as they are"
-
-
 def test_s219_the_doc_states_the_real_precision_of_the_compare():
     """#375 review: the doc said "A changed pixel fails the job" while the Swift test compares at perceptualPrecision
     0.98. The doc names the same number the Swift file sets, and never promises pixel-exact."""
@@ -134,28 +115,6 @@ def test_s219_the_doc_states_the_real_precision_of_the_compare():
     assert f"perceptualPrecision {precision}" in doc, f"the doc never names perceptualPrecision {precision}"
     assert "TemplateSnapshotTests.swift" in doc
     assert "changed pixel" not in doc.lower()
-
-
-# ---- story #484: a ci.yml edit no longer forces the phone jobs, and a new run cancels the old one ----
-def path_rules():
-    changes = job("ui-changes")
-    ui = re.search(r"grep -qE '(\^\([^']*\))' <<< \"\$names\"; then echo \"ui=true\"", changes)
-    ios = re.search(r"grep -qE '(\^\([^']*\))' <<< \"\$names\"; then echo \"ios=true\"", changes)
-    assert ui and ios, "ui-changes must write ui and ios from a grep over the changed names"
-    return re.compile(ui.group(1)), re.compile(ios.group(1))
-
-
-def test_s484_a_pr_that_only_edits_ci_yml_gets_ui_false_and_ios_false():
-    ui, ios = path_rules()
-    assert not ui.search(".github/workflows/ci.yml") and not ios.search(".github/workflows/ci.yml")
-
-
-def test_s484_every_other_row_of_the_two_path_rules_stays():
-    ui, ios = path_rules()
-    for path in ("ui/ios/templates/ListTemplate.swift", "design/tokens.json", "scripts/emit_tokens.py"):
-        assert ios.search(path) and ui.search(path), path
-    for path in ("ui/android/build.gradle.kts", "tests/fixtures/ios/Bad/BadScreen.swift", "scripts/ui_proof.py", "scripts/emit_contracts.py"):
-        assert ui.search(path) and not ios.search(path), path
 
 
 def test_s484_one_run_per_pr_and_a_new_run_cancels_the_old_one():

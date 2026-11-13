@@ -784,6 +784,13 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Decision: no repo needed; no ADR (no change of architecture or scope, the gate is untouched).
 - Confidence that nothing fits better: 0.9.
 
+## 13 Nov 2026, story #485: one change map for the slow CI jobs
+- Need: decide which CI jobs must run from the changed paths of a pull request, fail closed, one map file read by CI and local checks.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "decide which CI jobs must run from the changed paths of a pull request, fail closed, one map file read by CI and local checks"` printed `no repos found`. GitHub topic search (`github-actions`, `path-filter`) found `step-security/paths-filter` (a fork of dorny) and `chainguard-actions/dorny-paths-filter` (a fork).
+- Read: dorny/paths-filter (MIT, pushed 27 Sep 2026, not archived; filters may be a file, base rules per event, a boolean per filter) and step-security/paths-filter (MIT, a fork, pushed 9 Nov 2026, the same text).
+- Borrowed: the filter file idea and the base rule per event. Not borrowed: the action itself, which runs only inside a workflow and adds a third-party action to a protected file.
+- Decision: a stdlib reader over one JSON map, used by CI, the gate and (PR 4) check_local.sh. ADR-018.
+- Confidence that nothing fits better: 0.8.
 ## 13 Nov 2026, story #504: the kit's CI walks a sample child through the whole path
 - Need: run a tool end to end against a generated sample project in CI.
 - Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "run a tool end to end against a generated sample project in CI"` printed `no repos found`. A second run with `--need "generate a sample project and run a CLI tool end to end in CI" --out docs/research/repo-radar.md` printed the same. GitHub topic search `--topic github-actions --topic end-to-end-testing` and the query "sample project end-to-end CI smoke test" were read by title and description. Top hits: `vasu31dev/playwright-ts-template` (139 stars), `vasu31dev/playwright-ts` (106), `MikeBild/serverless-aws-cdk-ecommerce` (51), `filipsnastins/testcontainers-github-actions` (20), `hamc/blastproof` (11).

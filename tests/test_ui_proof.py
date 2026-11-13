@@ -95,15 +95,6 @@ def ui_changes_step():
     return re.search(r"  ui-changes:\n.*?\n  ui-android-compile:", ci, re.S).group(0)
 
 
-def test_s217_the_ui_filter_covers_what_decides_the_compile_and_nothing_unrelated():
-    pattern = re.search(r"grep -qE '([^']+)'", ui_changes_step()).group(1)
-    for path in ("ui/android/build.gradle.kts", "scripts/ui_proof.py", "design/tokens.json"):
-        assert re.search(pattern, path), f"{path} must run the compile jobs"
-    # story #484: an edit to ci.yml alone no longer forces the phone jobs (a PR that only added a pip package waited 40 minutes for a macOS machine)
-    for path in ("docs/x.md", "scripts/other.py", "tests/test_ui_proof.py", ".github/workflows/ci.yml"):
-        assert not re.search(pattern, path), f"{path} must not run the compile jobs"
-
-
 def job(name):
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     return re.search(rf"\n  {name}:\n.*?(?=\n  [a-z][\w-]*:\n)", ci, re.S).group(0)
@@ -122,17 +113,13 @@ def test_s217_the_gradle_distribution_is_checked_against_the_committed_sum():
     assert android.index("sha256sum -c") < android.index("compileDebugKotlin"), "check before the build"
 
 
-def test_s217_a_failed_git_diff_outputs_ui_true_and_a_move_out_of_ui_is_seen():
+def test_s485_the_change_map_step_fails_closed_and_reads_the_reader_from_the_base_branch():
+    """Story #485 replaces the grep filter of story #217. The table and the fail-closed cases are in tests/test_change_map.py."""
     step = ui_changes_step()
-    assert 'names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }' in step
-    assert "grep -qE" in step and '<<< "$names"' in step
-    assert 'git diff --name-only "$range" |' not in step, "git diff must not sit inside the pipe or the if"
+    assert 'git show "$base:scripts/$f"' in step and 'change_map.py" decide' in step
+    assert "every slow job runs (fails closed)" in step and 'decision={\"all\":true}' in step
 
 
 def test_s217_the_new_jobs_have_read_only_permissions():
     for name in ("ui-changes", "ui-android-compile", "ui-ios-compile"):
         assert re.search(r"\n    permissions:\n      contents: read\n", job(name)), name
-
-
-def test_s217_a_failed_base_fetch_outputs_ui_true():
-    assert 'git fetch -q origin "$BASE" || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }' in ui_changes_step()

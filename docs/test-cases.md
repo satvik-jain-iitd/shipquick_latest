@@ -2211,6 +2211,28 @@ Scenario: the gate
 ```
 Tests: `tests/test_ios_snapshots.py` (`test_s484_a_pr_that_only_edits_ci_yml_gets_ui_false_and_ios_false`, `test_s484_every_other_row_of_the_two_path_rules_stays`, `test_s484_one_run_per_pr_and_a_new_run_cancels_the_old_one`, `test_s484_the_gate_always_runs_and_fails_on_a_cancelled_job`), `tests/test_ui_proof.py` (`test_s217_the_ui_filter_covers_what_decides_the_compile_and_nothing_unrelated`, changed).
 
+## Story #485 (PR 1): one change map decides the slow jobs, and the gate proves it
+```gherkin
+Scenario: the table of today's paths
+  Then every path that turned a phone job on before still does (ci.yml aside), and no path that was free turns one on
+Scenario: an Android-only PR does not wait on iOS
+  When only ui/android/ changes
+  Then the android area is on and the ios area is off
+Scenario: fail closed
+  Given the event is not a pull request, the diff cannot be read, the map is missing, empty or broken, or the map or the reader changed
+  Then every area is on
+Scenario: a path no row names
+  Then every area is on and the reason names the path and the row to add
+Scenario: a rename
+  Then the old path and the new path both count
+Scenario: a job's own steps
+  When a phone job's steps change in ci.yml
+  Then that job's area is on; a change elsewhere in ci.yml turns nothing on
+Scenario: the gate proves it
+  Then a job of an on area must succeed, a job of an off area may be skipped, and a missing result fails
+  And a PR that sets a job's if: to false fails the gate
+```
+Tests: `tests/test_change_map.py` (`test_s485_every_path_that_turned_a_job_on_before_still_turns_it_on_ci_yml_aside`, `test_s485_no_path_that_was_free_before_turns_a_job_on`, `test_s485_an_android_only_change_leaves_ios_off`, `test_s485_fail_closed_*`, `test_s485_a_renamed_file_counts_under_its_old_path_and_its_new_path`, `test_s485_a_change_to_a_phone_job_s_own_steps_turns_its_area_on`, `test_s485_gate_*`, `test_s485_a_pr_that_sets_a_job_if_to_false_fails_the_gate`); `tests/test_ui_proof.py` (`test_s485_the_change_map_step_fails_closed_and_reads_the_reader_from_the_base_branch`); `tests/test_ios_snapshots.py` (`test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout`, changed to the ios output). The grep-form tests of stories #217, #219 and #484 are replaced by these.
 ## Story #491 (feedback #490): a gate-files PR is exempt from the tdd check, from the lists
 ```gherkin
 Scenario: a PR that only copies the gate files of a kit-branch child
