@@ -374,3 +374,46 @@ def test_s499_a_new_area_in_the_map_needs_no_reader_change(tmp_path):
     d = json.loads(r.stdout)
     assert d["web"] is True and d["android"] is False and d["ios"] is False, d
     assert "web=true" in out_file.read_text(encoding="utf-8").split("\n")
+
+
+# #499 review point 1: the snapshot job (13 minutes, macOS) has its own area, with the three paths that ran it before.
+SNAPSHOT_ROWS = [
+    ("ui/ios/templates/ListTemplate.swift", True),
+    ("design/tokens.json", True),
+    ("scripts/emit_tokens.py", True),
+    ("ui/guides/x.md", False),          # a doc under ui/ never ran the snapshot job
+    ("ui/mcp/x.md", False),
+    ("ui/README.md", False),
+    ("ui/android/build.gradle.kts", False),
+]
+
+
+@pytest.mark.parametrize("path,want", SNAPSHOT_ROWS)
+def test_s499_the_snapshot_job_runs_only_for_its_three_paths(tmp_path, path, want):
+    repo = make_repo(tmp_path)
+    change(repo, path)
+    assert decide(repo)["snapshot"] is want, (path, decide(repo))
+
+
+def _change_map_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("change_map_reader", READER)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_s499_every_repo_path_a_phone_job_names_is_in_its_area():
+    # Review point 3: every repo path that a phone job's block in ci.yml names is matched by that job's area, and every
+    # phone job is in an area. The job text is the source; the map must cover it.
+    reader = _change_map_module()
+    areas, _ = reader.load_map(MAP)
+    phone = set(re.findall(r"^  (ui-(?:android|ios)-[A-Za-z0-9_-]+):\s*$", CI, re.M))
+    assert phone == {job for spec in areas.values() for job in spec["jobs"]}, "a phone job is in no area, or an area names a missing job"
+    token = re.compile(r"(?<![\w/.-])((?:ui|design|tests|scripts)/[\w./*{},-]+)")
+    for area, spec in areas.items():
+        for job in spec["jobs"]:
+            block = reader.job_block(CI, job)
+            assert block is not None, job
+            for tok in sorted(set(t.rstrip(".,") for t in token.findall(block))):
+                assert reader.matches(tok, spec["paths"]) and not reader.matches(tok, spec.get("except", [])), (job, area, tok)
