@@ -349,3 +349,10 @@ def test_s485_the_ui_changes_step_decides_a_push_from_github_event_before():
     """#499 review point 1, the workflow side: a push passes github.event.before as the base, not origin/dev."""
     step = re.search(r"- name: Which slow jobs must run.*?(?=\n      - name:|\Z)", CI, re.S).group(0)
     assert "github.event.before" in step and "BEFORE" in step, step
+
+
+def test_s485_the_adr_claims_no_drop_it_does_not_make():
+    # Red for review point 7 (PR #499): the ADR said "nothing was dropped", but ui/ios/** stopped turning the Android jobs on.
+    text = (ROOT / "docs/decisions/ADR-018.md").read_text(encoding="utf-8")
+    assert "Nothing was dropped" not in text
+    assert "still does, except" in text
