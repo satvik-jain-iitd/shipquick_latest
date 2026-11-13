@@ -76,7 +76,10 @@ def test_s327_ci_job_is_warn_only_and_since_496_in_the_gate_needs():
     assert "check_shortcuts.py" in ci
     gate = ci.split("  gate:", 1)[1]
     assert "shortcut-ledger" in gate.split("steps:", 1)[0]
-    assert "continue-on-error: true" in ci.split("  shortcut-ledger:", 1)[1].split("  tdd:", 1)[0]
+    job = ci.split("  shortcut-ledger:", 1)[1].split("  tdd:", 1)[0]
+    head, steps = job.split("    steps:", 1)
+    assert "continue-on-error" not in head, "on the job, a failed step may still show a FAILURE check row"
+    assert "continue-on-error: true" in steps, "on the step, the job itself ends green"
 
 
 # ---- review of #338: wrapped comments, string literals, a missing file, a second table ----

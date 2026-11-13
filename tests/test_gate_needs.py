@@ -10,8 +10,8 @@ CI = (Path(__file__).resolve().parent.parent / ".github" / "workflows" / "ci.yml
 EXEMPT = {"gate": "the gate itself"}
 
 
-def jobs():
-    section = CI.split("\njobs:\n", 1)[1]
+def jobs(text=CI):
+    section = text.split("\njobs:\n", 1)[1]
     return re.findall(r"^  ([A-Za-z0-9_-]+):\s*$", section, re.M)
 
 
@@ -40,3 +40,8 @@ def test_s496_the_exempt_list_holds_no_job_that_is_not_in_ci_yml_and_no_job_the_
 
 def test_s496_the_gate_needs_name_only_jobs_that_exist():
     assert [n for n in gate_needs() if n not in set(jobs())] == []
+
+
+def test_s496_a_job_key_with_a_trailing_comment_is_a_job():
+    sample = "name: x\njobs:\n  one:\n    runs-on: a\n  two:   # a note\n    runs-on: a\n  three: # another\n    runs-on: a\n"
+    assert jobs(sample) == ["one", "two", "three"]

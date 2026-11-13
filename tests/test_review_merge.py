@@ -912,10 +912,39 @@ def test_s496_a_pull_request_run_of_another_pr_on_the_same_head_is_not_counted(e
     pr = good()
     pr["statusCheckRollup"] = [row("gate", 100, "FAILURE"), row("gate", 101, "SUCCESS", "2026-11-13T11:00:00Z")]
     runs = [wf_run(100, "pull_request", 1, 1, prs=(12,)), wf_run(101, "pull_request", 1, 2, prs=(99,))]
-    refused(*env(pr=pr, runs=runs), "check gate is not SUCCESS")
+    refused(*env(pr=pr, runs=runs), "two pull requests share this head")
+
+
+def test_s496_a_run_that_names_this_pr_and_another_refuses(env):
+    """Second review of #513: `pull_requests` lists every open PR on the head, so (12, 99) is two PRs on one head."""
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100)]
+    refused(*env(pr=pr, runs=[wf_run(100, "pull_request", 1, 1, prs=(12, 99))]), "two pull requests share this head")
 
 
 def test_s496_a_pull_request_run_that_names_no_pull_request_is_not_counted(env):
     pr = good()
     pr["statusCheckRollup"] = [row("gate", 100, "SUCCESS")]
     refused(*env(pr=pr, runs=[wf_run(100, "pull_request", 1, 1, prs=())]), "no required check")
+
+
+def test_s496_a_red_row_of_another_event_still_refuses(env):
+    """Second review of #513, point 1: only push and workflow_dispatch rows and replaced pull_request rows are dropped.
+    A red row of a pull_request_target run counts as before this story."""
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100), row("security", 101, "FAILURE", "2026-11-13T11:00:00Z")]
+    runs = [wf_run(100, "pull_request", 1, 1), wf_run(101, "pull_request_target", 2, 1, prs=())]
+    refused(*env(pr=pr, runs=runs), "check security is not SUCCESS")
+
+
+def test_s496_a_row_with_no_run_id_passes_through(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100), {"name": "external", "status": "COMPLETED", "conclusion": "FAILURE"}]
+    refused(*env(pr=pr, runs=[wf_run(100, "pull_request", 1, 1)]), "check external is not SUCCESS")
+
+
+def test_s496_a_newest_run_with_no_rows_yet_leaves_no_gate_and_refuses(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100)]
+    runs = [wf_run(100, "pull_request", 1, 1), wf_run(102, "pull_request", 1, 3)]   # run 102 is queued: no rows yet
+    refused(*env(pr=pr, runs=runs), "no required check")
