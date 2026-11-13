@@ -356,3 +356,20 @@ def test_s485_the_adr_claims_no_drop_it_does_not_make():
     text = (ROOT / "docs/decisions/ADR-018.md").read_text(encoding="utf-8")
     assert "Nothing was dropped" not in text
     assert "still does, except" in text
+
+
+def test_s499_a_new_area_in_the_map_needs_no_reader_change(tmp_path):
+    # Red for review point 1 (PR #499): the reader named android and ios by hand. A new area in the map must come out
+    # of the reader as its own decision and its own output line, with no code change.
+    m = json.loads(MAP_TEXT)
+    m["areas"]["web"] = {"jobs": ["web-check"], "paths": ["web/**"], "except": []}
+    repo = make_repo(tmp_path, files={**BASE_FILES, "scripts/change_map.json": json.dumps(m)})
+    change(repo, "web/app.ts")
+    out_file = tmp_path / "github-output.txt"
+    r = subprocess.run([sys.executable, str(READER), "decide", "--base", "origin/dev", "--head", "HEAD", "--event",
+                        "pull_request", "--map", "scripts/change_map.json", "--outputs", str(out_file)],
+                       cwd=repo, capture_output=True, text=True)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    d = json.loads(r.stdout)
+    assert d["web"] is True and d["android"] is False and d["ios"] is False, d
+    assert "web=true" in out_file.read_text(encoding="utf-8").split("\n")
