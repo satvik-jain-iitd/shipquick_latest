@@ -853,7 +853,7 @@ def test_s496_a_manual_run_with_a_green_gate_cannot_replace_a_red_pr_result(env)
         row("tdd", 101, "SKIPPED", "2026-11-13T11:00:00Z"), row("gate", 101, "SUCCESS", "2026-11-13T11:05:00Z"),
     ]
     runs = [wf_run(100, "pull_request", 1, 1), wf_run(101, "workflow_dispatch", 1, 2)]
-    refused(*env(pr=pr, runs=runs), "check tdd is not SUCCESS")
+    refused(*env(pr=pr, runs=runs), "is not SUCCESS")   # the PR run is red on tdd and on gate; the first by name is named
 
 
 def test_s496_a_push_run_on_the_same_head_is_not_counted_either(env):

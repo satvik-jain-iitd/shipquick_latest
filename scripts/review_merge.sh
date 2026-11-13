@@ -139,6 +139,19 @@ open=$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResol
 [ "$open" = 0 ] || refuse "$open unresolved review threads"
 
 [ "$(field '.statusCheckRollup | length')" -gt 0 ] || refuse "no checks ran"
+# story #496 (epic #485 items 15 and 16): only the PR's own, newest run of each workflow counts. A manual or push run on the same
+# head skips the PR-only jobs and starts later, and a run a newer run replaced leaves stale rows; neither may decide the merge.
+# The run of a row is in its detailsUrl; the runs of the head come from the Actions API (scripts/check_pr_runs.py).
+if jq -e '[.statusCheckRollup[] | (.detailsUrl // "") | test("/actions/runs/[0-9]+")] | any' <<<"$json" >/dev/null; then
+  runs_tmp="$(mktemp)"; rollup_tmp="$(mktemp)"
+  gh api "repos/$repo/actions/runs?head_sha=$(field .headRefOid)&per_page=100" --paginate --jq '.workflow_runs[]' >"$runs_tmp" 2>/dev/null \
+    || { rm -f "$runs_tmp" "$rollup_tmp"; refuse "cannot read the workflow runs of $(field .headRefOid)"; }
+  jq '.statusCheckRollup' <<<"$json" >"$rollup_tmp"
+  counted=$(python3 "$HERE/check_pr_runs.py" --rollup-file "$rollup_tmp" --runs-file "$runs_tmp") \
+    || { rm -f "$runs_tmp" "$rollup_tmp"; refuse "$counted"; }
+  rm -f "$runs_tmp" "$rollup_tmp"
+  json=$(jq --argjson c "$counted" '.statusCheckRollup = $c' <<<"$json")
+fi
 # A check name can carry more than one run (a rerun, a close/reopen, a stale suite from an earlier commit): only its latest run by startedAt counts.
 bad=$(jq -r '
   .statusCheckRollup

@@ -1110,7 +1110,7 @@ Scenario: --write logs each shortcut once and never edits an old row
 Scenario: check_local warns with the count and the CI job never gates
   Given scripts/check_local.sh and .github/workflows/ci.yml
   When the shortcut check is wired in
-  Then check_local prints the count as a warning and the shortcut-ledger job is not in the gate needs
+  Then check_local prints the count as a warning; the shortcut-ledger job is warn-only and, since story #496, in the gate needs
 ```
 Tests: `test_s327_one_good_and_one_no_trigger_comment_are_listed_and_only_the_second_is_tagged`, `test_s327_write_appends_one_row_per_shortcut_once_and_never_edits_old_rows`, `test_s327_the_real_repo_scan_runs_and_prints_the_count`, `test_s327_check_local_warns_with_the_count_and_never_fails`, `test_s327_ci_job_is_warn_only_and_not_in_the_gate`.
 ## Story #325 (A7): workflow security lint
@@ -2258,3 +2258,26 @@ Scenario: the name list
   Then one list in scripts/check_tdd.py holds each runner, and a sample of each name matches one of its lines
 ```
 Tests: `tests/test_check_tdd.py` (`test_s502_a_known_test_file_name_in_red_passes`, `test_s502_a_typescript_red_test_that_is_not_in_the_diff_still_fails`, `test_s502_a_fixture_in_a_tests_folder_is_not_a_test_and_says_so`, `test_s502_the_name_list_is_one_line_per_runner_in_the_script`).
+
+## Story #496 (epic #485 items 15 and 16): the merge script counts only the PR's own, newest runs
+```gherkin
+Scenario: a manual run with a green gate cannot replace a red PR result
+  Given a red tdd and a red gate in the pull_request run of the head
+  And a later workflow_dispatch run of the same head with tdd skipped and gate green
+  Then review_merge.sh refuses, because only the pull_request run counts
+Scenario: a push run on the same head is not counted either
+  Then a red gate in the pull_request run still refuses
+Scenario: a check row from a run that a newer run replaced is not counted
+  Given a run cancelled before the test matrix expanded left a check named test (cancelled)
+  And the next run of the same workflow and event on the same head named the job test (3.12) and passed
+  Then review_merge.sh merges, with no new commit needed
+Scenario: the newest run still counts when it is red
+  Then an older green gate does not hide a newer red gate
+Scenario: a red check of another workflow is not replaced by a newer run of this workflow
+  Then the merge is refused and names the check
+Scenario: the run list cannot be read, or a row names a run the list does not hold
+  Then the merge is refused
+Scenario: every job of ci.yml is in the needs of gate, or named as exempt
+  Then a job left out fails the test, and shortcut-ledger is in the list
+```
+Tests: `tests/test_review_merge.py` (`test_s496_*`), `tests/test_gate_needs.py`, `tests/test_check_shortcuts.py` (`test_s327_ci_job_is_warn_only_and_since_496_in_the_gate_needs`).

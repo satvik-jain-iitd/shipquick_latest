@@ -15,6 +15,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 ### Added
 - `tests/test_sample_child_walk.py`: the kit's CI walks a generated child (TypeScript-style test names, the kit on its own branch, a screens list, its own workflow) through `adopt.sh`, the bump, `--gate-files`, the real hooks and `check_local.sh`. It runs in the Python test job in under a minute. A new check must be named in the walk (story #504, ADOPTION.md).
 
+### Changed
+- `scripts/review_merge.sh` counts only the PR's own, newest run of each workflow (story #496, epic #485 items 15 and 16): a manual or push run on the same head can no longer replace a red PR result, and a stale row from a run a newer run replaced (a `test` cancelled before the matrix expanded, seen on #509) is not counted. The new helper is `scripts/check_pr_runs.py`. `shortcut-ledger` is in the `needs` of `gate` (still warn-only), and `tests/test_gate_needs.py` fails when a job of `ci.yml` is in neither the needs nor the exempt list.
+
 ## [0.14.2] - 2026-11-13
 Tag `v0.14.2`, "the tdd check reads other runners' test names, and the screens wiring example runs the check". Notes: `docs/RELEASE_NOTES_v0.14.2.md`.
 
