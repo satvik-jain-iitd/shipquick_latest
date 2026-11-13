@@ -841,8 +841,10 @@ def row(name, run, concl="SUCCESS", started="2026-11-13T10:00:00Z"):
             "detailsUrl": f"https://github.com/o/r/actions/runs/{run}/job/{run}1"}
 
 
-def wf_run(run_id, event="pull_request", workflow=1, number=1):
-    return {"id": run_id, "event": event, "workflow_id": workflow, "run_number": number, "head_sha": "abc123"}
+def wf_run(run_id, event="pull_request", workflow=1, number=1, prs=(12,)):
+    """One workflow run of the head. `prs` are the numbers of the pull requests the run names (the tests merge PR 12)."""
+    return {"id": run_id, "event": event, "workflow_id": workflow, "run_number": number, "head_sha": "abc123",
+            "pull_requests": [{"number": n} for n in prs]}
 
 
 def test_s496_a_manual_run_with_a_green_gate_cannot_replace_a_red_pr_result(env):
@@ -902,3 +904,18 @@ def test_s496_a_check_from_a_run_the_list_does_not_name_refuses(env):
     pr = good()
     pr["statusCheckRollup"] = [row("gate", 100)]
     refused(*env(pr=pr, runs=[wf_run(999, "pull_request", 1, 1)]), "not in the workflow runs")
+
+
+def test_s496_a_pull_request_run_of_another_pr_on_the_same_head_is_not_counted(env):
+    """Second review of #513: two PRs can share one head commit. The newest pull_request run of the head may belong to
+    the other PR, so only a run whose pull_requests list names this PR counts."""
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100, "FAILURE"), row("gate", 101, "SUCCESS", "2026-11-13T11:00:00Z")]
+    runs = [wf_run(100, "pull_request", 1, 1, prs=(12,)), wf_run(101, "pull_request", 1, 2, prs=(99,))]
+    refused(*env(pr=pr, runs=runs), "check gate is not SUCCESS")
+
+
+def test_s496_a_pull_request_run_that_names_no_pull_request_is_not_counted(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100, "SUCCESS")]
+    refused(*env(pr=pr, runs=[wf_run(100, "pull_request", 1, 1, prs=())]), "no required check")
