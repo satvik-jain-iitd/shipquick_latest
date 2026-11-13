@@ -454,3 +454,22 @@ def test_s499_pr_rules_does_not_say_a_push_runs_every_area():
     # Red for review point 4 (PR #499): a push is decided from its own diff since the push rule (fix 636c24b).
     text = (ROOT / "docs/PR_RULES.md").read_text(encoding="utf-8")
     assert "is not a pull request, so every area runs" not in text
+
+
+def test_s499_a_top_level_key_after_jobs_is_header_and_turns_every_area_on(tmp_path):
+    """#499 second review, point 1: a column-0 key after `jobs:` (here env:) is part of the header; a change there
+    decides the other jobs, so every area turns on. The split on `\\njobs:` never saw it."""
+    repo = make_repo(tmp_path)
+    text = (repo / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    change(repo, ".github/workflows/ci.yml", text=text + "\nenv:\n  SHIP_FLAG: \"1\"\n")
+    change(repo, "docs/x.md", text="doc\n")
+    d = decide(repo)
+    assert on(d) == {"android": True, "ios": True, "snapshot": True}, d
+
+
+def test_s499_a_decision_without_an_area_is_refused_unless_all_is_true(tmp_path):
+    """#499 second review, point 2: a decision that names no area (or has all false and misses one) must not pass the
+    gate with every phone job skipped. The gate refuses it; all: true is the only way to say 'every area on'."""
+    for decision in ({}, {"all": False, "reasons": []}, {"android": False, "ios": False, "all": False, "reasons": []}):
+        r = gate(tmp_path, decision, needs({}))
+        assert r.returncode == 1, (decision, r.stdout + r.stderr)
