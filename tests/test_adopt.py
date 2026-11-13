@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -1130,3 +1131,27 @@ def test_s479_gate_files_refuses_to_overwrite_a_gitignored_file_on_disk(child):
     assert r.returncode == 2 and "roadmap.json" in r.stderr and "uncommitted" in r.stderr, (r.stdout, r.stderr)
     assert (child / "roadmap.json").read_text(encoding="utf-8") == mine and not (child / ".pre-commit-config.yaml").exists()
 
+
+
+# ---- story #498: one run per PR in the caller; no child build jobs or map written ----
+def test_s498_adopt_writes_the_caller_with_one_run_per_pull_request(child):
+    adopt(child)
+    text = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    assert "concurrency:\n  group: shipquick-checks-${{ github.event.pull_request.number || github.run_id }}\n  cancel-in-progress: true\n" in text
+
+
+def test_s498_check_says_so_when_the_caller_has_no_concurrency_block(child, gh):
+    with_origin(child)
+    adopt(child)
+    add_fake_submodule(child, HEAD)
+    call = child / ".github" / "workflows" / "shipquick-call.yml"
+    call.write_text(re.sub(r"concurrency:\n(  .*\n)+", "", call.read_text(encoding="utf-8")), encoding="utf-8")
+    r = adopt(child, "--check", env=gh)
+    assert r.returncode == 1 and "no concurrency block" in r.stdout and "one run per PR" in r.stdout, r.stdout
+
+
+def test_s498_adopt_writes_no_build_jobs_and_no_change_map(child):
+    adopt(child)
+    text = (child / ".github" / "workflows" / "shipquick-call.yml").read_text(encoding="utf-8")
+    assert "changes:" not in text and "needs:" not in text
+    assert not list(child.rglob("change_map*")), "the child's map is the child's own (ADR-019)"

@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 
 from test_adopt import GH_STUB, PROTECTED   # the stub gh and the protection of the default branch, reused (story #504)
+import test_child_map_doc as map_doc   # the snippet of docs/ADOPTION.md, run in a generated child (story #498)
 
 ROOT = Path(__file__).resolve().parent.parent
 PONYTAIL_ON = ROOT / "tests/fixtures/adopt/settings-ponytail-on.json"
@@ -239,6 +240,44 @@ def test_a_sample_child_walks_the_whole_path_on_the_kit(tmp_path):
     assert "base: origin/kit" not in verbose, "the code PR must not pick the kit branch as its base"
     walked_missing = sorted(n for n in WALKED if not re.search(rf"^ok\s+{re.escape(n)}\s*$", verbose, re.M))
     assert walked_missing == [], f"the code PR's pre-push stage did not print 'ok' for: {walked_missing}\n{verbose[-1200:]}"
+
+    # 8. Story #498: the child's own change map, from the snippet in the kit's docs/ADOPTION.md, read by the kit's reader.
+    #    Four cases on branches of one base: docs only, a path of the area, a kit bump, and a skipped job of an area that is on.
+    git(child, "remote", "set-url", "origin", str(origin))   # the snippet's fetch must not leave this machine
+    yml, mapjson = map_doc.blocks("yaml", kit)[0], map_doc.blocks("json", kit)[0]
+    git(child, "checkout", "-q", "-b", "mapbase", "kit")
+    for rel, text in {".shipquick/change_map.json": mapjson, ".github/workflows/build.yml": yml, "docs/a.md": "d\n", "app/main.py": "m\n"}.items():
+        (child / rel).parent.mkdir(parents=True, exist_ok=True)
+        (child / rel).write_text(text, encoding="utf-8")
+    git(child, "add", "-A")
+    step("commit the map base", commit(child, env, "chore: the child's map and its build workflow"))
+    publish(child, "mapbase")
+    ok, skip = {"changes": {"result": "success"}, "app-tests": {"result": "success"}}, {"changes": {"result": "success"}, "app-tests": {"result": "skipped"}}
+
+    def case(name, edit):
+        git(child, "checkout", "-q", "-b", name, "mapbase")
+        edit()
+        git(child, "add", "-A")
+        step(f"commit {name}", commit(child, env, f"chore: {name}"))
+        out = child.parent / f"{name}.out"
+        out.write_text("", encoding="utf-8")
+        e = {**env, "EVENT": "pull_request", "BASE": "mapbase", "BEFORE": "", "RUNNER_TEMP": str(child.parent), "GITHUB_OUTPUT": str(out)}
+        step(f"decide {name}", run(["bash", "-e", "-c", map_doc.run_blocks(yml)[0]], child, e))
+        return dict(line.split("=", 1) for line in out.read_text(encoding="utf-8").splitlines())
+
+    def gate(decision, needs):
+        e = {**env, "DECISION": decision, "NEEDS": json.dumps(needs), "RUNNER_TEMP": str(child.parent)}
+        return run(["bash", "-e", "-c", map_doc.run_blocks(yml)[1]], child, e)
+
+    d = case("docs-only", lambda: (child / "docs/a.md").write_text("d2\n", encoding="utf-8"))
+    assert d["app"] == "false", f"a docs-only change must leave the area off: {d}"
+    assert gate(d["decision"], skip).returncode == 0, "a skipped job of an off area must pass the child's gate"
+    d = case("app-path", lambda: (child / "app/main.py").write_text("m2\n", encoding="utf-8"))
+    assert d["app"] == "true", f"a change under the area's path must turn it on: {d}"
+    assert gate(d["decision"], ok).returncode == 0
+    assert gate(d["decision"], skip).returncode == 1, "a skipped job of an area that is on must fail the child's gate"
+    d = case("kit-bump", lambda: git(kit, "checkout", "-q", "--detach", before))
+    assert json.loads(d["decision"])["all"] is True, f"a kit bump must turn every area on: {d}"
 
     elapsed = time.monotonic() - started
     assert elapsed < 60, f"the walk took {elapsed:.0f} s; done-when 6 says under one minute"
