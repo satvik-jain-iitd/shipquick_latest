@@ -5,7 +5,7 @@ A patch release (`pm/agile/RELEASE_GUIDE.md`). It fixes two things a child hit: 
 ## What a child gains
 
 - **The tdd check reads other runners' test names.** A `## Red` section may name a test file of Python (`*_test.py`), js/jsx/ts/tsx/mjs/cjs (`*.test.*`, `*.spec.*`), Go (`*_test.go`), Kotlin (`*Test.kt`, `*Tests.kt`) and Swift (`*Test.swift`, `*Tests.swift`). The names live in one list, `TEST_NAMES`, one line per runner (#502, feedback #501).
-- **The tdd check matches the changed test paths.** A path with brackets, symbols, or a space in it, such as `app/[id]/page.test.tsx`, is matched as a whole path. A test file that names no test is refused with a clear message, not a guess (#502).
+- **The tdd check matches the changed test paths.** A path with brackets, symbols, or a space in it, such as `app/[id]/page.test.tsx`, is matched as a whole path. A `## Red` section that names no test is refused with a clear message, not a guess (#502).
 - **The screens wiring example runs the check.** The "Wiring CI" example in `docs/SCREENS.md` runs `screens.sh --check` before the upload step, as `check_screens_wired.py` requires. The section says how to split a shared e2e run. The check's message names that section (#503, feedback #500).
 
 ## What breaks for children on the bump
