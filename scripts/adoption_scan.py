@@ -114,6 +114,7 @@ def main() -> int:
     today = datetime.datetime.now(datetime.timezone.utc)
     child_token = os.environ.get(CHILD_TOKEN_ENV)
     skipped = []   # story #260: a skip is never silent; each one is named again in the summary
+    unreported = []   # story #497: children whose issue could not be read or opened; the run ends red
     for child, is_private in read_children(args.children):
         token = child_token if is_private else None
         fetch = (lambda path, t=token: gh_api(path, token=t))
@@ -126,13 +127,19 @@ def main() -> int:
         why = check_child(child, fetch, args.days, today)
         if why:
             print(why)
-            open_or_comment(child, why, args.dry_run)
+            try:
+                open_or_comment(child, why, args.dry_run)
+            except issue_notice.IssueError as e:   # story #497: a report that did not land is never silent, and never stops the scan
+                print(f"could not report {child}: {e}")
+                unreported.append(child)
         else:
             print(f"{child}: adopted and fresh")
     print(f"summary: {len(skipped)} skipped")
     for line in skipped:
         print(line)
-    return 0
+    if unreported:
+        print(f"summary: {len(unreported)} could not be reported: {', '.join(unreported)}")
+    return 1 if unreported else 0
 
 
 if __name__ == "__main__":

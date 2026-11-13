@@ -202,7 +202,7 @@ def test_s497_the_nightly_label_is_made_before_the_first_issue_is_opened():
 
 def test_s497_issue_notice_opens_or_comments_by_a_key_in_the_title():
     cmds = []
-    run = lambda cmd, check=False, **k: cmds.append(cmd)  # noqa: E731
+    run = lambda cmd, check=False, **k: cmds.append(cmd) or subprocess.CompletedProcess(cmd, 0)  # noqa: E731
     existing = [{"number": 7, "title": "Nightly: THE FULL CI run on dev is red"}]
     out = issue_notice.open_or_comment("o/r", "nightly", "t", "b", "the full ci run", False, api=lambda p, token=None: existing, run=run)
     assert out == "commented #7" and cmds[0][:3] == ["gh", "issue", "comment"]

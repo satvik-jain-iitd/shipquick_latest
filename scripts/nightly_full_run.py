@@ -14,7 +14,9 @@ already turns every area on for an event that is not a pull request or a push. N
       3. a red run opens one issue (label `nightly`) that names each bad job and says whether it failed or never got a
          machine; a later red night comments on the same open issue (the shared helper, scripts/issue_notice.py).
   --dry-run dispatches nothing and changes nothing: it reads the latest dispatched run and prints what it would do.
-Needs: gh, authenticated (GH_TOKEN) with actions: write and issues: write. Exit 1 only when the dispatch itself fails.
+Needs: gh, authenticated (GH_TOKEN) with actions: write and issues: write.
+Exit 1 when the night cannot be read or reported: a failed dispatch, run list, run state, jobs list or issue list, or an
+issue or comment that did not land. Never silence and never a guess: GitHub shows the red night to someone.
 """
 import argparse
 import datetime
@@ -33,17 +35,26 @@ WORKFLOW = "ci.yml"
 BAD = {"failure", "timed_out", "cancelled", "action_required", "startup_failure", "stale"}
 FIND_SECONDS = 600   # how long a dispatched run may take to show up
 POLL_SECONDS = 60
+READ_FAILURES = 3    # failed reads of the run's state in a row before the night ends red
+
+
+class NightError(Exception):
+    """The night cannot be read: dispatch, run list, run state or jobs list failed."""
 
 
 def classify(job):
-    """None for a good job; otherwise (kind, detail). kind is "failed" or "never got a machine"."""
+    """None for a good job; otherwise (kind, detail). kind is "failed", "never got a machine" (only a job still queued or
+    waiting at the deadline) or "cancelled before it started" (a completed job no runner took, cancelled with its run)."""
     status, conclusion = job.get("status"), job.get("conclusion")
     no_machine = not job.get("runner_name") and not (job.get("steps") or [])
     if status != "completed":   # queued, waiting or in progress at the deadline
-        return ("never got a machine", f"still {status} at the deadline, no runner took it") if no_machine \
-            else ("failed", f"still {status} at the deadline")
+        if status in ("queued", "waiting", "pending"):
+            return "never got a machine", f"still {status} at the deadline, no runner took it"
+        return "failed", f"still {status} at the deadline"
     if conclusion in BAD:
-        return ("never got a machine", f"{conclusion}, no runner took it") if no_machine else ("failed", f"conclusion {conclusion}")
+        if no_machine and conclusion == "cancelled":
+            return "cancelled before it started", "cancelled, no runner took it"
+        return "failed", f"conclusion {conclusion}" + (", no runner took it" if no_machine else "")
     return None   # success, skipped or neutral: the gate job judges the whole run
 
 
@@ -58,6 +69,8 @@ def problems(run, jobs):
         c = classify(j)
         if c:
             found.append({"job": j.get("name", "?"), "kind": c[0], "detail": c[1]})
+    if len(found) > 1:   # the gate fails because another job did: name the real job, not the gate beside it
+        found = [p for p in found if p["job"] != "gate"]
     return found or [{"job": f"{WORKFLOW} run", "kind": "failed", "detail": f"the run ended {run.get('status')}/{run.get('conclusion')} with no bad job"}]
 
 
@@ -76,8 +89,10 @@ def report(repo, run, jobs, today, api, run_cmd, dry_run=False):
     if not found:
         return "green"
     if not dry_run:
-        run_cmd(["gh", "label", "create", LABEL, "-R", repo, "--description", "Red nights of the full CI run on dev",
-                 "--color", "D93F0B", "--force"], check=False)
+        made = run_cmd(["gh", "label", "create", LABEL, "-R", repo, "--description", "Red nights of the full CI run on dev",
+                        "--color", "D93F0B", "--force"], check=False)
+        if made.returncode != 0:   # not fatal by itself: the issue create below fails when the label is really missing
+            print(f"warning: gh label create {LABEL} failed (exit {made.returncode})")
     return issue_notice.open_or_comment(repo, LABEL, TITLE, issue_text(run, found, today), TITLE, dry_run, api=api, run=run_cmd)
 
 
@@ -89,8 +104,10 @@ def find_run(repo, ref, since, api, sleep, now, limit=FIND_SECONDS):
     """The newest dispatched run of ci.yml on the ref created at or after `since` (a minute of slack), or None."""
     start = now()
     while True:
-        runs = (api(f"repos/{repo}/actions/workflows/{WORKFLOW}/runs?event=workflow_dispatch&branch={ref}&per_page=10") or {}).get("workflow_runs", [])
-        for r in runs:
+        data = api(f"repos/{repo}/actions/workflows/{WORKFLOW}/runs?event=workflow_dispatch&branch={ref}&per_page=10")
+        if data is None:   # "cannot read" is not "no run yet"
+            raise NightError(f"cannot read the {WORKFLOW} runs of {repo}")
+        for r in data.get("workflow_runs", []):
             if _ts(r["created_at"]) >= since - 60:
                 return r
         if now() - start >= limit:
@@ -100,10 +117,18 @@ def find_run(repo, ref, since, api, sleep, now, limit=FIND_SECONDS):
 
 def wait_done(repo, run, deadline_seconds, api, sleep, now):
     """Poll the run until it is completed or the deadline passes; return the last state read."""
-    start = now()
+    start, failures, state = now(), 0, run
     while True:
-        state = api(f"repos/{repo}/actions/runs/{run['id']}") or run
-        if state.get("status") == "completed" or now() - start >= deadline_seconds:
+        read = api(f"repos/{repo}/actions/runs/{run['id']}")
+        if read is None:
+            failures += 1
+            if failures >= READ_FAILURES:
+                raise NightError(f"cannot read run {run['id']} of {repo} ({failures} reads in a row failed)")
+        else:
+            failures, state = 0, read
+            if state.get("status") == "completed":
+                return state
+        if now() - start >= deadline_seconds:
             return state
         sleep(POLL_SECONDS)
 
@@ -112,12 +137,17 @@ def nightly(repo, ref, wait_minutes, api=issue_notice.gh_api, run_cmd=subprocess
     today = today or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     started = now()
     if not dry_run:
-        run_cmd(["gh", "api", "-X", "POST", f"repos/{repo}/actions/workflows/{WORKFLOW}/dispatches", "-f", f"ref={ref}"], check=True)
+        sent = run_cmd(["gh", "api", "-X", "POST", f"repos/{repo}/actions/workflows/{WORKFLOW}/dispatches", "-f", f"ref={ref}"], check=False)
+        if sent.returncode != 0:
+            raise NightError(f"cannot dispatch {WORKFLOW} on {ref} of {repo} (exit {sent.returncode})")
     run = find_run(repo, ref, 0 if dry_run else started, api, sleep, now, limit=0 if dry_run else FIND_SECONDS)   # a dry run looks once
     if run is None:
         return report(repo, None, [], today, api, run_cmd, dry_run)
     run = wait_done(repo, run, wait_minutes * 60, api, sleep, now)
-    jobs = (api(f"repos/{repo}/actions/runs/{run['id']}/jobs?per_page=100") or {}).get("jobs", [])
+    listed = api(f"repos/{repo}/actions/runs/{run['id']}/jobs?per_page=100")
+    if listed is None:
+        raise NightError(f"cannot read the jobs of run {run['id']} of {repo}")
+    jobs = listed.get("jobs", [])
     return report(repo, run, jobs, today, api, run_cmd, dry_run)
 
 
@@ -128,7 +158,11 @@ def main(argv=None):
     ap.add_argument("--wait-minutes", type=int, default=150)
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args(argv)
-    print(f"nightly full run on {a.repo}@{a.ref}: {nightly(a.repo, a.ref, a.wait_minutes, dry_run=a.dry_run)}")
+    try:
+        print(f"nightly full run on {a.repo}@{a.ref}: {nightly(a.repo, a.ref, a.wait_minutes, dry_run=a.dry_run)}")
+    except (NightError, issue_notice.IssueError) as e:
+        print(f"nightly full run on {a.repo}@{a.ref}: cannot finish: {e}")
+        return 1
     return 0
 
 

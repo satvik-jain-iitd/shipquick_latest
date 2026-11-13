@@ -2321,3 +2321,21 @@ Scenario: the adoption scan and the nightly share one issue helper
   Then both open or comment through scripts/issue_notice.py
 ```
 Tests: `tests/test_nightly_full_run.py` (`test_s497_*`).
+
+### Story #497, second review of #514: a night the script cannot read or report ends red
+```gherkin
+Scenario: gh issue create or gh issue comment fails
+  Then the night ends red (exit 1), not "opened"
+Scenario: the list of open issues cannot be read
+  Then the helper raises and no second issue opens; an empty list is a normal read
+Scenario: the run list or the jobs list cannot be read
+  Then the night ends red and no issue is opened; an empty run list is "no run yet"
+Scenario: the adoption scan cannot report one child
+  Then it still scans the next child and ends red at the end
+Scenario: a completed job with no runner
+  Then it is "cancelled before it started"; only a job still queued or waiting at the deadline never got a machine
+Scenario: the gate and another job both failed
+  Then only the other job is listed
+Scenario: a manual start beside the timer
+  Then the concurrency group makes it wait and never cancels the running night
+```

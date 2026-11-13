@@ -13,6 +13,12 @@ permissions:
   actions: write
   issues: write
 
+# One night at a time: a manual start beside the timer waits for the running one and never cancels it, so two nights cannot
+# open two issues.
+concurrency:
+  group: nightly-full-run
+  cancel-in-progress: false
+
 jobs:
   nightly:
     runs-on: ubuntu-latest
