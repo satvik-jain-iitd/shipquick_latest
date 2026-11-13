@@ -127,7 +127,10 @@ def test_a_sample_child_walks_the_whole_path_on_the_kit(tmp_path):
     started = time.monotonic()
     kit, kit_sha = make_kit(tmp_path / "kit")
     short = kit_sha[:7]
-    before = git(kit, "rev-parse", f"{kit_sha}^")   # the first pin: the commit before the kit under test
+    # the first pin: a commit with the kit's own tree and no parent, made here, so the walk never needs history
+    # (CI checks out a shallow merge commit, and its parent is not there)
+    before = git(kit, "-c", "user.name=walk", "-c", "user.email=walk@example.com", "commit-tree",
+                 git(kit, "rev-parse", f"{kit_sha}^{{tree}}"), "-m", "walk: the kit before the bump")
     stub = tmp_path / "stub"
     stub.mkdir()
     (stub / "gh").write_text(GH_STUB, encoding="utf-8")
