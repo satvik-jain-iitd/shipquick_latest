@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.14.2] - 2026-11-13
+Tag `v0.14.2`, "the tdd check reads other runners' test names, and the screens wiring example runs the check". Notes: `docs/RELEASE_NOTES_v0.14.2.md`.
+
 ### Changed
 - `scripts/check_tdd.py`: a `## Red` section may name a test file of other runners: `*_test.py`, `*.test.`/`*.spec.` for js, jsx, ts, tsx, mjs, cjs, `*_test.go`, `*Test(s).kt`, `*Test(s).swift`. One list, `TEST_NAMES`, one line per runner. A path in the diff that no name accepts says so (#502, feedback #501).
 
