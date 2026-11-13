@@ -63,8 +63,23 @@ def job_block(text, name):
 
 
 def decision_parts(text):
-    """The header of ci.yml (before `jobs:`) and the ui-changes job, the two parts that decide which jobs run."""
-    return text.split("\njobs:", 1)[0], job_block(text, "ui-changes")
+    """The header of ci.yml and the ui-changes job, the two parts that decide which jobs run. The header is every line
+    outside a job's body: the lines before `jobs:` and every column-0 key after it (a top-level env: placed after the
+    jobs is header too, story #499 second review). Only a job's own body is left out of the header."""
+    header, bodies, in_jobs, cur = [], {}, False, None
+    for line in text.split("\n"):
+        if re.match(r"^[^\s#]", line):          # a column-0 key: only `jobs:` opens the job section
+            in_jobs, cur = line.startswith("jobs:"), None
+            header.append(line)
+        elif in_jobs and re.match(r"^  [A-Za-z0-9_-]+:\s*$", line):   # a job key starts that job's body
+            cur = line.strip()[:-1]
+            bodies.setdefault(cur, [])
+        elif in_jobs and cur is not None:       # a line of a job's body
+            bodies[cur].append(line)
+        else:
+            header.append(line)
+    ui = "\n".join(bodies["ui-changes"]) if "ui-changes" in bodies else None
+    return "\n".join(header), ui
 
 
 def load_map(path):
@@ -131,6 +146,9 @@ def decide(base, head, event, map_path):
 def gate(decision, needs, areas):
     wrong = []
     for area, spec in areas.items():
+        if area not in decision and not decision.get("all"):   # a decision that names no area is refused (story #499)
+            wrong.append(f"decision has no value for area {area}; a decision must name every area, or set all to true")
+            continue
         on = bool(decision.get(area)) or bool(decision.get("all"))   # all: true means every area on (fail closed)
         for job in spec["jobs"]:
             res = (needs.get(job) or {}).get("result")

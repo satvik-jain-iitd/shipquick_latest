@@ -78,13 +78,14 @@ def change(repo, path, text=None, delete=False, move_to=None):
     else:
         p = repo / path
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(text if text is not None else p.read_text(encoding="utf-8") + "x\n", encoding="utf-8")
+        p.write_text(text if text is not None else p.read_text(encoding="utf-8") + "# x\n", encoding="utf-8")   # a comment line: valid YAML and Python, and a column-0 non-key line in ci.yml would be header
         git(repo, "add", path)
     git(repo, "commit", "-q", "-m", f"change {path}")
 
 
 def on(d):
-    return {"android": d["android"], "ios": d["ios"]}
+    """Every area of the decision, not two of them: a test that forgets an area fails here (story #499, second review)."""
+    return {k: v for k, v in d.items() if k not in ("all", "reasons")}
 
 
 # ---- the map and its rows ----
@@ -100,19 +101,19 @@ def test_s485_the_map_is_json_with_two_areas_and_the_free_paths_and_no_yaml_read
 
 # #499 review point 5: one repo per path, with the areas (jobs) that path turns on. Today's rule, row by row.
 TABLE = [
-    ("ui/android/build.gradle.kts", {"android": True, "ios": False}),
-    ("ui/ios/templates/ListTemplate.swift", {"android": False, "ios": True}),
-    ("ui/tool/package.json", {"android": True, "ios": True}),
-    ("tests/fixtures/ios/Bad/BadScreen.swift", {"android": False, "ios": True}),   # story #499: the iOS fixture only
-    ("scripts/ui_proof.py", {"android": True, "ios": True}),
-    ("scripts/emit_contracts.py", {"android": True, "ios": True}),
-    ("scripts/emit_tokens.py", {"android": True, "ios": True}),
-    ("design/tokens.json", {"android": True, "ios": True}),
-    ("docs/x.md", {"android": False, "ios": False}),
-    ("scripts/other.py", {"android": False, "ios": False}),
-    ("tests/test_ui_proof.py", {"android": False, "ios": False}),
-    (".github/workflows/ci.yml", {"android": False, "ios": False}),
-    ("CHANGELOG.md", {"android": False, "ios": False}),
+    ("ui/android/build.gradle.kts", {"android": True, "ios": False, "snapshot": False}),
+    ("ui/ios/templates/ListTemplate.swift", {"android": False, "ios": True, "snapshot": True}),
+    ("ui/tool/package.json", {"android": True, "ios": True, "snapshot": False}),
+    ("tests/fixtures/ios/Bad/BadScreen.swift", {"android": False, "ios": True, "snapshot": False}),   # story #499: the iOS fixture only
+    ("scripts/ui_proof.py", {"android": True, "ios": True, "snapshot": False}),
+    ("scripts/emit_contracts.py", {"android": True, "ios": True, "snapshot": False}),
+    ("scripts/emit_tokens.py", {"android": True, "ios": True, "snapshot": True}),
+    ("design/tokens.json", {"android": True, "ios": True, "snapshot": True}),
+    ("docs/x.md", {"android": False, "ios": False, "snapshot": False}),
+    ("scripts/other.py", {"android": False, "ios": False, "snapshot": False}),
+    ("tests/test_ui_proof.py", {"android": False, "ios": False, "snapshot": False}),
+    (".github/workflows/ci.yml", {"android": False, "ios": False, "snapshot": False}),
+    ("CHANGELOG.md", {"android": False, "ios": False, "snapshot": False}),
 ]
 
 
@@ -137,25 +138,25 @@ def test_s485_no_path_that_was_free_before_turns_a_job_on(tmp_path):
 def test_s485_an_android_only_change_leaves_ios_off(tmp_path):
     repo = make_repo(tmp_path)
     change(repo, "ui/android/build.gradle.kts")
-    assert on(decide(repo)) == {"android": True, "ios": False}
+    assert on(decide(repo)) == {"android": True, "ios": False, "snapshot": False}
 
 
 def test_s485_an_ios_only_change_leaves_android_off(tmp_path):
     repo = make_repo(tmp_path)
     change(repo, "ui/ios/templates/ListTemplate.swift")
-    assert on(decide(repo)) == {"android": False, "ios": True}
+    assert on(decide(repo)) == {"android": False, "ios": True, "snapshot": True}
 
 
 def test_s485_a_shared_ui_path_turns_both_on(tmp_path):
     repo = make_repo(tmp_path)
     change(repo, "ui/tool/package.json")
-    assert on(decide(repo)) == {"android": True, "ios": True}
+    assert on(decide(repo)) == {"android": True, "ios": True, "snapshot": False}
 
 
 def test_s485_a_new_file_inside_a_named_folder_needs_no_map_row(tmp_path):
     repo = make_repo(tmp_path)
     change(repo, "ui/android/brandnew/Thing.kt", text="new\n")
-    assert on(decide(repo)) == {"android": True, "ios": False}
+    assert on(decide(repo)) == {"android": True, "ios": False, "snapshot": False}
 
 
 def test_s485_a_new_top_level_folder_turns_every_area_on_and_names_the_row_to_add(tmp_path):
@@ -169,7 +170,7 @@ def test_s485_a_new_top_level_folder_turns_every_area_on_and_names_the_row_to_ad
 def test_s485_a_docs_only_change_turns_nothing_on(tmp_path):
     repo = make_repo(tmp_path)
     change(repo, "docs/x.md", text="more\n")
-    assert on(decide(repo)) == {"android": False, "ios": False}
+    assert on(decide(repo)) == {"android": False, "ios": False, "snapshot": False}
 
 
 # ---- fail closed (done-when 4): every doubt turns every area on, each case with its own test ----
@@ -212,10 +213,10 @@ def test_s485_fail_closed_when_the_map_or_its_reader_changed_in_the_pr(tmp_path)
 def test_s485_a_renamed_file_counts_under_its_old_path_and_its_new_path(tmp_path):
     repo = make_repo(tmp_path)
     change(repo, "ui/ios/templates/ListTemplate.swift", move_to="docs/ListTemplate.md")
-    assert on(decide(repo)) == {"android": False, "ios": True}, "the old path turns ios on"
+    assert on(decide(repo)) == {"android": False, "ios": True, "snapshot": True}, "the old path turns ios on"
     repo2 = make_repo(tmp_path / "b")
     change(repo2, "docs/x.md", move_to="ui/android/moved/x.kt")
-    assert on(decide(repo2)) == {"android": True, "ios": False}, "the new path turns android on"
+    assert on(decide(repo2)) == {"android": True, "ios": False, "snapshot": False}, "the new path turns android on"
 
 
 # ---- rule 5: a job's own steps turn that job's area on; another part of ci.yml does not ----
@@ -231,14 +232,14 @@ def test_s485_a_change_to_a_phone_job_s_own_steps_turns_its_area_on(tmp_path):
     repo = make_repo(tmp_path)
     edit_ci(repo, "CI= bash ui/tool/ios_lint.sh tests/fixtures/ios/Bad/BadScreen.swift", "CI= bash ui/tool/ios_lint.sh tests/fixtures/ios/Bad/BadScreen.swift  # changed")
     d = decide(repo)
-    assert on(d) == {"android": False, "ios": True}, d
+    assert on(d) == {"android": False, "ios": True, "snapshot": False}, d
     assert any("ui-ios-lint" in r for r in d["reasons"]), d["reasons"]
 
 
 def test_s485_a_change_to_another_part_of_ci_yml_turns_nothing_on(tmp_path):
     repo = make_repo(tmp_path)
     edit_ci(repo, "  gate:\n    name: gate\n", "  gate:\n    name: gate\n    # a comment in the gate job\n")
-    assert on(decide(repo)) == {"android": False, "ios": False}
+    assert on(decide(repo)) == {"android": False, "ios": False, "snapshot": False}
 
 
 def test_s485_ci_yml_has_no_inline_path_rule_left():
@@ -267,12 +268,12 @@ def test_s485_gate_passes_when_every_job_of_an_on_area_succeeded(tmp_path):
 
 
 def test_s485_gate_fails_when_a_job_of_an_on_area_was_skipped(tmp_path):
-    r = gate(tmp_path, {"android": False, "ios": True, "all": False, "reasons": []}, needs({"ui-ios-lint": "skipped"}))
+    r = gate(tmp_path, {"android": False, "ios": True, "snapshot": False, "all": False, "reasons": []}, needs({"ui-ios-lint": "skipped"}))
     assert r.returncode == 1 and "ui-ios-lint" in r.stdout + r.stderr
 
 
 def test_s485_gate_passes_a_skipped_job_of_an_off_area(tmp_path):
-    r = gate(tmp_path, {"android": True, "ios": False, "all": False, "reasons": []},
+    r = gate(tmp_path, {"android": True, "ios": False, "snapshot": False, "all": False, "reasons": []},
              needs({"ui-ios-compile": "skipped", "ui-ios-lint": "skipped", "ui-ios-snapshots": "skipped"}))
     assert r.returncode == 0, r.stdout + r.stderr
 
@@ -308,11 +309,11 @@ def test_s485_a_change_to_the_decision_job_or_the_top_of_ci_yml_turns_every_area
     repo = make_repo(tmp_path)
     edit_ci(repo, "Which slow jobs must run? (story #485, one map)", "Which slow jobs must run? (story #485, one map) edited")
     d = decide(repo)
-    assert on(d) == {"android": True, "ios": True}, d
+    assert on(d) == {"android": True, "ios": True, "snapshot": True}, d
     assert any("ci.yml" in r for r in d["reasons"]), d["reasons"]
     repo2 = make_repo(tmp_path / "top")
     edit_ci(repo2, 'name: "shipquick_latest CI"', 'name: "shipquick_latest CI (edited)"')
-    assert on(decide(repo2)) == {"android": True, "ios": True}
+    assert on(decide(repo2)) == {"android": True, "ios": True, "snapshot": True}
 
 
 def test_s485_all_true_turns_every_area_on_in_the_gate(tmp_path):
@@ -325,7 +326,7 @@ def test_s485_a_map_job_with_no_block_in_head_ci_yml_turns_every_area_on(tmp_pat
     """#499 review point 3: a job the map names but head ci.yml does not have cannot be judged; every area turns on."""
     repo = make_repo(tmp_path)
     edit_ci(repo, "  ui-ios-lint:\n", "  ui-ios-lint-renamed:\n")
-    assert on(decide(repo)) == {"android": True, "ios": True}, decide(repo)
+    assert on(decide(repo)) == {"android": True, "ios": True, "snapshot": True}, decide(repo)
 
 
 def test_s485_a_path_with_a_space_is_one_path_split_on_nul(tmp_path):
@@ -333,7 +334,7 @@ def test_s485_a_path_with_a_space_is_one_path_split_on_nul(tmp_path):
     which would turn Android on for an iOS-only change."""
     repo = make_repo(tmp_path)
     change(repo, "ui/ios/templates/Screen One.swift", text="s\n")
-    assert on(decide(repo)) == {"android": False, "ios": True}, decide(repo)
+    assert on(decide(repo)) == {"android": False, "ios": True, "snapshot": True}, decide(repo)
 
 
 def test_s485_a_push_is_decided_from_its_own_diff_and_an_unreadable_before_turns_all_on(tmp_path):
@@ -342,9 +343,9 @@ def test_s485_a_push_is_decided_from_its_own_diff_and_an_unreadable_before_turns
     repo = make_repo(tmp_path)
     change(repo, "docs/x.md", text="doc two\n")
     d = decide(repo, event="push", base="origin/dev")
-    assert on(d) == {"android": False, "ios": False}, d
-    assert on(decide(repo, event="push", base="0" * 40)) == {"android": True, "ios": True}
-    assert on(decide(repo, event="workflow_dispatch", base="origin/dev")) == {"android": True, "ios": True}
+    assert on(d) == {"android": False, "ios": False, "snapshot": False}, d
+    assert on(decide(repo, event="push", base="0" * 40)) == {"android": True, "ios": True, "snapshot": True}
+    assert on(decide(repo, event="workflow_dispatch", base="origin/dev")) == {"android": True, "ios": True, "snapshot": True}
 
 
 def test_s485_the_ui_changes_step_decides_a_push_from_github_event_before():
@@ -436,10 +437,10 @@ def test_s499_ci_yml_reads_an_output_for_every_area_of_the_map():
 # #499 review point 2: only tests/fixtures/android and tests/fixtures/ios are read by a phone job. Other fixture folders
 # are free (the owner's rule: run what is relevant).
 FIXTURE_ROWS = [
-    ("tests/fixtures/android/x.txt", {"android": True, "ios": False}),
-    ("tests/fixtures/ios/x.swift", {"android": False, "ios": True}),
-    ("tests/fixtures/adopt/x.txt", {"android": False, "ios": False}),
-    ("tests/fixtures/web/x.txt", {"android": False, "ios": False}),
+    ("tests/fixtures/android/x.txt", {"android": True, "ios": False, "snapshot": False}),
+    ("tests/fixtures/ios/x.swift", {"android": False, "ios": True, "snapshot": False}),
+    ("tests/fixtures/adopt/x.txt", {"android": False, "ios": False, "snapshot": False}),
+    ("tests/fixtures/web/x.txt", {"android": False, "ios": False, "snapshot": False}),
 ]
 
 
@@ -462,7 +463,7 @@ def test_s499_a_top_level_key_after_jobs_is_header_and_turns_every_area_on(tmp_p
     repo = make_repo(tmp_path)
     text = (repo / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     change(repo, ".github/workflows/ci.yml", text=text + "\nenv:\n  SHIP_FLAG: \"1\"\n")
-    change(repo, "docs/x.md", text="doc\n")
+    change(repo, "docs/x.md", text="doc two\n")
     d = decide(repo)
     assert on(d) == {"android": True, "ios": True, "snapshot": True}, d
 
@@ -473,3 +474,17 @@ def test_s499_a_decision_without_an_area_is_refused_unless_all_is_true(tmp_path)
     for decision in ({}, {"all": False, "reasons": []}, {"android": False, "ios": False, "all": False, "reasons": []}):
         r = gate(tmp_path, decision, needs({}))
         assert r.returncode == 1, (decision, r.stdout + r.stderr)
+
+
+def test_s499_a_force_push_turns_every_area_on(tmp_path):
+    """#499 second review, point 4: a push whose before is readable but not an ancestor of the pushed commit is a force
+    push; nothing is skipped on that run, so every area runs."""
+    repo = make_repo(tmp_path)
+    git(repo, "checkout", "-q", "-b", "side", "origin/dev")
+    change(repo, "docs/side.md", text="side\n")
+    side = git(repo, "rev-parse", "HEAD").stdout.strip()
+    git(repo, "checkout", "-q", "-")
+    change(repo, "docs/x.md", text="doc two\n")
+    d = decide(repo, event="push", base=side)
+    assert on(d) == {"android": True, "ios": True, "snapshot": True}, d
+    assert any("force push" in r for r in d["reasons"]), d["reasons"]
