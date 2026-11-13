@@ -2221,3 +2221,18 @@ Scenario: a code change is not exempt
   Then a PR with a changed code file and no ## Red section still fails
 ```
 Tests: `tests/test_check_tdd.py` (the `s491` tests: `GATE_PATHS` is read from `scripts/gate_files.txt`, and the exemption set is built from both lists).
+
+## Story #502 (feedback #501): the tdd check accepts the test names of other runners
+```gherkin
+Scenario: a TypeScript unit test or e2e spec named in Red, in the diff
+  Then the check passes (tdd OK)
+Scenario: the other runners (jsx, tsx, mjs, cjs, go, kotlin, swift, python) named in Red, in the diff
+  Then the check passes
+Scenario: a named test that is not in the diff
+  Then the check still fails, as before
+Scenario: a file in the diff that no name accepts (a fixture or a JSON file)
+  Then the check fails and says it is not a known test file name
+Scenario: the name list
+  Then one list in scripts/check_tdd.py holds each runner, and a sample of each name matches one of its lines
+```
+Tests: `tests/test_check_tdd.py` (`test_s502_a_known_test_file_name_in_red_passes`, `test_s502_a_typescript_red_test_that_is_not_in_the_diff_still_fails`, `test_s502_a_fixture_in_a_tests_folder_is_not_a_test_and_says_so`, `test_s502_the_name_list_is_one_line_per_runner_in_the_script`).

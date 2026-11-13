@@ -12,6 +12,9 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Changed
+- `scripts/check_tdd.py`: a `## Red` section may name a test file of other runners: `*_test.py`, `*.test.`/`*.spec.` for js, jsx, ts, tsx, mjs, cjs, `*_test.go`, `*Test(s).kt`, `*Test(s).swift`. One list, `TEST_NAMES`, one line per runner. A path in the diff that no name accepts says so (#502, feedback #501).
+
 ### Fixed
 - `docs/SCREENS.md`: the "Wiring CI" example runs `screens.sh --check` before the upload step, as `check_screens_wired.py` requires, and says how to split a shared e2e run. The check's message names that section. A test runs the example through the check (#503, feedback #500).
 
