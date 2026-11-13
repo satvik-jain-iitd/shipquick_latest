@@ -448,3 +448,9 @@ def test_s499_fixture_folders_turn_on_only_the_platform_that_reads_them(tmp_path
     repo = make_repo(tmp_path)
     change(repo, path, text="x\n")
     assert on(decide(repo)) == want, (path, decide(repo))
+
+
+def test_s499_pr_rules_does_not_say_a_push_runs_every_area():
+    # Red for review point 4 (PR #499): a push is decided from its own diff since the push rule (fix 636c24b).
+    text = (ROOT / "docs/PR_RULES.md").read_text(encoding="utf-8")
+    assert "is not a pull request, so every area runs" not in text
