@@ -178,12 +178,12 @@ jobs:
           BASE="${{ github.base_ref }}"
           bash scripts/run_stylelint_changed.sh "origin/$BASE"
   shortcut-ledger:
-    continue-on-error: true   # warn only: the job ends as success even when the step fails, so being in the gate needs (story #496) cannot block a merge
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Shortcut ledger, warn only (story #327): never fails the build; in the gate needs since story #496
+        continue-on-error: true   # warn only: the step may fail, the job and its check row end green
         run: python3 scripts/check_shortcuts.py
   tdd:
     runs-on: ubuntu-latest

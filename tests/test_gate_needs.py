@@ -12,7 +12,7 @@ EXEMPT = {"gate": "the gate itself"}
 
 def jobs(text=CI):
     section = text.split("\njobs:\n", 1)[1]
-    return re.findall(r"^  ([A-Za-z0-9_-]+):\s*$", section, re.M)
+    return re.findall(r"^  ([A-Za-z0-9_-]+):[ \t]*(?:#.*)?$", section, re.M)
 
 
 def gate_needs():

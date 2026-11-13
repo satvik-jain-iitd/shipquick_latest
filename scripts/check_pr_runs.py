@@ -6,14 +6,16 @@ Usage: check_pr_runs.py --pr <number> --rollup-file <statusCheckRollup JSON> --r
   one JSON object per run (compact or pretty, the reader takes both).
 Prints the rollup rows that count, as one JSON array, and exits 0. Exits 1 with one reason line when it cannot decide.
 
-Three rules, all read from the run a check row belongs to (the run id is in the row's detailsUrl):
-  0. Only a run that names this pull request counts: its `pull_requests` list holds the number. Two pull requests can
-     share one head commit, and an empty list (a fork's run, for example) names nobody, so it is not counted.
-  1. Only a `pull_request` run counts. A manual (`workflow_dispatch`) or push run on the same commit skips the PR-only
-     jobs and starts later, so its green `gate` could replace a red PR result.
+Rules, all read from the run a check row belongs to (the run id is in the row's detailsUrl):
+  0. A pull_request run counts only when its `pull_requests` list is exactly this pull request. The list holds every open
+     PR on the head, so another PR in it (alone or beside this one) refuses: two pull requests share this head. An empty
+     list (a fork's run, or a run after the merge) names nobody and is not counted.
+  1. Rows of a `push` or `workflow_dispatch` run are dropped. Such a run skips the PR-only jobs and starts later, so its
+     green `gate` could replace a red PR result.
   2. Of the pull_request runs of one workflow, only the newest (highest run_number) counts. A run that a newer run of
      the same workflow and event replaced leaves stale rows (a `test` cancelled before the matrix expanded, next to
      `test (3.12)` of the next run); they are not counted.
+  Rows of every other event (pull_request_target, schedule, ...) count as before this story.
 A row with no run id (a commit status from another app) counts as before. A row whose run the list does not name is
 a doubt, and a doubt refuses.
 """
@@ -43,14 +45,21 @@ def read_runs(text):
 
 def counted(rollup, runs, pr):
     by_id = {r["id"]: r for r in runs}
-    newest = {}
+    newest, dropped = {}, set()
     for r in runs:
-        if r.get("event") != "pull_request" or pr not in [p.get("number") for p in r.get("pull_requests") or []]:
-            continue
-        key = r["workflow_id"]
-        if key not in newest or r["run_number"] > newest[key]["run_number"]:
-            newest[key] = r
-    keep = {r["id"] for r in newest.values()}
+        event = r.get("event")
+        if event in ("push", "workflow_dispatch"):
+            dropped.add(r["id"])                 # rule 1: these skip the PR-only jobs and start later
+        elif event == "pull_request":
+            numbers = [p.get("number") for p in r.get("pull_requests") or []]
+            if any(n != pr for n in numbers):    # rule 0: the list is every open PR on the head
+                raise Refuse(f"two pull requests share this head ({numbers}); the run {r['id']} cannot be told from this PR's")
+            if numbers != [pr]:                  # an empty list (a fork's run) names nobody
+                dropped.add(r["id"])
+            elif r["workflow_id"] not in newest or r["run_number"] > newest[r["workflow_id"]]["run_number"]:
+                newest[r["workflow_id"]] = r
+    kept = {r["id"] for r in newest.values()}
+    dropped |= {r["id"] for r in runs if r.get("event") == "pull_request"} - kept   # rule 2: replaced by a newer run
     rows = []
     for row in rollup:
         m = RUN_ID.search(row.get("detailsUrl") or "")
@@ -60,7 +69,7 @@ def counted(rollup, runs, pr):
         run_id = int(m.group(1))
         if run_id not in by_id:
             raise Refuse(f"check {row.get('name') or row.get('context')} comes from run {run_id}, which is not in the workflow runs of this head")
-        if run_id in keep:
+        if run_id not in dropped:
             rows.append(row)
     return rows
 

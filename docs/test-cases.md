@@ -2264,7 +2264,7 @@ Tests: `tests/test_check_tdd.py` (`test_s502_a_known_test_file_name_in_red_passe
 Scenario: a manual run with a green gate cannot replace a red PR result
   Given a red tdd and a red gate in the pull_request run of the head
   And a later workflow_dispatch run of the same head with tdd skipped and gate green
-  Then review_merge.sh refuses, because only the pull_request run counts
+  Then review_merge.sh refuses, because the rows of a workflow_dispatch run are dropped
 Scenario: a push run on the same head is not counted either
   Then a red gate in the pull_request run still refuses
 Scenario: a check row from a run that a newer run replaced is not counted
@@ -2273,13 +2273,24 @@ Scenario: a check row from a run that a newer run replaced is not counted
   Then review_merge.sh merges, with no new commit needed
 Scenario: the newest run still counts when it is red
   Then an older green gate does not hide a newer red gate
+Scenario: a newest run with no rows yet leaves no gate
+  Then the merge is refused with "no required check"
 Scenario: a red check of another workflow is not replaced by a newer run of this workflow
   Then the merge is refused and names the check
-Scenario: a pull_request run of another PR on the same head is not counted
-  Then only the run whose pull_requests list names this PR counts, and a run with an empty list counts for nobody
+Scenario: a red row of another event (pull_request_target) still refuses
+  Then the rows of that run count as before the story
+Scenario: another PR on the same head
+  Given a pull_request run whose pull_requests list holds another PR, alone or beside this one
+  Then the merge is refused with "two pull requests share this head"
+Scenario: a pull_request run with an empty pull_requests list (a fork PR)
+  Then it is not counted, and with no other gate row the merge is refused
+Scenario: a row with no run id (a commit status from another app)
+  Then it counts as before
 Scenario: the run list cannot be read, or a row names a run the list does not hold
   Then the merge is refused
 Scenario: every job of ci.yml is in the needs of gate, or named as exempt
-  Then a job left out fails the test, and shortcut-ledger is in the list
+  Then a job left out fails the test, a job key with a trailing comment is still a job, and shortcut-ledger is in the list
+Scenario: shortcut-ledger is warn-only on its check row too
+  Then continue-on-error is on the step, not on the job
 ```
 Tests: `tests/test_review_merge.py` (`test_s496_*`), `tests/test_gate_needs.py`, `tests/test_check_shortcuts.py` (`test_s327_ci_job_is_warn_only_and_since_496_in_the_gate_needs`).
