@@ -803,3 +803,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: the READMEs of the three. DeployBot (a hosted merge service) matches a check to workflow name, base branch, head SHA, event, status and conclusion, and coalesces superseded runs. `keel` is an agent workflow from issue to merge with no run selection. `claude-gh-status` shows runs in a pane and merges nothing.
 - Borrowed: the idea to match a check to its exact workflow, head SHA and event, and to let a newer run replace an older one. Not borrowed: the service; it cannot run inside `review_merge.sh`.
 - Decision: build from scratch as one stdlib helper, `scripts/check_pr_runs.py`, called by the existing merge script. Confidence that nothing fits better: 0.8.
+## 13 Nov 2026, story #497: a nightly full run on dev with one issue when it is red
+- Need: a scheduled CI run on a branch that opens one GitHub issue when red and comments on it on later red nights.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "scheduled nightly CI run on a branch that opens one GitHub issue when red and comments on it on later red nights"` printed `no repos found`. GitHub topic search (`github-actions` and `nightly`) found only nightly build repos; a second search found `JasonEtco/create-an-issue`.
+- Read: the README of `JasonEtco/create-an-issue`: it creates an issue from a template and, with `update_existing`, edits the open issue with the same title. It does not comment, and it is a third-party action inside a protected workflow.
+- Reused: the issue-opening code of `scripts/adoption_scan.py` (find the open issue by a key in its title, comment, else create), moved into `scripts/issue_notice.py` and used by both scripts.
+- Decision: build the dispatch, wait and verdict as one stdlib script; reuse the adoption scan's issue code. Confidence that nothing fits better: 0.8.
