@@ -2294,3 +2294,30 @@ Scenario: shortcut-ledger is warn-only on its check row too
   Then continue-on-error is on the step, not on the job
 ```
 Tests: `tests/test_review_merge.py` (`test_s496_*`), `tests/test_gate_needs.py`, `tests/test_check_shortcuts.py` (`test_s327_ci_job_is_warn_only_and_since_496_in_the_gate_needs`).
+
+## Story #497 (epic #485 item 7): a nightly full run of every CI job on dev
+```gherkin
+Scenario: a green night opens nothing
+  Given the dispatched ci.yml run on dev ends green
+  Then no issue is opened and no comment is posted
+Scenario: the first red night opens one issue that names the job
+  Given the run is red and no nightly issue is open
+  Then one issue opens with the title "nightly: the full CI run on dev is red", the run link and each bad job
+Scenario: the second red night comments on the open issue
+  Given the run is red and the nightly issue is open
+  Then one comment is posted on it and no second issue opens
+Scenario: the issue says whether a job failed or never got a machine
+  Given one job failed after its steps ran and one job was still queued with no runner
+  Then the body says "failed" for the first and "never got a machine" for the second
+Scenario: the wait
+  Then the script stops waiting as soon as the run is completed, and at the deadline a job still queued never got a machine
+Scenario: a run that never appears
+  Then it is one problem, not a green night
+Scenario: dry run
+  Then nothing is dispatched and nothing is opened or commented
+Scenario: the timer stays thin
+  Then nightly.yml holds a schedule and one call to the script, with no condition of its own
+Scenario: the adoption scan and the nightly share one issue helper
+  Then both open or comment through scripts/issue_notice.py
+```
+Tests: `tests/test_nightly_full_run.py` (`test_s497_*`).

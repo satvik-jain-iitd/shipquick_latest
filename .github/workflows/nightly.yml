@@ -1,0 +1,26 @@
+# Story #497 (epic #485 item 7): the net under the change map. Once a night every CI job runs on dev.
+# A scheduled run uses the workflow files of the default branch, so this file is only a timer: the script dispatches
+# ci.yml on `dev` itself (every job checks out dev), waits for it, and opens or comments on one issue when it is red.
+name: Nightly full run
+
+on:
+  schedule:
+    - cron: "23 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 190
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Dispatch ci.yml on dev, wait for it, open or comment on one issue when it is red
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: python3 scripts/nightly_full_run.py --repo "$REPO" --ref dev

@@ -75,6 +75,12 @@ class FakeGh:
     def count(self, *words):
         return sum(1 for c in self.cmds if all(w in c for w in words))
 
+    def dispatches(self):
+        return sum(1 for c in self.cmds if any(a.endswith("/dispatches") for a in c))
+
+    def issue_create(self):
+        return next(c for c in self.cmds if c[1:3] == ["issue", "create"])
+
 
 def night(gh, wait_minutes=150, dry_run=False):
     clock = Clock()
@@ -96,7 +102,7 @@ def test_s497_the_first_red_night_opens_one_issue_that_names_the_job():
     result, _ = night(gh)
     assert result == "opened"
     assert gh.count("issue", "create") == 1 and gh.count("issue", "comment") == 0, gh.cmds
-    create = next(c for c in gh.cmds if "create" in c and "issue" in c)
+    create = gh.issue_create()
     body = create[create.index("--body") + 1]
     assert create[create.index("--title") + 1] == nf.TITLE
     assert "test (3.12)" in body and RUN_URL in body and TODAY in body
@@ -113,7 +119,7 @@ def test_s497_the_issue_says_whether_a_job_failed_or_never_got_a_machine():
     gh = FakeGh(jobs=[job("test (3.12)", conclusion="failure"),
                       job("ui-ios-compile", status="queued", conclusion=None, steps=False)], issues=[])
     night(gh)
-    body = next(c for c in gh.cmds if "create" in c)[-1]
+    body = gh.issue_create()[-1]
     assert "- test (3.12): failed" in body
     assert "- ui-ios-compile: never got a machine" in body
 
@@ -144,7 +150,7 @@ def test_s497_the_run_is_waited_for_and_a_job_still_queued_at_the_deadline_never
     result, clock = night(gh, wait_minutes=30)
     assert result == "opened"
     assert 30 * 60 <= clock.slept < 30 * 60 + 600, clock.slept   # waited to the deadline and no longer
-    body = next(c for c in gh.cmds if "create" in c)[-1]
+    body = gh.issue_create()[-1]
     assert "- ui-ios-compile: never got a machine" in body
 
 
@@ -159,8 +165,8 @@ def test_s497_a_run_older_than_the_dispatch_is_not_the_nightly_run():
     old = {"id": 1, "created_at": iso(-86400), "status": "completed"}
     gh = FakeGh(run=green_run(), runs=[old, {"id": 700, "created_at": iso(5), "status": "queued"}], jobs=[job("gate")])
     night(gh)
-    assert gh.count("actions/workflows/ci.yml/dispatches") == 1
-    dispatch = next(c for c in gh.cmds if any("dispatches" in a for a in c))
+    assert gh.dispatches() == 1
+    dispatch = next(c for c in gh.cmds if any(a.endswith("/dispatches") for a in c))
     assert "ref=dev" in dispatch, dispatch
 
 
@@ -168,7 +174,7 @@ def test_s497_a_run_that_never_appears_is_one_problem_not_a_green_night():
     gh = FakeGh(runs=[], issues=[])
     result, _ = night(gh)
     assert result == "opened"
-    body = next(c for c in gh.cmds if "create" in c)[-1]
+    body = gh.issue_create()[-1]
     assert "never got a machine" in body
 
 
@@ -177,14 +183,14 @@ def test_s497_a_dry_run_changes_nothing():
     gh = FakeGh(jobs=[job("test (3.12)", conclusion="failure")], issues=[])
     result, _ = night(gh, dry_run=True)
     assert result == "dry-run"
-    assert gh.count("issue") == 0 and gh.count("dispatches") == 0, gh.cmds
+    assert gh.count("issue") == 0 and gh.dispatches() == 0, gh.cmds
 
 
 def test_s497_the_nightly_label_is_made_before_the_first_issue_is_opened():
     gh = FakeGh(jobs=[job("test (3.12)", conclusion="failure")], issues=[])
     night(gh)
     assert gh.count("label", "create", nf.LABEL) == 1, gh.cmds
-    assert gh.cmds.index(next(c for c in gh.cmds if "label" in c)) < gh.cmds.index(next(c for c in gh.cmds if "create" in c and "issue" in c))
+    assert gh.cmds.index(next(c for c in gh.cmds if "label" in c)) < gh.cmds.index(gh.issue_create())
 
 
 def test_s497_issue_notice_opens_or_comments_by_a_key_in_the_title():
@@ -219,3 +225,11 @@ def test_s497_the_change_map_already_turns_every_area_on_for_a_non_pr_event():
     text = (ROOT / "scripts" / "change_map.py").read_text(encoding="utf-8")
     assert 'event not in ("pull_request", "push")' in text
     assert json.loads((ROOT / "scripts" / "change_map.json").read_text(encoding="utf-8"))["areas"]
+
+
+def test_s497_a_dry_run_looks_for_a_run_once_and_does_not_wait_for_one():
+    """Found by a real dry run: no dispatched run exists yet, and the ten-minute wait for a run that was never started
+    is only right after a real dispatch."""
+    gh = FakeGh(runs=[], issues=[])
+    result, clock = night(gh, dry_run=True)
+    assert result == "dry-run" and clock.slept == 0, (result, clock.slept)
