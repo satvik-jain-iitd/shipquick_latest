@@ -158,13 +158,14 @@ A child refuses hand-drawn UI with lint. The kit ships the configs. Wiring them 
 
 ## The sample child walk (story #504)
 
-The kit's own CI (the Python test job) walks a made-up child through the path a real one takes: `tests/test_sample_child_walk.py`.
-The child has TypeScript-style test names, the kit on its own branch, a screens list and a small workflow copied from
-the `Wiring CI` example. The walk runs `adopt.sh`, `adopt.sh --check`, a bump branch, `adopt.sh --gate-files`, a commit
-through the real hooks, and `check_local.sh` on a gate-files PR and a code PR. It runs in under a minute, with no real project.
+The kit's own CI (the Python test job) walks a made-up child through the path a real child takes: `tests/test_sample_child_walk.py`.
+The child has TypeScript-style test names, a dev branch for the code, the kit on its own branch (rule 24), a screens list and a workflow
+copied from the `Wiring CI` example. The kit sits in `knowledge/shipquick_latest`, as in a real child. The walk runs `adopt.sh`,
+`adopt.sh --check`, a bump branch, `adopt.sh --gate-files`, commits through the real hooks, and pushes the gate-files PR and the code PR for
+real. The pre-push stage picks its own base. The code PR must print `ok` for every walked `check_local.sh` check. It runs in under a minute.
 
-A new check joins the walk in the same PR. Add its name to `WALK_CHECKS` in that test when you add a check to
-`scripts/check_local.sh` or a job to `.github/workflows/checks.yml`. The test `test_the_walk_names_every_check` fails until you do.
+A new check joins the walk in the same PR: name it in `WALKED` or `NAMED` in that test, with a reason. A new `checks.yml` job goes in `CHECKS_YML`.
+The walk does not run the GitHub jobs of `checks.yml` (follow-up row, 13 Nov 2026).
 
 To run the walk against an old kit, set `WALK_KIT_SHA=<sha>`. It shows the step where that kit failed.
 
