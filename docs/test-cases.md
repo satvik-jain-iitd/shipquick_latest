@@ -2275,6 +2275,8 @@ Scenario: the newest run still counts when it is red
   Then an older green gate does not hide a newer red gate
 Scenario: a red check of another workflow is not replaced by a newer run of this workflow
   Then the merge is refused and names the check
+Scenario: a pull_request run of another PR on the same head is not counted
+  Then only the run whose pull_requests list names this PR counts, and a run with an empty list counts for nobody
 Scenario: the run list cannot be read, or a row names a run the list does not hold
   Then the merge is refused
 Scenario: every job of ci.yml is in the needs of gate, or named as exempt

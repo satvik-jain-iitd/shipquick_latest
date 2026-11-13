@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Story #496 (epic #485 items 15 and 16): which check rows of a pull request head count for the merge gate.
 
-Usage: check_pr_runs.py --rollup-file <statusCheckRollup JSON> --runs-file <workflow runs of the head>
+Usage: check_pr_runs.py --pr <number> --rollup-file <statusCheckRollup JSON> --runs-file <workflow runs of the head>
   The runs file is what `gh api repos/<repo>/actions/runs?head_sha=<sha> --paginate --jq '.workflow_runs[]'` prints:
   one JSON object per run (compact or pretty, the reader takes both).
 Prints the rollup rows that count, as one JSON array, and exits 0. Exits 1 with one reason line when it cannot decide.
 
-Two rules, both read from the run a check row belongs to (the run id is in the row's detailsUrl):
+Three rules, all read from the run a check row belongs to (the run id is in the row's detailsUrl):
+  0. Only a run that names this pull request counts: its `pull_requests` list holds the number. Two pull requests can
+     share one head commit, and an empty list (a fork's run, for example) names nobody, so it is not counted.
   1. Only a `pull_request` run counts. A manual (`workflow_dispatch`) or push run on the same commit skips the PR-only
      jobs and starts later, so its green `gate` could replace a red PR result.
   2. Of the pull_request runs of one workflow, only the newest (highest run_number) counts. A run that a newer run of
@@ -39,11 +41,11 @@ def read_runs(text):
         out.append(obj)
 
 
-def counted(rollup, runs):
+def counted(rollup, runs, pr):
     by_id = {r["id"]: r for r in runs}
     newest = {}
     for r in runs:
-        if r.get("event") != "pull_request":
+        if r.get("event") != "pull_request" or pr not in [p.get("number") for p in r.get("pull_requests") or []]:
             continue
         key = r["workflow_id"]
         if key not in newest or r["run_number"] > newest[key]["run_number"]:
@@ -65,13 +67,14 @@ def counted(rollup, runs):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--pr", type=int, required=True)
     ap.add_argument("--rollup-file", required=True)
     ap.add_argument("--runs-file", required=True)
     a = ap.parse_args(argv)
     try:
         rollup = json.load(open(a.rollup_file, encoding="utf-8"))
         runs = read_runs(open(a.runs_file, encoding="utf-8").read())
-        print(json.dumps(counted(rollup, runs)))
+        print(json.dumps(counted(rollup, runs, a.pr)))
         return 0
     except Refuse as e:
         print(str(e))

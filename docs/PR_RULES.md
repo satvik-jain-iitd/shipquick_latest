@@ -183,6 +183,7 @@ The pytest `::test_name` form still works. A path in the diff that no name accep
 ## 15. The merge script counts the PR's own, newest runs (story #496, epic #485 items 15 and 16)
 
 - `scripts/review_merge.sh` reads the workflow runs of the PR head (`gh api repos/<repo>/actions/runs?head_sha=<sha>`) and `scripts/check_pr_runs.py` decides which check rows count. The run of a row is in its `detailsUrl`.
+- Only a run that names this PR counts: the `pull_requests` list of the run holds its number. Two PRs can share one head commit, and a run with an empty list (a fork's run) names nobody, so it is not counted.
 - Only a `pull_request` run counts. A manual (`workflow_dispatch`) or push run on the same commit skips the PR-only jobs and starts later, so its green `gate` can never replace a red PR result.
 - Of the `pull_request` runs of one workflow, only the newest (highest `run_number`) counts. A run that a newer run of the same workflow and event replaced leaves stale rows (a `test` cancelled before the matrix expanded, next to `test (3.12)` of the next run, seen on #509); they are not counted, so a new commit is no longer needed to clear them. The newest run still counts when it is red or cancelled.
 - A row with no run id (a commit status from another app) counts as before. A run list that cannot be read, or a row whose run the list does not name, refuses the merge.

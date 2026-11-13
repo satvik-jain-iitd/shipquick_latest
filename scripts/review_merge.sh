@@ -147,7 +147,7 @@ if jq -e '[.statusCheckRollup[] | (.detailsUrl // "") | test("/actions/runs/[0-9
   gh api "repos/$repo/actions/runs?head_sha=$(field .headRefOid)&per_page=100" --paginate --jq '.workflow_runs[]' >"$runs_tmp" 2>/dev/null \
     || { rm -f "$runs_tmp" "$rollup_tmp"; refuse "cannot read the workflow runs of $(field .headRefOid)"; }
   jq '.statusCheckRollup' <<<"$json" >"$rollup_tmp"
-  counted=$(python3 "$HERE/check_pr_runs.py" --rollup-file "$rollup_tmp" --runs-file "$runs_tmp") \
+  counted=$(python3 "$HERE/check_pr_runs.py" --pr "$pr" --rollup-file "$rollup_tmp" --runs-file "$runs_tmp") \
     || { rm -f "$runs_tmp" "$rollup_tmp"; refuse "$counted"; }
   rm -f "$runs_tmp" "$rollup_tmp"
   json=$(jq --argjson c "$counted" '.statusCheckRollup = $c' <<<"$json")
