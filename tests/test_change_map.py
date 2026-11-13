@@ -90,9 +90,10 @@ def on(d):
 # ---- the map and its rows ----
 def test_s485_the_map_is_json_with_two_areas_and_the_free_paths_and_no_yaml_reader():
     m = json.loads(MAP_TEXT)
-    assert set(m["areas"]) == {"android", "ios"}
+    assert set(m["areas"]) == {"android", "ios", "snapshot"}
     assert m["areas"]["android"]["jobs"] == ["ui-android-compile", "ui-android-lint"]
-    assert m["areas"]["ios"]["jobs"] == ["ui-ios-compile", "ui-ios-lint", "ui-ios-snapshots"]
+    assert m["areas"]["ios"]["jobs"] == ["ui-ios-compile", "ui-ios-lint"]
+    assert m["areas"]["snapshot"]["jobs"] == ["ui-ios-snapshots"]
     assert "docs/**" in m["free"] and "*.md" in m["free"]
     assert "import yaml" not in READER.read_text(encoding="utf-8")
 
@@ -391,7 +392,7 @@ SNAPSHOT_ROWS = [
 @pytest.mark.parametrize("path,want", SNAPSHOT_ROWS)
 def test_s499_the_snapshot_job_runs_only_for_its_three_paths(tmp_path, path, want):
     repo = make_repo(tmp_path)
-    change(repo, path)
+    change(repo, path, text="x\n")
     assert decide(repo)["snapshot"] is want, (path, decide(repo))
 
 
@@ -416,4 +417,17 @@ def test_s499_every_repo_path_a_phone_job_names_is_in_its_area():
             block = reader.job_block(CI, job)
             assert block is not None, job
             for tok in sorted(set(t.rstrip(".,") for t in token.findall(block))):
-                assert reader.matches(tok, spec["paths"]) and not reader.matches(tok, spec.get("except", [])), (job, area, tok)
+                # a directory the job names ("ui/ios") is covered when a path inside it is: check it as "ui/ios/_"
+                forms = {tok, tok.rstrip("/") + "/_"}
+                covered = any(reader.matches(f, spec["paths"]) and not reader.matches(f, spec.get("except", [])) for f in forms)
+                assert covered, (job, area, tok)
+
+
+def test_s499_ci_yml_reads_an_output_for_every_area_of_the_map():
+    # The reader writes one output per area; ci.yml must expose it, and a phone job's `if:` must read its area's output.
+    areas = json.loads(MAP_TEXT)["areas"]
+    for area, spec in areas.items():
+        assert f"      {area}: ${{{{ steps.diff.outputs.{area} }}}}" in CI, area
+        for job in spec["jobs"]:
+            block = _change_map_module().job_block(CI, job)
+            assert f"needs.ui-changes.outputs.{area} != 'false'" in block, (job, area)

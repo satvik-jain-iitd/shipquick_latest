@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_about": "Story #485 (ADR-018). Which slow CI jobs run for a pull request. Read by scripts/change_map.py. A path that no row names turns every area on and the run prints the line to add. Paths are globs: 'dir/**' is everything under dir; a pattern without a slash matches a root-level name only.",
+  "_about": "Story #485 (ADR-018). Which slow CI jobs run for a pull request. Read by scripts/change_map.py. A path that no row names turns every area on and the run prints the line to add. Paths are globs: 'dir/**' is everything under dir; a pattern without a slash matches a root-level name only. Each area is one slow job group; the reader takes the area names from here (story #499).",
   "areas": {
     "android": {
       "jobs": ["ui-android-compile", "ui-android-lint"],
@@ -8,9 +8,14 @@
       "except": ["ui/ios/**"]
     },
     "ios": {
-      "jobs": ["ui-ios-compile", "ui-ios-lint", "ui-ios-snapshots"],
+      "jobs": ["ui-ios-compile", "ui-ios-lint"],
       "paths": ["ui/**", "design/**", "scripts/emit_tokens.py", "scripts/emit_contracts.py", "scripts/ui_proof.py", "tests/fixtures/**"],
       "except": ["ui/android/**"]
+    },
+    "snapshot": {
+      "jobs": ["ui-ios-snapshots"],
+      "paths": ["ui/ios/**", "design/**", "scripts/emit_tokens.py"],
+      "except": []
     }
   },
   "free": [

@@ -333,6 +333,7 @@ jobs:
     outputs:
       android: ${{ steps.diff.outputs.android }}
       ios: ${{ steps.diff.outputs.ios }}
+      snapshot: ${{ steps.diff.outputs.snapshot }}
       decision: ${{ steps.diff.outputs.decision }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -524,7 +525,7 @@ jobs:
     # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
     needs: [ui-changes]
     # ios is empty after a fail-safe exit above (only ui=true is written), so the job runs then too.
-    if: needs.ui-changes.outputs.ios != 'false'
+    if: needs.ui-changes.outputs.snapshot != 'false'
     runs-on: macos-15
     timeout-minutes: 45
     permissions:
