@@ -60,7 +60,7 @@ def test_s219_every_template_has_a_preview_for_prefire():
 
 def test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout():
     j = job("ui-ios-snapshots")
-    assert "needs: [ui-changes]" in j and "needs.ui-changes.outputs.ios == 'true'" in j  # #485: the map's ios area, not ui
+    assert "needs: [ui-changes]" in j and "needs.ui-changes.outputs.snapshot != 'false'" in j  # #485 and #499: the snapshot area of the map
     assert "runs-on: macos-15" in j
     assert re.search(r"^    timeout-minutes: \d+$", j, re.M)
     assert "xcode-select -s /Applications/Xcode_16.4.app" in j

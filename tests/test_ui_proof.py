@@ -117,7 +117,7 @@ def test_s485_the_change_map_step_fails_closed_and_reads_the_reader_from_the_bas
     """Story #485 replaces the grep filter of story #217. The table and the fail-closed cases are in tests/test_change_map.py."""
     step = ui_changes_step()
     assert 'git show "$base:scripts/$f"' in step and 'change_map.py" decide' in step
-    assert "every slow job runs (fails closed)" in step and "android=true" in step and "ios=true" in step
+    assert "every slow job runs (fails closed)" in step and 'decision={\"all\":true}' in step
 
 
 def test_s217_the_new_jobs_have_read_only_permissions():

@@ -520,11 +520,11 @@ jobs:
   ui-ios-snapshots:
     # Story #219: swift-snapshot-testing and Prefire compare every template with its reference images (light and dark,
     # smallest and largest Dynamic Type, iPhone SE and Pro Max) on one pinned simulator. Runs only when ui/ios/**, design/**,
-    # or scripts/emit_tokens.py changes (ui-changes.outputs.ios), never for an Android-only PR or a ci.yml-only PR (story #484). SHIPQUICK_SNAPSHOTS adds the test
+    # or scripts/emit_tokens.py changes (ui-changes.outputs.snapshot), never for an Android-only PR or a ci.yml-only PR (story #484). SHIPQUICK_SNAPSHOTS adds the test
     # target and its two packages to Package.swift; a child never resolves them. A workflow_dispatch run with record=true
     # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
     needs: [ui-changes]
-    # ios is empty after a fail-safe exit above (only ui=true is written), so the job runs then too.
+    # A fail-safe exit above writes only decision={"all":true}, so snapshot is unset; an unset output runs the job too.
     if: needs.ui-changes.outputs.snapshot != 'false'
     runs-on: macos-15
     timeout-minutes: 45
