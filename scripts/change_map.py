@@ -2,7 +2,8 @@
 """Story #485 (ADR-018): one change map decides which slow CI jobs run, and the gate proves the result.
 
   change_map.py decide --base <ref> --head <ref> --event <name> --map <file> [--outputs <GITHUB_OUTPUT file>]
-      Prints one JSON line {"android", "ios", "all", "reasons"}. With --outputs it appends android=, ios= and decision=.
+      Prints one JSON line: one key per area of the map, plus "all" and "reasons". With --outputs it appends one
+      <area>=true|false line per area and decision= (the JSON of the areas and all).
       Fails closed: every doubt turns every area on. Doubts: not a pull request; the diff cannot be read; the map is
       missing, empty or broken; the map or this file changed in the PR; a changed path no row names (the reason names
       the path and says which row to add). A change to one phone job's own steps in ci.yml turns that job's area on;
@@ -29,8 +30,9 @@ def git(*args):
     return subprocess.run(["git", *args], capture_output=True, text=True, check=True).stdout
 
 
-def all_on(reason):
-    return {"android": True, "ios": True, "all": True, "reasons": [reason]}
+def all_on(areas, reason):
+    """Every area on (fail closed). The areas come from the map; with no map they are unknown, and `all` alone says so."""
+    return {**{a: True for a in areas}, "all": True, "reasons": [reason]}
 
 
 def matches(path, patterns):
@@ -80,26 +82,27 @@ def readable_commit(ref):
 
 
 def decide(base, head, event, map_path):
-    if event not in ("pull_request", "push"):
-        return all_on(f"the event is {event!r}, not a pull request or a push")
-    if event == "push":   # a push decides from its own diff, base = github.event.before; an unreadable before is a doubt
-        if not readable_commit(base):
-            return all_on(f"the before commit {base[:12]} of this push cannot be read; every area runs")
-        if subprocess.run(["git", "merge-base", "--is-ancestor", base, head], capture_output=True).returncode != 0:
-            return all_on(f"the push is not a fast-forward of {base[:12]} (a force push); every area runs")
     try:
         areas, free = load_map(map_path)
-    except Exception as e:  # missing, empty, broken or wrong shape: every area on
-        return all_on(f"the map {map_path} is missing, empty or broken ({e.__class__.__name__})")
+    except Exception as e:  # missing, empty, broken or wrong shape: every area on, and the areas are not known
+        return all_on([], f"the map {map_path} is missing, empty or broken ({e.__class__.__name__})")
+    every = list(areas)
+    if event not in ("pull_request", "push"):
+        return all_on(every, f"the event is {event!r}, not a pull request or a push")
+    if event == "push":   # a push decides from its own diff, base = github.event.before; an unreadable before is a doubt
+        if not readable_commit(base):
+            return all_on(every, f"the before commit {base[:12]} of this push cannot be read; every area runs")
+        if subprocess.run(["git", "merge-base", "--is-ancestor", base, head], capture_output=True).returncode != 0:
+            return all_on(every, f"the push is not a fast-forward of {base[:12]} (a force push); every area runs")
     try:
         mb = git("merge-base", base, head).strip()
-        names = [n for n in git("diff", "-z", "--name-only", "--no-renames", mb, head).split("\0") if n]
+        changed = [n for n in git("diff", "-z", "--name-only", "--no-renames", mb, head).split("\0") if n]
     except subprocess.CalledProcessError:
-        return all_on(f"the diff of {base} and {head} cannot be read")
-    if any(n in GUARDED for n in names):
-        return all_on("the map or its reader changed in this PR, so nothing is skipped on this run")
+        return all_on(every, f"the diff of {base} and {head} cannot be read")
+    if any(n in GUARDED for n in changed):
+        return all_on(every, "the map or its reader changed in this PR, so nothing is skipped on this run")
     on, reasons = {a: False for a in areas}, []
-    for n in names:
+    for n in changed:
         hit = [a for a, spec in areas.items() if matches(n, spec["paths"]) and not matches(n, spec.get("except", []))]
         if hit:
             for a in hit:
@@ -107,22 +110,22 @@ def decide(base, head, event, map_path):
             continue
         if matches(n, free):
             continue
-        return all_on(f"{n}: no row in scripts/change_map.json names this path; add a row (an area, or free if it needs no slow job)")
+        return all_on(every, f"{n}: no row in scripts/change_map.json names this path; add a row (an area, or free if it needs no slow job)")
     try:
         base_ci = git("show", f"{mb}:{CI_PATH}")
         head_ci = git("show", f"{head}:{CI_PATH}")
     except subprocess.CalledProcessError:
-        return all_on(f"{CI_PATH} cannot be read at {mb} or {head}")
+        return all_on(every, f"{CI_PATH} cannot be read at {mb} or {head}")
     if decision_parts(base_ci) != decision_parts(head_ci):
-        return all_on(f"{CI_PATH}: the header or the ui-changes job changed, so nothing is skipped on this run")
+        return all_on(every, f"{CI_PATH}: the header or the ui-changes job changed, so nothing is skipped on this run")
     for area, spec in areas.items():
         for job in spec["jobs"]:
             if job_block(head_ci, job) is None or job_block(base_ci, job) is None:
-                return all_on(f"{CI_PATH}: job {job} is not in one of the two copies, so nothing is judged; every area runs")
+                return all_on(every, f"{CI_PATH}: job {job} is not in one of the two copies, so nothing is judged; every area runs")
             if job_block(base_ci, job) != job_block(head_ci, job):
                 on[area] = True
                 reasons.append(f"{job}: its own steps changed in ci.yml, so area {area} runs")
-    return {"android": on.get("android", False), "ios": on.get("ios", False), "all": False, "reasons": reasons}
+    return {**on, "all": False, "reasons": reasons}
 
 
 def gate(decision, needs, areas):
@@ -158,12 +161,14 @@ def main(argv):
         try:
             out = decide(a.base, a.head, a.event, a.map)
         except Exception as e:  # any crash inside the reader is a doubt: every area on
-            out = all_on(f"the reader failed ({e.__class__.__name__}); fails closed")
+            out = all_on([], f"the reader failed ({e.__class__.__name__}); fails closed")
         print(json.dumps(out, sort_keys=True))
         if a.outputs:
+            areas = {k: v for k, v in out.items() if k not in ("all", "reasons")}   # one output line and one decision key per area
             with open(a.outputs, "a", encoding="utf-8") as f:
-                f.write(f"android={str(out['android']).lower()}\nios={str(out['ios']).lower()}\n")
-                f.write("decision=" + json.dumps({"android": out["android"], "ios": out["ios"], "all": out["all"]}, sort_keys=True) + "\n")
+                for area, on in areas.items():
+                    f.write(f"{area}={str(on).lower()}\n")
+                f.write("decision=" + json.dumps({**areas, "all": out["all"]}, sort_keys=True) + "\n")
         return 0
     decision = json.loads(Path(a.decision).read_text(encoding="utf-8"))
     needs = json.loads(Path(a.needs).read_text(encoding="utf-8"))

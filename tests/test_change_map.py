@@ -196,7 +196,8 @@ def test_s485_fail_closed_when_the_map_is_missing_empty_or_broken(tmp_path):
             (repo / "scripts/change_map.json").write_text(content, encoding="utf-8")
             git(repo, "add", "-A"); git(repo, "commit", "-q", "-m", "broken map")
         d = decide(repo)
-        assert d["all"] and d["android"] and d["ios"], (content, d)
+        # no map, so no area is known: `all` alone. ci.yml runs a job unless the decision says false, so nothing is skipped.
+        assert d["all"] is True, (content, d)
 
 
 def test_s485_fail_closed_when_the_map_or_its_reader_changed_in_the_pr(tmp_path):
@@ -362,9 +363,9 @@ def test_s499_a_new_area_in_the_map_needs_no_reader_change(tmp_path):
     # Red for review point 1 (PR #499): the reader named android and ios by hand. A new area in the map must come out
     # of the reader as its own decision and its own output line, with no code change.
     m = json.loads(MAP_TEXT)
-    m["areas"]["web"] = {"jobs": ["web-check"], "paths": ["web/**"], "except": []}
+    m["areas"]["web"] = {"jobs": ["ui-docs"], "paths": ["web/**"], "except": []}   # a job that exists in ci.yml
     repo = make_repo(tmp_path, files={**BASE_FILES, "scripts/change_map.json": json.dumps(m)})
-    change(repo, "web/app.ts")
+    change(repo, "web/app.ts", text="w\n")
     out_file = tmp_path / "github-output.txt"
     r = subprocess.run([sys.executable, str(READER), "decide", "--base", "origin/dev", "--head", "HEAD", "--event",
                         "pull_request", "--map", "scripts/change_map.json", "--outputs", str(out_file)],

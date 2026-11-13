@@ -361,12 +361,13 @@ jobs:
             exit 0
           fi
           echo "the change map could not run here, so every slow job runs (fails closed)"
-          printf 'android=true\nios=true\ndecision={"all":true}\n' >> "$GITHUB_OUTPUT"
+          # every output unset = every job runs: a job runs unless the decision says false (story #499)
+          printf 'decision={"all":true}\n' >> "$GITHUB_OUTPUT"
   ui-android-compile:
     # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
     # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.android == 'true'
+    if: needs.ui-changes.outputs.android != 'false'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -392,7 +393,7 @@ jobs:
   ui-ios-compile:
     # Story #217: compile every template and the generated proof/ApiProof.swift for iOS. Compile only.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ios == 'true'
+    if: needs.ui-changes.outputs.ios != 'false'
     runs-on: macos-15
     timeout-minutes: 30
     permissions:
@@ -414,7 +415,7 @@ jobs:
     # bad one must fail with every rule named. detekt 1.23.8, Konsist 0.17.3, Gradle from the pin in ui/android. CI only.
     # Gradle checks every downloaded jar and pom against tests/fixtures/android/gradle/verification-metadata.xml; a missing or wrong sum fails the build.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.android == 'true'
+    if: needs.ui-changes.outputs.android != 'false'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -470,7 +471,7 @@ jobs:
     # Story #218: both tiers run through ui/tool/ios_lint.sh (CI=1 strict, else warn-only) with the committed baseline
     # ui/ios/lint/swiftlint-baseline.json, and SwiftFormat 0.64.6 (pinned the same way) checks the format in lint mode.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ios == 'true'
+    if: needs.ui-changes.outputs.ios != 'false'
     runs-on: macos-15
     timeout-minutes: 20
     permissions:
@@ -523,7 +524,7 @@ jobs:
     # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
     needs: [ui-changes]
     # ios is empty after a fail-safe exit above (only ui=true is written), so the job runs then too.
-    if: needs.ui-changes.outputs.ios == 'true'
+    if: needs.ui-changes.outputs.ios != 'false'
     runs-on: macos-15
     timeout-minutes: 45
     permissions:
