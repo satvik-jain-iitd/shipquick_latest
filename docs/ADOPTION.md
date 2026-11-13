@@ -156,6 +156,18 @@ A child refuses hand-drawn UI with lint. The kit ships the configs. Wiring them 
   fails unless the PR names an ADR that justifies it.
 - The kit's fixture apps are `tests/fixtures/android` and `tests/fixtures/ios`: one good screen, one bad screen.
 
+## The sample child walk (story #504)
+
+The kit's own CI (the Python test job) walks a made-up child through the path a real one takes: `tests/test_sample_child_walk.py`.
+The child has TypeScript-style test names, the kit on its own branch, a screens list and a small workflow copied from
+the `Wiring CI` example. The walk runs `adopt.sh`, `adopt.sh --check`, a bump branch, `adopt.sh --gate-files`, a commit
+through the real hooks, and `check_local.sh` on a gate-files PR and a code PR. It runs in under a minute, with no real project.
+
+A new check joins the walk in the same PR. Add its name to `WALK_CHECKS` in that test when you add a check to
+`scripts/check_local.sh` or a job to `.github/workflows/checks.yml`. The test `test_the_walk_names_every_check` fails until you do.
+
+To run the walk against an old kit, set `WALK_KIT_SHA=<sha>`. It shows the step where that kit failed.
+
 ## Checklist for each child
 
 Do these in order, in the child repo. One step at a time.
