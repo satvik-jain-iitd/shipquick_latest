@@ -103,7 +103,7 @@ TABLE = [
     ("ui/android/build.gradle.kts", {"android": True, "ios": False}),
     ("ui/ios/templates/ListTemplate.swift", {"android": False, "ios": True}),
     ("ui/tool/package.json", {"android": True, "ios": True}),
-    ("tests/fixtures/ios/Bad/BadScreen.swift", {"android": True, "ios": True}),
+    ("tests/fixtures/ios/Bad/BadScreen.swift", {"android": False, "ios": True}),   # story #499: the iOS fixture only
     ("scripts/ui_proof.py", {"android": True, "ios": True}),
     ("scripts/emit_contracts.py", {"android": True, "ios": True}),
     ("scripts/emit_tokens.py", {"android": True, "ios": True}),

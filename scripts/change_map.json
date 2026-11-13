@@ -4,12 +4,12 @@
   "areas": {
     "android": {
       "jobs": ["ui-android-compile", "ui-android-lint"],
-      "paths": ["ui/**", "design/**", "scripts/emit_tokens.py", "scripts/emit_contracts.py", "scripts/ui_proof.py", "tests/fixtures/**"],
+      "paths": ["ui/**", "design/**", "scripts/emit_tokens.py", "scripts/emit_contracts.py", "scripts/ui_proof.py", "tests/fixtures/android/**"],
       "except": ["ui/ios/**"]
     },
     "ios": {
       "jobs": ["ui-ios-compile", "ui-ios-lint"],
-      "paths": ["ui/**", "design/**", "scripts/emit_tokens.py", "scripts/emit_contracts.py", "scripts/ui_proof.py", "tests/fixtures/**"],
+      "paths": ["ui/**", "design/**", "scripts/emit_tokens.py", "scripts/emit_contracts.py", "scripts/ui_proof.py", "tests/fixtures/ios/**"],
       "except": ["ui/android/**"]
     },
     "snapshot": {
