@@ -178,12 +178,12 @@ jobs:
           BASE="${{ github.base_ref }}"
           bash scripts/run_stylelint_changed.sh "origin/$BASE"
   shortcut-ledger:
-    continue-on-error: true   # warn only: a crash here must not block a merge (review_merge.sh refuses any non-SUCCESS check)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Shortcut ledger, warn only (story #327): never fails the build, not in the gate
+      - name: Shortcut ledger, warn only (story #327): never fails the build; in the gate needs since story #496
+        continue-on-error: true   # warn only: the step may fail, the job and its check row end green
         run: python3 scripts/check_shortcuts.py
   tdd:
     runs-on: ubuntu-latest
@@ -673,7 +673,7 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, design-tokens, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, ui-ios-snapshots, secret-scan, dependency-review, workflow-security, test, tdd]
+    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, design-tokens, shortcut-ledger, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, ui-ios-snapshots, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -694,6 +694,7 @@ jobs:
           echo "frontend-design: ${{ needs.frontend-design.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
           echo "design-tokens: ${{ needs.design-tokens.result }}"
+          echo "shortcut-ledger: ${{ needs.shortcut-ledger.result }}"
           echo "roles: ${{ needs.roles.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"

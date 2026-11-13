@@ -179,3 +179,12 @@ The tdd check (`scripts/check_tdd.py`) accepts a `## Red` path only when its fil
 - swift (XCTest): `*Test.swift`, `*Tests.swift`
 
 The pytest `::test_name` form still works. A path in the diff that no name accepts (a fixture, a JSON file) fails with a line that says so. To add a runner, add one line to `TEST_NAMES`; a project config file is not read.
+
+## 15. The merge script counts the PR's own, newest runs (story #496, epic #485 items 15 and 16)
+
+- `scripts/review_merge.sh` reads the workflow runs of the PR head (`gh api repos/<repo>/actions/runs?head_sha=<sha>`) and `scripts/check_pr_runs.py --pr <number>` decides which check rows count. The run of a row is in its `detailsUrl`.
+- A `pull_request` run counts only when its `pull_requests` list is exactly this PR. The list holds every open PR on the head, so another PR in it (alone or beside this one) refuses with "two pull requests share this head". An empty list (a pull request from a fork, or a run after the merge) names nobody and is not counted. A fork PR is therefore not merged by the script: the owner merges it.
+- The rows of a `push` or a `workflow_dispatch` run are dropped. Such a run skips the PR-only jobs and starts later, so its green `gate` can never replace a red PR result. Rows of every other event (for example `pull_request_target`) count as before.
+- Of the `pull_request` runs of one workflow, only the newest (highest `run_number`) counts. A run that a newer run of the same workflow and event replaced leaves stale rows (a `test` cancelled before the matrix expanded, next to `test (3.12)` of the next run, seen on #509); they are not counted, so a new commit is no longer needed to clear them. The newest run still counts when it is red or cancelled, and a newest run with no rows yet leaves no `gate`, so the merge is refused.
+- A row with no run id (a commit status from another app) counts as before. A run list that cannot be read, or a row whose run the list does not name, refuses the merge.
+- Every job of `ci.yml` is in the `needs` of `gate`, or is named as exempt in `tests/test_gate_needs.py`. `shortcut-ledger` is in the list. It stays warn-only through `continue-on-error` on its step, so the job and its check row end green.
