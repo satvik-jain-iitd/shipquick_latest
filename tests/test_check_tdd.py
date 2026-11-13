@@ -1,5 +1,6 @@
 """Story #319 (A15): a PR that changes code names the test it turned red first, and that test file is in the PR diff.
 Docs-only PRs and dev <-> main PRs are exempt. Tests use a real throwaway git repo, not a stubbed diff."""
+import re
 import subprocess
 from pathlib import Path
 
@@ -299,3 +300,144 @@ def test_s491_a_missing_list_file_exits_one_with_one_line_naming_it(tmp_path):
     assert "Traceback" not in r.stdout + r.stderr
     lines = r.stdout.strip().splitlines()
     assert len(lines) == 1 and "gate_files.txt" in lines[0], lines
+
+
+# ---- story #502 (feedback #501): the test names of other runners are accepted, one list in the script ----
+
+def _red(*names):
+    return "Summary.\n\n## Red\n\n" + "".join(f"- {n} (failed first)\n" for n in names) + "\n## Local proof\nran it\n"
+
+
+@pytest.mark.parametrize("name", [
+    "app/tests/unit/x.test.ts",          # TypeScript unit test (feedback #501)
+    "app/tests/e2e/x.spec.ts",           # TypeScript e2e spec (feedback #501)
+    "web/src/Button.test.tsx",
+    "web/src/Button.spec.jsx",
+    "lib/index.test.mjs",
+    "lib/index.spec.cjs",
+    "internal/parser_test.go",           # Go
+    "src/test/kotlin/ParserTest.kt",     # Kotlin
+    "src/test/kotlin/ParserTests.kt",
+    "Tests/ParserTest.swift",            # Swift
+    "Tests/ParserTests.swift",
+    "pkg/x_test.py",                     # pytest or unittest, another folder
+])
+def test_s502_a_known_test_file_name_in_red_passes(tmp_path, name):
+    repo = make_repo(tmp_path, {"app/src/x.ts": "x\n", name: "red\n"})
+    r = run(tmp_path, repo, _red(name))
+    assert r.returncode == 0 and "tdd OK" in r.stdout, r.stdout + r.stderr
+
+
+def test_s502_a_typescript_red_test_that_is_not_in_the_diff_still_fails(tmp_path):
+    repo = make_repo(tmp_path, {"app/src/x.ts": "x\n"})
+    r = run(tmp_path, repo, _red("app/tests/unit/x.test.ts"))
+    assert r.returncode == 1 and "not in the PR diff" in r.stdout, r.stdout
+
+
+def test_s502_a_fixture_in_a_tests_folder_is_not_a_test_and_says_so(tmp_path):
+    repo = make_repo(tmp_path, {"app/src/x.ts": "x\n", "tests/fixtures/data.json": "{}\n"})
+    r = run(tmp_path, repo, _red("tests/fixtures/data.json"))
+    assert r.returncode == 1, r.stdout
+    assert "tests/fixtures/data.json" in r.stdout and "not a known test file name" in r.stdout, r.stdout
+
+
+def test_s502_the_name_list_is_one_line_per_runner_in_the_script():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("check_tdd", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    names = mod.TEST_NAMES
+    assert all(isinstance(p, str) and p for p in names), names
+    for sample in ("x.test.ts", "x.spec.ts", "x_test.go", "xTests.kt", "xTest.swift", "x_test.py", "test_x.py"):
+        assert any(re.fullmatch(p, sample) for p in names), (sample, names)
+
+
+# ---- #505 review (QA): a real test named with a source file passes; .kts and .snap files are not tests ----
+
+def test_s502_a_real_red_test_named_with_a_changed_source_file_passes(tmp_path):
+    repo = make_repo(tmp_path, CODE)
+    r = run(tmp_path, repo, _red("tests/test_widget.py::test_widget_rejects_empty", "scripts/widget.py"))
+    assert r.returncode == 0 and "tdd OK" in r.stdout, r.stdout + r.stderr
+
+
+@pytest.mark.parametrize("name", ["app/src/main/kotlin/FooTest.kts", "web/src/x.test.tsx.snap"])
+def test_s502_a_script_or_snapshot_file_named_as_a_test_is_not_a_test(tmp_path, name):
+    repo = make_repo(tmp_path, {"app/src/x.ts": "x\n", name: "not a test\n"})
+    r = run(tmp_path, repo, _red(name))
+    assert r.returncode == 1 and "not a known test file name" in r.stdout, r.stdout + r.stderr
+
+
+@pytest.mark.parametrize("sentence", ["- tests/test_widget.py.", "- app/x.test.ts."])
+def test_s502_a_test_path_that_ends_a_sentence_still_passes(tmp_path, sentence):
+    """#505 QA: a dot that ends the sentence after a test path is not part of the name."""
+    files = dict(CODE)
+    files["app/x.test.ts"] = "red\n"
+    repo = make_repo(tmp_path, files)
+    r = run(tmp_path, repo, "Summary.\n\n## Red\n\n" + sentence + "\n\n## Local proof\nran it\n")
+    assert r.returncode == 0 and "tdd OK" in r.stdout, r.stdout + r.stderr
+
+
+# ---- #505 round three (QA): match the changed test paths in the section, not the section's words ----
+
+import importlib.util  # noqa: E402
+import time  # noqa: E402
+
+_spec = importlib.util.spec_from_file_location("check_tdd_mod", SCRIPT)
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+
+
+def _body(*lines):
+    return "Summary.\n\n## Red\n\n" + "\n".join(lines) + "\n\n## Local proof\nran it\n"
+
+
+def test_s502r3_gap_a_an_older_subject_naming_a_deleted_test_does_not_fail_the_push():
+    changed = list(CODE)
+    ok, msg = _mod.check(_body("- web/x.test.ts (older commit: delete the old one)",
+                               "- tests/test_widget.py::test_widget_rejects_empty"), changed)
+    assert ok, msg
+
+
+def test_s502r3_gap_a_pasted_go_output_naming_a_test_does_not_fail_the_push():
+    changed = list(CODE)
+    ok, msg = _mod.check(_body("- tests/test_widget.py::test_widget_rejects_empty",
+                               "log: parser_test.go:42 failed in an older run"), changed)
+    assert ok, msg
+
+
+@pytest.mark.parametrize("path", [
+    "app/src/[id]/page.test.tsx",
+    "app/src/(auth)/login.test.tsx",
+    "app/src/+page.test.ts",
+    "app/src/$id.test.tsx",
+    "app/@scope/x.test.ts",
+    "app/my folder/x.test.ts",
+])
+def test_s502r3_gap_b_a_changed_test_path_with_brackets_or_symbols_passes(path):
+    ok, msg = _mod.check(_body(f"- {path}"), ["app/src/x.ts", path])
+    assert ok, msg
+
+
+def test_s502r3_gap_c_a_very_long_word_is_checked_in_under_a_second():
+    body = _body("- tests/test_widget.py::test_widget_rejects_empty", "w" * 5000 + ".py")
+    start = time.perf_counter()
+    ok, msg = _mod.check(body, list(CODE))
+    elapsed = time.perf_counter() - start
+    assert ok and elapsed < 1.0, (ok, msg, elapsed)
+
+
+def test_s502r3_a_named_test_not_in_the_diff_with_no_other_test_still_fails():
+    ok, msg = _mod.check(_body("- tests/test_other.py::test_other"), list(CODE))
+    assert not ok and "not in the PR diff" in msg, msg
+
+
+def test_s502r3_a_fixture_still_fails():
+    changed = ["app/src/x.ts", "tests/fixtures/data.json"]
+    ok, msg = _mod.check(_body("- tests/fixtures/data.json"), changed)
+    assert not ok and "not a known test file name" in msg, msg
+
+
+def test_s502r3_a_dot_slash_fixture_gets_the_not_a_test_message():
+    changed = ["app/src/x.ts", "tests/fixtures/data.json"]
+    ok, msg = _mod.check(_body("- ./tests/fixtures/data.json"), changed)
+    assert not ok and "not a known test file name" in msg, msg

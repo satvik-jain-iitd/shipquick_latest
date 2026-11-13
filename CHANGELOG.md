@@ -12,6 +12,18 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+### Added
+- `tests/test_sample_child_walk.py`: the kit's CI walks a generated child (TypeScript-style test names, the kit on its own branch, a screens list, its own workflow) through `adopt.sh`, the bump, `--gate-files`, the real hooks and `check_local.sh`. It runs in the Python test job in under a minute. A new check must be named in the walk (story #504, ADOPTION.md).
+
+## [0.14.2] - 2026-11-13
+Tag `v0.14.2`, "the tdd check reads other runners' test names, and the screens wiring example runs the check". Notes: `docs/RELEASE_NOTES_v0.14.2.md`.
+
+### Changed
+- `scripts/check_tdd.py`: a `## Red` section may name a test file of other runners: `*_test.py`, `*.test.`/`*.spec.` for js, jsx, ts, tsx, mjs, cjs, `*_test.go`, `*Test(s).kt`, `*Test(s).swift`. One list, `TEST_NAMES`, one line per runner. A path in the diff that no name accepts says so (#502, feedback #501).
+
+### Fixed
+- `docs/SCREENS.md`: the "Wiring CI" example runs `screens.sh --check` before the upload step, as `check_screens_wired.py` requires, and says how to split a shared e2e run. The check's message names that section. A test runs the example through the check (#503, feedback #500).
+
 ## [0.14.1] - 2026-11-13
 Tag `v0.14.1`, "a gate-files PR passes the tdd check, and a missing list file stops the check in one line". Notes: `docs/RELEASE_NOTES_v0.14.1.md`.
 

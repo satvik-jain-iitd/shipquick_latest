@@ -167,3 +167,15 @@ its own gate off from inside itself:
 - A PR that edits the steps of a `ui-*` job inside `ci.yml` turns that job's area on (story #485, ADR-018 rule 4). A push to `dev` or `main` is not a pull request, so every area runs there. The manual full run asked of the reviewer in #484 is no longer needed.
 - How to read the manual run: on its own run page, never on the PR's checks list. A manual run puts checks with the same names on the head commit, skips every PR-only job (`tdd`, `roles`, `team-block` and others) and starts later, so on the PR it can show a green `gate` over a red PR run. So after the manual run, a PR-event run (a push or a body edit) must be the last run before the approval, and `scripts/review_merge.sh` then reads that one.
 - The `gate` job keeps `if: always()` and fails on a cancelled job. GitHub counts a skipped required check as passed, so a gate that did not run would let a run with a cancelled job look green.
+
+## Test file names in `## Red` (story #502, feedback #501)
+
+The tdd check (`scripts/check_tdd.py`) accepts a `## Red` path only when its file name is one of the runner names in `TEST_NAMES`, and the file is in the PR diff:
+
+- pytest and unittest: `test_*.py`, `*_test.py`
+- node:test, jest, vitest, playwright, jasmine: `*.test.{js,jsx,ts,tsx,mjs,cjs}`, `*.spec.{js,jsx,ts,tsx,mjs,cjs}`
+- go test: `*_test.go`
+- kotlin: `*Test.kt`, `*Tests.kt`
+- swift (XCTest): `*Test.swift`, `*Tests.swift`
+
+The pytest `::test_name` form still works. A path in the diff that no name accepts (a fixture, a JSON file) fails with a line that says so. To add a runner, add one line to `TEST_NAMES`; a project config file is not read.

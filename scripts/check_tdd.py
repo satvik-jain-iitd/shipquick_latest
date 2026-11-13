@@ -19,7 +19,16 @@ from pathlib import Path
 
 RED = re.compile(r"^##\s+red\s*$", re.I | re.M)
 NEXT_H2 = re.compile(r"^##\s", re.M)
-TEST_PATH = re.compile(r"[\w./-]*(?:test_\w*\.py|\w+\.test\.js)")   # pytest files, and node:test files (story #81, roadmap/*.test.js)
+# Story #502 (feedback #501): the test file names the `## Red` section may name, one line per runner. Add a line to add a runner.
+TEST_NAMES = [
+    r"test_\w*\.py",                                   # pytest (story #319)
+    r"[^/\s]+_test\.py",                                   # pytest or unittest, any folder
+    r"[^/\s]+\.test\.(?:jsx|tsx|mjs|cjs|js|ts)(?![\w])",     # node:test, jest, vitest (story #81, roadmap/*.test.js)
+    r"[^/\s]+\.spec\.(?:jsx|tsx|mjs|cjs|js|ts)(?![\w])",     # playwright, jasmine, angular (TypeScript children, #501)
+    r"[^/\s]+_test\.go",                                   # go test
+    r"[^/\s]+Tests?\.kt",                                  # kotlin (junit, kotest)
+    r"[^/\s]+Tests?\.swift",                               # swift (XCTest)
+]
 DOC_SUFFIXES = (".md", ".txt")
 DOC_DIRS = ("docs/", "pm/")
 # Story #454: a kit bump moves the pin and rewrites the files adopt.sh owns. There is nothing to put a test on.
@@ -83,21 +92,45 @@ def red_section(body: str):
     return body[m.end(): nxt.start() if nxt else len(body)]
 
 
+def is_test_file(path: str) -> bool:
+    """A changed path whose base name is a test name in TEST_NAMES (full match on the base name)."""
+    base = path.rsplit("/", 1)[-1]
+    return any(re.fullmatch(p, base) for p in TEST_NAMES)
+
+
+def named_in(section: str, path: str) -> bool:
+    """The full path stands in the section, with a boundary on both sides (`./` may come first)."""
+    return re.search(rf"(?<![\w/.-])(?:\./)?{re.escape(path)}(?![\w]|\.\w)", section) is not None
+
+
+def words(section: str) -> list:
+    """Words of the section for the failure message only; no path regex runs over the text."""
+    return [w.strip("./") for w in re.split(r"[\s`'\"<>()\[\],;]+", section) if w.strip("./")]
+
+
 def check(body, changed, base_branch="", head_branch=""):
-    """Return (True, message) for a pass or an exemption, (False, reason) for a fail."""
+    """Return (True, message) for a pass or an exemption, (False, reason) for a fail.
+
+    Story #505 round three: a PR passes when one changed test file's full path stands in `## Red` (one is enough).
+    Older commit subjects and pasted output can name what the diff does not hold; they do not fail the push."""
     why = exempt_reason(changed, base_branch, head_branch)
     if why:
         return True, f"tdd exempt: {why}"
     section = red_section(body)
     if section is None:
         return False, f"the PR changes code but has no `## Red` section; {SHAPE}"
-    named = [m.group(0).lstrip("./") for m in TEST_PATH.finditer(section)]
-    if not named:
-        return False, f"the `## Red` section names no test; {SHAPE}"
-    missing = [n for n in dict.fromkeys(named) if n not in changed]
-    if missing:
+    found = [f for f in changed if is_test_file(f) and named_in(section, f)]
+    if found:
+        return True, f"tdd OK: {', '.join(found)}"
+    test_like = [w.split("::")[0] for w in words(section) if is_test_file(w.split("::")[0])]
+    if test_like:
+        missing = list(dict.fromkeys(test_like))
         return False, f"the `## Red` section names {', '.join(missing)}, which is not in the PR diff; name a test file this PR changes"
-    return True, f"tdd OK: {', '.join(dict.fromkeys(named))}"
+    in_diff = [w for w in dict.fromkeys(words(section)) if w in changed]
+    if in_diff:
+        return False, (f"the `## Red` section names {in_diff[0]}, which is in the PR diff but is not a known test file name "
+                       f"(see TEST_NAMES in scripts/check_tdd.py); name the test file, not a fixture or data file")
+    return False, f"the `## Red` section names no test; {SHAPE}"
 
 
 def changed_files(base, repo):

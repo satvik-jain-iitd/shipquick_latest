@@ -791,3 +791,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Borrowed: the filter file idea and the base rule per event. Not borrowed: the action itself, which runs only inside a workflow and adds a third-party action to a protected file.
 - Decision: a stdlib reader over one JSON map, used by CI, the gate and (PR 4) check_local.sh. ADR-018.
 - Confidence that nothing fits better: 0.8.
+## 13 Nov 2026, story #504: the kit's CI walks a sample child through the whole path
+- Need: run a tool end to end against a generated sample project in CI.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "run a tool end to end against a generated sample project in CI"` printed `no repos found`. A second run with `--need "generate a sample project and run a CLI tool end to end in CI" --out docs/research/repo-radar.md` printed the same. GitHub topic search `--topic github-actions --topic end-to-end-testing` and the query "sample project end-to-end CI smoke test" were read by title and description. Top hits: `vasu31dev/playwright-ts-template` (139 stars), `vasu31dev/playwright-ts` (106), `MikeBild/serverless-aws-cdk-ecommerce` (51), `filipsnastins/testcontainers-github-actions` (20), `hamc/blastproof` (11).
+- Read: the top hits are UI test frameworks or demo apps. None generates a child project and walks a kit's own scripts (adopt, bump, gate files, hooks, checks) through its CI. The README of `hamc/blastproof` is an AI PR tool that picks tests; it does not generate a child.
+- Reused: the kit's own child-repo fixture in `tests/test_adopt.py` (`child` fixture, `adopt()`, `FAKE_PRECOMMIT`, fake submodule) and the scratch-repo helper in `tests/test_protected_warn.py` (`make_child_repo`).
+- Decision: build from scratch as one test file. No repo fits the walk. Confidence that nothing fits better: 0.8.
