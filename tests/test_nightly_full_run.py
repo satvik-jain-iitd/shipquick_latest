@@ -7,6 +7,8 @@ import datetime
 import json
 import subprocess
 import sys
+
+import pytest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,12 +54,15 @@ class Clock:
 
 class FakeGh:
     """The few gh calls the nightly script makes: api reads and gh commands."""
-    def __init__(self, run=None, jobs=(), issues=(), states=None, runs=None):
+    def __init__(self, run=None, jobs=(), issues=(), states=None, runs=None, fail_cmds=(), api_none=()):
         self.cmds, self.run_value, self.jobs_value, self.issues_value = [], run or red_run(), list(jobs), list(issues)
+        self.fail_cmds, self.api_none = [tuple(f) for f in fail_cmds], list(api_none)   # commands that return 1, api paths that return None
         self.states = list(states or [])   # successive answers for the run's own state, then the last one repeats
         self.runs_value = runs if runs is not None else [{"id": 700, "created_at": iso(5), "status": "queued"}]
 
     def api(self, path, token=None):
+        if any(s in path for s in self.api_none):
+            return None   # gh api failed: the real helper returns None
         if "/workflows/ci.yml/runs" in path:
             return {"workflow_runs": self.runs_value}
         if path.endswith("/jobs?per_page=100"):
@@ -70,7 +75,8 @@ class FakeGh:
 
     def run(self, cmd, check=False, **kwargs):
         self.cmds.append(list(cmd))
-        return subprocess.CompletedProcess(cmd, 0)
+        failed = any(all(w in cmd for w in f) for f in self.fail_cmds)
+        return subprocess.CompletedProcess(cmd, 1 if failed else 0)
 
     def count(self, *words):
         return sum(1 for c in self.cmds if all(w in c for w in words))
@@ -131,9 +137,10 @@ def test_s497_a_skipped_job_is_not_a_problem_and_the_gate_stays_the_judge():
     assert [p["job"] for p in nf.problems(red_run(), jobs + [job("test (3.12)", conclusion="failure")])] == ["test (3.12)"]
 
 
-def test_s497_a_job_cancelled_before_any_runner_took_it_never_got_a_machine():
+def test_s497_a_completed_job_with_no_runner_was_cancelled_before_it_started():
+    """Second review of #514: six jobs of a cancelled run were all labelled "never got a machine"; they were cancelled with the run."""
     p = nf.problems(red_run(), [job("ui-ios-snapshots", conclusion="cancelled", steps=False)])
-    assert p[0]["kind"] == "never got a machine", p
+    assert p[0]["kind"] == "cancelled before it started", p
     p = nf.problems(red_run(), [job("ui-ios-snapshots", conclusion="cancelled")])
     assert p[0]["kind"] == "failed", p
 
@@ -233,3 +240,106 @@ def test_s497_a_dry_run_looks_for_a_run_once_and_does_not_wait_for_one():
     gh = FakeGh(runs=[], issues=[])
     result, clock = night(gh, dry_run=True)
     assert result == "dry-run" and clock.slept == 0, (result, clock.slept)
+
+
+# ---- second review of #514: a night the script cannot read or report must end red ----
+def test_s497_a_failed_issue_create_ends_the_night_red():
+    gh = FakeGh(jobs=[job("test (3.12)", conclusion="failure")], issues=[], fail_cmds=[("issue", "create")])
+    with pytest.raises(issue_notice.IssueError):
+        night(gh)
+
+
+def test_s497_a_failed_issue_comment_ends_the_night_red():
+    gh = FakeGh(jobs=[job("test (3.12)", conclusion="failure")], issues=[{"number": 41, "title": nf.TITLE}], fail_cmds=[("issue", "comment")])
+    with pytest.raises(issue_notice.IssueError):
+        night(gh)
+
+
+def test_s497_a_failed_label_create_alone_does_not_stop_the_issue():
+    gh = FakeGh(jobs=[job("test (3.12)", conclusion="failure")], issues=[], fail_cmds=[("label", "create")])
+    result, _ = night(gh)
+    assert result == "opened"
+
+
+def test_s497_a_failed_issue_list_never_opens_a_second_issue():
+    gh = FakeGh(jobs=[job("test (3.12)", conclusion="failure")], issues=[{"number": 41, "title": nf.TITLE}], api_none=["/issues?labels="])
+    with pytest.raises(issue_notice.IssueError):
+        night(gh)
+    assert gh.count("issue") == 0, gh.cmds
+
+
+def test_s497_the_shared_helper_raises_when_it_cannot_read_the_open_issues():
+    cmds = []
+    with pytest.raises(issue_notice.IssueError):
+        issue_notice.open_or_comment("o/r", "x", "t", "b", "k", False, api=lambda p, token=None: None, run=lambda c, **k: cmds.append(c))
+    assert cmds == []
+
+
+def test_s497_an_empty_issue_list_is_not_a_failed_read():
+    cmds = []
+    out = issue_notice.open_or_comment("o/r", "x", "t", "b", "k", False, api=lambda p, token=None: [], run=lambda c, **k: cmds.append(c) or subprocess.CompletedProcess(c, 0))
+    assert out == "opened"
+
+
+def test_s497_a_failed_run_list_ends_the_night_red_and_opens_no_issue():
+    gh = FakeGh(issues=[], api_none=["/workflows/ci.yml/runs"])
+    with pytest.raises(nf.NightError):
+        night(gh)
+    assert gh.count("issue") == 0, gh.cmds
+
+
+def test_s497_an_empty_run_list_is_no_run_yet_not_a_failed_read():
+    gh = FakeGh(runs=[], issues=[])
+    result, _ = night(gh)
+    assert result == "opened"
+
+
+def test_s497_a_failed_jobs_list_ends_the_night_red():
+    gh = FakeGh(issues=[], api_none=["/jobs?per_page=100"])
+    with pytest.raises(nf.NightError):
+        night(gh)
+    assert gh.count("issue") == 0, gh.cmds
+
+
+def test_s497_main_exits_1_when_the_night_cannot_be_read_or_reported(monkeypatch, capsys):
+    def boom(*a, **k):
+        raise nf.NightError("cannot read the workflow runs of o/r")
+    monkeypatch.setattr(nf, "nightly", boom)
+    assert nf.main(["--repo", "o/r"]) == 1
+    assert "cannot read the workflow runs" in capsys.readouterr().out
+
+
+def test_s497_the_adoption_scan_reports_every_child_then_ends_red_when_a_report_failed(monkeypatch, capsys):
+    monkeypatch.setattr(scan, "read_children", lambda path: [("a/one", False), ("a/two", False)])
+    monkeypatch.setattr(scan, "check_child", lambda child, fetch, days, today: f"{child}: no caller")
+    tried = []
+
+    def failing(child, why, dry):
+        tried.append(child)
+        raise issue_notice.IssueError("cannot read the open issues")
+    monkeypatch.setattr(scan, "open_or_comment", failing)
+    monkeypatch.setattr(sys, "argv", ["adoption_scan.py"])
+    assert scan.main() == 1
+    assert tried == ["a/one", "a/two"], "one failed report must not stop the scan of the next child"
+
+
+# ---- the labels ----
+def test_s497_a_job_still_waiting_at_the_deadline_never_got_a_machine():
+    waiting = {"status": "waiting", "conclusion": None, "name": "ui-ios-compile", "runner_name": None, "steps": []}
+    p = nf.problems({**red_run(), "status": "in_progress", "conclusion": None}, [waiting])
+    assert p[0]["kind"] == "never got a machine", p
+
+
+def test_s497_the_gate_is_not_listed_beside_the_real_job():
+    jobs = [job("gate", conclusion="failure"), job("test (3.12)", conclusion="failure")]
+    assert [p["job"] for p in nf.problems(red_run(), jobs)] == ["test (3.12)"]
+
+
+def test_s497_the_gate_is_listed_when_it_is_the_only_bad_job():
+    assert [p["job"] for p in nf.problems(red_run(), [job("gate", conclusion="failure"), job("test (3.12)")])] == ["gate"]
+
+
+# ---- point 5: one nightly at a time ----
+def test_s497_the_workflow_has_a_concurrency_group_that_never_cancels_a_running_night():
+    text = (ROOT / ".github" / "workflows" / "nightly.yml").read_text(encoding="utf-8")
+    assert "concurrency:" in text and "group: nightly-full-run" in text and "cancel-in-progress: false" in text
