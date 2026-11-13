@@ -2339,3 +2339,10 @@ Scenario: the gate and another job both failed
 Scenario: a manual start beside the timer
   Then the concurrency group makes it wait and never cancels the running night
 ```
+
+Scenario: a child passes its own workflow, guard and decision job to the reader (story #498)
+  Then a docs-only change leaves its area off, a path of the area turns it on, a change to its map, its decision job or the kit pin turns every area on
+Scenario: a child caller has no concurrency block
+  Then adopt.sh --check says so and names the fix
+Scenario: the snippet in docs/ADOPTION.md is run as written
+  Then docs only is off, an area path is on, and a skipped job of an on area fails the child's gate

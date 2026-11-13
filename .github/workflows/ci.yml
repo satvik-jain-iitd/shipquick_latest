@@ -358,7 +358,8 @@ jobs:
             git show "$base:scripts/$f" > "$RUNNER_TEMP/change-map/$f" 2>/dev/null || rm -f "$RUNNER_TEMP/change-map/$f"
           done
           if [ -f "$RUNNER_TEMP/change-map/change_map.py" ] && python3 "$RUNNER_TEMP/change-map/change_map.py" decide \
-              --base "$base" --head HEAD --event "$EVENT" --map "$RUNNER_TEMP/change-map/change_map.json" --outputs "$GITHUB_OUTPUT"; then
+              --base "$base" --head HEAD --event "$EVENT" --map "$RUNNER_TEMP/change-map/change_map.json" --outputs "$GITHUB_OUTPUT" \
+              --ci .github/workflows/ci.yml --guard scripts/change_map.json --guard scripts/change_map.py --decision-job ui-changes; then
             exit 0
           fi
           echo "the change map could not run here, so every slow job runs (fails closed)"

@@ -270,6 +270,11 @@ if [ -n "$check_mode" ]; then
     echo "not adopted: shipquick-call.yml grants no issues: read, so the story job cannot read the linked stories (run: bash $HERE/adopt.sh $child)"
     ok=0
   fi
+  # story #498: one run per PR, so a new push cancels the old run of the child's checks
+  if [ -f "$call" ] && ! grep -qE '^concurrency:' "$call"; then
+    echo "not adopted: shipquick-call.yml has no concurrency block (one run per PR; a new push cancels the old run) (run: bash $HERE/adopt.sh $child)"
+    ok=0
+  fi
   # story #479: the hooks and the switches are read from this branch, where git runs them, never from the kit branch
   hooks="$(cat "$child/.pre-commit-config.yaml" 2>/dev/null || true)"
   hooks_skipped=""
