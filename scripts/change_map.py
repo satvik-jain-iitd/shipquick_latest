@@ -22,8 +22,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-GUARDED = {"scripts/change_map.json", "scripts/change_map.py"}
-CI_PATH = ".github/workflows/ci.yml"
+GUARDED = ["scripts/change_map.json", "scripts/change_map.py"]   # the kit's own values; a child passes --guard and --ci (story #498)
+CI_PATHS = [".github/workflows/ci.yml"]
+DECISION_JOB = "ui-changes"
 
 
 def git(*args):
@@ -62,8 +63,8 @@ def job_block(text, name):
     return "\n".join(out) if inside else None
 
 
-def decision_parts(text):
-    """The header of ci.yml and the ui-changes job, the two parts that decide which jobs run. The header is every line
+def decision_parts(text, decision_job=DECISION_JOB):
+    """The header of ci.yml and the decision job (ui-changes in the kit), the two parts that decide which jobs run. The header is every line
     outside a job's body: the lines before `jobs:` and every column-0 key after it (a top-level env: placed after the
     jobs is header too, story #499 second review). Only a job's own body is left out of the header."""
     header, bodies, in_jobs, cur = [], {}, False, None
@@ -78,7 +79,7 @@ def decision_parts(text):
             bodies[cur].append(line)
         else:
             header.append(line)
-    ui = "\n".join(bodies["ui-changes"]) if "ui-changes" in bodies else None
+    ui = "\n".join(bodies[decision_job]) if decision_job in bodies else None
     return "\n".join(header), ui
 
 
@@ -96,7 +97,8 @@ def readable_commit(ref):
     return subprocess.run(["git", "rev-parse", "--verify", "-q", f"{ref}^{{commit}}"], capture_output=True).returncode == 0
 
 
-def decide(base, head, event, map_path):
+def decide(base, head, event, map_path, ci_paths=None, guard=None, decision_job=DECISION_JOB):
+    ci_paths, guard = ci_paths or CI_PATHS, guard or GUARDED
     try:
         areas, free = load_map(map_path)
     except Exception as e:  # missing, empty, broken or wrong shape: every area on, and the areas are not known
@@ -114,8 +116,8 @@ def decide(base, head, event, map_path):
         changed = [n for n in git("diff", "-z", "--name-only", "--no-renames", mb, head).split("\0") if n]
     except subprocess.CalledProcessError:
         return all_on(every, f"the diff of {base} and {head} cannot be read")
-    if any(n in GUARDED for n in changed):
-        return all_on(every, "the map or its reader changed in this PR, so nothing is skipped on this run")
+    if any(n in guard for n in changed):
+        return all_on(every, "the map, its reader or the kit pin changed in this PR, so nothing is skipped on this run")
     on, reasons = {a: False for a in areas}, []
     for n in changed:
         hit = [a for a, spec in areas.items() if matches(n, spec["paths"]) and not matches(n, spec.get("except", []))]
@@ -127,19 +129,21 @@ def decide(base, head, event, map_path):
             continue
         return all_on(every, f"{n}: no row in scripts/change_map.json names this path; add a row (an area, or free if it needs no slow job)")
     try:
-        base_ci = git("show", f"{mb}:{CI_PATH}")
-        head_ci = git("show", f"{head}:{CI_PATH}")
+        base_ci = {c: git("show", f"{mb}:{c}") for c in ci_paths}
+        head_ci = {c: git("show", f"{head}:{c}") for c in ci_paths}
     except subprocess.CalledProcessError:
-        return all_on(every, f"{CI_PATH} cannot be read at {mb} or {head}")
-    if decision_parts(base_ci) != decision_parts(head_ci):
-        return all_on(every, f"{CI_PATH}: the header or the ui-changes job changed, so nothing is skipped on this run")
+        return all_on(every, f"a workflow file ({', '.join(ci_paths)}) cannot be read at {mb} or {head}")
+    if any(decision_parts(base_ci[c], decision_job) != decision_parts(head_ci[c], decision_job) for c in ci_paths):
+        return all_on(every, f"{', '.join(ci_paths)}: the header or the {decision_job} job changed, so nothing is skipped on this run")
     for area, spec in areas.items():
         for job in spec["jobs"]:
-            if job_block(head_ci, job) is None or job_block(base_ci, job) is None:
-                return all_on(every, f"{CI_PATH}: job {job} is not in one of the two copies, so nothing is judged; every area runs")
-            if job_block(base_ci, job) != job_block(head_ci, job):
+            blocks = [(job_block(base_ci[c], job), job_block(head_ci[c], job)) for c in ci_paths]
+            blocks = [b for b in blocks if b != (None, None)]
+            if not blocks or any(None in b for b in blocks):
+                return all_on(every, f"job {job} is not in one of the two copies of the workflow files, so nothing is judged; every area runs")
+            if any(b[0] != b[1] for b in blocks):
                 on[area] = True
-                reasons.append(f"{job}: its own steps changed in ci.yml, so area {area} runs")
+                reasons.append(f"{job}: its own steps changed in the workflow, so area {area} runs")
     return {**on, "all": False, "reasons": reasons}
 
 
@@ -170,6 +174,9 @@ def main(argv):
     d.add_argument("--event", required=True)
     d.add_argument("--map", required=True)
     d.add_argument("--outputs")
+    d.add_argument("--ci", action="append", help="workflow file with the jobs (repeatable); default the kit's ci.yml")
+    d.add_argument("--guard", action="append", help="path that turns every area on when it changes (repeatable); default the kit's map and reader")
+    d.add_argument("--decision-job", default=DECISION_JOB, help="job whose body decides which jobs run; default ui-changes")
     g = sub.add_parser("gate")
     g.add_argument("--decision", required=True)
     g.add_argument("--needs", required=True)
@@ -177,7 +184,7 @@ def main(argv):
     a = ap.parse_args(argv)
     if a.cmd == "decide":
         try:
-            out = decide(a.base, a.head, a.event, a.map)
+            out = decide(a.base, a.head, a.event, a.map, a.ci, a.guard, a.decision_job)
         except Exception as e:  # any crash inside the reader is a doubt: every area on
             out = all_on([], f"the reader failed ({e.__class__.__name__}); fails closed")
         print(json.dumps(out, sort_keys=True))

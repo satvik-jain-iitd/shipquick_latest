@@ -10,6 +10,10 @@ name: ShipQuick checks
 on:
   workflow_dispatch:
 
+concurrency:
+  group: shipquick-checks-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: read

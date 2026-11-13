@@ -13,6 +13,7 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 ## [Unreleased]
 
 ### Added
+- `scripts/change_map.py` takes `--ci`, `--guard` and `--decision-job`, so a child reads its own map with the kit's reader (story #498, ADR-019); `docs/ADOPTION.md` has a tested snippet; the caller `adopt.sh` writes has a `concurrency` block and `adopt.sh --check` says when it is missing.
 - `tests/test_sample_child_walk.py`: the kit's CI walks a generated child (TypeScript-style test names, the kit on its own branch, a screens list, its own workflow) through `adopt.sh`, the bump, `--gate-files`, the real hooks and `check_local.sh`. It runs in the Python test job in under a minute. A new check must be named in the walk (story #504, ADOPTION.md).
 - `.github/workflows/nightly.yml` and `scripts/nightly_full_run.py` (story #497, epic #485 item 7): once a night the script dispatches `ci.yml` on `dev`, waits for it, and opens one issue (label `nightly`) that names each bad job and says whether it failed or never got a machine; a later red night comments on the same issue, a green night opens nothing. The timer runs from the default branch, so it starts after the next promotion to `main`. `scripts/issue_notice.py` is the one issue-opening helper, now shared with `scripts/adoption_scan.py`.
 
