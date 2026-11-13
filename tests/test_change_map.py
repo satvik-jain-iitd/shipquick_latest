@@ -431,3 +431,20 @@ def test_s499_ci_yml_reads_an_output_for_every_area_of_the_map():
         for job in spec["jobs"]:
             block = _change_map_module().job_block(CI, job)
             assert f"needs.ui-changes.outputs.{area} != 'false'" in block, (job, area)
+
+
+# #499 review point 2: only tests/fixtures/android and tests/fixtures/ios are read by a phone job. Other fixture folders
+# are free (the owner's rule: run what is relevant).
+FIXTURE_ROWS = [
+    ("tests/fixtures/android/x.txt", {"android": True, "ios": False}),
+    ("tests/fixtures/ios/x.swift", {"android": False, "ios": True}),
+    ("tests/fixtures/adopt/x.txt", {"android": False, "ios": False}),
+    ("tests/fixtures/web/x.txt", {"android": False, "ios": False}),
+]
+
+
+@pytest.mark.parametrize("path,want", FIXTURE_ROWS)
+def test_s499_fixture_folders_turn_on_only_the_platform_that_reads_them(tmp_path, path, want):
+    repo = make_repo(tmp_path)
+    change(repo, path, text="x\n")
+    assert on(decide(repo)) == want, (path, decide(repo))
