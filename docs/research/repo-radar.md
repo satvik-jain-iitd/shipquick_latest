@@ -817,3 +817,11 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: both READMEs. Both run only inside a workflow, filter by path at run time, and have no gate that proves a needed job ran or fails closed on a doubt.
 - Reused: the kit's own reader from story #485 (ADR-018); only its arguments change.
 - Decision: no new tool; give the reader `--ci`, `--guard` and `--decision-job`. Confidence that nothing fits better: 0.8.
+
+## 19 Nov 2026, story #570: check_local.sh tests runs only the tests a change names
+
+- Need: pick the Python test files a change can break, from the changed file names, fail closed to the full suite.
+- Run: GitHub search `gh search repos --topic pytest --topic test-selection` (the scout script path in the docs is stale) found `Igorxp5/pytest-ekstazi`, `gigaverse-app/pytest-selective`, `DiffCI/core`.
+- Read: the READMEs of `pytest-ekstazi` and `pytest-selective`. Ekstazi runs the whole suite once, records per-test file dependencies in a json file, and needs a pytest plugin and a stored map. `pytest-selective` follows imports through the code and falls back to the full suite when unsure. Both need an installed plugin and a dependency map or import graph.
+- Reused: the fail-closed idea (when unsure, run everything). Not borrowed: the plugins; the kit has no pytest plugin set-up and the earlier big selector PRs #558 to #560 are replaced.
+- Decision: build the small agreed rule as one stdlib script, `scripts/tests_for_change.py` (a test that names the changed file's base name is picked). Confidence that nothing fits better: 0.75.
