@@ -94,6 +94,11 @@ check_story() {
   rm -f "$tmp"
   report story "$rc"
 }
+check_test_impact_manifest() {
+  if [ ! -f .shipquick/test-impact.yml ]; then echo "skip test-impact-manifest: no .shipquick/test-impact.yml"; return 0; fi
+  python3 "$HERE/check_test_impact.py" --file .shipquick/test-impact.yml
+  report test-impact-manifest $?
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   gitleaks git --no-banner --no-color --redact --verbose .
@@ -120,7 +125,8 @@ for c in "${checks[@]}"; do
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
     story) check_story ;;
-    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
+    test-impact-manifest) check_test_impact_manifest ;;
+    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story test-impact-manifest secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"
