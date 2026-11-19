@@ -2433,4 +2433,20 @@ Scenario: neither job asks for write permission
   Then the roles job has GH_REPO in its env
 Scenario: the PR's own file is read only on a 404 from the base
   Then a 500 or a missing token never reads it
+## Story #588: one day's merged PRs as a table (tests/test_sprint_metrics.py)
+```gherkin
+Scenario: a day with two merged PRs prints a table and a totals line
+  Then there is one row per PR and the exit code is 0
+Scenario: the command reads only the five GET paths through the shared reader
+  Then gh_api is issue_notice.gh_api
+Scenario: a PR that cannot be read is a named row and exit 1
+  Then the other rows still print
+Scenario: a failed search prints the reason and no table
+  Then an incomplete search and more than 100 PRs exit 1 too
+Scenario: an empty value prints a dash and adds nothing to the totals
+  Then the totals skip it
+Scenario: a day with no merged PR says so and exits 0
+  Then it prints no merged PRs on the date
+Scenario: the day is read on the clock the offset names
+  Then a bad offset, date or missing repo exits 2 and makes no call
 ```
