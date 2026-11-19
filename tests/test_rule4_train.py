@@ -29,11 +29,12 @@ def test_pr_rules_lists_the_train_steps_in_order():
     sec = text.split("## 17. Light CI and the train", 1)[1]
     sec = re.split(r"\n## \d+\.", sec)[0]
     order = ["from `dev`", "targets the train", "reviewer approves each", "git merge --no-ff",
-             "second reviewer", "CI runs once", "owner's yes", "owner merges"]
+             "opens one PR", "CI runs once", "second reviewer", "owner's yes", "scripts/review_merge.sh"]
     pos = [sec.find(w) for w in order]
     assert -1 not in pos, dict(zip(order, pos))
     assert pos == sorted(pos), pos
     assert sec.find("second reviewer") < sec.find("owner's yes")
+    assert "section 13" in sec and ".shipquick/*" in sec and "owner's own merge" in sec
 
 
 def test_the_rule_copies_check_still_passes():

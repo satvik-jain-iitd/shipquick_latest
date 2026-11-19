@@ -213,7 +213,7 @@ The steps of a train, in order:
 2. Each feature PR targets the train branch and gets a light run.
 3. The reviewer approves each feature PR.
 4. The coder merges the approved branches into the train with `git merge --no-ff` and pushes once.
-5. The reviewer checks the union and asks a second reviewer.
-6. The coder opens one PR from the train into `dev` with a `Closes #N` line for every story on it. CI runs once, in full.
+5. The coder opens one PR from the train into `dev` with a `Closes #N` line for every story on it. CI runs once, in full, on that PR.
+6. The reviewer checks the union and asks a second reviewer.
 7. The owner's yes.
-8. The owner merges, through `scripts/review_merge.sh`.
+8. The merge goes through `scripts/review_merge.sh`. Who runs it depends on the mode and on protected paths (section 13); a train that touches `.shipquick/*` is the owner's own merge.
