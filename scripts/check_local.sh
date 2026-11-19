@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
@@ -175,6 +175,19 @@ check_intent_verify() {
   rm -f "$tmp"
   report intent-verify "$rc"
 }
+check_ac_trace() {   # #544: every AC id of each linked story maps to a real test in THIS repo's tree (never the kit's)
+  have_base ac-trace || return 0
+  command -v gh >/dev/null || { echo "skip ac-trace: gh is not installed"; return 0; }
+  gh auth status >/dev/null 2>&1 || { echo "skip ac-trace: gh is not logged in (gh auth login); CI still checks it"; return 0; }
+  local tmp rc root
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  python3 "$HERE/check_ac_trace.py" --pr-body-file "$tmp" --root "$root"
+  rc=$?
+  rm -f "$tmp"
+  report ac-trace "$rc"
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   # story #454: a push is judged on the commits it adds. History below origin/$BASE was already pushed; an old finding there is not this push's.
@@ -208,6 +221,7 @@ feature_of() {   # feature_of <check> -- the feature id that switches the check,
     frontend-design) echo frontend-design ;;
     story) echo story ;;
     intent-verify) echo intent-verify ;;
+    ac-trace) echo ac-trace ;;
     roadmap) echo roadmap ;;
     ui-registry) echo component-registry ;;
   esac
@@ -223,7 +237,7 @@ feature_skip() {   # feature_skip <check>: returns 0 when the check must be skip
   esac
 }
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify tdd roadmap workflow-security secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap workflow-security secrets)
 for c in "${checks[@]}"; do
   feature_skip "$c" && continue
   [ $? -eq 2 ] && continue
@@ -249,12 +263,13 @@ for c in "${checks[@]}"; do
     design-tokens) check_design_tokens ;;
     story) check_story ;;
     intent-verify) check_intent_verify ;;
+    ac-trace) check_ac_trace ;;
     story-size) check_story_size ;;
     shortcuts) check_shortcuts ;;
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts
