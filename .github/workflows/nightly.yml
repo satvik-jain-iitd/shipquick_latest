@@ -30,3 +30,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: python3 scripts/nightly_full_run.py --repo "$REPO" --ref dev
+
+  # Story #578: the code graph is built and checked here only, never in a PR workflow. A red job is the report; its log
+  # holds the reason. Actions are pinned to the same commits ci.yml uses. No token, no artifact, no issue.
+  graph-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: dev
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install the graph tool at the pinned version
+        run: |
+          test -s scripts/graphify_version.txt
+          pip install "graphifyy==$(tr -d '[:space:]' < scripts/graphify_version.txt)"
+      - name: Build the graph
+        run: python3 scripts/graphify_kit.py build .
+      - name: Check the graph is fresh
+        run: python3 scripts/graphify_kit.py check .

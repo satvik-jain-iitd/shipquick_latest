@@ -72,3 +72,4 @@ https://conf.researchr.org/details/icst-2024/icst-2024-industry/1/Cost-of-Flaky-
 - **A check stuck as pending.** Pending for more than twice its usual time counts as a failure. The reviewer re-runs
   it once (`gh run rerun <id> --failed`). Still stuck: tell the owner the run link and the stuck step name.
   An agent may not be allowed to run `gh run cancel`; then the owner's cancel click in the browser is the fallback.
+- **The code graph check runs in the nightly run only** (story #578). The job `graph-health` in `nightly.yml` builds the graph and checks it is fresh; no PR workflow and no `gate` runs it. A red job is the report.
