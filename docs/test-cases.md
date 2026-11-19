@@ -2390,3 +2390,19 @@ Scenario: the script reads no token and has no apply
 Scenario: the fixtures use made-up names only
   Then every child is under example-org
 ```
+
+## Story #589: checks.yml reads roles.yml from the base branch
+```gherkin
+Scenario: roles and intent-verify read the base branch through the API
+  Then neither job holds project/.shipquick/roles.yml
+Scenario: a set kit branch is read instead, and a missing one fails naming it
+  Then both jobs read the kit branch
+Scenario: neither job checks out the project
+  Then no step runs git fetch
+Scenario: no roles file on the branch fails closed
+  Then roles fails naming the branch and intent-verify passes an empty list
+Scenario: neither job asks for write permission
+  Then the roles job has GH_REPO in its env
+Scenario: the PR's own file is read only on a 404 from the base
+  Then a 500 or a missing token never reads it
+```
