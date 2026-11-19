@@ -223,3 +223,25 @@ def test_the_ci_step_runs_only_on_pull_requests():
 def test_the_sample_child_walk_names_the_check():
     walk = (ROOT / "tests" / "test_sample_child_walk.py").read_text(encoding="utf-8")
     assert '"ac-trace":' in walk
+
+
+# ---- #564 review: a short doc says the rule, what a "name search" is, and where the check runs ----
+def ac_doc():
+    return (ROOT / "docs" / "AC_TRACE.md").read_text(encoding="utf-8")
+
+
+def test_the_doc_says_the_rule_and_the_line_shapes():
+    text = ac_doc()
+    assert "`AC-1:`" in text and "`Tests:`" in text and "AC-1 -> path::test_name" in text
+    assert "2026-11-19" in text and "every" in text.lower()
+
+
+def test_the_doc_says_the_test_check_is_a_name_search_not_a_parse():
+    text = ac_doc()
+    assert "name search, not a parse" in text and "whole word" in text
+    assert "TypeScript" in text and "Kotlin" in text
+
+
+def test_the_doc_says_where_it_runs_and_how_to_turn_it_off():
+    text = ac_doc()
+    assert "`ac-trace`" in text and "scripts/check_local.sh ac-trace" in text and "kit CI only" in text
