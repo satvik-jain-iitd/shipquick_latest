@@ -149,6 +149,18 @@ To editor, from writer, re docs/drafts/kirana-growth-story.md:
 Need from you: the edited draft or a comment per claim.
 ```
 
+## Intent-verification gate (ADR-021)
+
+QA and Dev run on different models: QA on a larger reasoning model, Dev on a faster implementation model.
+A fast model can misread a QA delegation and start coding the wrong thing. To stop that:
+
+1. Before Dev starts any work QA delegated, Dev sends a say-back: what it understood, its planned approach, and an explicit question ("am I doing this right?").
+2. Dev does not code until QA replies "confirmed" (or corrects).
+3. QA records the confirmation as a comment on the story issue: `Intent verified by QA: <YYYY-MM-DD>`, from a login on the reviewer list (`scripts/roles.py get reviewer`) that is not the PR author. The PR body does not count.
+4. `scripts/check_intent_verify.py` fails a dev PR (linked to a user-story issue created on or after 2026-11-19) that has no such comment.
+
+The check is kit CI only: a child gets it from its own copy of the kit. The comment is an audit line, not a signature. The reviewer list decides who may confirm. A confirmation from the PR author never passes. A login with write access can still edit a comment after QA posts it, and a QA that confirms without reading the say-back passes; the date and the say-back in the session make a false line easy to spot later.
+
 ## How a child project inherits this
 
 See `docs/PLAN.md`, section D2. Short version: bump the submodule, copy rule 19 into your own
