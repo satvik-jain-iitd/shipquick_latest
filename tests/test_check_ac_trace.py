@@ -14,9 +14,29 @@ def run(body, *args):
     return subprocess.run(["python3", str(SCRIPT), *args], input=body, capture_output=True, text=True)
 
 
-def test_a_story_with_ac_ids_and_tests_passes():
-    r = run("## Scenarios\nAC-1: foo\nAC-2: bar\nTests: AC-1 -> tests/test_x.py::test_foo\n")
+def test_a_story_with_every_ac_mapped_passes():
+    r = run("## Scenarios\nAC-1: foo\nAC-2: bar\nTests: AC-1 -> tests/test_x.py::test_foo; AC-2 -> tests/test_x.py::test_bar\n")
     assert r.returncode == 0 and "OK" in r.stdout, r.stdout
+
+
+def test_an_unmapped_ac_fails_and_is_named():
+    r = run("AC-1: a\nAC-2: b\nTests: AC-1 -> tests/test_x.py::test_foo\n")
+    assert r.returncode == 1 and "AC-2" in r.stdout and "AC-1" not in r.stdout.split("AC-2")[0], r.stdout
+
+
+def test_a_tests_line_that_maps_nothing_fails():
+    r = run("AC-1: a\nAC-2: b\nTests: later\n")
+    assert r.returncode == 1 and "AC-1" in r.stdout and "AC-2" in r.stdout, r.stdout
+
+
+def test_a_mapping_for_an_ac_the_story_does_not_define_fails():
+    r = run("AC-1: a\nTests: AC-1 -> tests/test_x.py::test_foo; AC-9 -> tests/test_x.py::test_nine\n")
+    assert r.returncode == 1 and "AC-9" in r.stdout and "does not define" in r.stdout, r.stdout
+
+
+def test_a_mention_of_an_ac_in_prose_does_not_define_it():
+    r = run("This story replaces AC-7 of the old one.\nAC-1: a\nTests: AC-1 -> tests/test_x.py::test_foo\n")
+    assert r.returncode == 0, r.stdout
 
 
 def test_a_story_without_ac_ids_fails():
