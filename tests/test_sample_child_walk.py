@@ -39,7 +39,7 @@ jobs:
 # A new check in check_local.sh must be in one of the two. A new job in checks.yml must be in CHECKS_YML.
 WALKED = {
     "sizes", "markers", "md-blocks", "rule-copies", "workflow-security", "features-wiring", "commits",
-    "commit-subjects", "pr-size", "frontend-design", "disable-comments", "design-tokens", "tdd", "roadmap",
+    "commit-subjects", "pr-size", "frontend-design", "disable-comments", "design-tokens", "tdd", "roadmap", "flaky",
 }
 NAMED = {
     "ui-docs": "needs the kit's own ui/ folder; a child has none",
