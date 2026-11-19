@@ -159,3 +159,18 @@ def test_the_adr_says_qa_types_the_confirmation_on_the_issue_not_dev_in_the_body
 
 def test_the_adr_says_what_is_still_not_stopped():
     assert "does not read the say-back" in adr_last_section()
+
+
+# ---- #555 qa review, point 1: no stale "PR body" proof text left in the docs ----
+STALE_DOCS = ("docs/decisions/ADR-021.md", "docs/TEAM_ROSTER.md", "docs/TEAM_PROTOCOL.md")
+
+
+@pytest.mark.parametrize("rel", STALE_DOCS)
+def test_no_doc_says_the_proof_is_recorded_in_the_pr_body(rel):
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    for stale in ("recorded in the PR body", "PR body carries the confirmation", "Dev that types a confirmation QA never gave passes"):
+        assert stale not in text, f"{rel} still says: {stale!r}"
+
+
+def test_the_adr_names_that_a_login_with_write_access_can_edit_a_comment():
+    assert "edit" in adr_last_section() and "write access" in adr_last_section()
