@@ -5,6 +5,8 @@ Rule: for each changed file, pick every tests/**/test_*.py whose text names the 
 without its extension. A changed test file picks itself. A changed .md that no test names is ignored. Any other file that no
 test names, or a change list that cannot be read, prints "full suite: <reason>" first and then every test file.
 Changed files: git diff origin/$BASE...HEAD plus staged, unstaged and untracked files. Prints one path per line.
+Limit: it is a name search. A test that reaches the changed file only through another script is not picked; CI still runs the
+full suite. A repo with no tests/**/test_*.py prints "no python test files in this repo" and exits 3.
 """
 import argparse
 import re
@@ -31,6 +33,8 @@ def select(root, changed):
     """Returns (reason or None, picked paths). A reason means the full suite."""
     tests = {p.relative_to(root).as_posix(): p.read_text(encoding="utf-8", errors="replace")
              for p in sorted(Path(root).glob("tests/**/test_*.py"))}
+    if changed is None:
+        return "cannot read the changes", sorted(tests)
     picked, unnamed = set(), []
     for f in changed:
         if f in tests:
@@ -56,14 +60,16 @@ def main():
     ap.add_argument("--base", default="dev")
     ap.add_argument("--changed", nargs="*", help="changed files; default: read them from git")
     a = ap.parse_args()
+    if not any(Path(a.root).glob("tests/**/test_*.py")):
+        print("no python test files in this repo")
+        return 3
     try:
         changed = a.changed if a.changed is not None else changed_files(a.root, a.base)
     except (RuntimeError, OSError) as e:
-        reason, picked = f"cannot read the changes ({e})", select(a.root, [])[1]
-    else:
-        reason, picked = select(a.root, changed)
+        changed, err = None, e
+    reason, picked = select(a.root, changed)
     if reason:
-        print(f"full suite: {reason}")
+        print(f"full suite: {reason}" + (f" ({err})" if changed is None else ""))
     print("\n".join(picked))
 
 
