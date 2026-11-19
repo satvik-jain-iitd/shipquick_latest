@@ -2403,4 +2403,20 @@ Scenario: the workflow fails on a tag with no commit
   Then an empty or unknown tag exits 1
 Scenario: the workflow step keeps the planner exit code
   Then pipefail is set and nothing masks a red result
+## Story #586: the coverage ratchet as a local check
+```gherkin
+Scenario: a changed file that dropped below its base report fails
+  Then check_local.sh coverage prints FAIL coverage and names the file
+Scenario: a report path is not set or the file is missing
+  Then it prints FAIL coverage with the reason and never says skip
+Scenario: the check runs no tests
+  Then no pytest and no coverage run is called
+Scenario: a deleted file is not judged
+  Then it is not in the change list
+Scenario: the change list cannot be read
+  Then it prints FAIL coverage with the reason
+Scenario: the feature coverage is off
+  Then it prints skipped: coverage is off and passes
+Scenario: the default list
+  Then coverage is not in it, but is in the usage and unknown-check lines
 ```
