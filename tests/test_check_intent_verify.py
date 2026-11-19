@@ -136,3 +136,10 @@ def test_local_fails_on_a_linked_new_story_with_no_proof_comment(tmp_path):
     r = run_local(tmp_path, local_repo(tmp_path), story_issue(comments=[]), login="dev-login")
     assert r.returncode != 0, (r.stdout, r.stderr)
     assert "no comment" in r.stdout, r.stdout
+
+
+# ---- fix 3 (#523 review): no doc line promises an `Intent:` block field that no check or example backs ----
+def test_the_intent_field_is_not_promised_in_the_protocol_or_the_adr():
+    for rel in ("docs/TEAM_PROTOCOL.md", "docs/decisions/ADR-021.md"):
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        assert "`Intent:`" not in text and "Intent:` field" not in text, f"{rel} still promises an Intent: field"
