@@ -206,3 +206,19 @@ def test_a_reviewer_who_is_also_the_pr_author_does_not_count(tmp_path):
 def test_an_empty_reviewer_list_fails_with_a_clear_line(tmp_path):
     r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF)]), reviewers="")
     assert r.returncode == 1 and "reviewer list is empty" in r.stdout, r.stdout
+
+
+# ---- #555 round 2, point 1: a quote or a sentence that merely mentions the phrase is not a proof ----
+@pytest.mark.parametrize("body", [
+    "> Intent verified by QA: 2026-11-19",
+    "Intent verified by QA: 2026-11-19 is NOT given",
+    "The line `Intent verified by QA: 2026-11-19` is what QA writes",
+])
+def test_a_quote_or_a_sentence_with_the_phrase_does_not_count(tmp_path, body):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", body)]))
+    assert r.returncode == 1 and "no comment" in r.stdout, (body, r.stdout)
+
+
+def test_the_plain_line_with_trailing_spaces_still_counts(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF + "   ")]))
+    assert r.returncode == 0, r.stdout
