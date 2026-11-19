@@ -2419,4 +2419,18 @@ Scenario: the feature coverage is off
   Then it prints skipped: coverage is off and passes
 Scenario: the default list
   Then coverage is not in it, but is in the usage and unknown-check lines
+## Story #589: checks.yml reads roles.yml from the base branch
+```gherkin
+Scenario: roles and intent-verify read the base branch through the API
+  Then neither job holds project/.shipquick/roles.yml
+Scenario: a set kit branch is read instead, and a missing one fails naming it
+  Then both jobs read the kit branch
+Scenario: neither job checks out the project
+  Then no step runs git fetch
+Scenario: no roles file on the branch fails closed
+  Then roles fails naming the branch and intent-verify passes an empty list
+Scenario: neither job asks for write permission
+  Then the roles job has GH_REPO in its env
+Scenario: the PR's own file is read only on a 404 from the base
+  Then a 500 or a missing token never reads it
 ```

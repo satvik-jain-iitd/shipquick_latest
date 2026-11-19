@@ -102,14 +102,14 @@ def test_s225_the_adoption_job_reads_the_pin_and_hooks_from_the_kit_branch_not_t
 def test_s225_the_roles_job_reads_roles_yml_from_the_kit_branch_too():
     section = CHECKS.split("\n  roles:\n", 1)[1].split("\n  team-block:", 1)[0]
     assert "KIT_BRANCH: ${{ inputs.kit_branch }}" in section
-    assert 'show "$ref:.shipquick/roles.yml"' in section
+    assert 'branches/$KIT_BRANCH' in section and 'contents/.shipquick/roles.yml?ref=$1' in section
 
 
 def test_s225_the_roles_job_says_clearly_when_the_kit_branch_or_its_roles_yml_is_missing():
     # review of PR #227, fix 3
     section = CHECKS.split("\n  roles:\n", 1)[1].split("\n  team-block:", 1)[0]
     assert "kit branch $KIT_BRANCH not found" in section
-    assert "no .shipquick/roles.yml on kit branch $KIT_BRANCH" in section
+    assert "no .shipquick/roles.yml on branch $ref" in section
 
 
 # ---- review of #335: a rule-24 child keeps its rules on its kit branch ----
@@ -172,7 +172,7 @@ def test_the_intent_job_reads_reviewers_from_the_kit_branch():
     assert "KIT_BRANCH: ${{ inputs.kit_branch }}" in job
     assert "TARGET: ${{ github.base_ref }}" in job
     assert '"$KIT_BRANCH" != "$TARGET"' in job
-    assert 'git -C project show "origin/$KIT_BRANCH:.shipquick/roles.yml"' in job
+    assert 'branches/$KIT_BRANCH' in job and 'contents/.shipquick/roles.yml?ref=$1' in job
     assert "kit branch $KIT_BRANCH not found" in job
 
 
@@ -180,8 +180,9 @@ def test_a_missing_roles_file_gives_the_intent_job_an_empty_reviewer_list():
     job = _job_block(CHECKS, "intent-verify")
     assert 'reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file "$roles_file" || true)' in job
     assert "exit 1" in job.split("not found", 1)[1].split("\n", 1)[0]   # a missing kit branch still fails
-    after = job.split("roles_file=", 1)[1]
-    assert "no .shipquick/roles.yml" not in after.split("roles.py get reviewer", 1)[1]   # no hard exit on a missing file
+    step = job.split("Read roles.yml", 1)[1].split("- name: Check a reviewer", 1)[0]
+    miss = step.split("(the reviewer list stays empty)", 1)[1].split("\n", 1)[0]
+    assert "exit" not in miss   # no hard exit on a missing file
 
 
 def test_the_intent_job_asks_for_issues_read_only():
@@ -224,3 +225,89 @@ def test_the_ac_trace_job_asks_for_issues_read_only():
     assert "issues: read" in perms and "contents: read" in perms and "write" not in perms
     assert "GH_TOKEN: ${{ github.token }}" in job and "GH_REPO: ${{ github.repository }}" in job
     assert "PR_BODY: ${{ github.event.pull_request.body }}" in job
+
+
+# ---- story #589: roles.yml comes from the base branch, never from the pull request ----
+import os
+import subprocess
+import tempfile
+
+_JOBS = ("roles", "intent-verify")
+
+
+def _read_step(job):
+    blk = _job_block(CHECKS, job).split("Read roles.yml", 1)[1]
+    return blk.split("        run: |\n", 1)[1].split("\n      - name:", 1)[0]
+
+
+def _run_read(job, gh_script, kit="", target="main"):
+    """Runs the real shell of the read step with a fake `gh` that logs its args and answers by `gh_script`."""
+    with tempfile.TemporaryDirectory() as d:
+        gh = Path(d) / "gh"
+        gh.write_text('#!/bin/bash\necho "$*" >> "$RUNNER_TEMP/calls"\n' + gh_script, encoding="utf-8")
+        gh.chmod(0o755)
+        env = {**os.environ, "PATH": f"{d}:{os.environ['PATH']}", "RUNNER_TEMP": d, "GH_REPO": "o/r",
+               "KIT_BRANCH": kit, "TARGET": target, "HEAD_SHA": "abc123"}
+        r = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", _read_step(job)], env=env, capture_output=True, text=True)
+        roles = Path(d, "roles.yml")
+        calls = Path(d, "calls").read_text() if Path(d, "calls").exists() else ""
+        return r, (roles.read_text() if roles.exists() else None), calls
+
+
+_BASE_OK = 'case "$*" in *ref=main*) echo "reviewer: [base]"; exit 0;; *ref=abc123*) echo "reviewer: [pr]"; exit 0;; esac; exit 1'
+_NOT_FOUND = 'echo "gh: Not Found (HTTP 404)" >&2; exit 1'
+
+
+def test_the_roles_and_intent_jobs_read_roles_yml_from_the_base_branch():
+    for j in _JOBS:
+        blk = _job_block(CHECKS, j)
+        assert "project/.shipquick/roles.yml" not in blk, j
+        assert "TARGET: ${{ github.base_ref }}" in blk and "GH_TOKEN: ${{ github.token }}" in blk, j
+        assert 'gh api -H "Accept: application/vnd.github.raw" "repos/$GH_REPO/contents/.shipquick/roles.yml?ref=$1"' in blk, j
+        r, roles, calls = _run_read(j, _BASE_OK)
+        assert r.returncode == 0 and "ref=main" in calls and "ref=abc123" not in calls and "[base]" in roles, (j, r.stderr)
+
+
+def test_the_roles_and_intent_jobs_still_read_the_kit_branch_when_it_is_set():
+    script = 'case "$*" in *branches/kitb*) exit 0;; *ref=kitb*) echo "reviewer: [kit]"; exit 0;; esac; exit 1'
+    for j in _JOBS:
+        r, roles, calls = _run_read(j, script, kit="kitb")
+        assert r.returncode == 0 and "[kit]" in roles and "ref=main" not in calls, (j, r.stderr)
+        r, roles, calls = _run_read(j, _NOT_FOUND, kit="gone")
+        assert r.returncode == 1 and "kit branch gone not found" in r.stdout, j
+
+
+def test_the_roles_and_intent_jobs_do_not_check_out_the_project():
+    for j in _JOBS:
+        blk = _job_block(CHECKS, j)
+        assert "Check out the project" not in blk and "path: project" not in blk and "git fetch" not in blk and "git -C" not in blk, j
+
+
+def test_a_base_branch_with_no_roles_file_fails_closed():
+    r, roles, _ = _run_read("roles", _NOT_FOUND)   # base and PR head both without the file
+    assert r.returncode == 1 and "no .shipquick/roles.yml on branch main" in r.stdout and roles is None
+    r, roles, _ = _run_read("intent-verify", _NOT_FOUND)
+    assert r.returncode == 0 and "no .shipquick/roles.yml on branch main" in r.stdout and roles is None
+    # a kit branch with no file never falls back to the PR's own file
+    kit = 'case "$*" in *branches/*) exit 0;; esac; ' + _NOT_FOUND
+    r, roles, calls = _run_read("roles", kit, kit="kitb")
+    assert r.returncode == 1 and "branch kitb" in r.stdout and "abc123" not in calls
+
+
+def test_the_roles_and_intent_jobs_ask_for_no_write_permission():
+    for j in _JOBS:
+        assert "write" not in _job_block(CHECKS, j).split("steps:", 1)[0], j
+    assert "GH_REPO: ${{ github.repository }}" in _job_block(CHECKS, "roles").split("steps:", 1)[0]
+
+
+def test_the_prs_own_roles_file_is_read_only_on_a_404_from_the_base():
+    first = 'case "$*" in *ref=abc123*) echo "reviewer: [pr]"; exit 0;; esac; ' + _NOT_FOUND
+    for j in _JOBS:
+        r, roles, calls = _run_read(j, first)
+        assert r.returncode == 0 and "[pr]" in roles and "ref=abc123" in calls, j
+        assert "first roles file: the base branch has none, reading the pull request's own" in r.stdout, j
+        # a 500, or a missing token, never reads the PR's own file
+        for bad in ('echo "gh: Internal Server Error (HTTP 500)" >&2; exit 1',
+                    'echo "gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN" >&2; exit 4'):
+            r, roles, calls = _run_read(j, 'case "$*" in *ref=abc123*) echo "reviewer: [pr]"; exit 0;; esac; ' + bad)
+            assert "abc123" not in calls and roles is None and r.returncode == (1 if j == "roles" else 0), (j, bad)
