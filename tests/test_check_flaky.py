@@ -21,8 +21,8 @@ def entry(**kw):
         "owner": "shipquick-dev",
         "issue": "https://github.com/x/y/issues/1",
         "reason": "timing",
-        "quarantined_on": "2026-11-01",
-        "expires_on": "2026-12-01",
+        "quarantined_on": date.today().isoformat(),
+        "expires_on": (date.today() + timedelta(days=30)).isoformat(),
         "status": "quarantined",
     }
     base.update(kw)
