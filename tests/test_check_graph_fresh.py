@@ -1,82 +1,104 @@
-"""Graphify freshness check (ADR-022)."""
-import json
+"""Graphify freshness (ADR-022): a stub `graphify` on PATH builds a graph; the kit records the commit; the check reads it."""
+import os
+import stat
 import subprocess
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent
-SCRIPT = ROOT / "scripts" / "check_graph_fresh.py"
+KIT = ROOT / "scripts" / "graphify_kit.py"
+CHECK = ROOT / "scripts" / "check_graph_fresh.py"
+PIN = (ROOT / "scripts" / "graphify_version.txt").read_text().strip()
+
+STUB = """#!/bin/sh
+# stub graphify: --version prints $STUB_VERSION; extract/update <path> write <path>/graphify-out/graph.json
+case "$1" in
+  --version) echo "graphify ${STUB_VERSION:-%s}" ;;
+  extract|update) mkdir -p "$2/graphify-out" && echo '{"nodes":[{}],"edges":[]}' > "$2/graphify-out/graph.json" ;;
+esac
+""" % PIN
 
 
-def run(*args, cwd=None):
-    return subprocess.run(["python3", str(SCRIPT), *args], capture_output=True, text=True, cwd=cwd or ROOT)
+def env_with_stub(tmp_path, version=None):
+    bindir = tmp_path / "bin"
+    bindir.mkdir(exist_ok=True)
+    g = bindir / "graphify"
+    g.write_text(STUB)
+    g.chmod(g.stat().st_mode | stat.S_IEXEC)
+    e = {**os.environ, "PATH": f"{bindir}:{os.environ['PATH']}"}
+    if version:
+        e["STUB_VERSION"] = version
+    return e
 
 
-def make_graph(tmp_path, nodes=2, edges=1, sha=None, schema="1", version_ok=True):
-    gdir = tmp_path / "graphify-out"
-    gdir.mkdir()
-    (gdir / "graph.json").write_text(json.dumps({"nodes": [{}] * nodes, "edges": [{}] * edges}))
-    (gdir / ".schema_version").write_text(schema)
-    if sha is not None:
-        (gdir / ".source_sha").write_text(sha)
-    return gdir
+def sh(args, cwd, env):
+    return subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True)
 
 
-def test_a_missing_graph_without_require_passes(tmp_path):
-    r = run("--graph", str(tmp_path / "graphify-out"))
-    assert r.returncode == 0, r.stdout + r.stderr
+def repo(tmp_path):
+    r = tmp_path / "repo"
+    r.mkdir()
+    for c in (["init", "-q"], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "one"]):
+        subprocess.run(["git", *c], cwd=r, check=True, capture_output=True)
+    return r
 
 
-def test_a_missing_graph_with_require_fails(tmp_path):
-    r = run("--graph", str(tmp_path / "graphify-out"), "--require")
-    assert r.returncode == 1, r.stdout + r.stderr
+def head(r):
+    return subprocess.run(["git", "rev-parse", "HEAD"], cwd=r, capture_output=True, text=True).stdout.strip()
 
 
-def test_a_fresh_graph_passes(tmp_path):
-    import subprocess as sp
-    sha = sp.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
-    gdir = make_graph(tmp_path, sha=sha)
-    r = run("--graph", str(gdir), "--require")
-    assert r.returncode in (0, 1)  # version may mismatch in env; check message instead
-    assert "nodes" in r.stdout or "graphify" in r.stdout
+def test_build_writes_source_sha_and_check_is_fresh(tmp_path):
+    e, r = env_with_stub(tmp_path), repo(tmp_path)
+    assert sh(["python3", KIT, "build", str(r)], r, e).returncode == 0
+    assert (r / "graphify-out" / ".source_sha").read_text().strip() == head(r)
+    assert not (r / "graphify-out" / ".schema_version").exists()
+    c = sh(["python3", CHECK, "--require"], r, e)
+    assert c.returncode == 0, c.stdout + c.stderr
+    assert "graph fresh" in c.stdout
 
 
-def test_a_graph_with_wrong_schema_fails(tmp_path):
-    sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip() if False else None
-    gdir = make_graph(tmp_path, schema="99")
-    r = run("--graph", str(gdir), "--require")
-    assert r.returncode == 1, r.stdout + r.stderr
-    assert "schema version mismatch" in r.stdout
+def test_update_rewrites_source_sha(tmp_path):
+    e, r = env_with_stub(tmp_path), repo(tmp_path)
+    sh(["python3", KIT, "build", str(r)], r, e)
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "two"], cwd=r, check=True)
+    assert sh(["python3", CHECK, "--require"], r, e).returncode == 1  # stale after a new commit
+    assert sh(["python3", KIT, "update", str(r)], r, e).returncode == 0
+    assert (r / "graphify-out" / ".source_sha").read_text().strip() == head(r)
+    assert sh(["python3", CHECK, "--require"], r, e).returncode == 0
 
 
-def test_a_graph_with_stale_sha_fails(tmp_path):
-    gdir = make_graph(tmp_path, sha="0000000000000000000000000000000000000000")
-    r = run("--graph", str(gdir), "--require")
-    assert r.returncode == 1, r.stdout + r.stderr
-    assert "graph stale" in r.stdout
+def test_a_new_commit_makes_the_graph_stale(tmp_path):
+    e, r = env_with_stub(tmp_path), repo(tmp_path)
+    sh(["python3", KIT, "build", str(r)], r, e)
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "two"], cwd=r, check=True)
+    c = sh(["python3", CHECK, "--require"], r, e)
+    assert c.returncode == 1
+    assert "graph stale" in c.stdout
 
 
-def test_a_graph_with_no_nodes_fails(tmp_path):
-    gdir = tmp_path / "graphify-out"
-    gdir.mkdir()
-    (gdir / "graph.json").write_text(json.dumps({"nodes": [], "edges": []}))
-    r = run("--graph", str(gdir), "--require")
-    # empty graph is still parseable; freshness depends on sha/version. Without sha, not stale-required.
-    assert r.returncode in (0, 1)
+def test_no_source_sha_is_not_fresh_under_require(tmp_path):
+    e, r = env_with_stub(tmp_path), repo(tmp_path)
+    sh(["graphify", "extract", str(r)], r, e)  # a graph built by graphify itself, no sha file
+    c = sh(["python3", CHECK, "--require"], r, e)
+    assert c.returncode == 1
+    assert ".source_sha" in c.stdout
 
 
-def test_json_output_is_valid(tmp_path):
-    gdir = make_graph(tmp_path)
-    r = run("--graph", str(gdir), "--json")
-    # parse the last JSON object in stdout
-    import json as _j
-    # find a line that is valid json
-    for line in r.stdout.splitlines():
-        try:
-            _j.loads(line)
-            return
-        except Exception:
-            continue
-    # if no single-line json, try whole stdout
-    _j.loads(r.stdout)
+def test_a_version_mismatch_only_warns(tmp_path):
+    e, r = env_with_stub(tmp_path, version="0.0.1"), repo(tmp_path)
+    sh(["python3", KIT, "build", str(r)], r, e)
+    c = sh(["python3", CHECK, "--require"], r, e)
+    assert c.returncode == 0, c.stdout + c.stderr
+    assert "warn" in c.stdout and "0.0.1" in c.stdout
+
+
+def test_a_missing_graph_without_require_passes_and_with_require_fails(tmp_path):
+    e, r = env_with_stub(tmp_path), repo(tmp_path)
+    assert sh(["python3", CHECK], r, e).returncode == 0
+    assert sh(["python3", CHECK, "--require"], r, e).returncode == 1
+
+
+def test_an_empty_graph_fails(tmp_path):
+    e, r = env_with_stub(tmp_path), repo(tmp_path)
+    (r / "graphify-out").mkdir()
+    (r / "graphify-out" / "graph.json").write_text("{}")
+    assert sh(["python3", CHECK, "--require"], r, e).returncode == 1
