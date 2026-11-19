@@ -156,9 +156,8 @@ A fast model can misread a QA delegation and start coding the wrong thing. To st
 
 1. Before Dev starts any work QA delegated, Dev sends a say-back: what it understood, its planned approach, and an explicit question ("am I doing this right?").
 2. Dev does not code until QA replies "confirmed" (or corrects).
-3. The confirmation is recorded in the PR body as `Intent verified by QA: <YYYY-MM-DD>`.
-4. `scripts/check_intent_verify.py` fails a dev PR (linked to a user-story issue created on or after 2026-11-19) that lacks that line.
-5. The teammate block for a QA->Dev handoff gains an `Intent:` field carrying the say-back.
+3. QA records the confirmation as a comment on the story issue: `Intent verified by QA: <YYYY-MM-DD>`, from a login that is not the PR author. The PR body does not count.
+4. `scripts/check_intent_verify.py` fails a dev PR (linked to a user-story issue created on or after 2026-11-19) that has no such comment.
 
 The line is an audit line, not a signature. A Dev that types a confirmation QA never gave passes; the date and the say-back in the session make a false line easy to spot later.
 
