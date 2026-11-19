@@ -298,3 +298,22 @@ def test_a_push_with_no_linked_story_and_no_author_variable_passes(tmp_path):
 def test_the_feature_text_makes_no_timing_claim(rel):
     text = (ROOT / rel).read_text(encoding="utf-8")
     assert "before the coder wrote code" not in text, rel
+
+
+# ---- #555 round 3, point 5: TEAM_ROSTER names the reviewer list, ADR-021 point 3 says "a PR", the local check runs in a child too ----
+def test_team_roster_names_the_reviewer_list():
+    section = (ROOT / "docs" / "TEAM_ROSTER.md").read_text(encoding="utf-8").split("## Intent-verification gate (ADR-021)", 1)[1]
+    assert "reviewer list" in section.split("\n## ", 1)[0]
+
+
+def test_adr_point_3_says_a_pr_not_a_dev_authored_pr():
+    text = (ROOT / "docs" / "decisions" / "ADR-021.md").read_text(encoding="utf-8")
+    assert "dev-authored PR" not in text and "fails a PR (linked" in text
+
+
+def test_the_adr_says_once_that_the_local_check_runs_in_a_child_too():
+    assert text_count("The local check runs in a child too", "docs/decisions/ADR-021.md") == 1
+
+
+def text_count(needle, rel):
+    return (ROOT / rel).read_text(encoding="utf-8").count(needle)
