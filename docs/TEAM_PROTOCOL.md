@@ -147,6 +147,19 @@ To editor, from writer, re docs/drafts/kirana-growth-story.md:
 Need from you: the edited draft or a comment per claim.
 ```
 
+## Intent-verification gate (ADR-021)
+
+QA and Dev run on different models: QA on a larger reasoning model, Dev on a faster implementation model.
+A fast model can misread a QA delegation and start coding the wrong thing. To stop that:
+
+1. Before Dev starts any work QA delegated, Dev sends a say-back: what it understood, its planned approach, and an explicit question ("am I doing this right?").
+2. Dev does not code until QA replies "confirmed" (or corrects).
+3. The confirmation is recorded in the PR body as `Intent verified by QA: <YYYY-MM-DD>`.
+4. `scripts/check_intent_verify.py` fails a dev PR (linked to a user-story issue created on or after 2026-11-19) that lacks that line.
+5. The teammate block for a QA->Dev handoff gains an `Intent:` field carrying the say-back.
+
+The line is an audit line, not a signature. A Dev that types a confirmation QA never gave passes; the date and the say-back in the session make a false line easy to spot later.
+
 ## How a child project inherits this
 
 See `docs/PLAN.md`, section D2. Short version: bump the submodule, copy rule 19 into your own
