@@ -1,3 +1,4 @@
 query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) {
-  issues(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { pageInfo { hasNextPage } nodes { number title body state closedAt labels(first: 10) { nodes { name } } parent { number } } }
+  issues(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { pageInfo { hasNextPage } nodes { number title body state createdAt closedAt labels(first: 10) { nodes { name } } parent { number } milestone { title dueOn }
+    timelineItems(itemTypes: [LABELED_EVENT], first: 50) { nodes { ... on LabeledEvent { createdAt label { name } } } } } }
   pullRequests(states: OPEN, first: 100) { pageInfo { hasNextPage } nodes { number title headRefName isDraft commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } } } } }

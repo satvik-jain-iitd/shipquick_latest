@@ -1,0 +1,833 @@
+{
+ "data": {
+  "repository": {
+   "issues": {
+    "pageInfo": {
+     "hasNextPage": false
+    },
+    "nodes": [
+     {
+      "number": 1,
+      "title": "Epic E1: Lending desk",
+      "body": "## Business\nA member borrows a book at the desk.",
+      "state": "CLOSED",
+      "closedAt": "2026-11-04T10:00:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "epic"
+        }
+       ]
+      },
+      "parent": null,
+      "milestone": null,
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 2,
+      "title": "Epic E2: Member cards",
+      "body": "## Business\nEvery member has one card.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "epic"
+        }
+       ]
+      },
+      "parent": null,
+      "milestone": null,
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 3,
+      "title": "Epic E3: Late fees",
+      "body": "## Business\nLate books cost a little.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "epic"
+        }
+       ]
+      },
+      "parent": null,
+      "milestone": null,
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 10,
+      "title": "Story: shelf list",
+      "body": "## Business\nA member sees every shelf on one page. The PR adds a list.\n\n## Product\n- one rpc per shelf",
+      "state": "CLOSED",
+      "closedAt": "2026-11-02T08:00:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": {
+       "number": 1
+      },
+      "milestone": {
+       "title": "M0 Setup",
+       "dueOn": "2026-11-05T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": [
+        {
+         "createdAt": "2026-11-02T05:00:00Z",
+         "label": {
+          "name": "doing"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 11,
+      "title": "Story: book search",
+      "body": "Part of epic E1 (#1).\n\n## Business\nA member finds a book by its name.\n\n## Product\n- rpc and migration words here.",
+      "state": "CLOSED",
+      "closedAt": "2026-11-03T19:30:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": null,
+      "milestone": {
+       "title": "M0 Setup",
+       "dueOn": "2026-11-05T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": [
+        {
+         "createdAt": "2026-11-03T18:40:00Z",
+         "label": {
+          "name": "doing"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 12,
+      "title": "Story: borrow stamp",
+      "body": "## Business\nThe desk stamps the due date in the book.\n\nStarted: 2026-11-04T04:15:00Z (estimated)",
+      "state": "CLOSED",
+      "closedAt": "2026-11-04T06:15:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": {
+       "number": 1
+      },
+      "milestone": {
+       "title": "M1 Open day",
+       "dueOn": "2026-11-15T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 13,
+      "title": "Story: return slot",
+      "body": "## Business\nA member drops a book in the slot after hours.",
+      "state": "CLOSED",
+      "closedAt": "2026-11-04T09:00:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": {
+       "number": 1
+      },
+      "milestone": {
+       "title": "M1 Open day",
+       "dueOn": "2026-11-15T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 14,
+      "title": "Story: card print",
+      "body": "## Business\nA new member gets a printed card.",
+      "state": "CLOSED",
+      "closedAt": "2026-11-05T12:00:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": {
+       "number": 2
+      },
+      "milestone": {
+       "title": "M1 Open day",
+       "dueOn": "2026-11-15T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": [
+        {
+         "createdAt": "2026-11-05T09:00:00Z",
+         "label": {
+          "name": "ready"
+         }
+        },
+        {
+         "createdAt": "2026-11-05T10:00:00Z",
+         "label": {
+          "name": "doing"
+         }
+        },
+        {
+         "createdAt": "2026-11-05T11:00:00Z",
+         "label": {
+          "name": "doing"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 15,
+      "title": "Story: card photo",
+      "body": "## Business\nThe card shows the member's photo.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "doing"
+        },
+        {
+         "name": "P1"
+        }
+       ]
+      },
+      "parent": {
+       "number": 2
+      },
+      "milestone": {
+       "title": "M1 Open day",
+       "dueOn": "2026-11-15T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": [
+        {
+         "createdAt": "2026-11-10T03:30:00Z",
+         "label": {
+          "name": "doing"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 16,
+      "title": "Story: lost card",
+      "body": "## Business\nA member gets a new card in one visit.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "ready"
+        },
+        {
+         "name": "P0"
+        }
+       ]
+      },
+      "parent": {
+       "number": 2
+      },
+      "milestone": {
+       "title": "M1 Open day",
+       "dueOn": "2026-11-15T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 17,
+      "title": "Story: desk sign",
+      "body": "## Business\nA sign at the desk says the opening hours.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "ready"
+        },
+        {
+         "name": "P2"
+        }
+       ]
+      },
+      "parent": {
+       "number": 1
+      },
+      "milestone": {
+       "title": "M0 Setup",
+       "dueOn": "2026-11-05T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 18,
+      "title": "Story: fee table",
+      "body": "## Business\nThe owner sets the fee per late day.\n\nNeeds: #16",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "ready"
+        },
+        {
+         "name": "P0"
+        }
+       ]
+      },
+      "parent": {
+       "number": 3
+      },
+      "milestone": {
+       "title": "M2 First month",
+       "dueOn": "2026-11-30T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 19,
+      "title": "Story: fee notice",
+      "body": "## Business\nA member gets a note when a book is late.\n\n## Needs\nNeeds: #18\nNeeds: #16",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "blocked"
+        },
+        {
+         "name": "P1"
+        }
+       ]
+      },
+      "parent": {
+       "number": 3
+      },
+      "milestone": {
+       "title": "M2 First month",
+       "dueOn": "2026-11-30T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 20,
+      "title": "Story: fee pay",
+      "body": "## Business\nA member pays the fee at the desk.\n\nNeeds: #18\nNeeds: #16",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "ready"
+        },
+        {
+         "name": "P0"
+        }
+       ]
+      },
+      "parent": {
+       "number": 3
+      },
+      "milestone": {
+       "title": "M3 Winter",
+       "dueOn": "2026-12-20T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 21,
+      "title": "Story: winter hours",
+      "body": "## Business\nThe desk closes early in winter.\n\nNeeds: #19",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "ready"
+        },
+        {
+         "name": "P1"
+        }
+       ]
+      },
+      "parent": {
+       "number": 3
+      },
+      "milestone": {
+       "title": "M3 Winter",
+       "dueOn": "2026-12-20T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 22,
+      "title": "Story: card renew",
+      "body": "## Business\nA card is renewed once a year.\n\nNeeds: #20",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "blocked"
+        },
+        {
+         "name": "P1"
+        }
+       ]
+      },
+      "parent": {
+       "number": 2
+      },
+      "milestone": {
+       "title": "M1 Open day",
+       "dueOn": "2026-11-15T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 23,
+      "title": "Story: overdue mail",
+      "body": "## Business\nA member gets a letter after thirty late days.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": {
+       "number": 3
+      },
+      "milestone": {
+       "title": "M2 First month",
+       "dueOn": "2026-11-30T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 24,
+      "title": "Story: shelf map",
+      "body": "Just a title for now.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": {
+       "number": 1
+      },
+      "milestone": null,
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 25,
+      "title": "Story: member login",
+      "body": "## Business\nA member logs in with the card number.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "ready"
+        },
+        {
+         "name": "P0"
+        }
+       ]
+      },
+      "parent": {
+       "number": 2
+      },
+      "milestone": {
+       "title": "M1 Open day",
+       "dueOn": "2026-11-15T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 26,
+      "title": "Story: card scan",
+      "body": "## Business\nThe desk scans a card in one second.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "ready"
+        },
+        {
+         "name": "P1"
+        }
+       ]
+      },
+      "parent": {
+       "number": 2
+      },
+      "milestone": {
+       "title": "M1 Open day",
+       "dueOn": "2026-11-15T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 27,
+      "title": "Story: fee waiver",
+      "body": "## Business\nThe owner can waive a fee.\n\nNeeds: #90\nNeeds: #13",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "blocked"
+        },
+        {
+         "name": "P2"
+        }
+       ]
+      },
+      "parent": {
+       "number": 3
+      },
+      "milestone": {
+       "title": "M2 First month",
+       "dueOn": "2026-11-30T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 28,
+      "title": "Story: desk bell",
+      "body": "## Business\nA member rings a bell when the desk is empty.",
+      "state": "CLOSED",
+      "closedAt": "2026-11-02T03:00:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": {
+       "number": 1
+      },
+      "milestone": {
+       "title": "M0 Setup",
+       "dueOn": "2026-11-05T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": [
+        {
+         "createdAt": "2026-11-01T20:00:00Z",
+         "label": {
+          "name": "doing"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 29,
+      "title": "Story: old plan note",
+      "body": "## Business\nThe old plan is kept as a note.",
+      "state": "CLOSED",
+      "closedAt": "2026-11-06T02:00:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        }
+       ]
+      },
+      "parent": {
+       "number": 2
+      },
+      "milestone": null,
+      "timelineItems": {
+       "nodes": [
+        {
+         "createdAt": "2026-11-05T22:30:00Z",
+         "label": {
+          "name": "doing"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 30,
+      "title": "Story: reading room",
+      "body": "Part of epic E3 (#3).\n\n## Business\nThe owner sees the room bookings after the migration.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "story"
+        },
+        {
+         "name": "ready"
+        },
+        {
+         "name": "P0"
+        }
+       ]
+      },
+      "parent": null,
+      "milestone": {
+       "title": "M2 First month",
+       "dueOn": "2026-11-30T18:29:00Z"
+      },
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 90,
+      "title": "Bug: the search drops the first letter",
+      "body": "Typing \"Moby\" finds nothing.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": [
+        {
+         "name": "bug"
+        }
+       ]
+      },
+      "parent": null,
+      "milestone": null,
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 91,
+      "title": "Bug: card photo is sideways",
+      "body": "The photo is rotated.",
+      "state": "CLOSED",
+      "closedAt": "2026-11-07T10:00:00Z",
+      "labels": {
+       "nodes": [
+        {
+         "name": "bug"
+        }
+       ]
+      },
+      "parent": null,
+      "milestone": null,
+      "timelineItems": {
+       "nodes": []
+      }
+     },
+     {
+      "number": 92,
+      "title": "Question: which font for the sign",
+      "body": "Open question.",
+      "state": "OPEN",
+      "closedAt": null,
+      "labels": {
+       "nodes": []
+      },
+      "parent": null,
+      "milestone": null,
+      "timelineItems": {
+       "nodes": []
+      }
+     }
+    ]
+   },
+   "pullRequests": {
+    "pageInfo": {
+     "hasNextPage": false
+    },
+    "nodes": [
+     {
+      "number": 101,
+      "title": "feat(cards): card photo (#15)",
+      "headRefName": "feat/15-card-photo",
+      "isDraft": false,
+      "commits": {
+       "nodes": [
+        {
+         "commit": {
+          "statusCheckRollup": {
+           "state": "FAILURE"
+          }
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 102,
+      "title": "feat(cards): member login (#25)",
+      "headRefName": "feat/25-member-login",
+      "isDraft": false,
+      "commits": {
+       "nodes": [
+        {
+         "commit": {
+          "statusCheckRollup": {
+           "state": "SUCCESS"
+          }
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 103,
+      "title": "feat(cards): card scan",
+      "headRefName": "feat/26-card-scan",
+      "isDraft": true,
+      "commits": {
+       "nodes": [
+        {
+         "commit": {
+          "statusCheckRollup": {
+           "state": "SUCCESS"
+          }
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 104,
+      "title": "chore: bump the build tools",
+      "headRefName": "chore/build-tools",
+      "isDraft": false,
+      "commits": {
+       "nodes": [
+        {
+         "commit": {
+          "statusCheckRollup": null
+         }
+        }
+       ]
+      }
+     },
+     {
+      "number": 105,
+      "title": "fix(search): keep the first letter (#90)",
+      "headRefName": "fix/90-search-letter",
+      "isDraft": false,
+      "commits": {
+       "nodes": [
+        {
+         "commit": {
+          "statusCheckRollup": {
+           "state": "SUCCESS"
+          }
+         }
+        }
+       ]
+      }
+     }
+    ]
+   }
+  }
+ }
+}

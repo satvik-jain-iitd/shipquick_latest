@@ -1,0 +1,21 @@
+{
+  "name": "Icon",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "imageVector": {
+        "type": {
+          "kind": "icon"
+        }
+      },
+      "contentDescription": {
+        "type": {
+          "kind": "string"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

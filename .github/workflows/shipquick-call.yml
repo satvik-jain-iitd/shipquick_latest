@@ -13,12 +13,14 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  issues: read
 
 jobs:
   shipquick-checks:
     permissions:
       contents: read
       pull-requests: read
+      issues: read
     uses: ./.github/workflows/checks.yml
     with:
       shipquick_ref: ${{ github.sha }}

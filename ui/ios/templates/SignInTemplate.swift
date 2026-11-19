@@ -21,6 +21,7 @@ public struct SignInTemplate: View {
                 }
                 Section {
                     Button("Forgot password?") {}
+                        .foregroundStyle(ShipQuickTokens.Colors.primary)
                 }
             }
             .navigationTitle("Sign in")

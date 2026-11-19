@@ -56,6 +56,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "Badge: The small dot or count itself. Put it in the badge slot of BadgedBox. Leave content out for a dot.",
+            "BadgeDefaults: The default container colour of a badge."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

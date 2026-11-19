@@ -62,6 +62,20 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "disclosureGroupStyle: `.disclosureGroupStyle(_:)`, iOS 16.0. Apple: \"Sets the style for disclosure groups within this view.\"",
+            "DisclosureGroupStyleConfiguration.Content: iOS 16.0. Apple: \"A type-erased content of a disclosure group.\"",
+            "DisclosureGroupStyleConfiguration.Label: iOS 16.0. Apple: \"A type-erased label of a disclosure group.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

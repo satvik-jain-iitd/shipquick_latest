@@ -56,6 +56,23 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "SmallFloatingActionButton: A smaller FAB. Use it for a second action, or next to other parts.",
+            "LargeFloatingActionButton: A bigger FAB. Use it when the screen has room and the action is the main one.",
+            "ExtendedFloatingActionButton: A wider FAB with a text label and an optional icon. Use it when words make the action clearer. Its expanded flag shrinks it to the icon, for example while a list scrolls.",
+            "FloatingActionButtonDefaults: The default colour, shapes and elevation for every FAB size.",
+            "FloatingActionButtonElevation: The shadow of a FAB in each state. Make one with FloatingActionButtonDefaults.elevation() or loweredElevation().",
+            "FabPosition: Where Scaffold puts the FAB: Start, Center, End or EndOverlay. Pass it as floatingActionButtonPosition."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

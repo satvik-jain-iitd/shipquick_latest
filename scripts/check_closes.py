@@ -9,7 +9,8 @@ import argparse
 import re
 import sys
 
-from close_linked_issues import LINK   # one rule for "this body links an issue", shared with the script that closes the issues
+from close_linked_issues import LINK
+from features import FeaturesError, is_on   # one rule for "this body links an issue", shared with the script that closes the issues
 
 DEPENDABOT = ("dependabot[bot]", "app/dependabot")   # the login in the Actions event, and the one `gh pr view --json author` prints
 EXEMPT_TITLE = re.compile(r"^(release|chore)(\([^)]*\))?!?: ")
@@ -27,7 +28,17 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--title", required=True)
     parser.add_argument("--author", default="")
+    parser.add_argument("--close-on-merge", choices=("on", "off"), help="the `close-on-merge` feature; without it the project's .shipquick/features.json is read (story #424)")
     args = parser.parse_args()
+    if args.close_on_merge is None:
+        try:
+            args.close_on_merge = "on" if is_on("close-on-merge") else "off"
+        except FeaturesError as e:
+            print(f"the features file is broken ({e}); fix it, the Closes check will not guess")
+            return 1
+    if args.close_on_merge == "off":
+        print("close-on-merge is off: no Closes link needed")
+        return 0
     why = check(args.title, args.author, sys.stdin.read())
     print(why or "Closes link OK")
     return 1 if why else 0
