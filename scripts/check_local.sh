@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky tests secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
 #   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
+#   tests (story #570): runs pytest on only the test files the change names (scripts/tests_for_change.py; "full suite" when a file is named by no test); python tests only; not in the default list
 #   shortcuts (story #327): warn only, prints the count of shortcut:/ponytail: comments; runs after the checks when no argument is given
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing. Not set: dev, or the caller's kit_branch when the branch descends from it (story #469)
@@ -221,6 +222,18 @@ check_flaky() {   # #540: the flaky-test registry of THIS repo (a missing file p
   python3 "$HERE/check_flaky.py" --file "$root/.shipquick/flaky-tests.json"
   report flaky $?
 }
+check_tests() {   # story #570: not in the default list; the picked files are printed, then pytest runs on them
+  local out rc=0 l
+  local -a picked=()
+  out="$(python3 "$HERE/tests_for_change.py" --base "$BASE")" || rc=$?
+  [ "$rc" -eq 3 ] && { echo "skip tests: no python test files in this repo"; return 0; }
+  [ "$rc" -eq 0 ] || { echo "FAIL tests: $out"; failed=1; return; }
+  printf '%s\n' "$out" | grep '^full suite' || true
+  while IFS= read -r l; do picked+=("$l"); done < <(printf '%s\n' "$out" | grep '^tests/')
+  [ "${#picked[@]}" -gt 0 ] || { echo "ok   tests: no test file to run"; return 0; }
+  echo "tests picked:"; printf '%s\n' "${picked[@]}"
+  python3 -m pytest -q "${picked[@]}"; report tests $?
+}
 check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
@@ -238,6 +251,7 @@ feature_of() {   # feature_of <check> -- the feature id that switches the check,
     ac-trace) echo ac-trace ;;
     roadmap) echo roadmap ;;
     graph-fresh) echo graph-fresh ;;
+    tests) echo tests-for-change ;;
     ui-registry) echo component-registry ;;
   esac
 }
@@ -282,11 +296,13 @@ for c in "${checks[@]}"; do
     ac-trace) check_ac_trace ;;
     story-size) check_story_size ;;
     shortcuts) check_shortcuts ;;
+    tests) check_tests ;;
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
     *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky secrets secrets-staged)"; exit 2 ;;
     flaky) check_flaky ;;
+
   esac
 done
 [ $# -eq 0 ] && check_shortcuts

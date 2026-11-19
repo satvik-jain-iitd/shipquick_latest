@@ -177,6 +177,14 @@
       "default": true,
       "locked": false
     },
+    "tests-for-change": {
+      "name": "Run only the tests a change names",
+      "what": "On your computer, `check_local.sh tests` runs only the Python test files that name the files you changed, or the whole suite when a file is named by no test. It is a name search: a test that reaches a changed file only through another script is not picked, and CI still runs the full suite.",
+      "if_off": "The tests check is skipped. It is not in the default list either way.",
+      "group": "Local checks",
+      "default": true,
+      "locked": false
+    },
     "adoption": {
       "name": "Kit is really installed",
       "what": "Checks that the project carries the ShipQuick checks for real, at the version it says. This guards all the others.",
