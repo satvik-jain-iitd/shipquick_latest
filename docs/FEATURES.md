@@ -61,6 +61,7 @@ F4 to F8 of epic #86 land, turning any other flag off changes nothing, so nothin
 | id | Name | What it does | If you turn it off | Default |
 |---|---|---|---|---|
 | `pre-commit` | Checks before each commit | Runs quick checks on your computer before each commit, so mistakes are caught early. | No checks run before a commit. CI still catches them later. | on |
+| `graph-fresh` | Code graph is fresh | On your computer, checks that the code graph was built from the commit you are on, so searches do not use old answers. | A stale code graph is not reported. A project with no graph is skipped either way. | on |
 
 ## Always on
 
