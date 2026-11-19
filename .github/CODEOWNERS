@@ -1,0 +1,28 @@
+# ShipQuick path-level ownership (M5c). Complements .shipquick/roles.yml (project-level roles).
+# Owners are GitHub users with verified access. Keep in sync with .shipquick/roles.yml.
+# Syntax: <pattern> <owner> [<owner>...]
+
+# CI and workflow files
+/.github/workflows/       @satvik-jain-iitd
+/.github/ISSUE_TEMPLATE/  @satvik-jain-iitd
+
+# Test-impact engine and manifest
+/scripts/test_impact.py           @satvik-jain-iitd
+/scripts/check_test_impact.py     @satvik-jain-iitd
+/.shipquick/test-impact.yml       @satvik-jain-iitd
+
+# Graphify integration
+/scripts/graphify_kit.py          @satvik-jain-iitd
+/scripts/check_graph_fresh.py     @satvik-jain-iitd
+/scripts/graphify_version.txt     @satvik-jain-iitd
+
+# Release and adoption
+/scripts/release.sh               @satvik-jain-iitd
+/scripts/adopt.sh                 @satvik-jain-iitd
+/scripts/adoption_scan.py         @satvik-jain-iitd
+
+# Protected architecture and rules
+/CLAUDE.md                        @satvik-jain-iitd
+/scripts/protected_paths.txt      @satvik-jain-iitd
+/scripts/review_merge.sh         @satvik-jain-iitd
+/scripts/mode.sh                 @satvik-jain-iitd
