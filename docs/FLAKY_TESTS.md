@@ -22,11 +22,14 @@ no registry is fine.
 | `expires_on` | The day the quarantine ends, `YYYY-MM-DD`. It cannot be before `quarantined_on`. |
 | `status` | `quarantined` (known flaky, waiting for the fix) or `fixed` (the fix landed; the row stays as history). |
 
+Optional fields, never required: `tier` (where it was seen: `pr`, `post-merge`, `nightly` or `manual`), `last_failure` (the day it last failed, `YYYY-MM-DD`) and `run_url` (the link to
+a CI run that failed).
+
 ## Who adds a row
 
 A row is added by the coder, in a pull request, with the issue that tracks the fix. The file is a protected path, so the owner merges that pull request.
 
 ## What expired blocks
 
-`scripts/check_flaky.py` fails when a row with status `quarantined` has an `expires_on` in the past. The same check runs before a push
-(`scripts/check_local.sh flaky`). A failing check blocks the push until the test is fixed (set `fixed`) or the owner agrees to a new date.
+`scripts/check_flaky.py` fails when a row with status `quarantined` has an `expires_on` in the past. The check runs before a push and in CI
+(`scripts/check_local.sh flaky`; in CI, a step of the `pre-commit` job). A failing check blocks the push until the test is fixed (set `fixed`) or the owner agrees to a new date.
