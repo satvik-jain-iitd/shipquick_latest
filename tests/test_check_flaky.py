@@ -94,3 +94,11 @@ def test_statuses_nobody_can_explain_are_rejected(tmp_path, status):
     f = tmp_path / "r.json"; f.write_text(json.dumps([entry(status=status)]))
     r = run("--file", str(f))
     assert r.returncode == 1 and "invalid status" in r.stdout, r.stdout
+
+
+def test_no_aliased_json_import_and_a_neutral_owner_in_the_test_entry():
+    """#562 review point 4: no aliased json import in the script or the test, and no real login as the owner."""
+    needle = "import json" + " as "   # built here so this file does not contain it
+    for rel in ("scripts/check_flaky.py", "tests/test_check_flaky.py"):
+        assert needle not in (ROOT / rel).read_text(encoding="utf-8"), rel
+    assert entry()["owner"] == "example-owner"
