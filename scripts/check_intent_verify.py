@@ -45,6 +45,10 @@ def check_pr_body(body: str, author: str, reviewers: set) -> str | None:
         if (info.get("createdAt") or "")[:10] < RULE_DATE:
             print(f"skip #{n}: story created before {RULE_DATE}, when the intent gate began")
             continue
+        if not author:   # checked only for a gated story: a push that links none is never failed by these
+            return "PR_AUTHOR is empty: the check cannot tell who wrote the PR, so it fails (set PR_AUTHOR to the PR's author login)"
+        if not reviewers:
+            return "the reviewer list is empty: no login can confirm the intent, so it fails (scripts/roles.py get reviewer)"
         why = check_comments(info.get("comments") or [], author, reviewers)
         if why:
             return f"issue #{n}: {why}"
@@ -57,13 +61,7 @@ def main() -> int:
     ap.add_argument("--reviewers", default="", help="comma list of reviewer logins: `scripts/roles.py get reviewer`")
     args = ap.parse_args()
     author = os.environ.get("PR_AUTHOR", "").strip()
-    if not author:
-        print("PR_AUTHOR is empty: the check cannot tell who wrote the PR, so it fails (set PR_AUTHOR to the PR's author login)")
-        return 1
     reviewers = {r.strip().lower() for r in args.reviewers.split(",") if r.strip()}
-    if not reviewers:
-        print("the reviewer list is empty: no login can confirm the intent, so it fails (scripts/roles.py get reviewer)")
-        return 1
     why = check_pr_body(open(args.pr_body_file, encoding="utf-8").read(), author, reviewers)
     if why:
         print(why)
