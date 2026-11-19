@@ -196,3 +196,31 @@ def test_the_intent_flag_words_say_a_child_runs_it():
         text = (ROOT / f).read_text(encoding="utf-8")
         assert "Kit CI only" not in text and "The check is kit CI only" not in text, f
         assert "child's CI" in text, f
+
+
+# ---- story #577: the AC trace reaches children ----
+def test_checks_yml_runs_the_ac_trace_on_the_childs_own_tree():
+    job = _job_block(CHECKS, "ac-trace")
+    assert "if: github.event_name == 'pull_request'" in job
+    assert "timeout-minutes:" in job
+    assert "check_ac_trace.py --pr-body-file" in job and "--root project" in job
+    assert "path: project" in job and "persist-credentials: false" in job
+    assert "path: .shipquick" in job
+
+
+def test_the_ac_trace_job_reads_its_own_flag_and_the_gate_waits_for_it():
+    job = _job_block(CHECKS, "ac-trace")
+    assert "needs: [features]" in job
+    assert "fromJSON(needs.features.outputs.flags)['ac-trace']" in job
+    gate = CHECKS.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "ac-trace" in [n.strip() for n in needs.split(",")]
+    assert 'echo "ac-trace: ${{ needs.ac-trace.result }}"' in gate
+
+
+def test_the_ac_trace_job_asks_for_issues_read_only():
+    job = _job_block(CHECKS, "ac-trace")
+    perms = job.split("permissions:", 1)[1].split("env:", 1)[0]
+    assert "issues: read" in perms and "contents: read" in perms and "write" not in perms
+    assert "GH_TOKEN: ${{ github.token }}" in job and "GH_REPO: ${{ github.repository }}" in job
+    assert "PR_BODY: ${{ github.event.pull_request.body }}" in job
