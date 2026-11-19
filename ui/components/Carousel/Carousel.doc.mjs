@@ -95,5 +95,42 @@ export default {
       "description": "One item, given its index.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "Carousel",
+      "variants": [
+        {
+          "name": "HorizontalUncontainedCarousel",
+          "note": "Items of one fixed size that run off the edge of the screen. Use it for long lists of cards to scroll through."
+        },
+        {
+          "name": "HorizontalCenteredHeroCarousel",
+          "note": "One large item in the middle with small items on each side. Use it to put one item in focus, like a featured photo."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "CarouselState",
+          "use": "The scroll state of a carousel: currentItem, scrollToItem() and animateScrollToItem()."
+        },
+        {
+          "name": "rememberCarouselState",
+          "use": "Creates and keeps a CarouselState. Give it the item count."
+        },
+        {
+          "name": "CarouselDefaults",
+          "use": "Default fling behaviours (multi-browse, single advance, no snap) and small item sizes for carousels."
+        },
+        {
+          "name": "CarouselItemScope",
+          "use": "The scope of each item. Use maskClip or maskBorder so the item follows the carousel's mask as it changes size."
+        },
+        {
+          "name": "CarouselItemDrawInfo",
+          "use": "The size, minimum and maximum size and mask of an item as it moves. Read it from carouselItemDrawInfo in the item scope."
+        }
+      ]
+    }
+  }
 };

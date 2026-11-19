@@ -34,8 +34,19 @@ It will add `.package(path: "knowledge/shipquick_latest/ui/ios")`.
 
 - Tokens: `Tokens.swift` comes from `design/tokens.json` in story S6. Until then the templates use the system
   spacing (`.padding()` with no number) and system colours.
-- Compiling and snapshots: a macOS CI job runs when `ui/ios/**` changes. It comes in a later story (#219).
-  Today a text scan checks the templates (`tests/test_ios_templates.py`).
+- A text scan also checks the templates (`tests/test_ios_templates.py`).
+
+## Snapshots (story #219)
+
+Job `ui-ios-snapshots` draws every template in light and dark, the smallest and the largest Dynamic Type size,
+on iPhone SE and iPhone Pro Max, and compares the pictures with `ShipQuickUITests/__Snapshots__/`.
+Prefire turns every `#Preview` into one more test. How the images are recorded and refreshed: `SNAPSHOTS.md`.
+
+## What CI compiles (story #217)
+
+Job `ui-ios-compile` runs `xcodebuild` for generic iOS on Xcode 16.4 when `ui/**` changes.
+It compiles `templates/` and `proof/ApiProof.swift`. `scripts/ui_proof.py` writes the proof from the contracts:
+it calls every component with every prop its contract names. CI compiles only; it runs nothing.
 - `Package.swift` lists iOS only. So `swift build` on a Mac builds for macOS and fails on iOS-only calls.
   CI must build with `xcodebuild -scheme ShipQuickUI -destination 'generic/platform=iOS'`.
 
@@ -45,3 +56,27 @@ A custom `Shape` or `ButtonStyle`, `Path`, a raw colour (`Color(red:`, `Color(hu
 a UIKit view (`UIView` subclass, `UIViewRepresentable`), any import but SwiftUI and Foundation, and a number
 written in `.padding`, `.frame`, `.cornerRadius`, `.offset`, `.system(size:` or `spacing:`.
 A token reference passes, like `.padding(.top, Tokens.space2)`.
+
+In a child, `lint/swiftlint.yml` does this job (story #185): every rule is a warning locally, and CI runs `swiftlint lint --strict`.
+`tests/test_ui_lint.py` keeps it in step with this list. See `docs/ADOPTION.md`.
+`bash ui/tool/ios_lint.sh` (story #218) runs both tiers on the Swift files changed against `origin/dev`: `CI=1` is strict, else it warns; the committed baseline `lint/swiftlint-baseline.json` (protected) filters old findings, and `.swiftformat` runs in lint mode.
+## The tokens (story #184)
+
+`Sources/ShipQuickUI/Tokens.swift` is written by `python3 scripts/emit_tokens.py` from `design/tokens.json`. Do not edit it.
+It holds `ShipQuickTokens`: `Colors` (light and dark), `Fonts`, `Spacing`, `Radius`, `Motion`, `Haptics` and `touchTarget`.
+The feel tokens match Android's. CI compiles it with the templates.
+
+## The contract structs (story #222)
+
+`Sources/ShipQuickUI/Contracts/<Name>.swift` is written by `python3 scripts/emit_contracts.py`, one file per
+`ui/components/<Name>/<Name>.contract.json`. Do not edit them. Each holds `<Name>Props`: the contract's core props and
+its `platforms.ios` props as typed fields, one nested enum per enum prop. Content slots are listed in a comment, not
+stored (SwiftUI takes content as a view builder). Android props stay out; the Kotlin twin is its own story.
+`python3 scripts/emit_contracts.py --check` fails when a struct is missing, stale or has no contract left; it runs in
+`scripts/check_local.sh` (`ui-contracts`) and in CI. CI compiles the folder with the templates, so a type name that is
+not real Swift fails the build.
+
+## Accessibility (story #220)
+
+One UI test per template runs Apple's accessibility audit on CI.
+What a person still checks by hand is in `ACCESSIBILITY.md`, tagged `review-only`.

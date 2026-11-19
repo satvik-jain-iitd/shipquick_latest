@@ -86,5 +86,19 @@ export default {
       "description": "When false, the part is greyed out and ignores the user.",
       "default": "true"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "supporting": [
+        {
+          "name": "RadioButtonDefaults",
+          "use": "Default colours for radio buttons. Make them with RadioButtonDefaults.colors()."
+        },
+        {
+          "name": "RadioButtonColors",
+          "use": "The colours of a radio button, selected and not, on and off."
+        }
+      ]
+    }
+  }
 };

@@ -1,0 +1,29 @@
+{
+  "name": "WideNavigationRail",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "WideNavigationRailState"
+        },
+        "optional": true
+      },
+      "header": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

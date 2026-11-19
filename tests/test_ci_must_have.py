@@ -166,6 +166,36 @@ def test_s10_a_non_release_branch_over_fifty_files_still_fails(repo):
     assert run(repo, "pr-size")[0] == 1
 
 
+# ---- story #219 (#375 review): recorded reference images are looked at, not read, so they are not review surface.
+# Only PNGs under the protected folder ui/ios/ShipQuickUITests/__Snapshots__/ are left out of the count;
+# every other file still counts, a __Snapshots__/ folder anywhere else included ----
+def test_s219_reference_images_under_snapshots_do_not_count_toward_pr_size(repo):
+    files = {f"p/f{i}.txt": "x\n" for i in range(10)}
+    files.update({f"ui/ios/ShipQuickUITests/__Snapshots__/X/test{i}.png": "p" for i in range(45)})
+    commit(repo, files)
+    code, out = run(repo, "pr-size")
+    assert code == 0 and "Counted files: 10" in out, out
+
+
+def test_s219_a_png_outside_snapshots_and_a_non_png_inside_still_count(repo):
+    files = {f"p/f{i}.png": "p" for i in range(50)}
+    files["ui/ios/ShipQuickUITests/__Snapshots__/X/notes.txt"] = "n\n"
+    commit(repo, files)
+    assert run(repo, "pr-size")[0] == 1
+
+
+def test_s219_pngs_in_a_snapshots_folder_outside_the_protected_path_still_count(repo):
+    commit(repo, {f"docs/__Snapshots__/x{i}.png": "p" for i in range(51)})
+    code, out = run(repo, "pr-size")
+    assert code == 1 and "Counted files: 51" in out, out
+
+
+def test_s219_cis_pr_size_job_leaves_out_the_same_reference_images():
+    section = CI.split("\n  pr-size:\n", 1)[1].split("\n  frontend-design:", 1)[0]
+    anchored = "^ui\\/ios\\/ShipQuickUITests\\/__Snapshots__\\/.*\\.png$"
+    assert section.count(anchored) == 2, "both awk lines must anchor the exclusion to the protected folder"
+
+
 def test_s10_cis_pr_size_job_has_the_same_release_exemption_scoped_to_main():
     section = CI.split("\n  pr-size:\n", 1)[1].split("\n  frontend-design:", 1)[0]
     assert "release/*" in section and "skip pr-size" in section

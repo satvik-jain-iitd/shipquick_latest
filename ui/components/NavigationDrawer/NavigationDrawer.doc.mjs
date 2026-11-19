@@ -145,5 +145,62 @@ export default {
       "description": "List: the picked row.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "family": "NavigationDrawer",
+      "variants": [
+        {
+          "name": "ModalDrawerSheet",
+          "note": "The sheet that holds the items of a ModalNavigationDrawer."
+        },
+        {
+          "name": "NavigationDrawerItem",
+          "note": "One destination in a drawer sheet: a label, an optional icon and badge, and selected and onClick."
+        },
+        {
+          "name": "DismissibleNavigationDrawer",
+          "note": "A drawer that pushes the content aside when open, and that the user can close. Use it when the content should stay in view."
+        },
+        {
+          "name": "DismissibleDrawerSheet",
+          "note": "The sheet that holds the items of a DismissibleNavigationDrawer."
+        },
+        {
+          "name": "PermanentNavigationDrawer",
+          "note": "A drawer that is always open, beside the content. Use it on large screens only."
+        },
+        {
+          "name": "PermanentDrawerSheet",
+          "note": "The sheet that holds the items of a PermanentNavigationDrawer."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "DrawerState",
+          "use": "Says if the drawer is open or closed. Call open() and close() from a coroutine."
+        },
+        {
+          "name": "rememberDrawerState",
+          "use": "Creates and keeps a DrawerState, with DrawerValue.Closed or Open as the first value."
+        },
+        {
+          "name": "DrawerValue",
+          "use": "The two states of a drawer: Closed and Open."
+        },
+        {
+          "name": "DrawerDefaults",
+          "use": "Default container colours, elevations, shape, maximum width and window insets for drawer sheets, and the scrim colour."
+        },
+        {
+          "name": "NavigationDrawerItemDefaults",
+          "use": "Default colours and padding for NavigationDrawerItem."
+        },
+        {
+          "name": "NavigationDrawerItemColors",
+          "use": "The container, icon, text and badge colours of a NavigationDrawerItem, selected and not."
+        }
+      ]
+    }
+  }
 };

@@ -62,6 +62,32 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "menuStyle: `.menuStyle(_:)`, iOS 14.0. Apple: \"Sets the style for menus within this view.\"",
+            "menuActionDismissBehavior: `.menuActionDismissBehavior(_:)`, iOS 16.4. Apple: \"Tells a menu whether to dismiss after performing an action.\"",
+            "menuIndicator: `.menuIndicator(_:)`, iOS 15.0. Apple: \"Sets the menu indicator visibility for controls within this view.\"",
+            "menuOrder: `.menuOrder(_:)`, iOS 16.0. Apple: \"Sets the preferred order of items for menus presented from this view.\"",
+            "contextMenu: `.contextMenu(menuItems:)`, iOS 13.0. Apple: \"Adds a context menu to a view.\"",
+            "MenuStyleConfiguration.Content: iOS 14.0. Apple: \"A type-erased content of a menu.\"",
+            "MenuStyleConfiguration.Label: iOS 14.0. Apple: \"A type-erased label of a menu.\""
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: MenuButton. Use Menu.",
+            "Do not use: menuButtonStyle. Use menuStyle."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

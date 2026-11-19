@@ -198,7 +198,7 @@ def test_s182_tokens_json_has_the_feel_group():
 
 # ---- Story #228: one prop name, a Compose type and a SwiftUI type ----
 TWO = {**CONTRACT, "core": {}, "platforms": {"android": {"content": {"type": {"kind": "content"}}},
-                                             "ios": {"content": {"type": {"kind": "content"}}}}}
+                                             "ios": {"content": {"type": {"kind": "content"}, "optional": True}}}}
 COMPOSE = {"name": "content", "type": "@Composable () -> Unit", "description": "Inside."}
 
 
@@ -238,3 +238,38 @@ def test_s228_the_same_name_twice_for_one_platform_is_a_duplicate(tmp_path):
     tagged = {"name": "content", "type": "() -> some View", "description": "Inside.", "platform": "ios"}
     r = run(make(tmp_path, doc_text=doc([COMPOSE, tagged, tagged]), contract=TWO))
     assert r.returncode == 1 and "duplicate" in r.stdout and "(ios)" in r.stdout, r.stdout
+
+
+# ---- Story #215: a prop both platforms share, same name and same spec, sits in core ----
+SHARED = {**CONTRACT, "core": {}, "platforms": {"android": {"content": {"type": {"kind": "content"}}},
+                                                "ios": {"content": {"type": {"kind": "content"}}}}}
+
+
+def test_s215_a_prop_with_the_same_spec_on_android_and_ios_and_an_empty_core_fails(tmp_path):
+    props = [COMPOSE, {"name": "content", "type": "() -> some View", "description": "Inside.", "platform": "ios"}]
+    r = run(make(tmp_path, doc_text=doc(props), contract=SHARED))
+    assert r.returncode == 1 and "'content'" in r.stdout and "core" in r.stdout, r.stdout
+
+
+def test_s215_the_shared_prop_moved_into_core_passes(tmp_path):
+    props = [COMPOSE, {"name": "content", "type": "() -> some View", "description": "Inside.", "platform": "ios"}]
+    moved = {**CONTRACT, "core": {"content": {"type": {"kind": "content"}}}, "platforms": {}}
+    r = run(make(tmp_path, doc_text=doc(props), contract=moved))
+    assert r.returncode == 0, r.stdout
+
+
+def test_s215_the_same_name_with_a_different_spec_per_platform_stays_put(tmp_path):
+    # A number on Compose and a Binding<Double> on SwiftUI cannot share one core type.
+    c = {**CONTRACT, "core": {}, "platforms": {"android": {"value": {"type": {"kind": "number"}}},
+                                               "ios": {"value": {"type": {"kind": "named", "name": "Binding<Double>"}}}}}
+    props = [{"name": "value", "type": "number", "description": "Where.", "platform": "android"},
+             {"name": "value", "type": "Binding<Double>", "description": "Where.", "platform": "ios"}]
+    r = run(make(tmp_path, doc_text=doc(props), contract=c))
+    assert r.returncode == 0, r.stdout
+
+
+def test_s215_no_kit_contract_repeats_a_shared_prop_under_both_platforms():
+    for f in sorted((UI / "components").glob("*/*.contract.json")):
+        plats = json.loads(f.read_text(encoding="utf-8"))["platforms"]
+        a, i = plats.get("android", {}), plats.get("ios", {})
+        assert not [n for n in a if n in i and a[n] == i[n]], f.name

@@ -1,0 +1,6 @@
+# ShipQuick iOS format rules (story #218). SwiftFormat 0.64.6, pinned by SHA-256 in CI (job ui-ios-lint).
+# ui/tool/ios_lint.sh runs this file with --lint (CI) or --lint --lenient (local); `swiftformat .` fixes files with the same rules.
+# A child copies this file to its root as `.swiftformat`. Options only; no rule is disabled.
+--swift-version 6.0
+--indent 4
+--maxwidth 140

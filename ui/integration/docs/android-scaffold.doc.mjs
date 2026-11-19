@@ -80,6 +80,23 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "VerticalDragHandle: A tall handle between two panes. The user drags it to change the pane widths, on large screens.",
+            "ScaffoldDefaults: The default contentWindowInsets of Scaffold.",
+            "VerticalDragHandleDefaults: Default colours, shapes and sizes for VerticalDragHandle.",
+            "DragHandleColors: The colours of a drag handle when it rests, is pressed and is dragged.",
+            "DragHandleShapes: The shape of a drag handle when it rests, is pressed and is dragged.",
+            "DragHandleSizes: The size of a drag handle when it rests, is pressed and is dragged."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
