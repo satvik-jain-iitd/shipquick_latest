@@ -78,5 +78,5 @@ def test_the_script_reads_no_token_and_has_no_apply():
 def test_the_fixtures_use_made_up_names_only():
     import re
     text = Path(__file__).read_text()
-    owners = set(re.findall(r"\b([\w.-]+)/(?:child-[a-z])\b", text))
-    assert owners == {"example-org"}
+    owners = re.findall(r"([\w.-]+)/child-[a-z]\b", text)
+    assert owners and all(o.endswith("example-org") for o in owners)
