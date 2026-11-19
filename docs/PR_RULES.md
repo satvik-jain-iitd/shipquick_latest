@@ -206,3 +206,14 @@ The pytest `::test_name` form still works. A path in the diff that no name accep
 - A pull request whose **base** branch starts with `train/` is a light run: the six heavy jobs (`test` and the five phone jobs) are skipped and the `gate` is green when no job failed. Every other run is a full run. The rule reads `github.event_name` and `github.base_ref` only, never the head branch.
 - On a light run the gate skips the change-map step and prints `light run: the heavy jobs did not run; they run on the train pull request into dev`. On a full run the gate fails unless `test` is `success`.
 - A feature PR is opened into the train branch; the train PR into `dev` runs everything. Run `scripts/check_local.sh` and `scripts/check_local.sh tests` before pushing a feature branch.
+
+The steps of a train, in order:
+
+1. The coder makes the branch `train/<date>` from `dev`.
+2. Each feature PR targets the train branch and gets a light run.
+3. The reviewer approves each feature PR.
+4. The coder merges the approved branches into the train with `git merge --no-ff` and pushes once.
+5. The reviewer checks the union and asks a second reviewer.
+6. The coder opens one PR from the train into `dev` with a `Closes #N` line for every story on it. CI runs once, in full.
+7. The owner's yes.
+8. The owner merges, through `scripts/review_merge.sh`.
