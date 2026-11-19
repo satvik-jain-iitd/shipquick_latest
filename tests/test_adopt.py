@@ -1129,4 +1129,3 @@ def test_s479_gate_files_refuses_to_overwrite_a_gitignored_file_on_disk(child):
     r = adopt(child, "--gate-files")
     assert r.returncode == 2 and "roadmap.json" in r.stderr and "uncommitted" in r.stderr, (r.stdout, r.stderr)
     assert (child / "roadmap.json").read_text(encoding="utf-8") == mine and not (child / ".pre-commit-config.yaml").exists()
-
