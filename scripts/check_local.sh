@@ -158,14 +158,18 @@ check_story_size() {
   report story-size "$rc"
 }
 check_intent_verify() {
-  have_base story || return 0
+  have_base intent-verify || return 0
   command -v gh >/dev/null || { echo "skip intent-verify: gh is not installed"; return 0; }
   gh auth status >/dev/null 2>&1 || { echo "skip intent-verify: gh is not logged in (gh auth login); CI still checks it"; return 0; }
   local tmp rc
   tmp="$(mktemp)"
   git log "origin/$BASE..HEAD" --format=%B > "$tmp"
-  # locally there is no PR yet: the author of this branch is the logged-in gh login (the same proof rule as CI, ADR-021)
-  PR_AUTHOR="$(gh api user --jq .login 2>/dev/null || true)" python3 "$HERE/check_intent_verify.py" --pr-body-file "$tmp" \
+  # locally there is no PR yet: a PR_AUTHOR already set in the environment wins, else the author of this branch is the
+  # logged-in gh login (the same proof rule as CI, ADR-021)
+  local author
+  author="$(printf '%s' "${PR_AUTHOR:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  [ -n "$author" ] || author="$(gh api user --jq .login 2>/dev/null || true)"
+  PR_AUTHOR="$author" python3 "$HERE/check_intent_verify.py" --pr-body-file "$tmp" \
     --reviewers "$(python3 "$HERE/roles.py" get reviewer 2>/dev/null || true)"
   rc=$?
   rm -f "$tmp"
