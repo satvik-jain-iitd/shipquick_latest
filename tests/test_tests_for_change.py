@@ -66,3 +66,27 @@ def test_check_local_tests_runs_the_picked_files(tmp_path):
     (repo / "tests" / "test_a.py").write_text("def test_a():\n    assert False\n")
     r = subprocess.run(["bash", str(CHECK), "tests"], cwd=repo, capture_output=True, text=True, env=env)
     assert r.returncode != 0
+
+
+def test_an_unreadable_change_list_picks_every_test(tmp_path):
+    repo = make_repo(tmp_path)  # not a git repo: the change list cannot be read
+    r = subprocess.run([sys.executable, str(SCRIPT), "--root", str(repo)], capture_output=True, text=True)
+    assert r.stdout.splitlines()[0].startswith("full suite")
+    assert {"tests/test_a.py", "tests/test_b.py", "tests/test_doc.py"} <= set(r.stdout.split())
+
+
+def test_check_local_tests_skips_a_repo_without_python_tests(tmp_path):
+    env = {**os.environ, "BASE": "dev", "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+    for a in (["init", "-q", "-b", "dev"], ["-c", "core.hooksPath=/dev/null", "commit", "-q", "--allow-empty", "-m", "b"],
+              ["update-ref", "refs/remotes/origin/dev", "HEAD"]):
+        subprocess.run(["git", *a], cwd=tmp_path, check=True, capture_output=True, env=env)
+    (tmp_path / "code.py").write_text("x = 1\n")
+    r = subprocess.run(["bash", str(CHECK), "tests"], cwd=tmp_path, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "skip tests: no python test files in this repo" in r.stdout
+    assert "full suite" not in r.stdout and "ok   tests" not in r.stdout
+
+
+def test_check_local_has_no_disable_comment():
+    assert "shellcheck disable" not in CHECK.read_text()
