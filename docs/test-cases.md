@@ -2370,4 +2370,21 @@ Scenario: a changed file that is not in the current report
   Then it fails
 Scenario: no changed files
   Then it passes, but only after both reports were read
+## Story #580: the child bump planner, a dry run
+```gherkin
+Scenario: a pin that differs from the release is a bump
+  Then the row says bump and shows both commits
+Scenario: a pin equal to the release is current
+  Then the row says current
+Scenario: an unread child is named and the run exits 1
+  Then every line and the summary are printed first
+Scenario: a missing or empty registry exits 1
+  Then the missing file is named
+  And a bad release sha exits 2
+Scenario: the planner reuses the scan reader and pin
+  Then child_bump.py has no parser of its own
+Scenario: the script reads no token and has no apply
+  Then it writes nothing
+Scenario: the fixtures use made-up names only
+  Then every child is under example-org
 ```

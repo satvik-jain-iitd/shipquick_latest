@@ -837,3 +837,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: the README of `Bachmann1234/diff_cover` (`diff-cover` reports the coverage of the changed lines of a diff and can fail under one percent; it has no per-file baseline), the `coverage report --fail-under` option of coverage.py (one total for the whole run, no per-file baseline), and the two ratchet repos (both are JavaScript, for jest).
 - Borrowed: the idea of a ratchet, a number that may only go up. Not borrowed: any code; none is Python, none compares two coverage.py JSON reports per file, and none fails closed on a bad report.
 - Decision: build from scratch as one stdlib script. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #580: a dry-run planner that says which child pins an old kit commit
+- Need: a read-only list of which child repos pin a kit commit other than a given release commit.
+- Run: the scout script path is stale on this Mac, so no scout run. GitHub topic search (`dependency-update` and `github-actions`) found only `sgash708/mise-bump-action`; named tools checked: `renovatebot/renovate` and `dependabot/dependabot-core`.
+- Read: the READMEs of `mise-bump-action`, Renovate and Dependabot. All three open update PRs in a repo they own; none reads a registry of other repos and prints a plan, and each needs write credentials.
+- Reused: `read_children` and `gh_api` from `scripts/adoption_scan.py`, and the pin lines of `check_child`, moved into one `read_pin`.
+- Decision: build from scratch as one small stdlib script, `scripts/child_bump.py`, since the story is a dry run with no writes. Confidence that nothing fits better: 0.8.
