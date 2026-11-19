@@ -14,17 +14,26 @@ import sys
 
 from close_linked_issues import LINK
 
-AC_RE = re.compile(r"\bAC-\d+\b")
-TESTS_RE = re.compile(r"(?i)\btests?\s*[:=]\s*.+")
+# An AC is defined by a line that starts `AC-<n>:`; a mention in prose does not define one.
+DEFINE_RE = re.compile(r"^\s*(AC-\d+)\s*:", re.M)
+TESTS_LINE_RE = re.compile(r"^\s*tests?\s*[:=]", re.I | re.M)
+MAP_RE = re.compile(r"(AC-\d+)\s*->\s*([^\s;,]+)::([^\s;,]+)")
 RULE_DATE = "2026-11-19"
 
 
 def check(body: str) -> str | None:
-    acs = set(AC_RE.findall(body))
-    if not acs:
-        return "story has no acceptance-criteria IDs (use AC-1, AC-2, ...)"
-    if not TESTS_RE.search(body):
-        return "story has no `Tests:` mapping from AC IDs to test paths"
+    defined = list(dict.fromkeys(DEFINE_RE.findall(body)))
+    if not defined:
+        return "story has no acceptance-criteria IDs (a line that starts `AC-1:`, `AC-2:`, ...)"
+    if not TESTS_LINE_RE.search(body):
+        return "story has no `Tests:` line that maps each AC id to path::test_name"
+    mapped = {ac for ac, _, _ in MAP_RE.findall(body)}
+    unmapped = [a for a in defined if a not in mapped]
+    if unmapped:
+        return f"{', '.join(unmapped)} not mapped on a Tests line (write `AC-n -> path::test_name`)"
+    stray = sorted(mapped - set(defined))
+    if stray:
+        return f"Tests maps {', '.join(stray)}, which the story does not define"
     return None
 
 
