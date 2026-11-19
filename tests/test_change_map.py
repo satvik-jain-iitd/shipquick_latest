@@ -593,3 +593,11 @@ def test_s498_the_kit_ci_yml_passes_its_own_values_explicitly():
     step = step[:step.index("\n      - name:")] if "\n      - name:" in step else step
     for want in ("--ci .github/workflows/ci.yml", "--guard scripts/change_map.json", "--guard scripts/change_map.py", "--decision-job ui-changes"):
         assert want in step, want
+
+
+def test_s498_the_unmapped_path_message_names_the_childs_own_map(tmp_path):
+    repo = make_repo(tmp_path, CHILD_FILES)
+    change(repo, "other/x.txt")
+    d = child_decide(repo, *CHILD_ARGS)
+    msg = " ".join(d["reasons"])
+    assert d["all"] is True and ".shipquick/change_map.json" in msg and "scripts/change_map.json" not in msg, d["reasons"]
