@@ -809,3 +809,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: the README of `JasonEtco/create-an-issue`: it creates an issue from a template and, with `update_existing`, edits the open issue with the same title. It does not comment, and it is a third-party action inside a protected workflow.
 - Reused: the issue-opening code of `scripts/adoption_scan.py` (find the open issue by a key in its title, comment, else create), moved into `scripts/issue_notice.py` and used by both scripts.
 - Decision: build the dispatch, wait and verdict as one stdlib script; reuse the adoption scan's issue code. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #568: one row of numbers per pull request
+- Need: a pure function that turns `gh pr view`, `gh run list` and `gh issue view` JSON into one row of numbers (story to PR minutes, PR to merge minutes, CI runs, failed, cancelled, review rounds).
+- Run: the radar scout script is not at its documented path on this Mac (`~/Documents/AGI/plugins/radar/scripts/scout.py` is missing), so the run is a GitHub topic search (`github-metrics`, `pull-requests`). It found `tonypiazza/gh-metrics`, `git-pulse/tools` and `w3c/pulse-snapshots`.
+- Read: the READMEs of `tonypiazza/gh-metrics` and `git-pulse/tools`. `gh-metrics` computes repo-wide merge rate, cycle time and review timing by shelling out to `gh`; it has no per-PR row with CI runs and no story link. `git-pulse` shows monthly committer and issue/PR counts.
+- Borrowed: the idea to keep one fixed definition of each metric, so every run measures the same way. Not borrowed: the code; it shells out to `gh` and the story wants a pure function with no network.
+- Decision: build from scratch as one small stdlib function. Confidence that nothing fits better: 0.8.
