@@ -87,8 +87,7 @@ def main() -> int:
             return 1
     errors = validate(entries)
     if args.json:
-        import json as _j
-        print(_j.dumps({"ok": not errors, "errors": errors, "count": len(entries) if isinstance(entries, list) else 0}))
+        print(json.dumps({"ok": not errors, "errors": errors, "count": len(entries) if isinstance(entries, list) else 0}))
     else:
         if errors:
             for e in errors:

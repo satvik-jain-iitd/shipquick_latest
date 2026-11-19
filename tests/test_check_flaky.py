@@ -18,7 +18,7 @@ def entry(**kw):
     base = {
         "test_id": "tests/test_foo.py::test_bar",
         "path": "tests/test_foo.py",
-        "owner": "shipquick-dev",
+        "owner": "example-owner",
         "issue": "https://github.com/x/y/issues/1",
         "reason": "timing",
         "quarantined_on": date.today().isoformat(),
@@ -76,8 +76,7 @@ def test_missing_registry_passes(tmp_path):
 def test_json_output_valid(tmp_path):
     f = tmp_path / "r.json"; f.write_text(json.dumps([entry()]))
     r = run("--file", str(f), "--json")
-    import json as _j
-    d = _j.loads(r.stdout)
+    d = json.loads(r.stdout)
     assert d["ok"] is True
 
 
