@@ -809,3 +809,11 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: the README of `JasonEtco/create-an-issue`: it creates an issue from a template and, with `update_existing`, edits the open issue with the same title. It does not comment, and it is a third-party action inside a protected workflow.
 - Reused: the issue-opening code of `scripts/adoption_scan.py` (find the open issue by a key in its title, comment, else create), moved into `scripts/issue_notice.py` and used by both scripts.
 - Decision: build the dispatch, wait and verdict as one stdlib script; reuse the adoption scan's issue code. Confidence that nothing fits better: 0.8.
+
+## 13 Nov 2026, story #498: a child reads its own change map
+
+- Need: a child project skips slow CI jobs from the changed paths with its own map, fail closed, one reader shared with the kit.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "a child project skips slow CI jobs from the changed paths with its own map, fail closed, one reader shared with the kit"` printed `no repos found`. GitHub topic search found `dorny/paths-filter` and `tj-actions/changed-files`.
+- Read: both READMEs. Both run only inside a workflow, filter by path at run time, and have no gate that proves a needed job ran or fails closed on a doubt.
+- Reused: the kit's own reader from story #485 (ADR-018); only its arguments change.
+- Decision: no new tool; give the reader `--ci`, `--guard` and `--decision-job`. Confidence that nothing fits better: 0.8.
