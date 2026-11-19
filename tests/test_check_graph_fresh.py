@@ -102,3 +102,24 @@ def test_an_empty_graph_fails(tmp_path):
     (r / "graphify-out").mkdir()
     (r / "graphify-out" / "graph.json").write_text("{}")
     assert sh(["python3", CHECK, "--require"], r, e).returncode == 1
+
+
+def local(r, e):
+    return sh(["bash", str(ROOT / "scripts" / "check_local.sh"), "graph-fresh"], r, e)
+
+
+def test_local_check_only_warns_on_a_stale_graph(tmp_path):
+    e, r = env_with_stub(tmp_path), repo(tmp_path)
+    sh(["python3", KIT, "build", str(r)], r, e)
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "two"], cwd=r, check=True)
+    c = local(r, e)
+    assert c.returncode == 0, c.stdout + c.stderr
+    assert "warn graph-fresh" in c.stdout and "stale" in c.stdout
+
+
+def test_local_check_only_warns_without_source_sha(tmp_path):
+    e, r = env_with_stub(tmp_path), repo(tmp_path)
+    sh(["graphify", "update", str(r)], r, e)  # plain graphify, no .source_sha
+    c = local(r, e)
+    assert c.returncode == 0, c.stdout + c.stderr
+    assert "warn graph-fresh" in c.stdout and ".source_sha" in c.stdout
