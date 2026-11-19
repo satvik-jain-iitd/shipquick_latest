@@ -7,13 +7,11 @@ A story body should contain lines like `AC-1: ...` and a `Tests: AC-1 -> tests/t
 Exit 0 and "ac OK", or exit 1 and the reason. Stories created before 2026-11-19 are skipped.
 """
 import argparse
-import json
 import re
-import subprocess
 import sys
 from pathlib import Path
 
-from close_linked_issues import LINK
+from linked_stories import StoryReadError, linked_stories
 
 # An AC is defined by a line that starts `AC-<n>:`; a mention in prose does not define one.
 DEFINE_RE = re.compile(r"^\s*(AC-\d+)\s*:", re.M)
@@ -61,19 +59,13 @@ def check(body: str, root: Path = Path(".")) -> str | None:
 
 
 def check_pr_body(body: str, root: Path = Path(".")) -> str | None:
-    for n in dict.fromkeys(LINK.findall(body)):
-        out = subprocess.run(["gh", "issue", "view", n, "--json", "labels,body,createdAt"], capture_output=True, text=True)
-        if out.returncode != 0:
-            return f"could not read issue #{n}: {out.stderr.strip()}"
-        info = json.loads(out.stdout)
-        if "user-story" not in {l["name"] for l in info["labels"]}:
-            continue
-        if (info.get("createdAt") or "")[:10] < RULE_DATE:
-            print(f"skip #{n}: story created before {RULE_DATE}")
-            continue
-        why = check(info["body"] or "", root)
-        if why:
-            return f"issue #{n}: {why}"
+    try:
+        for n, info in linked_stories(body, RULE_DATE):
+            why = check(info["body"] or "", root)
+            if why:
+                return f"issue #{n}: {why}"
+    except StoryReadError as e:
+        return str(e)
     return None
 
 
