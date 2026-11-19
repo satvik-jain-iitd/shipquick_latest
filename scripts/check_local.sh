@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
@@ -215,6 +215,12 @@ check_roadmap() {   # story #81: the roadmap's node:test files, the same command
   node --test roadmap/*.test.js
   report roadmap $?
 }
+check_flaky() {   # #540: the flaky-test registry of THIS repo (a missing file passes: a child has none); never the kit's own file
+  local root
+  root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  python3 "$HERE/check_flaky.py" --file "$root/.shipquick/flaky-tests.json"
+  report flaky $?
+}
 check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
@@ -246,7 +252,7 @@ feature_skip() {   # feature_skip <check>: returns 0 when the check must be skip
   esac
 }
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap workflow-security graph-fresh secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap workflow-security graph-fresh flaky secrets)
 for c in "${checks[@]}"; do
   feature_skip "$c" && continue
   [ $? -eq 2 ] && continue
@@ -279,7 +285,8 @@ for c in "${checks[@]}"; do
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky secrets secrets-staged)"; exit 2 ;;
+    flaky) check_flaky ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts
