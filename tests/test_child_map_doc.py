@@ -115,3 +115,10 @@ def test_s498_a_missing_map_on_the_base_branch_turns_everything_on(tmp_path):
     edit(repo, "docs/a.md")
     d = decide(repo, tmp_path)
     assert json.loads(d["decision"]) == {"all": True}, d
+
+
+def test_s498_the_checklist_tells_an_existing_child_to_run_adopt_again_after_the_bump():
+    text = (ROOT / "docs" / "ADOPTION.md").read_text(encoding="utf-8")
+    m = re.search(r"^## Checklist for each child.*?\n(.*?)(?=^## |\Z)", text, re.S | re.M)
+    assert m, "no checklist section"
+    assert re.search(r"existing child.*run .*adopt\.sh.* again.*concurrency", m.group(1), re.S | re.I), m.group(1)

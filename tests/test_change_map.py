@@ -550,12 +550,13 @@ def test_s498_a_change_to_the_decision_job_turns_every_area_on(tmp_path):
     assert child_decide(repo, *CHILD_ARGS)["all"] is True
 
 
-def test_s498_the_decision_job_name_is_the_one_given(tmp_path):
-    """Without --decision-job the reader looks for ui-changes, which a child does not have: a change in `changes` is then invisible to it."""
+def test_s498_a_decision_job_in_no_head_workflow_turns_every_area_on(tmp_path):
+    """Round 2: a wrong --decision-job name (here the kit's ui-changes, which a child does not have) must not weaken the guard silently."""
     repo = make_repo(tmp_path, CHILD_FILES)
     change(repo, ".github/workflows/build.yml", CHILD_CI.replace("echo decide", "echo other"))
     args = [a for a in CHILD_ARGS if a not in ("--decision-job", "changes")]
-    assert child_decide(repo, *args)["all"] is False
+    d = child_decide(repo, *args)
+    assert d["all"] is True and any("ui-changes" in r and "not in" in r for r in d["reasons"]), d
 
 
 def test_s498_ci_can_be_given_twice_and_a_job_may_live_in_the_second_file(tmp_path):
@@ -595,9 +596,9 @@ def test_s498_the_kit_ci_yml_passes_its_own_values_explicitly():
         assert want in step, want
 
 
-def test_s498_the_unmapped_path_message_names_the_childs_own_map(tmp_path):
+def test_s498_the_unmapped_path_message_does_not_print_a_map_path(tmp_path):
     repo = make_repo(tmp_path, CHILD_FILES)
     change(repo, "other/x.txt", text="x\n")
     d = child_decide(repo, *CHILD_ARGS)
     msg = " ".join(d["reasons"])
-    assert d["all"] is True and ".shipquick/change_map.json" in msg and "scripts/change_map.json" not in msg, d["reasons"]
+    assert d["all"] is True and "no row in the change map names this path" in msg and "change_map.json" not in msg, d["reasons"]
