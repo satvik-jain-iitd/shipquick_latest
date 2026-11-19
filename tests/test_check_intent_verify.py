@@ -222,3 +222,18 @@ def test_a_quote_or_a_sentence_with_the_phrase_does_not_count(tmp_path, body):
 def test_the_plain_line_with_trailing_spaces_still_counts(tmp_path):
     r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF + "   ")]))
     assert r.returncode == 0, r.stdout
+
+
+# ---- #555 round 2, point 3: check_local.sh keeps a PR_AUTHOR already set, else the gh login; the skip label is intent-verify ----
+def test_local_keeps_a_pr_author_already_set_in_the_environment(tmp_path):
+    env = stub_env(tmp_path, story_issue(comments=[comment("qa-login", PROOF)]))
+    env.update({"STUB_LOGIN": "dev-login", "PR_AUTHOR": "qa-login"})   # the PR author is qa-login here, so its own comment must not count
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=local_repo(tmp_path), capture_output=True, text=True, env=env)
+    assert r.returncode == 1 and "no comment" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_local_skip_line_names_intent_verify(tmp_path):
+    repo = tmp_path / "bare"; repo.mkdir()
+    subprocess.run(["git", "-C", str(repo), "init", "-q", "-b", "feat"], check=True)
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=stub_env(tmp_path))
+    assert "skip intent-verify:" in r.stdout, (r.stdout, r.stderr)
