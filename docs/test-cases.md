@@ -2449,4 +2449,18 @@ Scenario: a day with no merged PR says so and exits 0
   Then it prints no merged PRs on the date
 Scenario: the day is read on the clock the offset names
   Then a bad offset, date or missing repo exits 2 and makes no call
+## Story #592: light CI on a train pull request
+```gherkin
+Scenario: the six heavy jobs do not run on a light run
+  Then each has the light-run if and the phone jobs keep their area test
+Scenario: the light-run rule reads the base branch, never the head
+  Then head_ref is not in the condition
+Scenario: the gate on a light run says so and still fails on a failed job
+  Then the change-map step is skipped and the light run line is printed
+Scenario: the gate on a full run needs test to succeed
+  Then a skipped test fails the gate
+Scenario: the cheap jobs and checks.yml are not touched
+  Then none holds the light-run condition
+Scenario: the ADR and the rule page name the trade
+  Then ADR-023 and PR_RULES section 17 exist
 ```

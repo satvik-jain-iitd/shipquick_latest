@@ -200,3 +200,9 @@ The pytest `::test_name` form still works. A path in the diff that no name accep
 - `python3 scripts/nightly_full_run.py --dry-run` dispatches nothing and changes nothing: it reads the latest dispatched run and prints what it would do.
 - The timer file runs from the default branch, so the nightly starts only once `nightly.yml` is on `main` (the next `dev` to `main` promotion). It is a protected path (`.github/workflows/*`): the owner merges the PR.
 - Issue opening is one helper, `scripts/issue_notice.py`, used by this script and by `scripts/adoption_scan.py`.
+
+## 17. Light CI and the train (story #592, ADR-023)
+
+- A pull request whose **base** branch starts with `train/` is a light run: the six heavy jobs (`test` and the five phone jobs) are skipped and the `gate` is green when no job failed. Every other run is a full run. The rule reads `github.event_name` and `github.base_ref` only, never the head branch.
+- On a light run the gate skips the change-map step and prints `light run: the heavy jobs did not run; they run on the train pull request into dev`. On a full run the gate fails unless `test` is `success`.
+- A feature PR is opened into the train branch; the train PR into `dev` runs everything. Run `scripts/check_local.sh` and `scripts/check_local.sh tests` before pushing a feature branch.
