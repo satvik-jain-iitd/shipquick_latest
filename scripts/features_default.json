@@ -169,6 +169,14 @@
       "default": true,
       "locked": false
     },
+    "graph-fresh": {
+      "name": "Code graph is fresh",
+      "what": "On your computer, checks that the code graph was built from the commit you are on, so searches do not use old answers.",
+      "if_off": "A stale code graph is not reported. A project with no graph is skipped either way.",
+      "group": "Local checks",
+      "default": true,
+      "locked": false
+    },
     "adoption": {
       "name": "Kit is really installed",
       "what": "Checks that the project carries the ShipQuick checks for real, at the version it says. This guards all the others.",

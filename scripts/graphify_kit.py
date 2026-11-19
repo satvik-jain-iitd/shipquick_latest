@@ -36,12 +36,23 @@ def run_graphify(args: list[str]) -> int:
         return 127
 
 
+def record_sha(rc: int, path: str) -> int:
+    """After a good run, write the commit the graph was built from; the freshness check reads only this and the graph."""
+    if rc == 0:
+        sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=path, capture_output=True, text=True)
+        if sha.returncode == 0:
+            out = Path(path) / "graphify-out"
+            out.mkdir(exist_ok=True)
+            (out / ".source_sha").write_text(sha.stdout.strip() + "\n")
+    return rc
+
+
 def cmd_build(args):
     path = args.path or "."
     cmd = ["extract", path, "--code-only", "--no-cluster", "--no-viz"]
     if args.force:
         cmd.append("--force")
-    return run_graphify(cmd)
+    return record_sha(run_graphify(cmd), path)
 
 
 def cmd_update(args):
@@ -49,7 +60,7 @@ def cmd_update(args):
     cmd = ["update", path]
     if args.force:
         cmd.append("--force")
-    return run_graphify(cmd)
+    return record_sha(run_graphify(cmd), path)
 
 
 def cmd_check(args):

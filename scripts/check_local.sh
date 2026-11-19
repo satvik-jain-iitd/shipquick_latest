@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
@@ -127,6 +127,14 @@ check_story() {
   rm -f "$tmp"
   report story "$rc"
 }
+check_graph_fresh() {
+  [ -f graphify-out/graph.json ] || { echo "skip graph-fresh: no graphify-out/graph.json (run python3 scripts/graphify_kit.py build)"; return 0; }
+  # warn only, like shortcuts: HEAD moves after every commit, so a hard fail here would fail every push. CI may use --require.
+  local out
+  out="$(python3 "$HERE/check_graph_fresh.py" --require 2>&1)" \
+    && echo "ok   graph-fresh" \
+    || echo "warn graph-fresh: $(printf '%s' "$out" | grep -v '^graph NOT fresh' | tr '\n' ';')"
+}
 check_workflow_security() { python3 "$HERE/check_workflow_security.py"; report workflow-security $?; }   # story #325
 check_design_tokens() {   # story #133: the same two steps as the design-tokens CI job
   have_base design-tokens || return 0
@@ -223,6 +231,7 @@ feature_of() {   # feature_of <check> -- the feature id that switches the check,
     intent-verify) echo intent-verify ;;
     ac-trace) echo ac-trace ;;
     roadmap) echo roadmap ;;
+    graph-fresh) echo graph-fresh ;;
     ui-registry) echo component-registry ;;
   esac
 }
@@ -237,7 +246,7 @@ feature_skip() {   # feature_skip <check>: returns 0 when the check must be skip
   esac
 }
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap workflow-security secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap workflow-security graph-fresh secrets)
 for c in "${checks[@]}"; do
   feature_skip "$c" && continue
   [ $? -eq 2 ] && continue
@@ -262,6 +271,7 @@ for c in "${checks[@]}"; do
     disable-comments) check_disable_comments ;;
     design-tokens) check_design_tokens ;;
     story) check_story ;;
+    graph-fresh) check_graph_fresh ;;
     intent-verify) check_intent_verify ;;
     ac-trace) check_ac_trace ;;
     story-size) check_story_size ;;
@@ -269,7 +279,7 @@ for c in "${checks[@]}"; do
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts

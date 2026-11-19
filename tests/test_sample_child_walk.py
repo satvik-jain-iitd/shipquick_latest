@@ -53,6 +53,7 @@ NAMED = {
     "story": "needs gh logged in to read the linked stories; CI runs it on GitHub",
     "intent-verify": "needs gh logged in to read the linked stories; CI runs it on GitHub",
     "ac-trace": "needs gh logged in to read the linked stories; CI runs it on GitHub",
+    "graph-fresh": "warn only (like shortcuts): it prints an ok, skip or warn line and never fails, and the walk builds no graph",
     "shortcuts": "warn only: it prints a count and never passes or fails, so no 'ok' line exists to assert",
     "secrets": "needs gitleaks, which the CI test job does not install; the pre-commit job runs it on every commit",
     "secrets-staged": "the pre-commit stage; the walk's commits pass through it, but its gitleaks run is not asserted",
