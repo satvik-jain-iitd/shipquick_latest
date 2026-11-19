@@ -145,6 +145,18 @@ check_tdd() {   # story #319 (A15): the commit log stands in for the PR body bef
   rm -f "$tmp"
   report tdd "$rc"
 }
+check_story_size() {
+  have_base story || return 0
+  command -v gh >/dev/null || { echo "skip story-size: gh is not installed"; return 0; }
+  gh auth status >/dev/null 2>&1 || { echo "skip story-size: gh is not logged in (gh auth login); CI still checks it"; return 0; }
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  python3 "$HERE/check_story_size.py" --pr-body-file "$tmp"
+  rc=$?
+  rm -f "$tmp"
+  report story-size "$rc"
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   # story #454: a push is judged on the commits it adds. History below origin/$BASE was already pushed; an old finding there is not this push's.
@@ -217,6 +229,7 @@ for c in "${checks[@]}"; do
     disable-comments) check_disable_comments ;;
     design-tokens) check_design_tokens ;;
     story) check_story ;;
+    story-size) check_story_size ;;
     shortcuts) check_shortcuts ;;
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
