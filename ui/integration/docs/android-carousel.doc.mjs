@@ -67,6 +67,24 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "HorizontalUncontainedCarousel: Items of one fixed size that run off the edge of the screen. Use it for long lists of cards to scroll through.",
+            "HorizontalCenteredHeroCarousel: One large item in the middle with small items on each side. Use it to put one item in focus, like a featured photo.",
+            "CarouselState: The scroll state of a carousel: currentItem, scrollToItem() and animateScrollToItem().",
+            "rememberCarouselState: Creates and keeps a CarouselState. Give it the item count.",
+            "CarouselDefaults: Default fling behaviours (multi-browse, single advance, no snap) and small item sizes for carousels.",
+            "CarouselItemScope: The scope of each item. Use maskClip or maskBorder so the item follows the carousel's mask as it changes size.",
+            "CarouselItemDrawInfo: The size, minimum and maximum size and mask of an item as it moves. Read it from carouselItemDrawInfo in the item scope."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

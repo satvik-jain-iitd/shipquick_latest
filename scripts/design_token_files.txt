@@ -1,0 +1,9 @@
+# Story #133: the files allowed to hold raw colour and font literals: the token sources themselves.
+# scripts/check_design_literals.py skips an added line in a file that matches one of these. One shell glob
+# per line (fnmatch, so `*` crosses `/`); `#` comments and blank lines are ignored. Protected path
+# (scripts/protected_paths.txt): a PR cannot allowlist its own file to dodge the check in auto mode.
+# A child keeps its own list at this same path; the kit's list and the child's are both read.
+design/*
+*tokens.css
+*tokens.ts
+*/tokens/*

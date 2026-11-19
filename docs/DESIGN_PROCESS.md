@@ -51,6 +51,13 @@ The Design learnings board (9 Nov 2026, story #165). The owner is learning desig
 - An `owner` row is his call. A generic rule never overwrites it. When they disagree, both rows stay, and the note says which one stands for this project.
 - Each new frame says in one line which rule it shows and why, so the owner learns while he picks.
 
+The Design system board (11 Nov 2026, story #188). Every library component the kit holds, on the canvas, right after the Design learnings board.
+- Set `"registry"` in the manifest: the path of the kit's `ui/registry.json` (in a child: `knowledge/shipquick_latest/ui/registry.json`), relative to where you run the tool, like `--manifest`. No key, no board.
+- The tool draws one board, `design-system.dc.html`, in the same row as the learnings board, to its right. One column per platform (Android, iOS). Each row: the component name on its base, its status, its doc link.
+- Status comes from the row's `status` when set; else `twin #<n>` when the row names a twin, else `no twin yet` (the parity report's own words). The doc link comes from the row's `doc` when set; else the kit's convention `ui/components/<Name>/<Name>.doc.mjs`.
+- A registry row whose platform is not `android` or `ios` stops the run. A registry path that cannot be read stops the run.
+- Never edit the board by hand. When the registry changes, run `--apply` again. `--check` prints `STALE project/design-system.dc.html` and exits 1 while the board on disk differs from what the registry says now. The same stale check covers every generated board (the background tiles, the learnings board).
+
 How it is kept:
 - The layout comes from a manifest (`design/canvas-stages.json`: sections, rows, the boards in each row, the purpose of each section) through `scripts/canvas_stage.py`. A board moves by editing the manifest and running the tool, never by dragging.
 - The manifest, in short. Colours and the font are the project's own, copied from its tokens; the tool holds none. Keys the tool does not know (`canvas`, `arranged`, a project's own record) are left alone and ignored.
@@ -62,6 +69,7 @@ How it is kept:
     "start_here": "How to read this canvas: ...", "start_tint": "sage",
     "remove_notes": ["an-old-title-note"],
     "layout": "columns",
+    "registry": "knowledge/shipquick_latest/ui/registry.json",
     "sections": [
       {"id": "talk", "title": "1 · In discussion", "purpose": "Waiting on a pick.", "prefix": "IN TALK", "tint": "yellow",
        "rows": [{"id": "1a", "title": "1a · Sign-in options", "boards": ["SignIn-A.dc.html", "SignIn-B.dc.html"], "notes": []}]},

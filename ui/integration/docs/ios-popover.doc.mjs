@@ -61,6 +61,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "popover: `.popover(item:attachmentAnchor:arrowEdge:content:)`, iOS 13.0. Apple: \"Presents a popover using the given item as a data source for the popover’s content.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
