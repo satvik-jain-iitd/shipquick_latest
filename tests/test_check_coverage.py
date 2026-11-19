@@ -71,6 +71,8 @@ def test_a_changed_file_not_in_the_report_fails(tmp_path):
 
 
 def test_no_changed_files_passes_only_after_both_reports_are_read(tmp_path):
-    assert run(tmp_path, report({}), report({}), []).returncode == 0
-    assert run(tmp_path, report({}), "not json", []).returncode == 1
-    assert run(tmp_path, None, report({}), []).returncode == 1
+    for name in ("a", "b", "c"):
+        (tmp_path / name).mkdir()
+    assert run(tmp_path / "a", report({}), report({}), []).returncode == 0
+    assert run(tmp_path / "b", report({}), "not json", []).returncode == 1
+    assert run(tmp_path / "c", None, report({}), []).returncode == 1
