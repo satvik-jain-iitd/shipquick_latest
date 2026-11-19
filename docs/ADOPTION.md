@@ -269,6 +269,7 @@ Do these in order, in the child repo. One step at a time.
 5. If the caller names a kit branch, protect that branch and require pull request reviews there.
 6. A private child: add a fine-grained token that can read it to ShipQuick's `SHIPQUICK_CHILD_TOKEN`, or the daily scan names it as skipped.
 7. Wait for one PR whose `shipquick-checks / gate` is green. Then run `adopt.sh . --check`. It must print `adopted`.
+8. An existing child must run `adopt.sh` again after the kit bump (step 2), because `adopt.sh --check` now asks for the concurrency block in the caller (story #498).
 
 ## Run `adopt.sh . --check` before you push a bump (story #446)
 

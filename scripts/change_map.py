@@ -127,12 +127,14 @@ def decide(base, head, event, map_path, ci_paths=None, guard=None, decision_job=
             continue
         if matches(n, free):
             continue
-        return all_on(every, f"{n}: no row in {map_path} names this path; add a row (an area, or free if it needs no slow job)")
+        return all_on(every, f"{n}: no row in the change map names this path; add a row (an area, or free if it needs no slow job)")
     try:
         base_ci = {c: git("show", f"{mb}:{c}") for c in ci_paths}
         head_ci = {c: git("show", f"{head}:{c}") for c in ci_paths}
     except subprocess.CalledProcessError:
         return all_on(every, f"a workflow file ({', '.join(ci_paths)}) cannot be read at {mb} or {head}")
+    if all(decision_parts(head_ci[c], decision_job)[1] is None for c in ci_paths):   # a wrong name would compare None to None and skip the guard
+        return all_on(every, f"the decision job {decision_job} is not in any of {', '.join(ci_paths)}, so nothing is judged; every area runs")
     if any(decision_parts(base_ci[c], decision_job) != decision_parts(head_ci[c], decision_job) for c in ci_paths):
         return all_on(every, f"{', '.join(ci_paths)}: the header or the {decision_job} job changed, so nothing is skipped on this run")
     for area, spec in areas.items():
