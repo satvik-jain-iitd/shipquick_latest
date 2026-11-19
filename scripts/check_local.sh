@@ -164,7 +164,8 @@ check_intent_verify() {
   local tmp rc
   tmp="$(mktemp)"
   git log "origin/$BASE..HEAD" --format=%B > "$tmp"
-  python3 "$HERE/check_intent_verify.py" --pr-body-file "$tmp"
+  # locally there is no PR yet: the author of this branch is the logged-in gh login (the same proof rule as CI, ADR-021)
+  PR_AUTHOR="$(gh api user --jq .login 2>/dev/null || true)" python3 "$HERE/check_intent_verify.py" --pr-body-file "$tmp"
   rc=$?
   rm -f "$tmp"
   report intent-verify "$rc"
