@@ -38,7 +38,7 @@ def story_issue(created="2026-11-20T09:00:00Z", comments=()):
     return {"labels": [{"name": "user-story"}], "body": "## Value\nNo actor line.\n", "createdAt": created, "comments": list(comments)}
 
 
-def run_pr(tmp_path, issue, author="dev-login", body="Closes #12\n## What\nFix.\n"):
+def run_pr(tmp_path, issue, author="dev-login", body="Closes #12\n## What\nFix.\n", reviewers="qa-login"):
     f = tmp_path / "body.md"
     f.write_text(body, encoding="utf-8")
     env = stub_env(tmp_path, issue)
@@ -46,7 +46,7 @@ def run_pr(tmp_path, issue, author="dev-login", body="Closes #12\n## What\nFix.\
         env.pop("PR_AUTHOR", None)
     else:
         env["PR_AUTHOR"] = author
-    return subprocess.run(["python3", str(SCRIPT), "--pr-body-file", str(f)], capture_output=True, text=True, env=env)
+    return subprocess.run(["python3", str(SCRIPT), "--pr-body-file", str(f), "--reviewers", reviewers], capture_output=True, text=True, env=env)
 
 
 def test_a_proof_comment_from_another_login_passes(tmp_path):
@@ -183,3 +183,24 @@ def test_check_local_skips_the_intent_check_when_gh_is_not_logged_in(tmp_path):
     r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert "skip intent-verify: gh is not logged in" in r.stdout
+
+
+# ---- #555 round 2, point 2: the proof counts only from a login on the reviewer list (scripts/roles.py get reviewer) ----
+def test_a_stranger_or_a_bot_login_not_on_the_reviewer_list_does_not_count(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("random-bot", PROOF)]))
+    assert r.returncode == 1 and "no comment" in r.stdout, r.stdout
+
+
+def test_any_login_on_a_comma_separated_reviewer_list_counts(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("other-reviewer", PROOF)]), reviewers="qa-login, other-reviewer")
+    assert r.returncode == 0 and "intent OK" in r.stdout, r.stdout
+
+
+def test_a_reviewer_who_is_also_the_pr_author_does_not_count(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("dev-login", PROOF)]), author="dev-login", reviewers="dev-login")
+    assert r.returncode == 1, r.stdout
+
+
+def test_an_empty_reviewer_list_fails_with_a_clear_line(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF)]), reviewers="")
+    assert r.returncode == 1 and "reviewer list is empty" in r.stdout, r.stdout
