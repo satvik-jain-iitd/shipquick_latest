@@ -195,4 +195,4 @@ def test_the_intent_flag_words_say_a_child_runs_it():
     for f in ("scripts/features_default.json", "docs/FEATURES.md", "docs/decisions/ADR-021.md"):
         text = (ROOT / f).read_text(encoding="utf-8")
         assert "Kit CI only" not in text and "The check is kit CI only" not in text, f
-        assert "child's CI" in text.split("intent-verify", 1)[1] or "child's own CI" in text, f
+        assert "child's CI" in text, f
