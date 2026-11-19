@@ -266,3 +266,15 @@ def test_the_docs_say_reviewer_list_and_kit_ci_only(rel):
 def test_the_adr_names_the_old_or_unlabelled_issue_gap():
     section = adr_last_section()
     assert "old or unlabelled issue" in section and "not checked" in section
+
+
+# ---- #555 round 3, point 1: a comment typed in the browser has \r\n line endings; the proof still counts ----
+def test_a_multi_line_comment_with_windows_line_endings_counts(tmp_path):
+    body = "Thanks, I read the say-back.\r\n" + PROOF + "\r\nThe scope is right.\r\n"
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", body)]))
+    assert r.returncode == 0 and "intent OK" in r.stdout, r.stdout
+
+
+def test_a_proof_line_ending_in_a_carriage_return_counts(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF + "\r")]))
+    assert r.returncode == 0, r.stdout
