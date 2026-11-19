@@ -223,14 +223,16 @@ check_flaky() {   # #540: the flaky-test registry of THIS repo (a missing file p
   report flaky $?
 }
 check_tests() {   # story #570: not in the default list; the picked files are printed, then pytest runs on them
-  local out picked
-  out="$(python3 "$HERE/tests_for_change.py" --base "$BASE")" || { echo "FAIL tests: $out"; failed=1; return; }
-  case "$out" in full\ suite*) echo "$(printf '%s\n' "$out" | head -1)" ;; esac
-  picked="$(printf '%s\n' "$out" | grep '^tests/' )"
-  [ -n "$picked" ] || { echo "ok   tests: no test file to run"; return 0; }
-  echo "tests picked:"; printf '%s\n' "$picked"
-  # shellcheck disable=SC2086
-  python3 -m pytest -q $picked; report tests $?
+  local out rc=0 l
+  local -a picked=()
+  out="$(python3 "$HERE/tests_for_change.py" --base "$BASE")" || rc=$?
+  [ "$rc" -eq 3 ] && { echo "skip tests: no python test files in this repo"; return 0; }
+  [ "$rc" -eq 0 ] || { echo "FAIL tests: $out"; failed=1; return; }
+  printf '%s\n' "$out" | grep '^full suite' || true
+  while IFS= read -r l; do picked+=("$l"); done < <(printf '%s\n' "$out" | grep '^tests/')
+  [ "${#picked[@]}" -gt 0 ] || { echo "ok   tests: no test file to run"; return 0; }
+  echo "tests picked:"; printf '%s\n' "${picked[@]}"
+  python3 -m pytest -q "${picked[@]}"; report tests $?
 }
 check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
