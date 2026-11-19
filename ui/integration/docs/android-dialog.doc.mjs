@@ -80,6 +80,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "BasicAlertDialog: A dialog with no layout of its own: you give the whole content. Use it only when AlertDialog's title, text and buttons do not fit the need.",
+            "AlertDialogDefaults: Default container colour, shape, tonal elevation, and icon, title and text colours for dialogs."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

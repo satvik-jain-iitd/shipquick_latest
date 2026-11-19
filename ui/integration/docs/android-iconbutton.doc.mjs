@@ -61,6 +61,27 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "FilledIconButton: An icon button with a filled container. The strongest look.",
+            "FilledTonalIconButton: An icon button with a tonal container. Between filled and outlined.",
+            "OutlinedIconButton: An icon button with a border. Medium strength.",
+            "IconToggleButton: A standard icon button that is checked or not. Pass checked and onCheckedChange. Use it for an on and off action, like Favourite.",
+            "FilledIconToggleButton: A filled icon button that is checked or not. Pass checked and onCheckedChange.",
+            "FilledTonalIconToggleButton: A tonal icon button that is checked or not. Pass checked and onCheckedChange.",
+            "OutlinedIconToggleButton: An outlined icon button that is checked or not. Pass checked and onCheckedChange.",
+            "IconButtonDefaults: The default colours, shapes and sizes for every icon button type.",
+            "IconButtonColors: The colours of an icon button when it is on or off. Make one with IconButtonDefaults.iconButtonColors() or the colour function of its type.",
+            "IconToggleButtonColors: The colours of an icon toggle button, checked and not checked. Make one with IconButtonDefaults.iconToggleButtonColors() or the colour function of its type."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

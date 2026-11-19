@@ -1,0 +1,33 @@
+{
+  "_about": "Story #189 (S11, rule 38). Ten fixed screen prompts, the same task text on every platform; only the platform lead differs (the fairness rule borrowed from Meta Astryx internal/vibe-tests/README.md: identical prompts, only the system under test varies, nothing leaks the expected answer). bench/vibe.py composes lead + task + output into one prompt per platform and screen. Never name a component here; the arm's rules text is the only thing that may teach the agent.",
+  "output": "Write the whole screen into one file named {file} in the current folder, with the Write tool. The file must be complete and compile on its own apart from imports from the app. Do not print the code in your reply; write the file.",
+  "platforms": {
+    "android": {
+      "lead": "You are writing an Android screen in Kotlin with Jetpack Compose. The app already has a Material 3 theme and a navigation host; write only this screen.",
+      "file": "Screen.kt",
+      "ext": [".kt"]
+    },
+    "ios": {
+      "lead": "You are writing an iOS screen in Swift with SwiftUI. The app already has a Tokens.swift file (spacing, sizes, colours) and a navigation stack; write only this screen.",
+      "file": "Screen.swift",
+      "ext": [".swift"]
+    },
+    "web": {
+      "lead": "You are writing a web screen in React with TypeScript (TSX). The project already has the @astryxdesign/core component library installed and a router; write only this screen.",
+      "file": "Screen.tsx",
+      "ext": [".tsx", ".jsx", ".ts", ".js", ".css", ".html"]
+    }
+  },
+  "screens": [
+    {"id": "sign_in", "task": "A sign-in screen: an email field, a password field, a 'Sign in' button, and a 'Forgot password?' link. Show an inline error under a field when it is empty on submit."},
+    {"id": "list", "task": "A list screen of orders: each row shows a title, a one-line subtitle and a status chip. Pull down to refresh. Tapping a row opens the detail."},
+    {"id": "detail", "task": "A detail screen for one order: a title, a status, three key-value rows (date, total, address) and a 'Cancel order' button at the bottom."},
+    {"id": "settings", "task": "A settings screen: sections for Account and Notifications, with switches for 'Email updates' and 'Push alerts', and a 'Sign out' row at the end."},
+    {"id": "step_flow", "task": "A three-step flow (Choose plan, Payment, Confirm) with a step indicator at the top, a 'Back' outline button and a 'Continue' filled button anchored at the bottom."},
+    {"id": "empty_state", "task": "An empty state for an inbox with no messages: an icon, a title 'No messages yet', one line of help text, and a 'Compose' button."},
+    {"id": "error", "task": "An error screen for a failed network load: an icon, the text 'Could not load', the error detail in smaller text, and a 'Try again' button."},
+    {"id": "form", "task": "A profile edit form: name, phone, date of birth (a date picker), country (a dropdown), and a 'Save' button that stays disabled until a field changes."},
+    {"id": "search", "task": "A search screen: a search bar at the top, a list of recent searches below, and results that replace the list while typing. Show 'No results' when nothing matches."},
+    {"id": "profile", "task": "A profile screen: a round avatar, the user's name and handle, three counters (posts, followers, following) and an 'Edit profile' button."}
+  ]
+}

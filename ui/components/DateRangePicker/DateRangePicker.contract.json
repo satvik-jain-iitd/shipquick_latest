@@ -1,0 +1,23 @@
+{
+  "name": "DateRangePicker",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "DateRangePickerState"
+        }
+      },
+      "showModeToggle": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

@@ -3,6 +3,19 @@ on:
   push:
     branches: [dev, main]
   pull_request:
+    types: [opened, synchronize, reopened, edited]   # story #92: an edited body re-runs team-block, tdd and uat
+  workflow_dispatch:
+    inputs:
+      record:
+        description: "Story #219: record new iOS reference images and upload them as the artifact ios-snapshots (ui/ios/SNAPSHOTS.md)"
+        type: boolean
+        default: false
+# Story #484: one run per PR. A new run of the same PR (a push, an edited body) cancels the old one, so a replaced run
+# never keeps a macOS job in the queue. A push run and a manual run have no PR number: their group is their own run id,
+# so nothing ever cancels them.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 permissions:
   contents: read
   pull-requests: read   # story #140: the roles job reads commit authors via `gh api .../pulls/.../commits`
@@ -80,6 +93,14 @@ jobs:
             exit 1
           fi
           echo "Commit messages OK"
+  rule-copies:
+    # Story #316 (A3): the kit's rule phrases are present and no drift in the kit CLAUDE.md phrases (rule 29).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the load-bearing rule phrases are in the kit CLAUDE.md (story #316)
+        run: python3 scripts/check_rule_copies.py
   pr-size:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -98,9 +119,11 @@ jobs:
           BASE="${{ github.base_ref }}"
           git fetch origin "$BASE"
           # Moved files are not new review surface, so renames do not count.
-          COUNT=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 !~ /^R/' | wc -l | tr -d ' ')
+          # Story #219: recorded reference images in the protected folder ui/ios/ShipQuickUITests/__Snapshots__/ are looked at, not read, so they do not count either. Anchored: a __Snapshots__/ folder anywhere else still counts.
+          COUNT=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 !~ /^R/ && $2 !~ /^ui\/ios\/ShipQuickUITests\/__Snapshots__\/.*\.png$/' | wc -l | tr -d ' ')
           RENAMES=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 ~ /^R/' | wc -l | tr -d ' ')
-          echo "Counted files: $COUNT (ignoring $RENAMES renames)"
+          IMAGES=$(git diff --name-status -M "origin/$BASE...HEAD" | awk -F'\t' '$1 !~ /^R/ && $2 ~ /^ui\/ios\/ShipQuickUITests\/__Snapshots__\/.*\.png$/' | wc -l | tr -d ' ')
+          echo "Counted files: $COUNT (ignoring $RENAMES renames and $IMAGES ui/ios/ShipQuickUITests/__Snapshots__/*.png reference images)"
           if [ "$COUNT" -gt 50 ]; then
             echo "PR too large ($COUNT files, max 50, excluding renames). Split it."
             exit 1
@@ -137,6 +160,52 @@ jobs:
           git fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_disable_comments.py --base "origin/$BASE" --body-file /tmp/pr-body.md
+  design-tokens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: No colour or font literal on an added web style line (story #133)
+        run: |
+          BASE="${{ github.base_ref }}"
+          git fetch origin "$BASE"
+          python3 scripts/check_design_literals.py --base "origin/$BASE"
+      - name: stylelint on changed CSS, needless disables reported (story #133; run_stylelint_changed.sh: per package root, the project's own stylelint, pinned npx as the fallback)
+        run: |
+          BASE="${{ github.base_ref }}"
+          bash scripts/run_stylelint_changed.sh "origin/$BASE"
+  shortcut-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Shortcut ledger, warn only (story #327): never fails the build; in the gate needs since story #496
+        continue-on-error: true   # warn only: the step may fail, the job and its check row end green
+        run: python3 scripts/check_shortcuts.py
+  tdd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      BASE_REF: ${{ github.base_ref }}
+      HEAD_REF: ${{ github.head_ref }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: A PR that changes code names the test it saw fail, and that test is in the diff (story #319)
+        run: |
+          case "$PR_AUTHOR" in
+            dependabot\[bot\]|app/dependabot) echo "Dependabot: tdd exempt"; exit 0 ;;
+          esac
+          git fetch origin "$BASE_REF"
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          python3 scripts/check_tdd.py --body-file "$RUNNER_TEMP/pr-body.md" --base "origin/$BASE_REF" --base-branch "$BASE_REF" --head-branch "$HEAD_REF"
   roles:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -187,6 +256,13 @@ jobs:
         run: |
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_intent_verify.py --pr-body-file /tmp/pr-body.md
+      - name: Check every linked user story is XS or S (ADR-020)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/check_story_size.py --pr-body-file /tmp/pr-body.md
   uat-checklist:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -219,6 +295,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check every component doc matches its contract (story #182)
         run: python3 scripts/check_ui_docs.py --root ui/components
+  ui-registry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Every custom component has the owner's recorded yes (story #186)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_component_request.py --repo "$GITHUB_REPOSITORY"
   ui-cli:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -226,6 +311,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native topics are current with the component docs (story #183)
         run: python3 scripts/ui_topics.py --check
+      - name: ui/llms.txt is current with the component docs and the registry (story #190)
+        run: python3 scripts/ui_mcp.py llms --check
+      - name: The compile proofs are current with the contracts (story #217)
+        run: python3 scripts/ui_proof.py --check
+      - name: The Swift contract structs are current with the contracts (story #222)
+        run: python3 scripts/emit_contracts.py --check
+      - name: The theme files are current with design/tokens.json (story #184)
+        run: python3 scripts/emit_tokens.py --check
       - name: Set up Node (the pinned Astryx CLI needs 22.13 or newer)
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -236,13 +329,264 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Every counted component has a doc, a contract and a topic, and no name shadows core (story #216)
         timeout-minutes: 2
-        run: python3 scripts/check_ui_coverage.py --require-web
+        run: python3 scripts/check_ui_coverage.py --require-web --strict-api
       - name: The CLI serves the kit's integration as shipped
         shell: bash   # pipefail: a failing ui.sh piped to grep must fail the step
         run: |
           bash scripts/ui.sh doctor integration validate shipquick-ui
           bash scripts/ui.sh docs android-button --dense | grep -q "androidx.compose.material3.Button"
           bash scripts/ui.sh docs ios-button --json | grep -q '"type": "docs.detail"'
+  ui-changes:
+    # Story #485 (ADR-018): one change map (scripts/change_map.json) decides which slow jobs run. The reader is read from the
+    # base branch, so a PR cannot weaken the rule it is judged by; a PR that changes the map or the reader turns every area on.
+    # Any doubt (not a pull request, a diff that cannot be read, a missing or broken map) turns every area on: fail closed.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      android: ${{ steps.diff.outputs.android }}
+      ios: ${{ steps.diff.outputs.ios }}
+      snapshot: ${{ steps.diff.outputs.snapshot }}
+      decision: ${{ steps.diff.outputs.decision }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Which slow jobs must run? (story #485, one map)
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # a pull request is judged against its base branch; a push against the commit before it (github.event.before)
+          if [ "$EVENT" = "push" ]; then
+            base="$BEFORE"
+          else
+            base="origin/${BASE:-dev}"
+            git fetch -q origin "${BASE:-dev}" 2>/dev/null || true
+          fi
+          mkdir -p "$RUNNER_TEMP/change-map"
+          for f in change_map.py change_map.json; do
+            git show "$base:scripts/$f" > "$RUNNER_TEMP/change-map/$f" 2>/dev/null || rm -f "$RUNNER_TEMP/change-map/$f"
+          done
+          if [ -f "$RUNNER_TEMP/change-map/change_map.py" ] && python3 "$RUNNER_TEMP/change-map/change_map.py" decide \
+              --base "$base" --head HEAD --event "$EVENT" --map "$RUNNER_TEMP/change-map/change_map.json" --outputs "$GITHUB_OUTPUT"; then
+            exit 0
+          fi
+          echo "the change map could not run here, so every slow job runs (fails closed)"
+          # every output unset = every job runs: a job runs unless the decision says false (story #499)
+          printf 'decision={"all":true}\n' >> "$GITHUB_OUTPUT"
+  ui-android-compile:
+    # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
+    # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.android != 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch Gradle, check it against distributionSha256Sum, and put it on PATH
+        # The version and the sum both come from ui/android/gradle/wrapper/gradle-wrapper.properties. sha256sum -c fails
+        # the job when the zip is not the one the sum names; nothing downloads Gradle behind this check.
+        run: |
+          props=ui/android/gradle/wrapper/gradle-wrapper.properties
+          sum=$(sed -n 's/^distributionSha256Sum=//p' "$props")
+          ver=$(sed -n 's#.*gradle-\([0-9.]*\)-bin\.zip#\1#p' "$props")
+          curl -sSfL -o "$RUNNER_TEMP/gradle.zip" "https://services.gradle.org/distributions/gradle-$ver-bin.zip"
+          echo "$sum  $RUNNER_TEMP/gradle.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-$ver/bin" >> "$GITHUB_PATH"
+      - name: Compile the templates and the proof
+        working-directory: ui/android
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+        run: gradle --no-daemon --stacktrace compileDebugKotlin
+  ui-ios-compile:
+    # Story #217: compile every template and the generated proof/ApiProof.swift for iOS. Compile only.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ios != 'false'
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Pin Xcode 16.4
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app
+          xcodebuild -version
+      - name: Compile the templates and the proof for iOS
+        working-directory: ui/ios
+        run: xcodebuild -scheme ShipQuickUI -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+      - name: Compile the fixture app (story #221) on the kit module, so its good and bad screens are real SwiftUI
+        working-directory: tests/fixtures/ios/FixtureApp
+        run: xcodebuild -scheme FixtureApp -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
+  ui-android-lint:
+    # Story #185: detekt (ForbiddenImport) and Konsist refuse hand-drawn UI. The good fixture screen must pass and the
+    # bad one must fail with every rule named. detekt 1.23.8, Konsist 0.17.3, Gradle from the pin in ui/android. CI only.
+    # Gradle checks every downloaded jar and pom against tests/fixtures/android/gradle/verification-metadata.xml; a missing or wrong sum fails the build.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.android != 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      FIX: tests/fixtures/android
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch Gradle, check it against distributionSha256Sum, and put it on PATH
+        run: |
+          props=ui/android/gradle/wrapper/gradle-wrapper.properties
+          sum=$(sed -n 's/^distributionSha256Sum=//p' "$props")
+          ver=$(sed -n 's#.*gradle-\([0-9.]*\)-bin\.zip#\1#p' "$props")
+          curl -sSfL -o "$RUNNER_TEMP/gradle.zip" "https://services.gradle.org/distributions/gradle-$ver-bin.zip"
+          echo "$sum  $RUNNER_TEMP/gradle.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-$ver/bin" >> "$GITHUB_PATH"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+      - name: The good screen passes detekt and Konsist (CI tier)
+        run: gradle --no-daemon --stacktrace -p "$FIX" detekt test -Ptier=ci -PuiDir=src/good
+      - name: The bad screen fails detekt, and the report names every forbidden import
+        run: |
+          if gradle --no-daemon -p "$FIX" detekt -Ptier=ci -PuiDir=src/bad > "$RUNNER_TEMP/detekt-bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/detekt-bad.txt"; echo "::error::the bad screen passed detekt"; exit 1
+          fi
+          cat "$RUNNER_TEMP/detekt-bad.txt"
+          missing=0
+          grep -q ForbiddenImport "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::rule ForbiddenImport is not named"; missing=1; }
+          for imp in $(sed -nE "s/^      - '(.*)'$/\1/p" ui/android/lint/detekt.yml) androidx.compose.material.Button com.google.android.material.button.MaterialButton android.widget.Button com.example.fancyui.FancyChip; do
+            grep -qF "$imp" "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::import not reported: $imp"; missing=1; }
+          done
+          grep -qF 'The import `androidx.compose.ui.draw` has been forbidden' "$RUNNER_TEMP/detekt-bad.txt" || { echo "::error::the wildcard import androidx.compose.ui.draw.* is not reported"; missing=1; }
+          exit $missing
+      - name: The bad screen fails Konsist, one named test per rule
+        run: |
+          if gradle --no-daemon -p "$FIX" test -Ptier=ci -PuiDir=src/bad > "$RUNNER_TEMP/konsist-bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/konsist-bad.txt"; echo "::error::the bad screen passed Konsist"; exit 1
+          fi
+          tail -60 "$RUNNER_TEMP/konsist-bad.txt"
+          xml=$(tr -d '\n' < "$FIX"/build/test-results/test/TEST-UiRulesKonsistTest.xml)
+          missing=0
+          for rule in $(sed -nE 's/.*fun ([a-z_]+)\(\).*/\1/p' ui/android/lint/UiRulesKonsistTest.kt); do
+            if grep -qE "testcase name=\"$rule\(\)\"[^>]*>[^<]*<failure" <<< "$xml"; then echo "failed as wanted: $rule"; else echo "::error::rule did not fail: $rule"; missing=1; fi
+          done
+          exit $missing
+      - name: The local tier warns and does not fail
+        run: |
+          gradle --no-daemon -p "$FIX" detekt -PuiDir=src/bad | tee "$RUNNER_TEMP/detekt-local.txt"
+          grep -q ForbiddenImport "$RUNNER_TEMP/detekt-local.txt"
+  ui-ios-lint:
+    # Story #185: SwiftLint custom_rules refuse hand-drawn UI. The good fixture screen must pass `--strict` and the bad one
+    # must fail with every rule id named. SwiftLint 0.65.1 from its release page, checked against the pinned SHA-256. CI only.
+    # Story #218: both tiers run through ui/tool/ios_lint.sh (CI=1 strict, else warn-only) with the committed baseline
+    # ui/ios/lint/swiftlint-baseline.json, and SwiftFormat 0.64.6 (pinned the same way) checks the format in lint mode.
+    needs: [ui-changes]
+    if: needs.ui-changes.outputs.ios != 'false'
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Fetch SwiftLint 0.65.1 and check it against the pinned SHA-256
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/swiftlint.zip" https://github.com/realm/SwiftLint/releases/download/0.65.1/portable_swiftlint.zip
+          echo "c1e429b0599cf1b516f369a2d9ec04eaf0e436f3c12b637df8851fa52ff694d0  $RUNNER_TEMP/swiftlint.zip" | shasum -a 256 -c -
+          mkdir "$RUNNER_TEMP/swiftlint"
+          unzip -q "$RUNNER_TEMP/swiftlint.zip" -d "$RUNNER_TEMP/swiftlint"
+          echo "$RUNNER_TEMP/swiftlint" >> "$GITHUB_PATH"
+      - name: Fetch SwiftFormat 0.64.6 and check it against the pinned SHA-256
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/swiftformat.zip" https://github.com/nicklockwood/SwiftFormat/releases/download/0.64.6/swiftformat.zip
+          echo "70e6b2057647fb1c54d620ebbb6649274de56534c57f91f67461a129ebaaba3e  $RUNNER_TEMP/swiftformat.zip" | shasum -a 256 -c -
+          mkdir "$RUNNER_TEMP/swiftformat"
+          unzip -q "$RUNNER_TEMP/swiftformat.zip" -d "$RUNNER_TEMP/swiftformat"
+          chmod +x "$RUNNER_TEMP/swiftformat/swiftformat"
+          echo "$RUNNER_TEMP/swiftformat" >> "$GITHUB_PATH"
+      - name: The good screen and the Tokens file pass the CI tier (strict, with the baseline, formatted)
+        run: CI=1 bash ui/tool/ios_lint.sh tests/fixtures/ios/Good/*.swift
+      - name: The bad screen fails the CI tier, and the report names every rule
+        run: |
+          if CI=1 bash ui/tool/ios_lint.sh tests/fixtures/ios/Bad/BadScreen.swift > "$RUNNER_TEMP/bad.txt" 2>&1; then
+            cat "$RUNNER_TEMP/bad.txt"; echo "::error::the bad screen passed the CI tier"; exit 1
+          fi
+          cat "$RUNNER_TEMP/bad.txt"
+          missing=0
+          for rule in $(sed -nE 's/^  ([a-z_]+):$/\1/p' ui/ios/lint/swiftlint.yml); do
+            if grep -qF "($rule)" "$RUNNER_TEMP/bad.txt"; then echo "reported as wanted: $rule"; else echo "::error::rule not reported: $rule"; missing=1; fi
+          done
+          exit $missing
+      - name: The local tier warns and does not fail
+        run: |
+          CI= bash ui/tool/ios_lint.sh tests/fixtures/ios/Bad/BadScreen.swift | tee "$RUNNER_TEMP/local.txt"
+          grep -q "warning:" "$RUNNER_TEMP/local.txt"
+      - name: With no Swift file changed, the runner exits 0 and runs nothing
+        run: |
+          LINT_BASE=HEAD CI=1 bash ui/tool/ios_lint.sh | tee "$RUNNER_TEMP/none.txt"
+          grep -q "no Swift file changed" "$RUNNER_TEMP/none.txt"
+      - name: The fixture app (story #221) has a good screen that passes and a bad screen caught with each rule named
+        run: python3 ui/tool/ios_fixture_check.py
+  ui-ios-snapshots:
+    # Story #219: swift-snapshot-testing and Prefire compare every template with its reference images (light and dark,
+    # smallest and largest Dynamic Type, iPhone SE and Pro Max) on one pinned simulator. Runs only when ui/ios/**, design/**,
+    # or scripts/emit_tokens.py changes (ui-changes.outputs.snapshot), never for an Android-only PR or a ci.yml-only PR (story #484). SHIPQUICK_SNAPSHOTS adds the test
+    # target and its two packages to Package.swift; a child never resolves them. A workflow_dispatch run with record=true
+    # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
+    needs: [ui-changes]
+    # A fail-safe exit above writes only decision={"all":true}, so snapshot is unset; an unset output runs the job too.
+    if: needs.ui-changes.outputs.snapshot != 'false'
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      SHIPQUICK_SNAPSHOTS: "1"
+      TEST_RUNNER_SNAPSHOT_TESTING_RECORD: ${{ inputs.record == true && 'all' || 'never' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Pin Xcode 16.4 and check the iOS 18.5 simulator is there
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app
+          xcodebuild -version
+          xcrun simctl list runtimes | grep -F "iOS 18.5"
+      - name: Run the snapshot tests on iPhone 16, iOS 18.5
+        working-directory: ui/ios
+        run: |
+          # SPM makes one scheme, the product's, and it runs the test target too (#375 review: xcodebuild -list -json is not
+          # clean JSON once Prefire is resolved, so the scheme is named, never parsed from xcodebuild output)
+          xcodebuild test -scheme ShipQuickUI -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
+            -skipPackagePluginValidation -skipMacroValidation -parallel-testing-enabled NO CODE_SIGNING_ALLOWED=NO -quiet
+      - name: Run the accessibility audit on iPhone 16, iOS 18.5 (story #220)
+        if: ${{ !cancelled() }}
+        run: |
+          # performAccessibilityAudit() needs an app and a UI test target, so XcodeGen 2.45.4 (pinned SHA-256) makes the
+          # project from ui/ios/A11yAudit/project.yml. It runs after a red snapshot step too, so one red never hides the other.
+          curl -sSfL -o "$RUNNER_TEMP/xcodegen.zip" https://github.com/yonaskolb/XcodeGen/releases/download/2.45.4/xcodegen.zip
+          echo "090ec29491aad50aec10631bf6e62253fed733c50f3aab0f5ffc86bc170bdbef  $RUNNER_TEMP/xcodegen.zip" | shasum -a 256 -c -
+          unzip -q "$RUNNER_TEMP/xcodegen.zip" -d "$RUNNER_TEMP"
+          export PATH="$RUNNER_TEMP/xcodegen/bin:$PATH"
+          xcodegen generate --spec ui/ios/A11yAudit/project.yml
+          # without SHIPQUICK_SNAPSHOTS the local ShipQuickUI package resolves with no test packages
+          # on a red run, print each failing test and the audit issue it names (the full log is too long to read)
+          env -u SHIPQUICK_SNAPSHOTS xcodebuild test -project ui/ios/A11yAudit/A11yAudit.xcodeproj -scheme A11yHost \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' CODE_SIGNING_ALLOWED=NO \
+            -resultBundlePath "$RUNNER_TEMP/a11y.xcresult" > "$RUNNER_TEMP/a11y.log" 2>&1 || {
+            grep -E -A40 "error:" "$RUNNER_TEMP/a11y.log" | grep -vE "^Test Case .* started" | head -250
+            xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/a11y.xcresult"
+            exit 1
+          }
+      - name: Upload the recorded reference images (record=true only)
+        if: always() && inputs.record == true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ios-snapshots
+          path: ui/ios/ShipQuickUITests/__Snapshots__/
+          if-no-files-found: error
   secret-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -293,6 +637,15 @@ jobs:
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
+  workflow-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: No pull_request_target or workflow_run checks out the PR head, and every npm install skips scripts (story #325)
+        run: python3 scripts/check_workflow_security.py
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -314,7 +667,7 @@ jobs:
       - name: Install dependencies
         timeout-minutes: 5
         run: |
-          pip install pytest==9.0.2 pillow==12.3.0   # pillow: scripts/qa/ flow map and audit report (story #162)
+          pip install pytest==9.0.2 pillow==12.3.0 pre-commit==4.7.0   # pillow: scripts/qa/ flow map and audit report (story #162); pre-commit: the real hooks in tests/test_adopt.py (story #479)
       - name: Run tests
         run: |
           mkdir -p logs
@@ -334,25 +687,46 @@ jobs:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, design-tokens, shortcut-ledger, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, ui-ios-snapshots, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Every phone job matches the change map (story #485, the gate proves it)
+        env:
+          DECISION: ${{ needs.ui-changes.outputs.decision }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          printf '%s' "$DECISION" > "$RUNNER_TEMP/decision.json"
+          printf '%s' "$NEEDS" > "$RUNNER_TEMP/needs.json"
+          python3 scripts/change_map.py gate --decision "$RUNNER_TEMP/decision.json" --needs "$RUNNER_TEMP/needs.json" --map scripts/change_map.json
       - name: Check all job results
         run: |
           echo "pre-commit: ${{ needs.pre-commit.result }}"
           echo "commit-msg: ${{ needs.commit-msg.result }}"
+          echo "rule-copies: ${{ needs.rule-copies.result }}"
           echo "pr-size: ${{ needs.pr-size.result }}"
           echo "frontend-design: ${{ needs.frontend-design.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
+          echo "design-tokens: ${{ needs.design-tokens.result }}"
+          echo "shortcut-ledger: ${{ needs.shortcut-ledger.result }}"
           echo "roles: ${{ needs.roles.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"
           echo "freeze: ${{ needs.freeze.result }}"
           echo "ui-docs: ${{ needs.ui-docs.result }}"
+          echo "ui-registry: ${{ needs.ui-registry.result }}"
           echo "ui-cli: ${{ needs.ui-cli.result }}"
+          echo "ui-changes: ${{ needs.ui-changes.result }}"
+          echo "ui-android-compile: ${{ needs.ui-android-compile.result }}"
+          echo "ui-ios-compile: ${{ needs.ui-ios-compile.result }}"
+          echo "ui-android-lint: ${{ needs.ui-android-lint.result }}"
+          echo "ui-ios-lint: ${{ needs.ui-ios-lint.result }}"
+          echo "ui-ios-snapshots: ${{ needs.ui-ios-snapshots.result }}"
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
+          echo "workflow-security: ${{ needs.workflow-security.result }}"
           echo "test: ${{ needs.test.result }}"
+          echo "tdd: ${{ needs.tdd.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"
             exit 1

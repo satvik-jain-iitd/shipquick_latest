@@ -17,6 +17,20 @@ on:
         description: Commit SHA (or tag) of the ShipQuick scripts. Use the same one as in `uses:`.
         type: string
         required: true
+      kit_branch:
+        description: >-
+          Story #225, a rule-24 child: the branch that carries the knowledge/shipquick_latest submodule,
+          .pre-commit-config.yaml and .shipquick/roles.yml, so `main` can carry only the caller. Empty
+          (the default) means the branch the job runs on.
+        type: string
+        default: ''
+      milestone:
+        description: >-
+          Story #357: the project's current milestone, D0 to D6. From D1 on, the environments job needs a
+          filled Dev link and Production link in CLAUDE.md; D0 exempts a project that has deployed nothing yet.
+          A caller with no `milestone:` line means unknown, so it keeps today's gate (D1).
+        type: string
+        default: D1
 
 permissions:
   contents: read
@@ -31,22 +45,31 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: project
-      - name: Check the caller's pin and the pre-commit hooks (story #124)
+      - name: Check the caller's pin and the pre-commit hooks (story #124; kit branch, story #225)
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref || github.ref_name }}
         run: |
-          sub_sha="$(git -C project rev-parse -q --verify "HEAD:knowledge/shipquick_latest" || true)"
+          # The pin and the hooks are read from this commit, or from the kit branch when the job runs on another branch.
+          ref=HEAD; at="at this commit"
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo."; exit 1; }
+            ref="origin/$KIT_BRANCH"; at="on kit branch $KIT_BRANCH"
+          fi
+          sub_sha="$(git -C project rev-parse -q --verify "$ref:knowledge/shipquick_latest" || true)"
           if [ -z "$sub_sha" ]; then
-            echo "no knowledge/shipquick_latest submodule found at this commit. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+            echo "no knowledge/shipquick_latest submodule found $at. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
             exit 1
           fi
           if [ "$sub_sha" != "${{ inputs.shipquick_ref }}" ]; then
-            echo "the caller is pinned to ${{ inputs.shipquick_ref }}, but the submodule is at $sub_sha. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+            echo "the caller is pinned to ${{ inputs.shipquick_ref }}, but the submodule $at is at $sub_sha. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
             exit 1
           fi
-          if ! grep -q "check_local.sh" project/.pre-commit-config.yaml 2>/dev/null; then
-            echo "no ShipQuick pre-commit hooks in .pre-commit-config.yaml. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
+          if ! git -C project show "$ref:.pre-commit-config.yaml" 2>/dev/null | grep -q "check_local.sh"; then
+            echo "no ShipQuick pre-commit hooks in .pre-commit-config.yaml $at. Run: bash knowledge/shipquick_latest/scripts/adopt.sh ."
             exit 1
           fi
-          echo "adoption OK: pinned to $sub_sha, pre-commit hooks present"
+          echo "adoption OK: pinned to $sub_sha $at, pre-commit hooks present"
       - name: Check out the ShipQuick scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,10 +86,44 @@ jobs:
         run: python3 .shipquick/scripts/check_timeouts.py project/.github/workflows
       - name: Check a configured docs/screens.txt is actually wired into CI (story #146)
         run: python3 .shipquick/scripts/check_screens_wired.py --screens-file project/docs/screens.txt --workflows-dir project/.github/workflows
-  disable-comments:
+  features:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: github.event_name == 'pull_request'
+    outputs:
+      flags: ${{ steps.read.outputs.flags }}
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Read the feature flags from the base branch, never from this PR (story #421)
+        id: read
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          # A PR that turns a feature off in its own diff still runs that job here: the base branch still says on.
+          # A rule-24 child keeps the file on its kit branch, as it keeps roles.yml.
+          REF="$TARGET"
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then REF="$KIT_BRANCH"; fi
+          git -C project fetch -q --depth=1 origin "+refs/heads/$REF:refs/remotes/origin/$REF" || { echo "branch $REF not found in this repo."; exit 1; }
+          flags=$(python3 .shipquick/scripts/features.py flags --git project --ref "origin/$REF")
+          echo "flags=$flags" >> "$GITHUB_OUTPUT"
+          python3 -c 'import json,sys; [print("skipped: %s is off" % k) for k, v in json.loads(sys.argv[1]).items() if not v]' "$flags"
+  disable-comments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['disable-comments']
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
@@ -89,10 +146,39 @@ jobs:
           git -C project fetch origin "$BASE"
           printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
           python3 .shipquick/scripts/check_disable_comments.py --base "origin/$BASE" --repo project --body-file "$RUNNER_TEMP/pr-body.md"
+  design-tokens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['design-tokens']
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          fetch-depth: 0
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: No colour or font literal on an added web style line (story #133)
+        run: |
+          BASE="${{ github.base_ref }}"
+          git -C project fetch origin "$BASE"
+          python3 .shipquick/scripts/check_design_literals.py --base "origin/$BASE" --repo project
+      - name: stylelint on changed CSS, needless disables reported (story #133; run_stylelint_changed.sh: per package root, the project's own stylelint, pinned npx as the fallback)
+        run: |
+          BASE="${{ github.base_ref }}"
+          bash .shipquick/scripts/run_stylelint_changed.sh "origin/$BASE" project
   roles:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['roles']
     env:
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
       GH_TOKEN: ${{ github.token }}
@@ -110,21 +196,34 @@ jobs:
           sparse-checkout: scripts
           persist-credentials: false
       - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
         run: |
           commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --paginate --jq '.[] | "\(.author.login):\(.parents | length):\([.commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s][-1] // "")"' | paste -sd, -)
-          coders=$(python3 .shipquick/scripts/roles.py get coder --file project/.shipquick/roles.yml)
-          reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file project/.shipquick/roles.yml)
-          owner=$(python3 .shipquick/scripts/roles.py get owner --file project/.shipquick/roles.yml)
-          coder_sessions=$(python3 .shipquick/scripts/roles.py get coder_sessions --file project/.shipquick/roles.yml)
+          roles_file=project/.shipquick/roles.yml
+          # story #225: a rule-24 child keeps roles.yml on its kit branch; a PR into another branch reads it from there.
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo (the caller's kit_branch)."; exit 1; }
+            ref="origin/$KIT_BRANCH"
+            git -C project show "$ref:.shipquick/roles.yml" > "$RUNNER_TEMP/roles.yml" 2>/dev/null || { echo "no .shipquick/roles.yml on kit branch $KIT_BRANCH. Add it there (bash knowledge/shipquick_latest/scripts/adopt.sh . --coder ... --reviewer ... --owner ...)."; exit 1; }
+            roles_file="$RUNNER_TEMP/roles.yml"
+          fi
+          coders=$(python3 .shipquick/scripts/roles.py get coder --file "$roles_file")
+          reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file "$roles_file")
+          owner=$(python3 .shipquick/scripts/roles.py get owner --file "$roles_file")
+          coder_sessions=$(python3 .shipquick/scripts/roles.py get coder_sessions --file "$roles_file")
           python3 .shipquick/scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner" --coder-sessions "$coder_sessions"
   team-block:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['team-block']
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
       PR_TITLE: ${{ github.event.pull_request.title }}
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      CLOSE_ON_MERGE: ${{ fromJSON(needs.features.outputs.flags)['close-on-merge'] }}
     steps:
       - name: Check out the ShipQuick scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -142,11 +241,18 @@ jobs:
           printf '%s\n' "$PR_BODY" | awk '/^## For the reviewer/{f=1;next} /^## /{f=0} f' | python3 .shipquick/scripts/check_block.py
       - name: Check the PR body links its issue (Closes #n)
         run: |
-          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --title "$PR_TITLE" --author "$PR_AUTHOR"
+          # story #424: the `close-on-merge` flag comes from the features job (the base branch's file)
+          case "$CLOSE_ON_MERGE" in
+            true) word=on ;;
+            false) word=off ;;
+            *) echo "the close-on-merge flag is '$CLOSE_ON_MERGE', not true or false: failing, never guessing"; exit 1 ;;
+          esac
+          printf '%s\n' "$PR_BODY" | python3 .shipquick/scripts/check_closes.py --close-on-merge "$word" --title "$PR_TITLE" --author "$PR_AUTHOR"
   frontend-design:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['frontend-design']
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
@@ -172,7 +278,8 @@ jobs:
   uat-on-main:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    needs: [features]
+    if: github.event_name == 'pull_request' && github.base_ref == 'main' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['uat-on-main']
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
@@ -195,7 +302,8 @@ jobs:
   freeze-on-main:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    needs: [features]
+    if: github.event_name == 'pull_request' && github.base_ref == 'main' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['freeze']
     steps:
       - name: Check out the project
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -218,7 +326,8 @@ jobs:
   environments:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: github.event_name == 'pull_request'
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['environments']
     steps:
       - name: Check out the project
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -232,25 +341,165 @@ jobs:
           path: .shipquick
           sparse-checkout: scripts
           persist-credentials: false
-      - name: Check Dev link / Production link are filled past D0 (story #120)
-        run: bash .shipquick/scripts/check_environments.sh --claude-md project/CLAUDE.md --milestone D1
+      - name: Check Dev link / Production link are filled past D0 (story #120, #463)
+        env:
+          MILESTONE: ${{ inputs.milestone }}
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          child_file=project/CLAUDE.md
+          # a rule-24 child keeps CLAUDE.md on its kit branch (its main has none); a PR into another branch reads it from there, as rule-copies does.
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo (the caller's kit_branch)."; exit 1; }
+            git -C project show "origin/$KIT_BRANCH:CLAUDE.md" > "$RUNNER_TEMP/CLAUDE.md" 2>/dev/null || { echo "no CLAUDE.md on kit branch $KIT_BRANCH. Run adopt.sh there to write it."; exit 1; }
+            child_file="$RUNNER_TEMP/CLAUDE.md"
+          fi
+          bash .shipquick/scripts/check_environments.sh --claude-md "$child_file" --milestone "$MILESTONE"
+  component-registry:
+    # Story #186: every custom component in the child's ui/registry.json has the owner's recorded yes, read live from the issue.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['component-registry']
+    permissions:
+      contents: read
+      issues: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          persist-credentials: false
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Every custom component has the owner's recorded yes (story #186)
+        run: cd project && python3 ../.shipquick/scripts/check_component_request.py --registry ui/registry.json --roles .shipquick/roles.yml
+  rule-copies:
+    # Story #316 (A3): the child's CLAUDE.md carries the kit rule block unchanged, and the kit's phrases are present.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['rule-copies']
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          persist-credentials: false
+      - name: Check out the ShipQuick rules and scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: |
+            scripts
+            skills
+            CLAUDE.md
+          persist-credentials: false
+      - name: The child's rule block matches the kit and the kit phrases are present (story #316)
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          child_file=project/CLAUDE.md
+          # a rule-24 child keeps its rules on its kit branch; a PR into another branch reads them from there (as the roles job does).
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo (the caller's kit_branch)."; exit 1; }
+            ref="origin/$KIT_BRANCH"
+            git -C project show "$ref:CLAUDE.md" > "$RUNNER_TEMP/CLAUDE.md" 2>/dev/null || { echo "no CLAUDE.md on kit branch $KIT_BRANCH. Run adopt.sh there to write it."; exit 1; }
+            child_file="$RUNNER_TEMP/CLAUDE.md"
+          fi
+          python3 .shipquick/scripts/check_rule_copies.py --child "$child_file"
+  commit-subjects:
+    # Story #446: no commit subject over 72 characters on the PR's own commits (check_commit_subjects.py, the rule of the commit-msg
+    # hook). It holds where nobody installed the hooks. Full history, so the base branch is there as origin/<base>.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['commit-subjects']
+    steps:
+      - name: Check out the project with its full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: No commit subject over 72 characters (story 446)
+        env:
+          TARGET: ${{ github.base_ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          case "$PR_AUTHOR" in
+            dependabot\[bot\]|app/dependabot) echo "Dependabot: commit-subjects exempt (its titles cannot be reworded)"; exit 0 ;;
+          esac
+          cd project && python3 ../.shipquick/scripts/check_commit_subjects.py --base "origin/$TARGET"
+  story:
+    # Story #175: every user story the PR links names who does it and how it is done (check_story.py, story #155).
+    # The job asks for issues: read; a reusable workflow gets it only when the caller grants it (adopt.sh writes that).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['story']
+    permissions:
+      contents: read
+      issues: read
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check every linked user story names who does it (story #155, #175)
+        run: |
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          python3 .shipquick/scripts/check_story.py --pr-body-file "$RUNNER_TEMP/pr-body.md"
   gate:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [adoption, disable-comments, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments]
+    needs: [adoption, features, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, commit-subjects, story]
     if: always()
     steps:
       - name: Check all job results (story #131 -- review_merge.sh requires this exact check to be SUCCESS)
         run: |
           echo "adoption: ${{ needs.adoption.result }}"
+          echo "features: ${{ needs.features.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
+          echo "design-tokens: ${{ needs.design-tokens.result }}"
           echo "roles: ${{ needs.roles.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
           echo "frontend-design: ${{ needs.frontend-design.result }}"
           echo "uat-on-main: ${{ needs.uat-on-main.result }}"
           echo "freeze-on-main: ${{ needs.freeze-on-main.result }}"
           echo "environments: ${{ needs.environments.result }}"
+          echo "component-registry: ${{ needs.component-registry.result }}"
+          echo "rule-copies: ${{ needs.rule-copies.result }}"
+          echo "commit-subjects: ${{ needs.commit-subjects.result }}"
+          echo "story: ${{ needs.story.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"
             exit 1

@@ -48,6 +48,8 @@ Need from you: <one thing>.
 Lines for the owner in Romanized Hindi (3 at most) go in chat above the block, never inside it.
 A machine checks the block, so the shape has to be exact.
 
+A review (the finding shape, the verdict and the `Not checked:` line) follows `docs/REVIEW_SHAPE.md`.
+
 ## Blocks to the owner
 
 The owner is the only relay, so the owner's action order is the critical path.

@@ -67,6 +67,26 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "DatePickerDefaults.DatePickerTitle: The default title at the top of a DatePicker. It changes with the display mode.",
+            "DatePickerDefaults.DatePickerHeadline: The default headline that shows the chosen date, or a hint when none is chosen.",
+            "DatePickerState: Holds the chosen date (selectedDateMillis, in UTC), the month on show, the year range, the display mode and the selectable dates.",
+            "rememberDatePickerState: Creates and keeps a DatePickerState, with the first date, year range, display mode and selectable dates you give.",
+            "DatePickerDefaults: Default colours, shape, year range, date formatter, title, headline and sizes for date pickers.",
+            "DatePickerColors: The container, title, headline, day, year and selection colours of a date picker. Make one with DatePickerDefaults.colors().",
+            "DatePickerFormatter: Turns dates into text for the picker's headline and month line (formatDate, formatMonthYear). Make one with DatePickerDefaults.dateFormatter().",
+            "DisplayMode: How a date picker shows: Picker (a calendar) or Input (a text field). The user can switch with the mode button.",
+            "SelectableDates: Says which dates and years the user can pick: isSelectableDate and isSelectableYear. Use it to block past dates or weekends."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

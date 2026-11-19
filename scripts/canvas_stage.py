@@ -16,6 +16,9 @@ Use:  canvas_stage.py --manifest design/canvas-stages.json --canvas <folder hold
       canvas_stage.py --manifest design/canvas-stages.json --canvas <folder holding project/> --apply
       canvas_stage.py --canvas <folder holding project/> --publish-list      (story #163: the files to publish)
       canvas_stage.py --canvas <folder holding project/> --verify listing.txt (fails naming each file not published)
+Story #188: when the manifest names a "registry" (the path of the kit's ui/registry.json, relative to where you run the
+tool, like --manifest), the tool also draws a Design system board from it, right after the Design learnings board.
+`--check` exits 1 and prints STALE for any generated board on disk that differs from what it would write now.
 Standard library only. No project value lives in this file: every colour and the font come from the manifest.
 """
 import argparse, json, re, sys
@@ -31,6 +34,9 @@ PREFIXES = ("LIVE", "ON STAGING", "ON DEV", "DESIGN", "IN TALK", "REJECTED", "OL
 LEARN_BOARD = "design-learnings.dc.html"
 LEARN_KINDS = {"owner": "The owner's taste", "craft": "Craft rules", "testing": "What testing taught"}
 LEARN_COL, LEARN_PAD = 560, 48
+# story #188: the Design system board, made by the tool from the registry the manifest names, one column per platform
+DS_BOARD = "design-system.dc.html"
+DS_PLATFORMS = {"android": "Android", "ios": "iOS"}   # the two library folders of rule 38; a web child uses its own kit, not the registry
 MINE = re.compile(r"^cs-")     # the one prefix reserved for notes this tool writes; a user's note is never touched
 DEFAULT_PAPER, DEFAULT_FONT = "#ffffff", "system-ui, sans-serif"
 
@@ -175,6 +181,40 @@ def learnings_board(rows, title, tint, th):
     return bg_html(title, "", tint, w, h, th, heads, band=False, extra="\n".join(body)), w, h, problems
 
 
+def design_system_board(rows, tint, th):
+    """Story #188: one board, one column per platform, every registry row: name on its base, status, doc link.
+    Returns (html, w, h, problems). Every word is ink on the tint's fill, the same 4.5:1 the theme checks."""
+    problems, heads, body, bottoms = [], [], [], []
+    for i, (plat, label) in enumerate(DS_PLATFORMS.items()):
+        x = LEARN_PAD + i * (LEARN_COL + 40); y = LEARN_PAD + 70
+        heads.append((x, LEARN_PAD, label))
+        for r in sorted((r for r in rows if r.get("platform") == plat), key=lambda r: str(r.get("name", ""))):
+            name = str(r.get("name", "?"))
+            status = r.get("status") or (f"twin #{r['twin']}" if r.get("twin") else "no twin yet")   # the parity report's own words
+            doc = r.get("doc") or f"ui/components/{name}/{name}.doc.mjs"   # shortcut: the kit's doc convention is assumed, add a "doc" field to the row when the doc lives elsewhere
+            text = f"{status} · {doc}"
+            body.append(f'  <p style="position: absolute; left: {x}px; top: {y}px; width: {LEARN_COL}px; margin: 0; font-size: 22px; line-height: 1.4;">'
+                        f'<b>{esc(name)}</b> on {esc(str(r.get("base", "?")))}<br>{esc(text)}</p>')
+            y += 30 + text_height(text, LEARN_COL) + 24
+        bottoms.append(y)
+    for r in rows:
+        if r.get("platform") not in DS_PLATFORMS: problems.append(f"registry row {r.get('name', '')!r}: platform {r.get('platform')!r} is not one of {tuple(DS_PLATFORMS)}")
+    w, h = 2 * LEARN_PAD + 2 * LEARN_COL + 40, max(400, max(bottoms) + LEARN_PAD)
+    return bg_html("Design system", "", tint, w, h, th, heads, band=False, extra="\n".join(body)), w, h, problems
+
+
+def registry_rows(path):
+    """The registry's component rows, or (None, why) when the file cannot be read."""
+    try:
+        data = json.loads(Path(path).read_text())
+    except (OSError, ValueError) as e:
+        return None, f"registry {path} cannot be read: {e}"
+    rows = data.get("components", []) if isinstance(data, dict) else None
+    if not isinstance(rows, list) or not all(isinstance(r, dict) for r in rows):
+        return None, f'registry {path} is not {{"components": [{{...}}]}}'
+    return rows, None
+
+
 def layout(canvas: dict, manifest: dict):
     """Return (new canvas dict, background files {path: html}, problems list). Nothing is written here."""
     c = json.loads(json.dumps(canvas))
@@ -188,11 +228,20 @@ def layout(canvas: dict, manifest: dict):
     bg_files = {}
     learn = [s for s in sections if s.get("id") == "learnings"]
     if columns and not learn: problems.append('layout "columns" needs a section with "id": "learnings" (the Design learnings board, story #165)')
+    if manifest.get("registry") and not learn: problems.append('"registry" needs a section with "id": "learnings": the Design system board sits in its row (story #188)')
     for s in learn:   # the tool makes this board itself, from the section's "learnings" rows, and puts it first in that section
         html, w, h, bad = learnings_board(s.get("learnings", []), s["title"], tint_of(s.get("tint", "")), th); problems += bad
         boards[LEARN_BOARD] = {**boards.get(LEARN_BOARD, {"x": 0, "y": 0, "title": "Design learnings"}), "w": w, "h": h}
         bg_files["project/" + LEARN_BOARD] = html
-        s["rows"] = [{"id": "learnings", "title": "Newest on top · the owner's taste, craft rules, what testing taught", "boards": [LEARN_BOARD], "notes": []}] + s["rows"]   # a new list: the manifest is never changed
+        row_boards = [LEARN_BOARD]
+        if manifest.get("registry"):   # story #188: the Design system board sits right after the learnings board, in the same row
+            rows, why = registry_rows(manifest["registry"])
+            if why: problems.append(why)
+            else:
+                html, w, h, bad = design_system_board(rows, tint_of(s.get("tint", "")), th); problems += bad
+                boards[DS_BOARD] = {**boards.get(DS_BOARD, {"x": 0, "y": 0, "title": "Design system"}), "w": w, "h": h}
+                bg_files["project/" + DS_BOARD] = html; row_boards.append(DS_BOARD)
+        s["rows"] = [{"id": "learnings", "title": "Newest on top · the owner's taste, craft rules, what testing taught", "boards": row_boards, "notes": []}] + s["rows"]   # a new list: the manifest is never changed
     # 1. every board exactly once; unknown boards go to an Unsorted row
     named = {}
     for s in sections:
@@ -356,12 +405,15 @@ def main(argv=None):
     if problems:
         print("\n".join("PROBLEM " + p for p in problems)); return 1
     if a.check:
+        stale = [p for p, html in bg_files.items() if not (root / p).exists() or (root / p).read_text() != html]   # story #188: a generated board is never hand-edited
+        for p in stale: print(f"STALE {p}: the manifest or the registry changed and the board was not regenerated: run --apply")
+        if stale: return 1
         same = json.dumps({k: (v["x"], v["y"]) for k, v in new["boards"].items()}, sort_keys=True) == json.dumps({k: (v.get("x"), v.get("y")) for k, v in canvas["boards"].items()}, sort_keys=True)
         print("ok, no problem;", "the canvas already matches the manifest" if same else "positions differ from the manifest: run --apply"); return 0
     cj.write_text(json.dumps(new, indent=1, ensure_ascii=False))
     for p, html in bg_files.items():
         f = root / p; f.parent.mkdir(parents=True, exist_ok=True); f.write_text(html)
-    print(f"wrote {cj} and {len(bg_files)} generated boards (backgrounds, learnings): {', '.join(bg_files)}"); return 0
+    print(f"wrote {cj} and {len(bg_files)} generated boards (backgrounds, learnings, design system):{', '.join(bg_files)}"); return 0
 
 
 if __name__ == "__main__":

@@ -19,3 +19,4 @@ Every idea from the owner or Claude, dated, one line, with status (open / taken 
 - ID227: two-session pair, coder on Sonnet and reviewer on Opus, direct messages (taken, rule 27)
 - ID228: runtime rule, free and n8n first, nothing on the Mac (taken, rule 28)
 - ID230: this release, v0.5.0 Process v2 (taken, epic #41)
+- ID363: CI tests only what a change can break; a PR with no iOS code does not wait for the iOS jobs (taken, story #484; the change map is story #485)

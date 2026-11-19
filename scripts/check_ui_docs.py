@@ -6,7 +6,8 @@ Fails when: a doc or contract is missing; either breaks its JSON schema (ui/sche
 the contract lacks (core, a platform, or webOnly); a contract prop has no doc; an enum prop's doc type
 does not spell out exactly the contract's literal values; any prop (webOnly too) whose type is a bare
 name or mixes literals with an open `string`; a duplicate prop (same name and same `platform`); a prop tagged
-`platform: X` that the contract has neither in core nor under platforms.X (story #228); text after the JSON other than an
+`platform: X` that the contract has neither in core nor under platforms.X (story #228); a prop with the same spec
+under both platforms.android and platforms.ios instead of in core (story #215); text after the JSON other than an
 `export const <name> = {...}` block; no component folder at all. Upstream idea: Astryx docPropReferences and
 docPropLiterals tests (meta/astryx, MIT).
 
@@ -93,7 +94,8 @@ def literals(spec_type):
 def api_shape_errors(doc):
     """Story #231: what the schema subset cannot say about `platformApi` and `status`. A variant has a one-line
     note or its own props; a supporting item has a one-line use; a deprecated or unavailable entry names its
-    replacement; a name sits only once in one platform's lists."""
+    replacement; a name sits only once in one list. One name may be both a variant and supporting, as the M3 list
+    has MaterialTheme as a composable and as an object: those are two rows."""
     name, errs = doc.get("name", "?"), []
     if doc.get("status") and not str(doc.get("replacement", "")).strip():
         errs.append(f"{name}: status '{doc['status']}' needs a replacement (the doc-level `replacement`)")
@@ -106,14 +108,14 @@ def api_shape_errors(doc):
                     errs.append(f"{where}: item {item!r} must be an object with name and {need}, not a string")
                     continue
                 n = item.get("name", "")
-                names.append(n)
+                names.append((key, n))
                 if key == "variants" and not (str(item.get("note", "")).strip() or item.get("props")):
                     errs.append(f"{where} {n}: needs a one-line note on how it differs, or its own props")
                 if key == "supporting" and not str(item.get("use", "")).strip():
                     errs.append(f"{where} {n}: needs a one-line use (when to use it)")
                 if item.get("status") and not str(item.get("replacement", "")).strip():
                     errs.append(f"{where} {n}: status '{item['status']}' needs a replacement")
-        errs += [f"{name}: platformApi.{plat} lists {n} twice" for n in sorted({n for n in names if names.count(n) > 1})]
+        errs += [f"{name}: platformApi.{plat}.{k} lists {n} twice" for k, n in sorted({kn for kn in names if names.count(kn) > 1})]
     return errs
 
 
@@ -134,6 +136,12 @@ def check_component(folder, doc_schema, contract_schema):
         return errs
     errs += api_shape_errors(doc)
     core, plats = contract["core"], contract["platforms"]
+    # Story #215: a prop Compose and SwiftUI share, same name and same spec, lives once in core.
+    # shortcut: "same meaning" is read as an identical spec; a shared prop with two types (number vs Binding<Double>)
+    # stays per platform until core can carry a per-platform type.
+    a, i = plats.get("android", {}), plats.get("ios", {})
+    errs += [f"{name}: prop '{n}' has the same spec under platforms.android and platforms.ios; move it into core"
+             for n in a if n in i and a[n] == i[n]]
     specs = dict(core)
     for platform_props in plats.values():
         specs.update(platform_props)

@@ -40,7 +40,7 @@ Size means **change surface and risk**. It does not mean time.
 | L | Many files, a full feature, high review surface. |
 | XL | Too big. Split it before planning. |
 
-Rule: anything `L` or `XL` should be split unless it truly cannot.
+Rule: only `XS` and `S` may be planned. A story sized `M`, `L` or `XL` must be split before it leaves Ready (story #size-gate, `scripts/check_story_size.py`).
 
 ## Split rules
 
@@ -56,6 +56,6 @@ A story is Ready when:
 - The value is clear and one line long.
 - It has a `Who does it:` line: the actor, the app or screen, and how often. The actor is the person who has the pain (story #155, `scripts/check_story.py`).
 - It passes INVEST.
-- It has Impact, Urgency, and a T-shirt size.
+- It has Impact, Urgency, and a T-shirt size of `XS` or `S` only. `M`, `L` and `XL` stories are split before Ready (ADR-020).
 - It has clear acceptance criteria.
 - It has no open `blocked` label.

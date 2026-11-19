@@ -70,5 +70,29 @@ export default {
       "description": "The NavigationRailItems.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "NavigationRailItem",
+          "note": "One destination in a NavigationRail: an icon, an optional label, and selected and onClick."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "NavigationRailDefaults",
+          "use": "Default container colour and window insets for NavigationRail."
+        },
+        {
+          "name": "NavigationRailItemDefaults",
+          "use": "Default colours for NavigationRailItem. Make them with NavigationRailItemDefaults.colors()."
+        },
+        {
+          "name": "NavigationRailItemColors",
+          "use": "The icon, text and indicator colours of a NavigationRailItem, selected and not."
+        }
+      ]
+    }
+  }
 };
