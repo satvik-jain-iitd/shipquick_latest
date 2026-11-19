@@ -18,7 +18,7 @@ ROOT = HERE.parent
 DEFAULT = ROOT / ".shipquick" / "flaky-tests.json"
 
 REQUIRED = {"test_id", "path", "owner", "issue", "reason", "quarantined_on", "expires_on", "status"}
-VALID_STATUS = {"active", "quarantined", "fixed", "expired"}
+VALID_STATUS = {"quarantined", "fixed"}
 VALID_TIER = {"pr", "post-merge", "nightly", "manual"}
 
 
