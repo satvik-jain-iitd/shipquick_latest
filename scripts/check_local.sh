@@ -207,6 +207,7 @@ feature_of() {   # feature_of <check> -- the feature id that switches the check,
     design-tokens) echo design-tokens ;;
     frontend-design) echo frontend-design ;;
     story) echo story ;;
+    intent-verify) echo intent-verify ;;
     roadmap) echo roadmap ;;
     ui-registry) echo component-registry ;;
   esac
