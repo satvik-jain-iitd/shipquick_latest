@@ -180,6 +180,13 @@ jobs:
         run: |
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_story.py --pr-body-file /tmp/pr-body.md
+      - name: Check every linked user story has AC traceability (M5d)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/check_ac_trace.py --pr-body-file /tmp/pr-body.md
   uat-checklist:
     runs-on: ubuntu-latest
     timeout-minutes: 10
