@@ -1,0 +1,37 @@
+{
+  "name": "Surface",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "shape": {
+        "type": {
+          "kind": "named",
+          "name": "Shape"
+        },
+        "optional": true
+      },
+      "tonalElevation": {
+        "type": {
+          "kind": "named",
+          "name": "Dp"
+        },
+        "optional": true
+      },
+      "onClick": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

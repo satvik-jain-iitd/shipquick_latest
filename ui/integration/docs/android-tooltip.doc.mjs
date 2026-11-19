@@ -67,6 +67,26 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "PlainTooltip: A short line of text that names an icon or a button. Put it in TooltipBox.",
+            "RichTooltip: A tooltip with an optional title, more text and an optional action button. Put it in TooltipBox.",
+            "TooltipState: Says if the tooltip shows. Call show() from a coroutine and dismiss() to hide it. isPersistent keeps it open.",
+            "rememberTooltipState: Creates and keeps a TooltipState across recompositions.",
+            "TooltipScope: The scope of tooltip content. Its drawCaret draws the small pointer to the anchor.",
+            "TooltipDefaults: Default colours, shapes, caret shape and position providers for plain and rich tooltips.",
+            "RichTooltipColors: The container, content, title and action colours of a RichTooltip. Make one with TooltipDefaults.richTooltipColors().",
+            "TooltipAnchorPosition: Where the tooltip sits next to its anchor: Above, Below, Start, End, Left or Right.",
+            "DefaultTooltipCaretShape: The default pointer shape of a tooltip, with a caretSize. Get it from TooltipDefaults.caretShape()."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

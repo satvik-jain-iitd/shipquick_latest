@@ -20,10 +20,10 @@ def test_s181_rule_38_is_library_first_and_links_its_docs():
         assert (ROOT / link).is_file(), link
 
 
-def test_s181_rule_numbers_37_and_38_stay_in_order():
+def test_s181_rule_numbers_37_and_38_stay_in_order():   # later rules (39 and on) may follow
     nums = [int(n) for n in re.findall(r"^(\d+)\. ", CLAUDE, re.M)]
     assert nums == sorted(nums) and len(nums) == len(set(nums))
-    assert nums[-2:] == [37, 38]
+    assert nums[nums.index(37):nums.index(37) + 2] == [37, 38]
 
 
 def test_s181_request_template_has_every_field():
@@ -57,8 +57,12 @@ def test_s181_third_party_kit_ban_is_native_only():
 
 
 def test_s181_rule_says_the_reviewer_checks_by_hand_until_the_tools_land():
-    assert "until S3 to S7 land, the reviewer checks by hand" in rule(38)
-    assert re.search(r"until S3 to S7 land, the reviewer checks by hand", DOCS["docs/COMPONENT_LIBRARY.md"], re.I)
+    # owner, 10 Nov 2026 ("Haan, badlo"): the lint exists in the kit (S7) but reaches no child until S9 (#187) wires it in
+    assert "until S9 (#187) wires the lint into children, the reviewer checks by hand" in rule(38)
+    assert re.search(r"until S9 \(#187\) wires (the|it into) (lint )?(into )?children, the reviewer checks by hand",
+                     DOCS["docs/COMPONENT_LIBRARY.md"], re.I)
+    for path in ("CLAUDE.md", "docs/COMPONENT_LIBRARY.md"):
+        assert "S3 to S7 land" not in DOCS[path], path
 
 
 def test_s181_owner_yes_counts_only_from_a_reviewer_comment():

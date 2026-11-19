@@ -2,7 +2,13 @@
   "name": "Menu",
   "baseTarget": "root",
   "types": {},
-  "core": {},
+  "core": {
+    "content": {
+      "type": {
+        "kind": "content"
+      }
+    }
+  },
   "platforms": {
     "android": {
       "expanded": {
@@ -15,11 +21,6 @@
           "kind": "fn",
           "args": []
         }
-      },
-      "content": {
-        "type": {
-          "kind": "content"
-        }
       }
     },
     "ios": {
@@ -29,11 +30,6 @@
           "name": "LocalizedStringKey"
         },
         "optional": true
-      },
-      "content": {
-        "type": {
-          "kind": "content"
-        }
       },
       "label": {
         "type": {

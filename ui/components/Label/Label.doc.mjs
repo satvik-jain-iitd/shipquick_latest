@@ -75,5 +75,18 @@ export default {
       "description": "The SF Symbol name for the icon.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "labelStyle", "note": "`.labelStyle(_:)`, iOS 14.0. Apple: \"Sets the style for labels within this view.\""},
+        {"name": "labelIconToTitleSpacing", "note": "`.labelIconToTitleSpacing(_:)`, iOS 26.0. Apple: \"Set the spacing between the icon and title in labels.\""},
+        {"name": "labelReservedIconWidth", "note": "`.labelReservedIconWidth(_:)`, iOS 26.0. Apple: \"Set the width reserved for icons in labels.\""}
+      ],
+      "supporting": [
+        {"name": "LabelStyleConfiguration.Icon", "use": "iOS 14.0. Apple: \"A type-erased icon view of a label.\""},
+        {"name": "LabelStyleConfiguration.Title", "use": "iOS 14.0. Apple: \"A type-erased title view of a label.\""}
+      ]
+    }
+  }
 };
