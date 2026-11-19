@@ -94,6 +94,18 @@ check_story() {
   rm -f "$tmp"
   report story "$rc"
 }
+check_story_size() {
+  have_base story || return 0
+  command -v gh >/dev/null || { echo "skip story-size: gh is not installed"; return 0; }
+  gh auth status >/dev/null 2>&1 || { echo "skip story-size: gh is not logged in (gh auth login); CI still checks it"; return 0; }
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  python3 "$HERE/check_story_size.py" --pr-body-file "$tmp"
+  rc=$?
+  rm -f "$tmp"
+  report story-size "$rc"
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   gitleaks git --no-banner --no-color --redact --verbose .
@@ -120,7 +132,8 @@ for c in "${checks[@]}"; do
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
     story) check_story ;;
-    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
+    story-size) check_story_size ;;
+    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story story-size secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"

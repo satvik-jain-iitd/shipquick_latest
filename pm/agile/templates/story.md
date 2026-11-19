@@ -11,13 +11,13 @@ Who does it: <actor>, <app or screen>, <how often>
 <!-- One line. Why this, why this sprint? -->
 
 ## Acceptance criteria
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ## Sizing
 - Impact: <!-- H / M / L -->
 - Urgency: <!-- H / M / L -->
-- Size: <!-- XS / S / M / L / XL -->
+- Size: <!-- XS or S only. M, L, XL must be split first (ADR-020). -->
 - Dependencies: <!-- None / Soft / Hard -->
 
 ## Notes
