@@ -46,4 +46,4 @@ account on the reviewer row (GoServe: `klickbae8yt-star` builds, `satvik-jain-ii
 QA runs on a larger reasoning model, Dev on a faster implementation model. Before Dev starts any
 QA-delegated work, Dev sends a say-back (understanding + planned approach + "am I doing this right?")
 and waits for QA's "confirmed". The confirmation is recorded as a comment on the story issue,
-`Intent verified by QA: <YYYY-MM-DD>`, from a login that is not the PR author (checked by `scripts/check_intent_verify.py`).
+`Intent verified by QA: <YYYY-MM-DD>`, from a login on the reviewer list (`scripts/roles.py get reviewer`) that is not the PR author (checked by `scripts/check_intent_verify.py`).
