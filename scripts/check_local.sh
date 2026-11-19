@@ -300,9 +300,8 @@ for c in "${checks[@]}"; do
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky secrets secrets-staged)"; exit 2 ;;
     flaky) check_flaky ;;
-
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky tests secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts
