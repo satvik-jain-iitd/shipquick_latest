@@ -58,20 +58,30 @@ def read_children(path) -> list[tuple[str, bool]]:
 gh_api = issue_notice.gh_api   # story #497: the one gh reader, shared with scripts/nightly_full_run.py
 
 
-def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str | None:
-    """None when adopted and fresh; otherwise one line naming the gap."""
+def read_pin(child: str, fetch) -> tuple[str | None, str]:
+    """(the 40-letter kit commit the child's caller pins, "") or (None, the reason it could not be read)."""
     info = fetch(f"repos/{child}")
     if info is None:
-        return f"cannot read {child} (gh api failed)"
+        return None, f"cannot read {child} (gh api failed)"
     branch = info["default_branch"]
     call = fetch(f"repos/{child}/contents/.github/workflows/shipquick-call.yml?ref={branch}")
     if call is None:
-        return f"{child}: no .github/workflows/shipquick-call.yml on {branch}"
-    body = base64.b64decode(call["content"]).decode("utf-8", "replace")
-    m = PIN.search(body)
+        return None, f"{child}: no .github/workflows/shipquick-call.yml on {branch}"
+    m = PIN.search(base64.b64decode(call["content"]).decode("utf-8", "replace"))
     if not m:
-        return f"{child}: shipquick-call.yml on {branch} has no shipquick_ref pin"
-    sha = m.group(1)
+        return None, f"{child}: shipquick-call.yml on {branch} has no shipquick_ref pin"
+    return m.group(1), ""
+
+
+def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str | None:
+    """None when adopted and fresh; otherwise one line naming the gap."""
+    sha, why = read_pin(child, fetch)
+    if sha is None:
+        return why
+    info = fetch(f"repos/{child}")
+    branch = info["default_branch"]
+    call = fetch(f"repos/{child}/contents/.github/workflows/shipquick-call.yml?ref={branch}")
+    body = base64.b64decode(call["content"]).decode("utf-8", "replace")
     kit, bad = kit_branch.parse(body)
     if bad:
         return f"{child}: shipquick-call.yml on {branch}: {bad}"
