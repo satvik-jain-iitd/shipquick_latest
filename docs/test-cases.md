@@ -2390,3 +2390,17 @@ Scenario: the script reads no token and has no apply
 Scenario: the fixtures use made-up names only
   Then every child is under example-org
 ```
+
+## Story #587: the child bump plan runs on a release tag
+```gherkin
+Scenario: a private child is read with the child token
+  Then the token reaches the reader for the private child only
+Scenario: the workflow runs the planner on a release tag
+  Then it runs on a v tag and by hand, and passes the tag through env
+Scenario: the workflow is read only and writes nothing
+  Then contents is read and no issue, pull request, push or upload step exists
+Scenario: the workflow fails on a tag with no commit
+  Then an empty or unknown tag exits 1
+Scenario: the workflow step keeps the planner exit code
+  Then pipefail is set and nothing masks a red result
+```

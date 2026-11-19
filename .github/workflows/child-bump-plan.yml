@@ -1,0 +1,33 @@
+# Story #587: print the child bump plan (which child pins a kit commit other than this release). Read only.
+name: Child bump plan
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to plan for, for example v1.2.3"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Print the plan for the tag's commit
+        env:
+          TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+          SHIPQUICK_CHILD_TOKEN: ${{ secrets.SHIPQUICK_CHILD_TOKEN }}
+        run: |
+          set -o pipefail
+          if [ -z "$TAG" ]; then echo "no tag given" >&2; exit 1; fi
+          SHA=$(git rev-parse --verify "refs/tags/$TAG^{commit}") || { echo "tag $TAG has no commit" >&2; exit 1; }
+          python3 scripts/child_bump.py --release-sha "$SHA" | tee -a "$GITHUB_STEP_SUMMARY"
