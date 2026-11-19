@@ -14,8 +14,25 @@ def run(body, *args):
     return subprocess.run(["python3", str(SCRIPT), *args], input=body, capture_output=True, text=True)
 
 
-def test_a_story_with_every_ac_mapped_passes():
-    r = run("## Scenarios\nAC-1: foo\nAC-2: bar\nTests: AC-1 -> tests/test_x.py::test_foo; AC-2 -> tests/test_x.py::test_bar\n")
+def tree(tmp_path, **files):
+    """A repo tree: {"tests/test_x.py": "def test_foo(): ..."} as keyword-free dict via tree(tmp_path, **{"a/b.py": text})."""
+    for rel, text in files.items():
+        p = tmp_path / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8")
+    return tmp_path
+
+
+def run_root(tmp_path, body):
+    return subprocess.run(["python3", str(SCRIPT), "--root", str(tmp_path)], input=body, capture_output=True, text=True)
+
+
+XTREE = {"tests/test_x.py": "def test_foo():\n    pass\n\ndef test_bar():\n    pass\n"}
+
+
+def test_a_story_with_every_ac_mapped_passes(tmp_path):
+    tree(tmp_path, **XTREE)
+    r = run_root(tmp_path, "## Scenarios\nAC-1: foo\nAC-2: bar\nTests: AC-1 -> tests/test_x.py::test_foo; AC-2 -> tests/test_x.py::test_bar\n")
     assert r.returncode == 0 and "OK" in r.stdout, r.stdout
 
 
@@ -34,8 +51,9 @@ def test_a_mapping_for_an_ac_the_story_does_not_define_fails():
     assert r.returncode == 1 and "AC-9" in r.stdout and "does not define" in r.stdout, r.stdout
 
 
-def test_a_mention_of_an_ac_in_prose_does_not_define_it():
-    r = run("This story replaces AC-7 of the old one.\nAC-1: a\nTests: AC-1 -> tests/test_x.py::test_foo\n")
+def test_a_mention_of_an_ac_in_prose_does_not_define_it(tmp_path):
+    tree(tmp_path, **XTREE)
+    r = run_root(tmp_path, "This story replaces AC-7 of the old one.\nAC-1: a\nTests: AC-1 -> tests/test_x.py::test_foo\n")
     assert r.returncode == 0, r.stdout
 
 
@@ -103,3 +121,38 @@ def test_check_local_skips_when_gh_not_logged_in(tmp_path):
     r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "ac-trace"], cwd=repo, capture_output=True, text=True, env=env)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert "skip ac-trace: gh is not logged in" in r.stdout
+
+
+# ---- #564 review point 2: the mapped test is real: the file is in the tree and holds the name as a whole word ----
+def test_a_mapping_to_a_missing_test_fails(tmp_path):
+    tree(tmp_path, **XTREE)
+    missing_file = run_root(tmp_path, "AC-1: a\nTests: AC-1 -> tests/test_gone.py::test_foo\n")
+    assert missing_file.returncode == 1 and "tests/test_gone.py" in missing_file.stdout and "AC-1" in missing_file.stdout, missing_file.stdout
+    missing_name = run_root(tmp_path, "AC-1: a\nTests: AC-1 -> tests/test_x.py::test_nope\n")
+    assert missing_name.returncode == 1 and "test_nope" in missing_name.stdout, missing_name.stdout
+
+
+def test_the_name_is_a_whole_word_so_a_longer_name_does_not_satisfy_it(tmp_path):
+    tree(tmp_path, **{"tests/test_x.py": "def test_foo_bar():\n    pass\n"})
+    r = run_root(tmp_path, "AC-1: a\nTests: AC-1 -> tests/test_x.py::test_foo\n")
+    assert r.returncode == 1 and "test_foo" in r.stdout, r.stdout
+
+
+@pytest.mark.parametrize("rel,text,name", [
+    ("src/a.test.ts", 'test("adds two numbers", () => {});\n', "adds two numbers"),
+    ("src/a.test.ts", "it('shows', () => {});\n", "shows"),
+    ("app/src/test/AppTest.kt", "class AppTest { @Test fun greets() {} }\n", "greets"),
+    ("tests/test_x.py", "async def test_async():\n    pass\n", "test_async"),
+])
+def test_a_child_may_test_in_another_language(tmp_path, rel, text, name):
+    tree(tmp_path, **{rel: text})
+    ref = f'"{name}"' if " " in name else name   # a title with spaces is written in quotes
+    r = run_root(tmp_path, f"AC-1: a\nTests: AC-1 -> {rel}::{ref}\n")
+    assert r.returncode == 0, r.stdout
+
+
+@pytest.mark.parametrize("path", ["../outside.py", "/etc/hosts", "tests/../../x.py"])
+def test_a_path_outside_the_tree_fails(tmp_path, path):
+    tree(tmp_path, **XTREE)
+    r = run_root(tmp_path, f"AC-1: a\nTests: AC-1 -> {path}::test_foo\n")
+    assert r.returncode == 1 and "outside" in r.stdout, r.stdout
