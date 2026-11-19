@@ -1,0 +1,44 @@
+<!-- Story #190: ten read-only questions for shipquick_ui_mcp (mcp-builder evaluation format).
+     Each needs a search to find the name, then a get for the fact. Answers checked against ui/components/ on 11 Nov 2026. -->
+<evaluation>
+  <qa_pair>
+    <question>I need an on/off control for a settings row on iOS. Find the library component for it and give the exact SwiftUI type its doc names as the iOS base.</question>
+    <answer>SwiftUI.Toggle</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the component used to show a sheet that slides up from the bottom. What is the default value of its sheetState prop on Android?</question>
+    <answer>rememberModalBottomSheetState()</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the button component. Its doc lists a touch target accessibility rule. Which WCAG success criterion number does that rule cite?</question>
+    <answer>2.5.8</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the high-emphasis round button for the one main action of a screen. On which single platform does the library have it? Answer with the platform key.</question>
+    <answer>android</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the component for picking a value along a range by dragging. What is the default of its valueRange prop on Android?</question>
+    <answer>0f..1f</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the grouped content container component. Which SwiftUI type does its doc name as the iOS base?</question>
+    <answer>SwiftUI.GroupBox</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the button component and read its contract. How many props does the contract list as web only?</question>
+    <answer>6</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the small status marker that sits on an icon, like an unread count. Which Compose Material 3 type does its doc name as the Android base?</question>
+    <answer>androidx.compose.material3.BadgedBox</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the date selection component. Which WCAG success criterion number does its accessibility section cite?</question>
+    <answer>3.3.2</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the checkbox component. Which web component from the core package does its doc name as the web base? Give the part after the last slash.</question>
+    <answer>CheckboxInput</answer>
+  </qa_pair>
+</evaluation>

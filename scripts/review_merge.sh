@@ -44,14 +44,30 @@ repo="${2:-$(gh repo view --json nameWithOwner --jq .nameWithOwner)}"
 json=$(gh pr view "$pr" -R "$repo" --json state,isDraft,mergeable,baseRefName,headRefOid,title,author,body,reviews,statusCheckRollup) || refuse "cannot read pull request $pr"
 field() { jq -r "$1" <<<"$json"; }
 
+# story #425: the `merge-gate` feature, read as committed on the PR's base branch (never this checkout, which a PR could
+# change). Off means no agent merges: the owner merges by hand. An unreadable or broken file takes the same safe side.
+gate_rc=0; gate_err=$(python3 "$HERE/features.py" remote merge-gate --repo "$repo" --ref "$(field .baseRefName)" 2>&1 >/dev/null) || gate_rc=$?
+case "$gate_rc" in
+  0) ;;
+  1) refuse "merge gate is off: the owner merges by hand" ;;
+  *) refuse "the features file on $(field .baseRefName) cannot be read ($gate_err): the owner merges by hand" ;;
+esac
+
 { [ "$(field .state)" = OPEN ] && [ "$(field .isDraft)" = false ]; } || refuse "pull request is not open, or is a draft"
 [ "$(field .mergeable)" != CONFLICTING ] || refuse "pull request has conflicts"
 
 # story #140: who may author and who may approve come from the PR's OWN repo's .shipquick/roles.yml,
 # read from GitHub (never the local checkout -- story #122's lesson), not a name hardcoded here.
-roles_raw=$(gh api "repos/$repo/contents/.shipquick/roles.yml?ref=$(field .baseRefName)" --jq '.content' 2>/dev/null)
+# Story #225: a rule-24 child names a kit branch in its caller; roles.yml lives there, the same as in the CI roles job.
+roles_ref=$(field .baseRefName); roles_where="$roles_ref"
+caller_raw=$(gh api "repos/$repo/contents/.github/workflows/shipquick-call.yml?ref=$roles_ref" --jq '.content' 2>/dev/null) || caller_raw=""
+if [ -n "$caller_raw" ]; then
+  kit=$(printf '%s' "$caller_raw" | base64 -d 2>/dev/null | python3 "$HERE/kit_branch.py" parse) || refuse "$repo's shipquick-call.yml on $roles_ref: $kit"
+  if [ -n "$kit" ] && [ "$kit" != "$roles_ref" ]; then roles_ref="$kit"; roles_where="kit branch $kit"; fi
+fi
+roles_raw=$(gh api "repos/$repo/contents/.shipquick/roles.yml?ref=$roles_ref" --jq '.content' 2>/dev/null)
 roles_rc=$?
-[ "$roles_rc" -eq 0 ] && [ -n "$roles_raw" ] || refuse "cannot read $repo's .shipquick/roles.yml on $(field .baseRefName) to check roles"
+[ "$roles_rc" -eq 0 ] && [ -n "$roles_raw" ] || refuse "cannot read $repo's .shipquick/roles.yml on $roles_where to check roles"
 roles_tmp="$(mktemp)"
 printf '%s' "$roles_raw" | base64 -d > "$roles_tmp" 2>/dev/null
 coders=$(python3 "$HERE/roles.py" get coder --file "$roles_tmp") || refuse "cannot read coder accounts from $repo's .shipquick/roles.yml"
@@ -73,6 +89,12 @@ reviewer_account=$(jq -r --arg revs "$reviewers" --arg author "$author" --arg he
   | if length > 0 then .[0].author.login else "" end
 ' <<<"$json")
 [ -n "$reviewer_account" ] || refuse "not approved by a reviewer account (other than the author, $author) on the latest commit"
+
+# story #318 (A4b): the approving review must say what it decided and what it did not check. Both are whole lines.
+approval_body=$(jq -r --arg r "$reviewer_account" --arg head "$(field .headRefOid)" \
+  '[.reviews[] | select(.author.login == $r and .state == "APPROVED" and .commit.oid == $head)] | last | .body // ""' <<<"$json" | tr -d '\r')
+grep -q '^Verdict:' <<<"$approval_body" || refuse "the approving review has no \`Verdict:\` line"
+grep -q '^Not checked:' <<<"$approval_body" || refuse "the approving review has no \`Not checked:\` line"
 
 # story #139 (ADR-011): maker and checker are different SESSIONS, not only different accounts. Opt-in:
 # only when roles.yml lists reviewer_sessions. The approving review names its session; that session must
@@ -117,6 +139,19 @@ open=$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResol
 [ "$open" = 0 ] || refuse "$open unresolved review threads"
 
 [ "$(field '.statusCheckRollup | length')" -gt 0 ] || refuse "no checks ran"
+# story #496 (epic #485 items 15 and 16): only the PR's own, newest run of each workflow counts. A manual or push run on the same
+# head skips the PR-only jobs and starts later, and a run a newer run replaced leaves stale rows; neither may decide the merge.
+# The run of a row is in its detailsUrl; the runs of the head come from the Actions API (scripts/check_pr_runs.py).
+if jq -e '[.statusCheckRollup[] | (.detailsUrl // "") | test("/actions/runs/[0-9]+")] | any' <<<"$json" >/dev/null; then
+  runs_tmp="$(mktemp)"; rollup_tmp="$(mktemp)"
+  gh api "repos/$repo/actions/runs?head_sha=$(field .headRefOid)&per_page=100" --paginate --jq '.workflow_runs[]' >"$runs_tmp" 2>/dev/null \
+    || { rm -f "$runs_tmp" "$rollup_tmp"; refuse "cannot read the workflow runs of $(field .headRefOid)"; }
+  jq '.statusCheckRollup' <<<"$json" >"$rollup_tmp"
+  counted=$(python3 "$HERE/check_pr_runs.py" --pr "$pr" --rollup-file "$rollup_tmp" --runs-file "$runs_tmp") \
+    || { rm -f "$runs_tmp" "$rollup_tmp"; refuse "$counted"; }
+  rm -f "$runs_tmp" "$rollup_tmp"
+  json=$(jq --argjson c "$counted" '.statusCheckRollup = $c' <<<"$json")
+fi
 # A check name can carry more than one run (a rerun, a close/reopen, a stale suite from an earlier commit): only its latest run by startedAt counts.
 bad=$(jq -r '
   .statusCheckRollup
@@ -144,7 +179,16 @@ gate_concl=$(jq -r --arg n "$gate_name" '
 ' <<<"$json" | head -1)
 [ "$gate_concl" = SUCCESS ] || refuse "required check $gate_name is $gate_concl, not SUCCESS"
 
-why=$(field .body | python3 "$HERE/check_closes.py" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
+# story #424: the `close-on-merge` flag is read as committed on the PR's base branch, never from this checkout; any error refuses.
+base_ref=$(field .baseRefName); cm_rc=0
+python3 "$HERE/features.py" remote close-on-merge --repo "$repo" --ref "$base_ref" >/dev/null 2>"${TMPDIR:-/tmp}/rm_feat.$$" || cm_rc=$?
+case "$cm_rc" in
+  0) cm=on ;;
+  1) cm=off ;;
+  *) why=$(cat "${TMPDIR:-/tmp}/rm_feat.$$"); rm -f "${TMPDIR:-/tmp}/rm_feat.$$"; refuse "the features file on $base_ref cannot be read, so close-on-merge is unknown: $why" ;;
+esac
+rm -f "${TMPDIR:-/tmp}/rm_feat.$$"
+why=$(field .body | python3 "$HERE/check_closes.py" --close-on-merge "$cm" --title "$(field .title)" --author "$(field .author.login)") || refuse "no \`Closes #n\` in the body (same rule as CI: $why)"
 
 token=$(gh auth token --user "$reviewer_account") || refuse "no token for $reviewer_account on this machine"
 

@@ -1,0 +1,35 @@
+{
+  "name": "OutlinedTextField",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "TextFieldState"
+        }
+      },
+      "label": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "supportingText": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "isError": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      }
+    }
+  },
+  "webOnly": []
+}

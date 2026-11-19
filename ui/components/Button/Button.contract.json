@@ -3,15 +3,20 @@
   "baseTarget": "root",
   "types": {},
   "core": {
-    "label": {"type": {"kind": "string"}},
-    "variant": {"type": {"kind": "enum", "values": ["primary", "secondary", "ghost", "destructive"]}, "optional": true},
-    "size": {"type": {"kind": "enum", "values": ["sm", "md", "lg"]}, "optional": true},
-    "isDisabled": {"type": {"kind": "boolean"}, "optional": true},
-    "isLoading": {"type": {"kind": "boolean"}, "optional": true},
-    "onClick": {"type": {"kind": "fn", "args": []}, "optional": true}
+    "onClick": {"type": {"kind": "fn", "args": []}}
   },
-  "platforms": {},
+  "platforms": {
+    "android": {
+      "enabled": {"type": {"kind": "boolean"}, "optional": true},
+      "content": {"type": {"kind": "content"}}
+    }
+  },
   "webOnly": [
+    {"name": "label", "reason": "the web button takes its words as a string; Compose takes `content`, SwiftUI a label view"},
+    {"name": "variant", "reason": "a web look; M3 ships five button composables instead, with no variant of our own (story #223)"},
+    {"name": "size", "reason": "a web size; M3 sizes come from ButtonDefaults"},
+    {"name": "isDisabled", "reason": "a web flag; Compose uses `enabled`"},
+    {"name": "isLoading", "reason": "a web state; M3 has no loading button"},
     {"name": "type", "reason": "HTML form submission type"}
   ],
   "sameMeaning": {"onClick": "a press, as in Compose"}

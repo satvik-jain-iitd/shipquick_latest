@@ -1,0 +1,38 @@
+{
+  "name": "TimePickerDialog",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "onDismissRequest": {
+        "type": {
+          "kind": "fn",
+          "args": []
+        }
+      },
+      "confirmButton": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "title": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "modeToggleButton": {
+        "type": {
+          "kind": "content"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}

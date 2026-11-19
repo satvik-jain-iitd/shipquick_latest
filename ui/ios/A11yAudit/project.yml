@@ -1,0 +1,42 @@
+# Story #220: the accessibility audit project. XcodeGen turns this into A11yAudit.xcodeproj on CI (never committed).
+# performAccessibilityAudit() is an XCUITest call, so it needs an app and a UI test target; a Swift package has neither.
+# The app (Host/) shows one ShipQuickUI template, picked by the launch argument `-screen <Name>`.
+name: A11yAudit
+options:
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  ShipQuickUI:
+    path: ..
+settings:
+  base:
+    GENERATE_INFOPLIST_FILE: YES
+    SWIFT_VERSION: "5.0"
+targets:
+  A11yHost:
+    type: application
+    platform: iOS
+    sources: [Host]
+    dependencies:
+      - package: ShipQuickUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.shipquick.a11yhost
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+  A11yAuditTests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [Tests]
+    dependencies:
+      - target: A11yHost
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.shipquick.a11yaudittests
+        TEST_TARGET_NAME: A11yHost
+schemes:
+  A11yHost:
+    build:
+      targets:
+        A11yHost: all
+    test:
+      targets: [A11yAuditTests]

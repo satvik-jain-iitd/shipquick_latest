@@ -62,6 +62,20 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "DropdownMenuItem: One choice in a DropdownMenu: text, optional leading and trailing icons, and onClick.",
+            "MenuDefaults: Default container colour, shape, elevation, item colours and item padding for menus.",
+            "MenuItemColors: The text and icon colours of a menu item, on and off. Make one with MenuDefaults.itemColors()."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

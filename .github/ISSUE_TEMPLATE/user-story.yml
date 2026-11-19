@@ -31,6 +31,14 @@ body:
       description: Copy scenarios here and into matching test names.
     validations:
       required: true
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: "One runnable or visible condition (story #310). It is the coder's /goal condition, and the reviewer reruns it before merge."
+      placeholder: "python3 -m unittest tests.test_desk is green"
+    validations:
+      required: true
   - type: dropdown
     id: frontend-change
     attributes:
