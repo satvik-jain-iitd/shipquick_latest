@@ -174,3 +174,12 @@ def test_no_doc_says_the_proof_is_recorded_in_the_pr_body(rel):
 
 def test_the_adr_names_that_a_login_with_write_access_can_edit_a_comment():
     assert "edit" in adr_last_section() and "write access" in adr_last_section()
+
+
+# ---- #555 qa review, point 2: the local skip when gh is not logged in is tested again ----
+def test_check_local_skips_the_intent_check_when_gh_is_not_logged_in(tmp_path):
+    repo = local_repo(tmp_path)
+    env = stub_env(tmp_path, story_issue(comments=[]), no_auth=True)
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "skip intent-verify: gh is not logged in" in r.stdout
