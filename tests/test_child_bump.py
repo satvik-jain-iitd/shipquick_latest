@@ -80,3 +80,20 @@ def test_the_fixtures_use_made_up_names_only():
     text = Path(__file__).read_text()
     owners = re.findall(r"([\w.-]+)/child-[a-z]\b", text)
     assert owners and all(o.endswith("example-org") for o in owners)
+
+
+def test_each_child_costs_two_reads_in_read_pin_and_in_check_child():
+    import datetime
+    calls = []
+    inner = fake_fetch({"child-a": OLD})
+
+    def counting(path):
+        calls.append(path)
+        return inner(path)
+
+    scan.read_pin("example-org/child-a", counting)
+    assert len(calls) == 2
+    calls.clear()
+    scan.check_child("example-org/child-a", counting, 14, datetime.datetime.now(datetime.timezone.utc))
+    assert [c for c in calls if "contents" in c or c == "repos/example-org/child-a"] == calls[:2]
+    assert calls[:2].count("repos/example-org/child-a") == 1 and len([c for c in calls if "shipquick-call.yml" in c]) == 1
