@@ -2,7 +2,7 @@
 
 Protocol: follow knowledge/shipquick_latest/CLAUDE.md
 
-This file holds facts about this project only. It never repeats a ShipQuick rule. If a rule is missing or wrong, fix it in ShipQuick, not here.
+This file holds facts about this project only, plus one block of ShipQuick rules between the `<!-- shipquick-rules:start -->` and `<!-- shipquick-rules:end -->` lines. `adopt.sh` writes that block from the kit and refreshes it on every pin bump; never edit it by hand. If a rule is missing or wrong, fix it in ShipQuick, not here.
 
 ## Environments
 See `knowledge/shipquick_latest/docs/ENVIRONMENTS.md`. Both lines are required once the project is past milestone D0; `scripts/check_environments.sh` fails CI otherwise.

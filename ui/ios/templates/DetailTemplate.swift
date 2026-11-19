@@ -10,16 +10,19 @@ public struct DetailTemplate: View {
         NavigationStack {
             Form {
                 Section {
-                    LabeledContent("Status", value: "Active")
-                    LabeledContent("Owner", value: "Name")
-                    LabeledContent("Updated", value: "Today")
+                    LabeledContent("Status") { Text("Active").foregroundStyle(ShipQuickTokens.Colors.onSurfaceMuted) }
+                    LabeledContent("Owner") { Text("Name").foregroundStyle(ShipQuickTokens.Colors.onSurfaceMuted) }
+                    LabeledContent("Updated") { Text("Today").foregroundStyle(ShipQuickTokens.Colors.onSurfaceMuted) }
                 }
-                Section("Notes") {
+                Section {
                     Text("A short note about this item. Long text wraps.")
                         .textSelection(.enabled)
+                } header: {
+                    Text("Notes").foregroundStyle(ShipQuickTokens.Colors.onSurfaceMuted)
                 }
                 Section {
                     Button("Delete item", role: .destructive) { confirmDelete = true }
+                        .foregroundStyle(ShipQuickTokens.Colors.error)
                 }
             }
             .navigationTitle("Item")
