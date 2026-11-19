@@ -104,27 +104,145 @@ def test_read_children_accepts_any_whitespace_before_private(tmp_path):
     assert scan.read_children(f) == [("owner/a", True), ("owner/b", True)]
 
 
-def test_a_private_child_with_no_token_is_skipped_with_no_issue_filed():
-    fetch = api(call_content=None)
-    why, should_file = scan.scan_child("owner/child", True, fetch, 14, TODAY, has_token=False)
-    assert why and "no" in why and "SHIPQUICK_CHILD_TOKEN" in why
-    assert should_file is False
 
-
-def test_a_private_child_with_a_token_is_checked_normally():
-    fetch = api(call_content={"content": _b64(f"  shipquick_ref: {FRESH_SHA}\n")}, fresh=True)
-    why, should_file = scan.scan_child("owner/child", True, fetch, 14, TODAY, has_token=True)
-    assert why is None
-    assert should_file is True
-
-
-def test_a_public_child_ignores_has_token():
-    fetch = api(call_content=None)
-    why, should_file = scan.scan_child("owner/child", False, fetch, 14, TODAY, has_token=False)
-    assert why and "shipquick-call.yml" in why
-    assert should_file is True
 
 
 def _b64(text):
     import base64
     return base64.b64encode(text.encode()).decode()
+
+
+# ---- story #225: a rule-24 child names a kit branch; the scan reads the pin and the hooks from it ----
+PROTECTED = {"required_pull_request_reviews": {"required_approving_review_count": 1}, "enforce_admins": {"enabled": True}}
+
+
+def kit_api(kit_sha=FRESH_SHA, hooks=True, kit="dev", seen=None, protection=PROTECTED):
+    def fetch(path):
+        if seen is not None:
+            seen.append(path)
+        if path == "repos/owner/child":
+            return {"default_branch": "main"}
+        if path == "repos/owner/child/branches/dev/protection":
+            return protection
+        if path == "repos/owner/child/contents/.github/workflows/shipquick-call.yml?ref=main":
+            line = f"\n      kit_branch: {kit}" if kit else ""
+            return {"content": _b64(f"    with:\n      shipquick_ref: {FRESH_SHA}{line}\n")}
+        if path == "repos/owner/child/contents/knowledge/shipquick_latest?ref=dev":
+            return {"type": "submodule", "sha": kit_sha}
+        if path == "repos/owner/child/contents/.pre-commit-config.yaml?ref=dev":
+            return {"content": _b64("entry: bash x/scripts/check_local.sh\n" if hooks else "repos: []\n")}
+        if path.startswith(f"repos/{scan.REPO}/commits/"):
+            return {"commit": {"committer": {"date": (TODAY - datetime.timedelta(days=1)).isoformat()}}}
+        return None
+    return fetch
+
+
+def test_s225_a_rule24_child_with_a_matching_pin_and_hooks_on_the_kit_branch_is_adopted():
+    assert scan.check_child("owner/child", kit_api(), days=14, today=TODAY) is None
+
+
+def test_s225_a_rule24_child_whose_kit_branch_pin_differs_is_flagged():
+    why = scan.check_child("owner/child", kit_api(kit_sha=STALE_SHA), days=14, today=TODAY)
+    assert why and "dev" in why and STALE_SHA[:7] in why
+
+
+def test_s225_a_rule24_child_whose_kit_branch_has_no_submodule_is_flagged():
+    def fetch(path):
+        return None if "knowledge/shipquick_latest" in path else kit_api()(path)
+    why = scan.check_child("owner/child", fetch, days=14, today=TODAY)
+    assert why and "dev" in why and "submodule" in why
+
+
+def test_s225_a_rule24_child_with_no_hooks_on_the_kit_branch_is_flagged():
+    why = scan.check_child("owner/child", kit_api(hooks=False), days=14, today=TODAY)
+    assert why and "dev" in why and "pre-commit" in why
+
+
+def test_s225_a_rule24_child_whose_kit_branch_is_not_protected_is_flagged():
+    why = scan.check_child("owner/child", kit_api(protection=None), days=14, today=TODAY)
+    assert why and "dev" in why and "protect" in why
+
+
+def test_s225_a_rule24_child_whose_kit_branch_takes_pushes_without_a_pr_is_flagged():
+    why = scan.check_child("owner/child", kit_api(protection={"enforce_admins": {"enabled": True}}), days=14, today=TODAY)
+    assert why and "pull request reviews" in why
+
+
+def test_s225_the_scan_strips_a_trailing_comment_after_kit_branch():
+    assert scan.check_child("owner/child", kit_api(kit="dev  # documents"), days=14, today=TODAY) is None
+
+
+def test_s225_the_scan_refuses_an_expression_as_kit_branch():
+    why = scan.check_child("owner/child", kit_api(kit="${{ github.base_ref }}"), days=14, today=TODAY)
+    assert why and "expression" in why
+
+
+def test_s225_adopt_sh_and_the_scan_share_one_kit_branch_parser():
+    import kit_branch
+    assert kit_branch.parse("      kit_branch: 'dev' # x\n") == ("dev", None)
+    assert kit_branch.parse("name: x\n") == (None, None)
+    assert kit_branch.parse("      kit_branch: ${{ inputs.b }}\n")[1]
+    assert kit_branch.parse("      kit_branch:\n")[1]
+    assert "kit_branch.py" in (ROOT / "scripts" / "adopt.sh").read_text(encoding="utf-8")
+    assert "kit_branch.py" in (ROOT / "scripts" / "review_merge.sh").read_text(encoding="utf-8")
+
+
+def test_s225_a_child_without_kit_branch_is_scanned_as_before():
+    seen = []
+    assert scan.check_child("owner/child", kit_api(kit=None, seen=seen), days=14, today=TODAY) is None
+    assert not any("knowledge/shipquick_latest" in p or "pre-commit" in p or "protection" in p for p in seen)
+
+
+# ---- story #260: a skipped child is always named in the run summary, with a count ----
+def run_main(monkeypatch, capsys, tmp_path, lines, token=None):
+    f = tmp_path / "children.md"
+    f.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    filed = []
+    monkeypatch.setattr(scan, "gh_api", lambda path, token=None: None)  # every read fails: a 404 or a 403
+    monkeypatch.setattr(scan, "open_or_comment", lambda child, why, dry: filed.append(child))
+    monkeypatch.setattr(sys, "argv", ["adoption_scan.py", "--children", str(f)])
+    if token:
+        monkeypatch.setenv(scan.CHILD_TOKEN_ENV, token)
+    else:
+        monkeypatch.delenv(scan.CHILD_TOKEN_ENV, raising=False)
+    assert scan.main() == 0
+    return capsys.readouterr().out, filed
+
+
+def test_s260_a_private_child_with_no_token_is_named_as_skipped_in_the_summary(monkeypatch, capsys, tmp_path):
+    out, filed = run_main(monkeypatch, capsys, tmp_path, ["owner/a private", "owner/b private"])
+    assert "skipped owner/a: private, no token" in out and "skipped owner/b: private, no token" in out
+    assert "2 skipped" in out and filed == []
+
+
+def test_s260_a_private_child_that_answers_404_or_403_is_skipped_not_filed(monkeypatch, capsys, tmp_path):
+    out, filed = run_main(monkeypatch, capsys, tmp_path, ["owner/a private"], token="t")
+    assert "skipped owner/a: private, cannot read" in out and "1 skipped" in out and filed == []
+
+
+def test_s260_a_public_child_that_cannot_be_read_is_still_filed(monkeypatch, capsys, tmp_path):
+    out, filed = run_main(monkeypatch, capsys, tmp_path, ["owner/a"])
+    assert filed == ["owner/a"] and "0 skipped" in out
+
+
+def test_s260_the_registry_names_every_known_child_and_marks_the_private_ones():
+    got = dict(scan.read_children(ROOT / "docs" / "children.md"))
+    known = {"satvik-jain-iitd/GoServe": False, "klickbae8yt-star/job-search": True, "satvik-jain-iitd/Miraya": True}
+    assert {k: v for k, v in got.items() if k in known} == known
+    # the fourth child is public and its name is banned everywhere but docs/children.md, so it is not spelled here
+    other = set(got) - set(known)
+    assert len(other) == 1 and got[other.pop()] is False
+
+
+def test_s260_scan_child_is_gone_since_main_skips_private_children_itself():
+    assert not hasattr(scan, "scan_child")
+
+
+def test_s260_adoption_md_is_generic_and_the_per_child_facts_live_in_the_registry():
+    doc = (ROOT / "docs" / "ADOPTION.md").read_text(encoding="utf-8")
+    for fact in ("edd3c26", "e0bee8a", "v0.9.0", "forbidden-names", "Children today"):
+        assert fact not in doc, fact
+    assert "<release tag>" in doc
+    reg = (ROOT / "docs" / "children.md").read_text(encoding="utf-8")
+    for child in (r.split("/")[1] for r in dict(scan.read_children(ROOT / "docs" / "children.md"))):
+        assert re.search(rf"^# {child}: .*Next:", reg, re.M), child

@@ -41,41 +41,41 @@ export default {
           ],
           "rows": [
             [
-              "label",
-              "string",
-              "",
-              "The words on the button. Screen readers read them too."
-            ],
-            [
-              "variant",
-              "'primary' | 'secondary' | 'ghost' | 'destructive'",
-              "'secondary'",
-              "How strong the button looks. Primary is for the one main action."
-            ],
-            [
-              "size",
-              "'sm' | 'md' | 'lg'",
-              "'md'",
-              "How big the button is. The touch target never drops below the token."
-            ],
-            [
-              "isDisabled",
-              "boolean",
-              "false",
-              "Greys the button out and ignores presses."
-            ],
-            [
-              "isLoading",
-              "boolean",
-              "false",
-              "Shows a spinner and ignores presses until the action ends."
-            ],
-            [
               "onClick",
               "() => void",
               "",
               "Runs when the user presses the button."
+            ],
+            [
+              "enabled",
+              "boolean",
+              "true",
+              "False greys the button out and ignores presses."
+            ],
+            [
+              "content",
+              "@Composable RowScope.() -> Unit",
+              "",
+              "What sits inside the button: a Text, with an Icon before it when needed."
             ]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "FilledTonalButton: Less strong than Button, stronger than OutlinedButton. Use it for a second action that still matters, like Next in a set-up flow.",
+            "ElevatedButton: A tonal button with a shadow. Use it only when the button must stand apart from a busy background.",
+            "OutlinedButton: A border and no fill. Use it for an important action that is not the main one.",
+            "TextButton: Text only, the weakest look. Use it in dialogs, in cards, and for minor actions.",
+            "ButtonDefaults: The default colours, elevation, shape, padding and sizes for each button type. Take values from it, never type your own.",
+            "ButtonColors: The colours of a button when it is on or off. Make one with ButtonDefaults.buttonColors() or the colour function of its type.",
+            "ButtonElevation: The shadow of a button in each state. Make one with ButtonDefaults.buttonElevation() or the elevation function of its type."
           ]
         }
       ]
@@ -87,8 +87,8 @@ export default {
           "type": "list",
           "style": "do",
           "items": [
-            "Keep one primary button per screen. Use secondary or ghost for the rest.",
-            "Name the action in the label, like \"Save changes\", not \"OK\"."
+            "Name the action in the label, like \"Save changes\", not \"OK\".",
+            "Keep one filled Button per screen for the main action. Use FilledTonalButton, OutlinedButton or TextButton for the rest."
           ]
         },
         {

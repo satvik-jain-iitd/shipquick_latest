@@ -21,6 +21,13 @@ BANNED = {
     "GenericShape": re.compile(r"\bGenericShape\b"),
     "RoundedCornerShape(": re.compile(r"\bRoundedCornerShape\s*\("),
     "custom Shape class": re.compile(r"\b(class|object)\s+\w+[^{\n]*:\s*[\w.]*Shape\b"),
+    # story #185 review: raw gesture-built controls and a wrapped View are hand-made UI too (rule 38)
+    "pointerInput": re.compile(r"\bpointerInput\b"),
+    "detectTapGestures": re.compile(r"\bdetectTapGestures\b"),
+    "detectDragGestures": re.compile(r"\bdetectDragGestures\b"),
+    "draggable": re.compile(r"\bdraggable\b"),
+    "transformable": re.compile(r"\btransformable\b"),
+    "AndroidView": re.compile(r"\bAndroidView\b"),
 }
 # Experimental in the stable M3 releases. Calling one needs the opt-in on the file or the function.
 EXPERIMENTAL = re.compile(r"\b(TopAppBar|CenterAlignedTopAppBar|MediumTopAppBar|LargeTopAppBar|ModalBottomSheet|"
@@ -63,6 +70,12 @@ def test_s134_each_banned_pattern_is_caught():
         "GenericShape": "val s = GenericShape { _, _ -> }",
         "RoundedCornerShape(": "shape = RoundedCornerShape(8.dp)",
         "custom Shape class": "class Blob : Shape {",
+        "pointerInput": "Modifier.pointerInput(Unit) { }",
+        "detectTapGestures": "detectTapGestures { }",
+        "detectDragGestures": "detectDragGestures { _, _ -> }",
+        "draggable": "Modifier.draggable(state, Orientation.Horizontal)",
+        "transformable": "Modifier.transformable(state)",
+        "AndroidView": "AndroidView(factory = { ctx -> View(ctx) })",
     }.items():
         assert f"banned: {label}" in problems(GOOD + line), label
 

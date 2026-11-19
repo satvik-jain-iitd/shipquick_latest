@@ -1,0 +1,8 @@
+# ShipQuick Android UI lint, CI tier (story #185). Laid on top of detekt.yml: the same rules, now errors.
+# Use both files in CI: config.setFrom("detekt.yml", "detekt-ci.yml"). A child's CI must use this tier.
+build:
+  maxIssues: 0
+
+style:
+  ForbiddenImport:
+    severity: error

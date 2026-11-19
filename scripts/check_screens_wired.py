@@ -23,7 +23,7 @@ def decide(screens_text: str, workflow_texts: list) -> str | None:
     if any(CHECK_CALL.search(text) for text in workflow_texts):
         return None
     return ("docs/screens.txt names a screen, but no workflow in .github/workflows runs "
-            "`screens.sh --check` -- add that step to your own ci.yml (docs/SCREENS.md), or the "
+            "`screens.sh --check` -- add that step to your own ci.yml (docs/SCREENS.md, section \"Wiring CI\"), or the "
             "render gate is configured but never run")
 
 
