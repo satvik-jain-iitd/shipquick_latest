@@ -831,3 +831,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: the READMEs of `pytest-ekstazi` and `pytest-selective`. Ekstazi runs the whole suite once, records per-test file dependencies in a json file, and needs a pytest plugin and a stored map. `pytest-selective` follows imports through the code and falls back to the full suite when unsure. Both need an installed plugin and a dependency map or import graph.
 - Reused: the fail-closed idea (when unsure, run everything). Not borrowed: the plugins; the kit has no pytest plugin set-up and the earlier big selector PRs #558 to #560 are replaced.
 - Decision: build the small agreed rule as one stdlib script, `scripts/tests_for_change.py` (a test that names the changed file's base name is picked). Confidence that nothing fits better: 0.75.
+## 19 Nov 2026, story #579: coverage ratchet, pass or fail per changed file
+- Need: a script that reads two coverage reports (baseline and current) and says pass or fail for each changed file, failing closed on any bad report.
+- Run: the radar scout script is not at its documented path on this Mac, so the run is a GitHub topic search (`coverage`, `ratchet`) plus the two tools the story names. The search found `Koleok/jest-coverage-ratchet` and `GetJobber/jest-a-coverage-slip-detector`.
+- Read: the README of `Bachmann1234/diff_cover` (`diff-cover` reports the coverage of the changed lines of a diff and can fail under one percent; it has no per-file baseline), the `coverage report --fail-under` option of coverage.py (one total for the whole run, no per-file baseline), and the two ratchet repos (both are JavaScript, for jest).
+- Borrowed: the idea of a ratchet, a number that may only go up. Not borrowed: any code; none is Python, none compares two coverage.py JSON reports per file, and none fails closed on a bad report.
+- Decision: build from scratch as one stdlib script. Confidence that nothing fits better: 0.8.

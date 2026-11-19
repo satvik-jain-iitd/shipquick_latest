@@ -2355,3 +2355,19 @@ Scenario: a child caller has no concurrency block
   Then adopt.sh --check says so and names the fix
 Scenario: the snippet in docs/ADOPTION.md is run as written
   Then docs only is off, an area path is on, and a skipped job of an on area fails the child's gate
+## Story #579: coverage ratchet (tests/test_check_coverage.py)
+
+```gherkin
+Scenario: a drop below the baseline
+  Then the file fails and the line names both numbers
+Scenario: a file at or above its baseline
+  Then it passes
+Scenario: a current report or a baseline that is missing, unreadable or malformed
+  Then the run exits 1 with the reason and nothing is skipped or read as empty
+Scenario: a changed file that is not in the baseline
+  Then it must reach the new-file floor and is never given a baseline of 0
+Scenario: a changed file that is not in the current report
+  Then it fails
+Scenario: no changed files
+  Then it passes, but only after both reports were read
+```
