@@ -290,6 +290,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [pre-commit]
+    if: github.event_name == 'push'
     strategy:
       matrix:
         python-version: ["3.12"]
@@ -323,11 +324,71 @@ jobs:
         with:
           name: test-results
           path: logs/
+  test-impact:
+    name: test-impact
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [pre-commit]
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.4.x"
+      - name: Install dependencies
+        run: |
+          pip install pytest==9.0.2
+          PINNED=$(cat scripts/graphify_version.txt)
+          pip install "graphifyy==${PINNED}"
+      - name: Build code-only graph
+        env:
+          GRAPHIFY_NO_AUTO_REFRESH: "1"
+        run: |
+          python3 scripts/graphify_kit.py build .
+          SHA=$(git rev-parse HEAD)
+          echo "$SHA" > graphify-out/.source_sha
+          echo "1" > graphify-out/.schema_version
+      - name: Validate manifest
+        run: |
+          python3 scripts/check_test_impact.py --file .shipquick/test-impact.yml
+      - name: Run selector (dry run, write report)
+        run: |
+          BASE=$(git merge-base origin/${{ github.base_ref }} HEAD)
+          python3 scripts/test_impact.py --base "$BASE" --head HEAD --json /tmp/impact-report.json
+          cat /tmp/impact-report.json
+      - name: Run selected tests
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, sys
+          r = json.load(open("/tmp/impact-report.json"))
+          if r.get("fallback"):
+              print("Fallback triggered:", r.get("fallback_reason"))
+              # run full suite
+              subprocess.run(["pytest", "--tb=short"], check=True)
+              subprocess.run(["node", "--test", "roadmap/*.test.js"], shell=True, check=True)
+              sys.exit(0)
+          for c in r.get("selected_commands", []):
+              print("Running:", c["command"])
+              subprocess.run(c["command"].split(), check=True)
+          PY
+      - name: Upload impact report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-impact-report
+          path: /tmp/impact-report.json
+
   gate:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test, graphify-check, test-impact]
     if: always()
     steps:
       - name: Check all job results

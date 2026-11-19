@@ -1,0 +1,32 @@
+version: 1
+languages:
+  - id: python
+    source: ["scripts/**/*.py", "plugin/**/*.py"]
+    tests: ["tests/test_*.py"]
+    runner: pytest
+    command: "pytest {tests}"
+    full_suite: "pytest --tb=short"
+  - id: node
+    source: ["roadmap/**/*.js"]
+    tests: ["roadmap/*.test.js"]
+    runner: node
+    command: "node --test {tests}"
+    full_suite: "node --test roadmap/*.test.js"
+global_impact:
+  - "pyproject.toml"
+  - "requirements*.txt"
+  - "package.json"
+  - "package-lock.json"
+  - ".github/workflows/**"
+  - "scripts/check_*.py"
+  - "scripts/test_impact.py"
+  - "scripts/graphify_kit.py"
+  - "scripts/graphify_version.txt"
+  - "conftest.py"
+  - "pytest.ini"
+  - "tox.ini"
+mappings: []
+contract_groups: []
+full_suite_commands:
+  python: "pytest --tb=short"
+  node: "node --test roadmap/*.test.js"
