@@ -143,3 +143,9 @@ def test_the_workflow_step_keeps_the_planner_exit_code():
     text = WF.read_text()
     assert "set -o pipefail" in text and "GITHUB_STEP_SUMMARY" in text
     assert "|| true" not in text and "continue-on-error" not in text
+
+
+def test_the_workflow_step_has_the_workflow_token_for_public_children():
+    # without GH_TOKEN, gh cannot read any public child on a runner and every child is `unread`
+    text = WF.read_text()
+    assert "GH_TOKEN: ${{ github.token }}" in text.split("env:", 1)[1].split("run:", 1)[0]

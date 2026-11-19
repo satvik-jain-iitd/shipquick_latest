@@ -25,6 +25,7 @@ jobs:
       - name: Print the plan for the tag's commit
         env:
           TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+          GH_TOKEN: ${{ github.token }}
           SHIPQUICK_CHILD_TOKEN: ${{ secrets.SHIPQUICK_CHILD_TOKEN }}
         run: |
           set -o pipefail
