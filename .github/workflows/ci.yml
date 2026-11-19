@@ -323,11 +323,39 @@ jobs:
         with:
           name: test-results
           path: logs/
+  graphify-check:
+    name: graphify-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [pre-commit]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install Graphify (pinned)
+        run: |
+          PINNED=$(cat scripts/graphify_version.txt)
+          pip install "graphifyy==${PINNED}"
+      - name: Build code-only graph
+        env:
+          GRAPHIFY_NO_AUTO_REFRESH: "1"
+        run: |
+          python3 scripts/graphify_kit.py build .
+      - name: Verify freshness
+        run: |
+          python3 scripts/graphify_kit.py check .
+      - name: Upload graph artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: graphify-out
+          path: graphify-out/
   gate:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test]
+    needs: [pre-commit, commit-msg, pr-size, frontend-design, disable-comments, roles, team-block, uat-checklist, freeze, ui-docs, ui-cli, secret-scan, dependency-review, test, graphify-check]
     if: always()
     steps:
       - name: Check all job results
@@ -346,6 +374,7 @@ jobs:
           echo "secret-scan: ${{ needs.secret-scan.result }}"
           echo "dependency-review: ${{ needs.dependency-review.result }}"
           echo "test: ${{ needs.test.result }}"
+          echo "graphify-check: ${{ needs.graphify-check.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"
             exit 1
