@@ -291,3 +291,10 @@ def test_a_push_with_no_linked_story_passes_without_an_author_or_a_reviewer_list
 def test_a_push_with_no_linked_story_and_no_author_variable_passes(tmp_path):
     r = run_pr(tmp_path, None, author=None, reviewers="", body="## What\nNo link.\n")
     assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+# ---- #555 round 3, point 4: the feature text claims only what a check tests (no timing claim) ----
+@pytest.mark.parametrize("rel", ("scripts/features_default.json", "docs/FEATURES.md"))
+def test_the_feature_text_makes_no_timing_claim(rel):
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    assert "before the coder wrote code" not in text, rel
