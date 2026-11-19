@@ -127,3 +127,29 @@ def test_check_local_flaky_passes_when_the_repo_has_no_registry(tmp_path):
     """A child has no registry file: a missing file is a pass, never a read of the kit's own file."""
     r = local_flaky(tmp_path)
     assert r.returncode == 0 and "ok   flaky" in r.stdout, (r.stdout, r.stderr)
+
+
+# ---- #562 review point 3: one short doc says what the registry is and is not ----
+def flaky_doc():
+    return (ROOT / "docs" / "FLAKY_TESTS.md").read_text(encoding="utf-8")
+
+
+def test_the_doc_names_every_field_of_a_registry_row():
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import check_flaky
+    text = flaky_doc()
+    for field in sorted(check_flaky.REQUIRED):
+        assert f"`{field}`" in text, field
+
+
+def test_the_doc_says_it_is_a_list_with_an_expiry_and_not_a_skip_switch():
+    text = flaky_doc()
+    assert "not a skip switch" in text and "no test runner reads" in text.lower()
+
+
+def test_the_doc_says_who_adds_a_row_and_what_expired_blocks():
+    text = flaky_doc()
+    assert ".shipquick/flaky-tests.json" in text and "check_local.sh flaky" in text
+    assert "the coder" in text and "protected path" in text and "owner merges" in text
+    assert "`quarantined`" in text and "`fixed`" in text and "expires_on" in text and "fails" in text
