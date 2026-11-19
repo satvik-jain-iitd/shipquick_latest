@@ -57,6 +57,14 @@ body:
     attributes:
       label: Approved
       description: Required if Frontend change is yes. The date the owner approved that board.
+  - type: dropdown
+    id: size
+    attributes:
+      label: "Size (T-shirt)"
+      description: "Change surface and risk, not time. Only XS and S may be planned; M, L and XL must be split first (ADR-020, scripts/check_story_size.py)."
+      options: ["XS", "S", "M", "L", "XL"]
+    validations:
+      required: true
   - type: checkboxes
     id: dor
     attributes:
@@ -66,6 +74,7 @@ body:
         - label: Every scenario testable (unit, fixture, or matrix row)
         - label: Persona and FR named
         - label: "Who does it: the actor, app or screen, and how often are named, and the actor is the person who has the pain (story #155)"
+        - label: "Size is XS or S; M, L and XL stories are split before Ready (ADR-020)"
         - label: Dependencies listed and available
         - label: Ponytail check written
         - label: Owner has seen the issue

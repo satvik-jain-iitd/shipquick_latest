@@ -90,5 +90,3 @@ def test_s187_check_names_a_missing_platform_file(child):
     (child / SNIP / "lint" / "detekt.yml").unlink()
     r = adopt(child, "--check", "--platforms", "android,ios")
     assert "platforms: not ready" in r.stdout and "detekt.yml" in r.stdout
-
-

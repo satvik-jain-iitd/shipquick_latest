@@ -564,6 +564,15 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
 
+**S0.17 Story size gate (ADR-020).**
+```gherkin
+Scenario: a story sized M, L or XL is refused at Ready
+  Given a user-story issue created on or after 2026-11-19
+  When it has no Size line, or Size is M, L or XL
+  Then check_story_size.py exits 1 and names the size
+  And a Size of XS or S passes
+```
+Tests: `tests/test_check_story_size.py` (ADR-020). CI: pytest. Local: `python3 scripts/check_story_size.py`.
 ## Story #260: a child can enforce ShipQuick
 ```gherkin
 Scenario: the gate is a required check on the child's default branch

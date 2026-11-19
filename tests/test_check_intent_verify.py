@@ -1,0 +1,319 @@
+"""Intent-verification gate (ADR-021). The proof is an issue comment, `Intent verified by QA: YYYY-MM-DD`, from a login
+that is not the PR author. The PR body never counts: the coder writes it."""
+import json
+import os
+import subprocess
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+SCRIPT = ROOT / "scripts" / "check_intent_verify.py"
+PROOF = "Intent verified by QA: 2026-11-19"
+
+
+STUB = """#!/usr/bin/env bash
+case "$1 $2" in
+  "auth status") [ -n "${STUB_NO_AUTH:-}" ] && { echo "You are not logged into any GitHub hosts. Run gh auth login" >&2; exit 1; }; exit 0 ;;
+  "issue view") cat "$STUB_DIR/issue.json"; exit 0 ;;
+  "api user") echo "${STUB_LOGIN:-dev-login}"; exit 0 ;;
+esac
+exit 9
+"""
+
+
+def stub_env(tmp_path, issue=None, no_auth=False):
+    stub = tmp_path / "stub"; stub.mkdir(exist_ok=True)
+    (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
+    if issue is not None:
+        (stub / "issue.json").write_text(json.dumps(issue), encoding="utf-8")
+    return {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "STUB_NO_AUTH": "1" if no_auth else ""}
+
+
+def comment(login, body):
+    return {"author": {"login": login}, "body": body}
+
+
+def story_issue(created="2026-11-20T09:00:00Z", comments=()):
+    return {"labels": [{"name": "user-story"}], "body": "## Value\nNo actor line.\n", "createdAt": created, "comments": list(comments)}
+
+
+def run_pr(tmp_path, issue, author="dev-login", body="Closes #12\n## What\nFix.\n", reviewers="qa-login"):
+    f = tmp_path / "body.md"
+    f.write_text(body, encoding="utf-8")
+    env = stub_env(tmp_path, issue)
+    if author is None:
+        env.pop("PR_AUTHOR", None)
+    else:
+        env["PR_AUTHOR"] = author
+    return subprocess.run(["python3", str(SCRIPT), "--pr-body-file", str(f), "--reviewers", reviewers], capture_output=True, text=True, env=env)
+
+
+def test_a_proof_comment_from_another_login_passes(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF)]))
+    assert r.returncode == 0 and "intent OK" in r.stdout, r.stdout
+
+
+def test_a_proof_comment_by_the_pr_author_does_not_count(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("dev-login", PROOF)]))
+    assert r.returncode == 1 and "no comment" in r.stdout, r.stdout
+
+
+def test_the_author_match_ignores_case(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("Dev-Login", PROOF)]), author="dev-login")
+    assert r.returncode == 1, r.stdout
+
+
+def test_a_line_in_the_pr_body_alone_does_not_count(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[]), body=f"Closes #12\n{PROOF}\n")
+    assert r.returncode == 1 and "no comment" in r.stdout, r.stdout
+
+
+def test_a_story_with_no_comment_at_all_fails(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[]))
+    assert r.returncode == 1, r.stdout
+
+
+def test_a_comment_without_a_date_does_not_count(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", "Intent verified by QA: yes")]))
+    assert r.returncode == 1, r.stdout
+
+
+def test_an_empty_pr_author_fails_with_a_clear_line_even_with_a_proof_comment(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF)]), author="")
+    assert r.returncode == 1 and "PR_AUTHOR" in r.stdout, r.stdout
+
+
+def test_a_missing_pr_author_fails_with_a_clear_line(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF)]), author=None)
+    assert r.returncode == 1 and "PR_AUTHOR" in r.stdout, r.stdout
+
+
+@pytest.mark.parametrize("created,has_proof,rc", [
+    ("2026-11-18T10:00:00Z", False, 0),   # before the rule: skipped
+    ("2026-11-19T00:00:00Z", True, 0),    # on/after the rule with a proof comment from another login: passes
+    ("2026-11-20T09:00:00Z", False, 1),   # on/after the rule without a proof comment: fails
+])
+def test_a_story_created_before_the_rule_is_skipped(tmp_path, created, has_proof, rc):
+    comments = [comment("qa-login", PROOF)] if has_proof else []
+    r = run_pr(tmp_path, story_issue(created, comments))
+    assert r.returncode == rc, r.stdout
+
+
+def test_pr_body_mode_skips_a_body_with_no_linked_issue(tmp_path):
+    r = run_pr(tmp_path, None, body="## What\nNo link.\n")
+    assert r.returncode == 0, r.stdout
+
+
+# ---- fix 2 (#523 review): the local check judges the same proof as CI ----
+def local_repo(tmp_path, message="feat: x\n\nCloses #12"):
+    repo = tmp_path / "repo"; repo.mkdir()
+    git = lambda *a: subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True)
+    git("init", "-q", "-b", "dev"); git("config", "user.email", "t@example.com"); git("config", "user.name", "t")
+    git("commit", "-q", "--allow-empty", "-m", "chore: base")
+    git("update-ref", "refs/remotes/origin/dev", "HEAD")
+    git("commit", "-q", "--allow-empty", "-m", message)
+    (repo / ".shipquick").mkdir()
+    (repo / ".shipquick" / "roles.yml").write_text("coder: dev-login\nreviewer: qa-login\nowner: owner-login\n", encoding="utf-8")
+    return repo
+
+
+def run_local(tmp_path, repo, issue, login="dev-login"):
+    env = stub_env(tmp_path, issue)
+    env.pop("PR_AUTHOR", None)   # an inherited PR_AUTHOR must not change what these tests judge
+    env["STUB_LOGIN"] = login
+    return subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
+
+
+def test_local_passes_on_a_proof_comment_from_another_login(tmp_path):
+    r = run_local(tmp_path, local_repo(tmp_path), story_issue(comments=[comment("qa-login", PROOF)]), login="dev-login")
+    assert r.returncode == 0 and "intent OK" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_local_fails_on_a_proof_comment_from_the_logged_in_author(tmp_path):
+    r = run_local(tmp_path, local_repo(tmp_path), story_issue(comments=[comment("dev-login", PROOF)]), login="dev-login")
+    assert r.returncode != 0 and "no comment" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_local_fails_on_a_linked_new_story_with_no_proof_comment(tmp_path):
+    r = run_local(tmp_path, local_repo(tmp_path), story_issue(comments=[]), login="dev-login")
+    assert r.returncode != 0, (r.stdout, r.stderr)
+    assert "no comment" in r.stdout, r.stdout
+
+
+# ---- fix 3 (#523 review): no doc line promises an `Intent:` block field that no check or example backs ----
+def test_the_intent_field_is_not_promised_in_the_protocol_or_the_adr():
+    for rel in ("docs/TEAM_PROTOCOL.md", "docs/decisions/ADR-021.md"):
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        assert "`Intent:`" not in text and "Intent:` field" not in text, f"{rel} still promises an Intent: field"
+
+
+# ---- fix 4 (#523 review): ADR-021 says who types the confirmation and what is still not stopped ----
+def adr_last_section():
+    text = (ROOT / "docs" / "decisions" / "ADR-021.md").read_text(encoding="utf-8")
+    return text.split("## What this does not stop", 1)[1]
+
+
+def test_the_adr_says_qa_types_the_confirmation_on_the_issue_not_dev_in_the_body():
+    section = adr_last_section()
+    assert "recorded by Dev" not in section and "Owner yes" not in section
+    assert "QA" in section and "comment" in section and "not the PR author" in section
+
+
+def test_the_adr_says_what_is_still_not_stopped():
+    assert "does not read the say-back" in adr_last_section()
+
+
+# ---- #555 qa review, point 1: no stale "PR body" proof text left in the docs ----
+STALE_DOCS = ("docs/decisions/ADR-021.md", "docs/TEAM_ROSTER.md", "docs/TEAM_PROTOCOL.md")
+
+
+@pytest.mark.parametrize("rel", STALE_DOCS)
+def test_no_doc_says_the_proof_is_recorded_in_the_pr_body(rel):
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    for stale in ("recorded in the PR body", "PR body carries the confirmation", "Dev that types a confirmation QA never gave passes"):
+        assert stale not in text, f"{rel} still says: {stale!r}"
+
+
+def test_the_adr_names_that_a_login_with_write_access_can_edit_a_comment():
+    assert "edit" in adr_last_section() and "write access" in adr_last_section()
+
+
+# ---- #555 qa review, point 2: the local skip when gh is not logged in is tested again ----
+def test_check_local_skips_the_intent_check_when_gh_is_not_logged_in(tmp_path):
+    repo = local_repo(tmp_path)
+    env = stub_env(tmp_path, story_issue(comments=[]), no_auth=True)
+    env.pop("PR_AUTHOR", None)
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert "skip intent-verify: gh is not logged in" in r.stdout
+
+
+# ---- #555 round 2, point 2: the proof counts only from a login on the reviewer list (scripts/roles.py get reviewer) ----
+def test_a_stranger_or_a_bot_login_not_on_the_reviewer_list_does_not_count(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("random-bot", PROOF)]))
+    assert r.returncode == 1 and "no comment" in r.stdout, r.stdout
+
+
+def test_any_login_on_a_comma_separated_reviewer_list_counts(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("other-reviewer", PROOF)]), reviewers="qa-login, other-reviewer")
+    assert r.returncode == 0 and "intent OK" in r.stdout, r.stdout
+
+
+def test_a_reviewer_who_is_also_the_pr_author_does_not_count(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("dev-login", PROOF)]), author="dev-login", reviewers="dev-login")
+    assert r.returncode == 1, r.stdout
+
+
+def test_an_empty_reviewer_list_fails_with_a_clear_line(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF)]), reviewers="")
+    assert r.returncode == 1 and "reviewer list is empty" in r.stdout, r.stdout
+
+
+# ---- #555 round 2, point 1: a quote or a sentence that merely mentions the phrase is not a proof ----
+@pytest.mark.parametrize("body", [
+    "> Intent verified by QA: 2026-11-19",
+    "Intent verified by QA: 2026-11-19 is NOT given",
+    "The line `Intent verified by QA: 2026-11-19` is what QA writes",
+])
+def test_a_quote_or_a_sentence_with_the_phrase_does_not_count(tmp_path, body):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", body)]))
+    assert r.returncode == 1 and "no comment" in r.stdout, (body, r.stdout)
+
+
+def test_the_plain_line_with_trailing_spaces_still_counts(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF + "   ")]))
+    assert r.returncode == 0, r.stdout
+
+
+# ---- #555 round 2, point 3: check_local.sh keeps a PR_AUTHOR already set, else the gh login; the skip label is intent-verify ----
+def test_local_keeps_a_pr_author_already_set_in_the_environment(tmp_path):
+    env = stub_env(tmp_path, story_issue(comments=[comment("qa-login", PROOF)]))
+    env.update({"STUB_LOGIN": "dev-login", "PR_AUTHOR": "qa-login"})   # the PR author is qa-login here, so its own comment must not count
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=local_repo(tmp_path), capture_output=True, text=True, env=env)
+    assert r.returncode == 1 and "no comment" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_local_skip_line_names_intent_verify(tmp_path):
+    repo = tmp_path / "bare"; repo.mkdir()
+    subprocess.run(["git", "-C", str(repo), "init", "-q", "-b", "feat"], check=True)
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=stub_env(tmp_path))
+    assert "skip intent-verify:" in r.stdout, (r.stdout, r.stderr)
+
+
+# ---- #555 round 2, point 4: the check has its own feature id, so a child can turn it off (kit CI only) ----
+def test_the_intent_verify_feature_is_on_by_default_and_not_locked():
+    d = json.loads((ROOT / "scripts" / "features_default.json").read_text(encoding="utf-8"))["features"]["intent-verify"]
+    assert d["default"] is True and d["locked"] is False and d["name"] and d["what"] and d["if_off"] and d["group"]
+
+
+def test_turning_intent_verify_off_skips_the_local_check(tmp_path):
+    repo = local_repo(tmp_path)
+    r = subprocess.run(["python3", str(ROOT / "scripts" / "features.py"), "--root", str(repo), "set", "intent-verify", "off"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    env = stub_env(tmp_path, story_issue(comments=[]))
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
+    assert "skipped: intent-verify is off" in r.stdout, (r.stdout, r.stderr)
+
+
+# ---- #555 round 2, points 2, 4 and 5: the docs say the reviewer list decides, the check is kit CI only, and the old-issue gap ----
+@pytest.mark.parametrize("rel", ("docs/decisions/ADR-021.md", "docs/TEAM_PROTOCOL.md"))
+def test_the_docs_say_reviewer_list_and_kit_ci_only(rel):
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    assert "reviewer list" in text and "kit CI only" in text, rel
+    assert "cannot tell a QA login" not in text, rel
+
+
+def test_the_adr_names_the_old_or_unlabelled_issue_gap():
+    section = adr_last_section()
+    assert "old or unlabelled issue" in section and "not checked" in section
+
+
+# ---- #555 round 3, point 1: a comment typed in the browser has \r\n line endings; the proof still counts ----
+def test_a_multi_line_comment_with_windows_line_endings_counts(tmp_path):
+    body = "Thanks, I read the say-back.\r\n" + PROOF + "\r\nThe scope is right.\r\n"
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", body)]))
+    assert r.returncode == 0 and "intent OK" in r.stdout, r.stdout
+
+
+def test_a_proof_line_ending_in_a_carriage_return_counts(tmp_path):
+    r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF + "\r")]))
+    assert r.returncode == 0, r.stdout
+
+
+# ---- #555 round 3, point 2: the author and reviewer-list checks fire only for a gated story, never for a push with no link ----
+def test_a_push_with_no_linked_story_passes_without_an_author_or_a_reviewer_list(tmp_path):
+    r = run_pr(tmp_path, None, author="", reviewers="", body="## What\nNo link.\n")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_a_push_with_no_linked_story_and_no_author_variable_passes(tmp_path):
+    r = run_pr(tmp_path, None, author=None, reviewers="", body="## What\nNo link.\n")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+# ---- #555 round 3, point 4: the feature text claims only what a check tests (no timing claim) ----
+@pytest.mark.parametrize("rel", ("scripts/features_default.json", "docs/FEATURES.md"))
+def test_the_feature_text_makes_no_timing_claim(rel):
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    assert "before the coder wrote code" not in text, rel
+
+
+# ---- #555 round 3, point 5: TEAM_ROSTER names the reviewer list, ADR-021 point 3 says "a PR", the local check runs in a child too ----
+def test_team_roster_names_the_reviewer_list():
+    section = (ROOT / "docs" / "TEAM_ROSTER.md").read_text(encoding="utf-8").split("## Intent-verification gate (ADR-021)", 1)[1]
+    assert "reviewer list" in section.split("\n## ", 1)[0]
+
+
+def test_adr_point_3_says_a_pr_not_a_dev_authored_pr():
+    text = (ROOT / "docs" / "decisions" / "ADR-021.md").read_text(encoding="utf-8")
+    assert "dev-authored PR" not in text and "fails a PR (linked" in text
+
+
+def test_the_adr_says_once_that_the_local_check_runs_in_a_child_too():
+    assert text_count("The local check runs in a child too", "docs/decisions/ADR-021.md") == 1
+
+
+def text_count(needle, rel):
+    return (ROOT / rel).read_text(encoding="utf-8").count(needle)
