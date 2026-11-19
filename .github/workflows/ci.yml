@@ -257,7 +257,8 @@ jobs:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
-          python3 scripts/check_intent_verify.py --pr-body-file /tmp/pr-body.md
+          reviewers="$(python3 scripts/roles.py get reviewer)"
+          python3 scripts/check_intent_verify.py --pr-body-file /tmp/pr-body.md --reviewers "$reviewers"
       - name: Check every linked user story is XS or S (ADR-020)
         env:
           GH_TOKEN: ${{ github.token }}

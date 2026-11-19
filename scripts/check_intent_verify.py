@@ -3,7 +3,7 @@ issue, as a comment `Intent verified by QA: <YYYY-MM-DD>`. The proof must come f
 because the coder writes the PR body and the coder cannot pass its own gate.
 
 Usage:
-  PR_AUTHOR=<login> python3 scripts/check_intent_verify.py --pr-body-file f
+  PR_AUTHOR=<login> python3 scripts/check_intent_verify.py --pr-body-file f --reviewers <a,b>
       check every `user-story` issue the PR body links (needs gh). In CI PR_AUTHOR is the PR's author. Locally
       check_local.sh sets it to the logged-in gh login, which is the author of a local branch.
 Exit 0 and "intent OK", or exit 1 and the reason. An empty PR_AUTHOR fails: an unknown author never passes.
@@ -21,18 +21,19 @@ PROOF = re.compile(r"^[\s>*_-]*intent verified by qa[*_]*\s*:[*_]*\s*(\d{4}-\d{2
 RULE_DATE = "2026-11-19"   # stories made before the rule are skipped, never failed
 
 
-def check_comments(comments, author: str) -> str | None:
-    """A proof is a comment with the phrase and a date, from a login that is not the PR author (case-insensitive)."""
+def check_comments(comments, author: str, reviewers: set) -> str | None:
+    """A proof is a comment with the phrase and a date, from a login on the reviewer list (scripts/roles.py get reviewer)
+    that is not the PR author. Logins compare without case."""
     for c in comments:
-        login = ((c.get("author") or {}).get("login") or "").strip()
-        if not login or login.lower() == author.lower():
+        login = ((c.get("author") or {}).get("login") or "").strip().lower()
+        if not login or login not in reviewers or login == author.lower():
             continue
         if PROOF.search(c.get("body") or ""):
             return None
-    return "no comment `Intent verified by QA: YYYY-MM-DD` from a login other than the PR author (ADR-021)"
+    return "no comment `Intent verified by QA: YYYY-MM-DD` from a reviewer-list login other than the PR author (ADR-021)"
 
 
-def check_pr_body(body: str, author: str) -> str | None:
+def check_pr_body(body: str, author: str, reviewers: set) -> str | None:
     for n in dict.fromkeys(LINK.findall(body)):
         out = subprocess.run(["gh", "issue", "view", n, "--json", "labels,body,createdAt,comments"], capture_output=True, text=True)
         if out.returncode != 0:
@@ -43,7 +44,7 @@ def check_pr_body(body: str, author: str) -> str | None:
         if (info.get("createdAt") or "")[:10] < RULE_DATE:
             print(f"skip #{n}: story created before {RULE_DATE}, when the intent gate began")
             continue
-        why = check_comments(info.get("comments") or [], author)
+        why = check_comments(info.get("comments") or [], author, reviewers)
         if why:
             return f"issue #{n}: {why}"
     return None
@@ -52,12 +53,17 @@ def check_pr_body(body: str, author: str) -> str | None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--pr-body-file", required=True, help="the PR body; every user-story issue it links is checked")
+    ap.add_argument("--reviewers", default="", help="comma list of reviewer logins: `scripts/roles.py get reviewer`")
     args = ap.parse_args()
-    author = os.environ.get("PR_AUTHOR", "")
-    if not author.strip():
+    author = os.environ.get("PR_AUTHOR", "").strip()
+    if not author:
         print("PR_AUTHOR is empty: the check cannot tell who wrote the PR, so it fails (set PR_AUTHOR to the PR's author login)")
         return 1
-    why = check_pr_body(open(args.pr_body_file, encoding="utf-8").read(), author)
+    reviewers = {r.strip().lower() for r in args.reviewers.split(",") if r.strip()}
+    if not reviewers:
+        print("the reviewer list is empty: no login can confirm the intent, so it fails (scripts/roles.py get reviewer)")
+        return 1
+    why = check_pr_body(open(args.pr_body_file, encoding="utf-8").read(), author, reviewers)
     if why:
         print(why)
         return 1

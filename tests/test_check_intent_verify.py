@@ -113,6 +113,8 @@ def local_repo(tmp_path, message="feat: x\n\nCloses #12"):
     git("commit", "-q", "--allow-empty", "-m", "chore: base")
     git("update-ref", "refs/remotes/origin/dev", "HEAD")
     git("commit", "-q", "--allow-empty", "-m", message)
+    (repo / ".shipquick").mkdir()
+    (repo / ".shipquick" / "roles.yml").write_text("coder: dev-login\nreviewer: qa-login\nowner: owner-login\n", encoding="utf-8")
     return repo
 
 
