@@ -103,3 +103,36 @@ def test_a_story_created_before_the_rule_is_skipped(tmp_path, created, has_proof
 def test_pr_body_mode_skips_a_body_with_no_linked_issue(tmp_path):
     r = run_pr(tmp_path, None, body="## What\nNo link.\n")
     assert r.returncode == 0, r.stdout
+
+
+# ---- fix 2 (#523 review): the local check judges the same proof as CI ----
+def local_repo(tmp_path, message="feat: x\n\nCloses #12"):
+    repo = tmp_path / "repo"; repo.mkdir()
+    git = lambda *a: subprocess.run(["git", "-C", str(repo), *a], check=True, capture_output=True)
+    git("init", "-q", "-b", "dev"); git("config", "user.email", "t@example.com"); git("config", "user.name", "t")
+    git("commit", "-q", "--allow-empty", "-m", "chore: base")
+    git("update-ref", "refs/remotes/origin/dev", "HEAD")
+    git("commit", "-q", "--allow-empty", "-m", message)
+    return repo
+
+
+def run_local(tmp_path, repo, issue, login="dev-login"):
+    env = stub_env(tmp_path, issue)
+    env["STUB_LOGIN"] = login
+    return subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
+
+
+def test_local_passes_on_a_proof_comment_from_another_login(tmp_path):
+    r = run_local(tmp_path, local_repo(tmp_path), story_issue(comments=[comment("qa-login", PROOF)]), login="dev-login")
+    assert r.returncode == 0 and "intent OK" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_local_fails_on_a_proof_comment_from_the_logged_in_author(tmp_path):
+    r = run_local(tmp_path, local_repo(tmp_path), story_issue(comments=[comment("dev-login", PROOF)]), login="dev-login")
+    assert r.returncode != 0 and "no comment" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_local_fails_on_a_linked_new_story_with_no_proof_comment(tmp_path):
+    r = run_local(tmp_path, local_repo(tmp_path), story_issue(comments=[]), login="dev-login")
+    assert r.returncode != 0, (r.stdout, r.stderr)
+    assert "no comment" in r.stdout, r.stdout
