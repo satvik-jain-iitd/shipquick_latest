@@ -48,7 +48,6 @@ def test_no_step_of_the_graph_job_hides_a_failure():
         assert "|| true" not in str(s.get("run", ""))
     run = "\n".join(str(s.get("run", "")) for s in job["steps"])
     assert "set -e" in run or "bash -e" in run or all(s.get("shell") is None for s in job["steps"])
-    assert "--require" not in run or True  # the check passes --require itself (scripts/graphify_kit.py)
     assert "test -s" in run or "[ -s" in run, "an empty or missing version file must stop the job"
 
 
