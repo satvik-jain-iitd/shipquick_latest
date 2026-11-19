@@ -120,6 +120,7 @@ def local_repo(tmp_path, message="feat: x\n\nCloses #12"):
 
 def run_local(tmp_path, repo, issue, login="dev-login"):
     env = stub_env(tmp_path, issue)
+    env.pop("PR_AUTHOR", None)   # an inherited PR_AUTHOR must not change what these tests judge
     env["STUB_LOGIN"] = login
     return subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
 
@@ -182,6 +183,7 @@ def test_the_adr_names_that_a_login_with_write_access_can_edit_a_comment():
 def test_check_local_skips_the_intent_check_when_gh_is_not_logged_in(tmp_path):
     repo = local_repo(tmp_path)
     env = stub_env(tmp_path, story_issue(comments=[]), no_auth=True)
+    env.pop("PR_AUTHOR", None)
     r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
     assert r.returncode == 0, (r.stdout, r.stderr)
     assert "skip intent-verify: gh is not logged in" in r.stdout
