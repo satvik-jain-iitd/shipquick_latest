@@ -215,15 +215,23 @@ jobs:
     env:
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BASE: ${{ github.base_ref }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
         run: |
+          if ! err=$(gh api -H "Accept: application/vnd.github.raw" "repos/$GH_REPO/contents/.shipquick/roles.yml?ref=$BASE" 2>&1 > "$RUNNER_TEMP/roles.yml"); then
+            rm -f "$RUNNER_TEMP/roles.yml"
+            echo "no .shipquick/roles.yml on branch $BASE"
+            echo "$err"
+            exit 1
+          fi
           commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --paginate --jq '.[] | "\(.author.login):\(.parents | length):\([.commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s][-1] // "")"' | paste -sd, -)
-          coders=$(python3 scripts/roles.py get coder)
-          reviewers=$(python3 scripts/roles.py get reviewer)
-          owner=$(python3 scripts/roles.py get owner)
-          coder_sessions=$(python3 scripts/roles.py get coder_sessions)
+          coders=$(python3 scripts/roles.py get coder --file "$RUNNER_TEMP/roles.yml")
+          reviewers=$(python3 scripts/roles.py get reviewer --file "$RUNNER_TEMP/roles.yml")
+          owner=$(python3 scripts/roles.py get owner --file "$RUNNER_TEMP/roles.yml")
+          coder_sessions=$(python3 scripts/roles.py get coder_sessions --file "$RUNNER_TEMP/roles.yml")
           python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner" --coder-sessions "$coder_sessions"
   team-block:
     runs-on: ubuntu-latest
@@ -257,9 +265,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE: ${{ github.base_ref }}
         run: |
+          if ! err=$(gh api -H "Accept: application/vnd.github.raw" "repos/$GH_REPO/contents/.shipquick/roles.yml?ref=$BASE" 2>&1 > "$RUNNER_TEMP/roles.yml"); then
+            rm -f "$RUNNER_TEMP/roles.yml"
+            echo "no .shipquick/roles.yml on branch $BASE"
+            echo "$err"
+            exit 1
+          fi
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
-          reviewers="$(python3 scripts/roles.py get reviewer)"
+          reviewers="$(python3 scripts/roles.py get reviewer --file "$RUNNER_TEMP/roles.yml")"
           python3 scripts/check_intent_verify.py --pr-body-file /tmp/pr-body.md --reviewers "$reviewers"
       - name: Check every AC of a linked user story maps to a real test (#544)
         if: github.event_name == 'pull_request'
