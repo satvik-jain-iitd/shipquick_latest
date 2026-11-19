@@ -153,3 +153,22 @@ def test_the_doc_says_who_adds_a_row_and_what_expired_blocks():
     assert ".shipquick/flaky-tests.json" in text and "check_local.sh flaky" in text
     assert "the coder" in text and "protected path" in text and "owner merges" in text
     assert "`quarantined`" in text and "`fixed`" in text and "expires_on" in text and "fails" in text
+
+
+# ---- story #569: CI runs the check, the doc says so ----
+def test_ci_runs_the_flaky_check():
+    """AC-1: a step in the pre-commit job (the gate needs it, it runs on a push to dev) runs the check; no pull_request-only if on it."""
+    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    job = text.split("\n  pre-commit:\n", 1)[1].split("\n  commit-msg:\n", 1)[0]
+    i = job.index("python3 scripts/check_flaky.py --file .shipquick/flaky-tests.json")
+    step = job[job.rfind("      - ", 0, i):].split("\n      - ", 1)[0]
+    assert "if:" not in step, step
+    gate = text.split("\n  gate:\n", 1)[1]
+    assert "needs: [pre-commit," in gate
+
+
+def test_the_doc_names_the_optional_fields_and_where_it_runs():
+    text = flaky_doc()
+    for field in ("tier", "last_failure", "run_url"):
+        assert f"`{field}`" in text, field
+    assert "before a push and in CI" in text

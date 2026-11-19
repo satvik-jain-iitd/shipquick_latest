@@ -602,3 +602,10 @@ def test_s498_the_unmapped_path_message_does_not_print_a_map_path(tmp_path):
     d = child_decide(repo, *CHILD_ARGS)
     msg = " ".join(d["reasons"])
     assert d["all"] is True and "no row in the change map names this path" in msg and "change_map.json" not in msg, d["reasons"]
+
+
+def test_a_flaky_list_change_wakes_no_phone_job(tmp_path):
+    """Story #569, AC-2: a row added to the flaky list is not UI work."""
+    repo = make_repo(tmp_path)
+    change(repo, ".shipquick/flaky-tests.json", text="[]\n")
+    assert on(decide(repo)) == {"android": False, "ios": False, "snapshot": False}
