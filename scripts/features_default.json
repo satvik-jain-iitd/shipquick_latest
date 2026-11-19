@@ -100,7 +100,7 @@
     "intent-verify": {
       "name": "Intent confirmed by QA first",
       "what": "Checks that a reviewer confirmed the coder's say-back on each story a pull request closes, in a comment on the story.",
-      "if_off": "A pull request may close a story no reviewer confirmed. Kit CI only: a child gets this check from its own copy of the kit, and the kit's CI still runs it.",
+      "if_off": "A pull request may close a story no reviewer confirmed. A child's CI runs this check too, through checks.yml, and so does the kit's own CI.",
       "group": "Checks on every pull request",
       "default": true,
       "locked": false
