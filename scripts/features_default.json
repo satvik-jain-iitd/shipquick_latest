@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "features": {
+    "roadmap": {
+      "name": "Live roadmap",
+      "what": "Builds a page from your issues and pull requests that shows what is done, what is now and what is next.",
+      "if_off": "No roadmap page is built or updated. Nothing else changes.",
+      "group": "Roadmap and issues",
+      "default": true,
+      "locked": false
+    },
+    "hosted-roadmap": {
+      "name": "Hosted roadmap page",
+      "what": "Reserved for a roadmap page on the web that anyone with the link can open. Nothing uses it yet.",
+      "if_off": "Nothing changes, because no hosted page exists yet.",
+      "group": "Roadmap and issues",
+      "default": false,
+      "locked": false
+    },
+    "close-on-merge": {
+      "name": "Close issues on merge",
+      "what": "Closes the story issue a pull request names with Closes #N once it is merged, and asks every pull request to name one.",
+      "if_off": "Issues stay open after a merge and a pull request need not name one. You close them by hand.",
+      "group": "Roadmap and issues",
+      "default": true,
+      "locked": false
+    },
+    "lanes": {
+      "name": "Work lanes",
+      "what": "Tells agents to keep up to three separate lines of work open at once, one per set of files.",
+      "if_off": "Agents keep one line of work open at a time. Work is slower, never less safe.",
+      "group": "Merging and modes",
+      "default": true,
+      "locked": false
+    },
+    "modes": {
+      "name": "Manual, semi and auto modes",
+      "what": "Lets you choose how much agents may do: ask you for every merge, some, or none.",
+      "if_off": "The mode always reads manual: agents never merge on their own.",
+      "group": "Merging and modes",
+      "default": true,
+      "locked": false
+    },
+    "merge-gate": {
+      "name": "Agent merge gate",
+      "what": "Lets a reviewer agent merge a pull request after every check is green and it is approved.",
+      "if_off": "No agent merges anything. You merge every pull request by hand.",
+      "group": "Merging and modes",
+      "default": true,
+      "locked": false
+    },
+    "uat-on-main": {
+      "name": "Test on dev before main",
+      "what": "Asks for a checklist of real tests on the dev link before a change goes live.",
+      "if_off": "A change can go live without the checklist.",
+      "group": "Merging and modes",
+      "default": true,
+      "locked": false
+    },
+    "freeze": {
+      "name": "Release freeze",
+      "what": "Lets you stop all merges to the live branch with one file, until you lift it.",
+      "if_off": "You cannot freeze the live branch. Merges to it are never blocked for a freeze.",
+      "group": "Merging and modes",
+      "default": true,
+      "locked": false
+    },
+    "environments": {
+      "name": "Dev and live links",
+      "what": "Checks that the project writes down both its dev link and its live link, and keeps them apart.",
+      "if_off": "The project may run without a dev link written down.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "team-block": {
+      "name": "Handoff block",
+      "what": "Asks every pull request to end with a short note for the reviewer saying what is needed.",
+      "if_off": "Pull requests need no reviewer note.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "roles": {
+      "name": "Who builds, who reviews",
+      "what": "Checks that the account that writes a change is not the one that approves it.",
+      "if_off": "The same account may write and approve a change.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "story": {
+      "name": "Story needs a who and a done",
+      "what": "Checks that each story a pull request closes says who does it and when it is done.",
+      "if_off": "A pull request may close a story that says neither.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "disable-comments": {
+      "name": "No quiet switch-offs",
+      "what": "Fails a pull request that adds a comment turning a check off, unless it names the decision that allows it.",
+      "if_off": "A check may be turned off with a comment and nobody is asked.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "frontend-design": {
+      "name": "Design first for screens",
+      "what": "Asks that every change to a screen names the approved design it follows, and shows the real screen next to it.",
+      "if_off": "Screen changes need no approved design.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "design-tokens": {
+      "name": "No loose colours or fonts",
+      "what": "Fails a web style line that adds a colour or font value directly, instead of using the shared design values.",
+      "if_off": "Colours and fonts may be written straight into style files.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "component-registry": {
+      "name": "Ready-made screen parts only",
+      "what": "Checks that screens are built from the shared library of screen parts, not drawn by hand.",
+      "if_off": "Screens may be hand-drawn instead of using the library.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "rule-copies": {
+      "name": "One copy of each rule",
+      "what": "Fails when two copies of the rules text drift apart.",
+      "if_off": "Copies of the rules may differ and nobody is told.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "commit-subjects": {
+      "name": "Short commit titles",
+      "what": "Fails a pull request that has a commit title longer than 72 characters, naming the commit.",
+      "if_off": "A long commit title is found only by people, if at all.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "pre-commit": {
+      "name": "Checks before each commit",
+      "what": "Runs quick checks on your computer before each commit, so mistakes are caught early.",
+      "if_off": "No checks run before a commit. CI still catches them later.",
+      "group": "Local checks",
+      "default": true,
+      "locked": false
+    },
+    "adoption": {
+      "name": "Kit is really installed",
+      "what": "Checks that the project carries the ShipQuick checks for real, at the version it says. This guards all the others.",
+      "if_off": "Cannot be turned off.",
+      "group": "Always on",
+      "default": true,
+      "locked": true
+    },
+    "gate": {
+      "name": "The final gate",
+      "what": "Collects every check into one pass or fail that a merge waits for. This guards all the others.",
+      "if_off": "Cannot be turned off.",
+      "group": "Always on",
+      "default": true,
+      "locked": true
+    }
+  }
+}

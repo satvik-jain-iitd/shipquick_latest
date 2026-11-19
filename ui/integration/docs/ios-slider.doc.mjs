@@ -67,6 +67,18 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "sliderThumbVisibility: `.sliderThumbVisibility(_:)`, iOS 26.0. Apple: \"Sets the thumb visibility for `Slider`s within this view.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

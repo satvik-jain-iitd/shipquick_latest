@@ -61,6 +61,22 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "ElevatedCard: A card with a shadow. Use it to lift the card a little from the background.",
+            "OutlinedCard: A card with a border and no shadow. Use it to set the card apart with the least weight.",
+            "CardDefaults: Default colours, elevations, shapes and borders for each card type.",
+            "CardColors: The container and content colours of a card, on and off. Make one with CardDefaults.cardColors() or the colour function of its type.",
+            "CardElevation: The shadow of a card in each state. Make one with CardDefaults.cardElevation() or the elevation function of its type."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

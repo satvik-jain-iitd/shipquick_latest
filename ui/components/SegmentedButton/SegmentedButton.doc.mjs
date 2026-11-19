@@ -167,5 +167,45 @@ export default {
       "platform": "ios",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "SingleChoiceSegmentedButtonRow",
+          "note": "The row for single-select. Each SegmentedButton in it takes selected and onClick."
+        },
+        {
+          "name": "MultiChoiceSegmentedButtonRow",
+          "note": "The row for multi-select. Each SegmentedButton in it takes checked and onCheckedChange."
+        },
+        {
+          "name": "SegmentedButtonDefaults.ActiveIcon",
+          "note": "The check mark a selected segment shows by default."
+        },
+        {
+          "name": "SegmentedButtonDefaults.Icon",
+          "note": "The icon slot. It shows the active icon when the segment is on, and the segment's own icon when it is off, with a short animation."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "SegmentedButtonDefaults",
+          "use": "The default colours, border, icon, and itemShape(index, count) for each segment."
+        },
+        {
+          "name": "SegmentedButtonColors",
+          "use": "The container, content and border colours, active and inactive, on and off. Make one with SegmentedButtonDefaults.colors()."
+        },
+        {
+          "name": "SingleChoiceSegmentedButtonRowScope",
+          "use": "The scope inside SingleChoiceSegmentedButtonRow, where you call SegmentedButton."
+        },
+        {
+          "name": "MultiChoiceSegmentedButtonRowScope",
+          "use": "The scope inside MultiChoiceSegmentedButtonRow, where you call SegmentedButton."
+        }
+      ]
+    }
+  }
 };

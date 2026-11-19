@@ -67,6 +67,19 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "SwitchDefaults: Default colours and the icon size for the thumb. Make colours with SwitchDefaults.colors().",
+            "SwitchColors: The thumb, track, border and icon colours of a switch, checked and not, on and off."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
