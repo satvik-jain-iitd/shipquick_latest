@@ -809,3 +809,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: the README of `JasonEtco/create-an-issue`: it creates an issue from a template and, with `update_existing`, edits the open issue with the same title. It does not comment, and it is a third-party action inside a protected workflow.
 - Reused: the issue-opening code of `scripts/adoption_scan.py` (find the open issue by a key in its title, comment, else create), moved into `scripts/issue_notice.py` and used by both scripts.
 - Decision: build the dispatch, wait and verdict as one stdlib script; reuse the adoption scan's issue code. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #580: a dry-run planner that says which child pins an old kit commit
+- Need: a read-only list of which child repos pin a kit commit other than a given release commit.
+- Run: the scout script path is stale on this Mac, so no scout run. GitHub topic search (`dependency-update` and `github-actions`) found only `sgash708/mise-bump-action`; named tools checked: `renovatebot/renovate` and `dependabot/dependabot-core`.
+- Read: the READMEs of `mise-bump-action`, Renovate and Dependabot. All three open update PRs in a repo they own; none reads a registry of other repos and prints a plan, and each needs write credentials.
+- Reused: `read_children` and `gh_api` from `scripts/adoption_scan.py`, and the pin lines of `check_child`, moved into one `read_pin`.
+- Decision: build from scratch as one small stdlib script, `scripts/child_bump.py`, since the story is a dry run with no writes. Confidence that nothing fits better: 0.8.
