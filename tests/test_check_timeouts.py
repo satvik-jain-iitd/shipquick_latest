@@ -70,3 +70,14 @@ def test_s194_a_space_before_the_colon_still_counts():
 
 def test_s194_the_no_jobs_line_names_the_fix():
     assert "block style" in ct.NO_JOBS
+
+
+# Story #174: a workflow file with zero jobs (another indent style) is named and failed, never
+# passed silently (PR #365 review: a root-indented workflow still runs on GitHub with no timeout).
+def test_s174_a_file_with_zero_jobs_is_named_and_failed(tmp_path, capsys):
+    f = tmp_path / "indented.yml"
+    f.write_text("on: push\n    jobs:\n        build:\n            runs-on: ubuntu-latest\n", encoding="utf-8")
+    assert ct.main([str(f)]) == 1
+    out = capsys.readouterr().out
+    assert f"no timeout-minutes: {f}: no jobs found" in out
+    assert "timeouts OK" not in out

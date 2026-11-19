@@ -13,8 +13,10 @@ data field it was read from, and the replacement (the vendor's own words) or the
 500 KB). The default run parses those saved extracts offline and writes docs/research/android-m3-api.md and
 docs/research/ios-swiftui-api.md. --check writes nothing: it exits 1 when a saved extract does not match the
 sha256 its list pins, or a list does not match what its extracts give.
+--fetch-frameworks (also part of --fetch) saves the public names of each framework package to
+docs/research/sources/framework-names.json and pins its sha256 in docs/research/framework-topics.md (story #288).
 
-usage: ui_api_lists.py [--fetch] [--check]
+usage: ui_api_lists.py [--fetch] [--fetch-frameworks] [--check]
 """
 import argparse
 import base64
@@ -58,18 +60,25 @@ PLUMBING = {"AnyShape", "AnyView", "DebugReplaceableView", "EditableCollectionCo
             "StrokeBorderShapeView", "StrokeShapeView", "Subview", "SubviewsCollection", "SubviewsCollectionSlice",
             "TransformedShape", "TupleContent", "TupleView"}
 # The iOS alternative for each entry Apple does not offer on iOS. Apple's data names none, so this is our choice
-# (confidence 0.7). Each value is a live row of the iOS list, or "none" when iOS has no such surface (a Mac window,
-# a visionOS volume, the Touch Bar, the Digital Crown). The generator fails on a value that is not a live row, and a
-# new unavailable entry fails until it is added here.
+# (confidence 0.7; each one reviewed on 2026-11-09 against the entry's own Apple page and its platforms field).
+# Each value is a live row of the iOS list, or "none: <reason>" when iOS has no such surface. The reason is one
+# line, so an agent knows why there is nothing to use. The generator fails on a value that is not a live row, on a
+# bare "none", and on a new unavailable entry until it is added here.
+_MAC_WINDOW = "none: it shapes a Mac app window; an iOS app has no such window control"
+_TOUCH_BAR = "none: the Mac Touch Bar; iOS has no Touch Bar"
+_VOLUME = "none: a visionOS volume or immersive space; iOS has no 3D space around the app"
+_SERVICES = "none: Mac Services and Continuity Camera import or export; iOS has no Services menu"
 IOS_ALTERNATIVES = {
     # types
     "DefaultSettingsLinkLabel": "Link", "SettingsLink": "Link", "HelpLink": "Link", "TextFieldLink": "TextField",
-    "DefaultWindowVisibilityToggleLabel": "none", "WindowVisibilityToggle": "none", "MenuButton": "Menu",
+    "DefaultWindowVisibilityToggleLabel": _MAC_WINDOW, "WindowVisibilityToggle": _MAC_WINDOW, "MenuButton": "Menu",
     "HSplitView": "NavigationSplitView", "VSplitView": "VStack", "GeometryReader3D": "GeometryReader",
-    "ZStackContent3D": "ZStack", "GlassBackgroundEffectConfiguration.Content": "GlassEffectContainer",
+    # the content of a visionOS glass background; on iOS the content takes the Liquid Glass modifier itself
+    "ZStackContent3D": "ZStack", "GlassBackgroundEffectConfiguration.Content": "glassEffect",
     # modifiers with an iOS twin
     "textInputSuggestions": "searchSuggestions", "textInputCompletion": "searchCompletion",
-    "toolbarItemHidden": "toolbarVisibility", "toolbarForegroundStyle": "toolbarColorScheme",
+    # hides one item in a Mac control group; on iOS leave the item out of the toolbar content
+    "toolbarItemHidden": "toolbar", "toolbarForegroundStyle": "toolbarColorScheme",
     "defaultWheelPickerItemHeight": "pickerStyle", "horizontalRadioGroupLayout": "pickerStyle",
     "menuButtonStyle": "menuStyle", "ornament": "toolbar", "glassBackgroundEffect": "glassEffect",
     "alternatingRowBackgrounds": "listRowBackground", "listRowPlatterColor": "listRowBackground",
@@ -80,22 +89,209 @@ IOS_ALTERNATIVES = {
     "prefersDefaultFocus": "defaultFocus", "onCopyCommand": "copyable", "onCutCommand": "cuttable", "onPasteCommand": "pasteDestination",
     "onDeleteCommand": "swipeActions", "onMoveCommand": "onKeyPress", "pageCommand": "onKeyPress", "onExitCommand": "onKeyPress",
     "onPlayPauseCommand": "onKeyPress", "onCommand": "onKeyPress", "onModifierKeysChanged": "onKeyPress",
-    "dialogSeverity": "alert", "dialogPreventsAppTermination": "none", "presentationPreventsAppTermination": "none",
-    "presentedWindowStyle": "sheet", "presentedWindowToolbarStyle": "toolbar", "accessibilityQuickAction": "accessibilityAction",
-    # no iOS surface: visionOS volumes and immersion, macOS windows and Touch Bar, watchOS crown and complications, tvOS
-    **{name: "none" for name in (
-        "directTouchSystemGesturesDisabled", "preferredSurroundingsEffect", "spatialOverlay", "spatialOverlayPreferenceValue",
-        "breakthroughEffect", "contentCaptureProtected", "upperLimbVisibility", "volumeBaseplateVisibility",
-        "accessoryWidgetGroupStyle", "windowDismissBehavior", "windowFullScreenBehavior", "windowMinimizeBehavior",
-        "windowResizeAnchor", "windowResizeBehavior", "preferredWindowClippingMargins", "touchBar", "touchBarItemPrincipal",
-        "touchBarCustomizationLabel", "touchBarItemPresence", "chart3DRenderingStyle", "modifierKeyAlternate",
-        "handPointerBehavior", "manipulable", "manipulationGesture", "pointerVisibility", "pointerStyle", "focusScope",
-        "focusSection", "dragPreviewsFormation", "dropPreviewsFormation", "digitalCrownAccessory", "digitalCrownRotation",
-        "onImmersionChange", "onWorldRecenter", "immersiveEnvironmentPicker", "onVolumeViewpointChange",
-        "supportedVolumeViewpoints", "exportsItemProviders", "importsItemProviders", "exportableToServices",
-        "importableFromServices", "presentationBreakthroughEffect", "onWebViewImmersiveEnvironmentRequest",
-        "webViewContextMenu", "continuityDevicePicker", "cameraAnchor", "foveatedStreamingPauseSheet",
-        "groupActivityAssociation", "tabletopGame", "complicationForeground")},
+    "dialogSeverity": "alert", "presentedWindowStyle": "sheet", "presentedWindowToolbarStyle": "toolbar",
+    "accessibilityQuickAction": "accessibilityAction",
+    # iPadOS shows its pointer shape through hover effects
+    "pointerStyle": "hoverEffect",
+    # visionOS hand manipulation of a 3D view; on iOS attach drag, magnify or rotate gestures
+    "manipulable": "gesture", "manipulationGesture": "gesture",
+    # no iOS surface, each with its reason
+    "dialogPreventsAppTermination": "none: it stops a Mac app from quitting; iOS apps are not quit from a menu",
+    "presentationPreventsAppTermination": "none: it stops a Mac app from quitting; iOS apps are not quit from a menu",
+    "directTouchSystemGesturesDisabled": "none: Mac and Mac Catalyst direct-touch system gestures only",
+    "preferredSurroundingsEffect": "none: it tints visionOS passthrough video; iOS has no passthrough",
+    "spatialOverlay": _VOLUME, "spatialOverlayPreferenceValue": _VOLUME,
+    "breakthroughEffect": "none: visionOS content seen through 3D models; iOS has no 3D occlusion",
+    "presentationBreakthroughEffect": "none: visionOS content seen through 3D models; iOS has no 3D occlusion",
+    "contentCaptureProtected": "none: visionOS 26 only, Apple's page names no iOS twin",
+    "upperLimbVisibility": "none: the person's arms in a visionOS immersive space",
+    "volumeBaseplateVisibility": _VOLUME, "onVolumeViewpointChange": _VOLUME, "supportedVolumeViewpoints": _VOLUME,
+    "preferredWindowClippingMargins": "none: drawing past a visionOS window's bounds",
+    "onImmersionChange": _VOLUME, "immersiveEnvironmentPicker": _VOLUME, "onWorldRecenter": _VOLUME,
+    "onWebViewImmersiveEnvironmentRequest": _VOLUME,
+    "accessoryWidgetGroupStyle": "none: a watchOS accessory widget group; build iOS widgets with WidgetKit",
+    "windowDismissBehavior": _MAC_WINDOW, "windowFullScreenBehavior": _MAC_WINDOW, "windowMinimizeBehavior": _MAC_WINDOW,
+    "windowResizeAnchor": _MAC_WINDOW, "windowResizeBehavior": _MAC_WINDOW,
+    "touchBar": _TOUCH_BAR, "touchBarItemPrincipal": _TOUCH_BAR, "touchBarCustomizationLabel": _TOUCH_BAR,
+    "touchBarItemPresence": _TOUCH_BAR,
+    "chart3DRenderingStyle": "none: a visionOS 26 render style for 3D charts; Apple offers it on visionOS only",
+    "modifierKeyAlternate": "none: a Mac menu item that swaps while a modifier key is held",
+    "handPointerBehavior": "none: the visionOS hand pointer", "pointerVisibility": "none: hides the Mac pointer only",
+    "focusScope": "none: scopes prefersDefaultFocus on Mac, TV and Watch; iOS defaultFocus needs no scope",
+    "focusSection": "none: guides tvOS and Mac focus moves; iOS has no focus engine sections",
+    "dragPreviewsFormation": "none: Mac drag previews only; iOS shows the system drag preview",
+    "dropPreviewsFormation": "none: Mac drop previews only; iOS shows the system drop preview",
+    "digitalCrownAccessory": "none: the Apple Watch Digital Crown; iPhone has no crown",
+    "digitalCrownRotation": "none: the Apple Watch Digital Crown; iPhone has no crown",
+    "exportsItemProviders": _SERVICES, "importsItemProviders": _SERVICES, "exportableToServices": _SERVICES,
+    "importableFromServices": _SERVICES,
+    "webViewContextMenu": "none: replaces a WebView's menu on Mac only; Apple offers it on macOS only",
+    "continuityDevicePicker": "none: tvOS picks a nearby Continuity device; Apple offers it on tvOS only",
+    "cameraAnchor": "none: the virtual camera of a visionOS Persona stream",
+    "foveatedStreamingPauseSheet": "none: visionOS foveated streaming only",
+    "groupActivityAssociation": "none: visionOS SharePlay spatial placement only",
+    "tabletopGame": "none: a visionOS tabletop game in 3D space",
+    "complicationForeground": "none: a watchOS complication; iOS has no complications",
+}
+
+# Story #285: the doc family of each iOS component and modifier row. By default it is the row's Family (a type's own
+# family, or a modifier's Apple page). Our docs place a modifier in the doc of the control it changes (`.sheet` in
+# BottomSheet) and group small types (Capsule in Shape), so these rows map to that doc's family instead. The gate
+# covers a row only from a doc of its doc family. A row moves doc by moving it here, in this protected file.
+IOS_DOC_FAMILY = {
+    "Accessibility modifiers": ["accessibility"],
+    "Animators": ["animation", "contentTransition", "geometryGroup", "KeyframeAnimator", "keyframeAnimator", "matchedGeometryEffect",
+                  "matchedTransitionSource", "PhaseAnimator", "phaseAnimator", "TimelineView", "transaction", "transition"],
+    "AppBar": ["contentToolbar", "ornament", "presentedWindowToolbarStyle", "toolbar", "toolbarBackground",
+               "toolbarBackgroundVisibility", "toolbarColorScheme", "toolbarContainerBehavior", "toolbarForegroundStyle",
+               "toolbarItemHidden", "toolbarMinimizationBehavior", "toolbarMinimizationRestoration",
+               "toolbarMinimizationSafeAreaAdjustment", "toolbarOverflowMenu", "toolbarRole", "toolbarTitleAlignment",
+               "toolbarTitleDisplayMode", "toolbarTitleMenu", "toolbarVerticalBehavior", "toolbarVerticalCompressionBehavior",
+               "toolbarVisibility", "touchBar", "touchBarCustomizationLabel", "touchBarItemPresence", "touchBarItemPrincipal"],
+    "Appearance modifiers": ["accentColor", "colorScheme", "complicationForeground", "foregroundColor", "statusBar", "statusBarHidden", "Color"],
+    "Badge": ["badge", "badgeProminence"],
+    "BottomSheet": ["actionSheet", "interactiveDismissDisabled",
+                    "presentationBackground", "presentationBackgroundInteraction", "presentationBreakthroughEffect",
+                    "presentationCompactAdaptation", "presentationContentInteraction", "presentationCornerRadius",
+                    "presentationDetents", "presentationDragIndicator", "presentationPlacement",
+                    "presentationPreventsAppTermination", "presentationSizing", "presentedWindowStyle", "sheet"],
+    "Button": ["buttonBorderShape", "ButtonBorderShape", "buttonRepeatBehavior", "buttonSizing", "buttonStyle", "EditButton", "NewDocumentButton",
+               "PasteButton", "pasteDestination", "renameAction", "RenameButton"],
+    "DocumentLaunchView": ["DocumentLaunchView", "documentBrowserContextMenu", "documentLaunchSubtitle", "documentLaunchTitle"],
+    "Canvas": ["Canvas"],
+    "ControlGroup": ["controlGroupStyle"],
+    "DatePicker": ["datePickerStyle", "MultiDatePicker"],
+    "Dialog": ["alert", "confirmationDialog", "dismissalConfirmationDialog", "fullScreenCover", "dialogIcon", "dialogPreventsAppTermination", "dialogSeverity", "dialogSuppressionToggle"],
+    "DisclosureGroup": ["disclosureGroupStyle"],
+    "Form": ["formStyle", "LabeledContent", "labeledContentStyle"],
+    "Gauge": ["gaugeStyle"],
+    "Glass": ["glassBackgroundEffect", "glassEffect", "GlassEffectContainer", "glassEffectID", "glassEffectTransition", "glassEffectUnion"],
+    "Gradient": ["AngularGradient", "EllipticalGradient", "LinearGradient", "MeshGradient", "RadialGradient"],
+    "Graphics and rendering modifiers": ["cornerRadius"],
+    "Grid": ["gridCellAnchor", "gridCellColumns", "gridCellUnsizedAxes", "gridColumnAlignment", "GridRow", "LazyHGrid", "LazyVGrid"],
+    "GroupBox": ["groupBoxStyle"],
+    "Image": ["AsyncImage", "imageScale", "symbolColorRenderingMode", "symbolEffect", "symbolEffectsRemoved", "symbolRenderingMode",
+              "symbolVariableValueMode", "symbolVariant", "asyncImageURLSession"],
+    "Label": ["labelIconToTitleSpacing", "labelReservedIconWidth", "labelStyle"],
+    "Layout modifiers": ["edgesIgnoringSafeArea"],
+    "Link": ["HelpLink", "SettingsLink"],
+    "List": ["alternatingRowBackgrounds", "deleteDisabled", "ForEach", "headerProminence", "listItemTint", "listRowBackground",
+             "listRowHoverEffect", "listRowHoverEffectDisabled", "listRowInsets", "listRowPlatterColor", "listRowSeparator",
+             "listRowSeparatorTint", "listRowSpacing", "listSectionIndexVisibility", "listSectionMargins", "listSectionSeparator",
+             "listSectionSeparatorTint", "listSectionSpacing", "listStyle", "moveDisabled", "OutlineGroup", "refreshable",
+             "Section", "sectionActions", "sectionIndexLabel", "selectionDisabled", "swipeActions", "swipeActionsContainer",
+             "typeSelectEquivalent"],
+    "Menu": ["contextMenu", "menuActionDismissBehavior", "MenuButton", "menuButtonStyle", "menuIndicator", "menuOrder", "menuStyle"],
+    "NavigationSplitView": ["inspector", "inspectorColumnWidth", "navigationSplitViewColumnWidth", "navigationSplitViewStyle"],
+    "NavigationStack": ["homeEmbeddedNavigationDestination", "navigationBarBackButtonHidden", "navigationBarHidden",
+                        "navigationBarItems", "navigationBarTitle", "navigationBarTitleDisplayMode", "navigationDestination",
+                        "navigationDocument", "NavigationLink", "navigationLinkIndicatorVisibility", "navigationSubtitle",
+                        "navigationTitle", "navigationTransition", "NavigationView", "navigationViewStyle"],
+    "PageControl": ["indexViewStyle"],
+    "Picker": ["defaultWheelPickerItemHeight", "horizontalRadioGroupLayout", "paletteSelectionEffect", "pickerStyle"],
+    "Popover": ["popover"],
+    "ProgressView": ["progressViewStyle"],
+    "ScrollView": ["defaultScrollAnchor", "scrollDismissesKeyboard", "onScrollGeometryChange", "onScrollPhaseChange", "onScrollTargetVisibilityChange",
+                   "onScrollVisibilityChange", "scrollBounceBehavior", "scrollClipDisabled", "scrollContentBackground",
+                   "scrollDisabled", "scrollEdgeEffectHidden", "scrollEdgeEffectStyle", "scrollIndicators", "scrollIndicatorsFlash",
+                   "scrollInputBehavior", "scrollPosition", "scrollTargetBehavior", "scrollTargetLayout", "scrollTransition",
+                   "ScrollViewReader"],
+    "Search modifiers": ["searchFocused"],
+    "Shape": ["Capsule", "Circle", "ConcentricRectangle", "ContainerRelativeShape", "Ellipse", "Path",
+              "Rectangle", "RoundedRectangle", "UnevenRoundedRectangle"],
+    "ShapePlumbing": ["AnyShape", "FillShapeView", "OffsetShape", "RotatedShape", "ScaledShape", "StrokeBorderShapeView",
+                      "StrokeShapeView", "TransformedShape"],
+    "Slider": ["sliderThumbVisibility"],
+    "Stacks": ["ArrangementView", "arrangementViewStyle", "GeometryReader", "GeometryReader3D", "Group", "HSplitView", "HStack",
+               "LazyHStack", "LazyVStack", "overlayArrangementEdge", "Spacer", "splitArrangementFixedLayoutSize",
+               "splitArrangementLayoutRatio", "splitArrangementLayoutSize", "ViewThatFits", "VSplitView", "VStack", "ZStack",
+               "ZStackContent3D"],
+    "Table": ["tableColumnHeaders", "tableStyle"],
+    "TabView": ["defaultAdaptableTabBarPlacement", "defaultTabBarPlacement", "sceneAccessory", "tabBarMinimizeBehavior", "tabItem",
+                "tabViewBottomAccessory", "tabViewCustomization", "tabViewSearchActivation", "tabViewSidebarBottomBar",
+                "tabViewSidebarFooter", "tabViewSidebarHeader", "tabViewStyle"],
+    "Technology-specific modifiers": ["deviceMotionAnchor", "locationHeadingAnchor", "nearbyInteractionOriginAnchor"],
+    "TextField": ["autocapitalization", "autocorrectionDisabled", "disableAutocorrection", "findDisabled", "findNavigator",
+                  "keyboardType", "onSubmit", "replaceDisabled", "SecureField", "submitLabel",
+                  "submitScope", "textContentType", "TextEditor", "textEditorStyle", "TextFieldLink", "textFieldStyle",
+                  "textInputAutocapitalization", "TextInputBorderShape", "textInputBorderShape", "textInputCompletion",
+                  "textInputFormattingControlVisibility", "textInputSuggestions", "writingToolsAffordanceVisibility",
+                  "writingToolsBehavior"],
+    "Toggle": ["toggleStyle", "WindowVisibilityToggle"],
+    "Tooltip": ["help"],
+    "ViewPlumbing": ["AnyView", "DebugReplaceableView", "EditableCollectionContent", "EmptyView", "EquatableView",
+                     "GroupElementsOfContent", "GroupSectionsOfContent", "LabeledControlGroupContent",
+                     "LabeledToolbarItemGroupContent", "ModifiedContent", "modifier", "OutlineSubgroupChildren",
+                     "PlaceholderContentView", "PresentedWindowContent", "PreviewModifierContent", "SubscriptionView", "Subview",
+                     "SubviewsCollection", "SubviewsCollectionSlice", "TupleContent", "TupleView"],
+    # Story #296 (1/6): InputModifiers split by task. Each block is one doc; InputModifiers keeps only rows no doc fits.
+    "app-intents-and-app-shortcuts": ["appEntityIdentifier", "appEntityUIElements", "onAppIntentExecution", "shortcutsLinkStyle",
+                                      "siriTipViewStyle"],
+    "Drag and drop": ["draggable", "dragConfiguration", "dragContainer", "dragContainerSelection", "dragPreviewsFormation",
+                      "dropConfiguration", "dropDestination", "dropPreviewsFormation", "itemProvider", "onDrag",
+                      "onDragSessionUpdated", "onDrop", "onDropSessionUpdated", "reorderContainer", "springLoadingBehavior", "accessibilityDragPoint", "accessibilityDropPoint"],
+    "edit-menus": ["copyable", "cuttable", "onCopyCommand", "onCutCommand", "onPasteCommand"],
+    "Focus": ["defaultFocus", "focusable", "focused", "focusedObject", "focusedSceneObject", "focusedSceneValue", "focusedValue",
+              "focusEffectDisabled", "focusScope", "focusSection", "prefersDefaultFocus", "accessibilityFocused", "accessibilityDefaultFocus"],
+    "Gestures": ["allowsHitTesting", "allowsWindowActivationEvents", "contentShape", "defersSystemGestures", "directTouchSystemGesturesDisabled",
+                 "gesture", "handGestureShortcut", "highPriorityGesture", "manipulable", "manipulationGesture", "onLongPressGesture",
+                 "onLongTouchGesture", "onPencilDoubleTap", "onPencilSqueeze", "onTapGesture", "simultaneousGesture"],
+    "Hover and pointer": ["defaultHoverEffect", "handPointerBehavior", "hoverEffect", "hoverEffectDisabled", "hoverEffectGroup",
+                          "onContinuousHover", "onHover", "pointerStyle", "pointerVisibility"],
+    "Keyboard": ["keyboardShortcut", "modifierKeyAlternate", "onCommand", "onDeleteCommand", "onExitCommand", "onKeyPress",
+                 "onModifierKeysChanged", "onMoveCommand", "onPlayPauseCommand", "pageCommand"],
+    "widgets": ["widgetURL", "accessoryWidgetGroupStyle", "controlWidgetActionHint", "controlWidgetStatus", "widgetAccentable",
+                "widgetCurvesContent", "widgetLabel", "containerBackground"],
+    "web-view": ["onWebViewImmersiveEnvironmentRequest", "webViewBackForwardNavigationGestures", "webViewContentBackground",
+                 "webViewContextMenu", "webViewElementFullscreenBehavior", "webViewLinkPreviews", "webViewMagnificationGestures",
+                 "webViewOnScrollGeometryChange", "webViewScrollInputBehavior", "webViewScrollPosition", "webViewTextSelection"],
+    # Story #296 (2/6): TechnologyModifiers split by Apple framework (each row's module read from its own Apple page, 11 Nov 2026).
+    # TechnologyModifiers keeps only the rows of a framework with one or two modifiers and no doc of its own.
+    "In-app purchase": ["currentEntitlementTask", "inAppPurchaseOptions", "multiSeatDataSharingConsentSheet", "multiSeatInvitationBehavior",
+                        "multiSeatInvitationSheet", "onInAppPurchaseCompletion", "onInAppPurchaseStart", "preferredSubscriptionOffer",
+                        "preferredSubscriptionPricingTerms", "productDescription", "productIconBorder", "productViewStyle", "storeButton",
+                        "storeProductsTask", "storeProductTask", "subscriptionIntroductoryOffer", "subscriptionOfferViewButtonVisibility",
+                        "subscriptionOfferViewDetailAction", "subscriptionOfferViewStyle", "subscriptionPromotionalOffer",
+                        "subscriptionStatusTask", "subscriptionStoreButtonLabel", "subscriptionStoreControlBackground",
+                        "subscriptionStoreControlIcon", "subscriptionStoreControlStyle", "subscriptionStoreOptionGroupStyle",
+                        "subscriptionStorePickerItemBackground", "subscriptionStorePolicyDestination",
+                        "subscriptionStorePolicyForegroundStyle", "subscriptionStoreSignInAction",
+                        "appStoreMerchandising", "appStoreOverlay", "manageSubscriptionsSheet", "offerCodeRedemption", "refundRequestSheet"],
+    "Map": ["lookAroundViewer", "mapCameraKeyframeAnimator", "mapControls", "mapControlVisibility", "mapFeatureSelectionAccessory",
+            "mapFeatureSelectionContent", "mapFeatureSelectionDisabled", "mapItemDetailPopover", "mapItemDetailSheet", "mapScope",
+            "mapStyle", "onMapCameraChange"],
+    "Tips": ["popoverTip", "tipAnchor", "tipBackground", "tipBackgroundInteraction", "tipCornerRadius", "tipImageSize", "tipImageStyle",
+             "tipViewStyle"],
+    "Wallet": ["addOrderToWalletButtonStyle", "addPassToWalletButtonStyle", "onApplePayCouponCodeChange", "onApplePayPaymentMethodChange",
+               "onApplePayShippingContactChange", "onApplePayShippingMethodChange", "payLaterViewAction", "payLaterViewDisplayStyle",
+               "payWithApplePayButtonDisableCardArt", "payWithApplePayButtonStyle", "verifyIdentityWithWalletButtonStyle"],
+    "Image Playground": ["imagePlaygroundGenerationStyle", "imagePlaygroundOptions", "imagePlaygroundPersonalizationPolicy",
+                         "imagePlaygroundSheet"],
+    # Story #296 (3/6): PresentationModifiers split by the screen each row presents. It keeps only rows no doc fits.
+    "PhotosPicker": ["photosPicker", "photosPickerAccessoryVisibility", "photosPickerDisabledCapabilities", "photosPickerMetadataOptions",
+                     "photosPickerSearchText", "photosPickerStyle", "photosReferenceImageViewer", "photosSharedAlbumCreationSheet",
+                     "photosSharedAlbumCustomizationSheet", "photosSharedAlbumPostingSheet", "postToPhotosSharedAlbumSheet"],
+    "File dialogs": ["fileDialogBrowserOptions", "fileDialogConfirmationLabel", "fileDialogCustomizationID", "fileDialogDefaultDirectory",
+                     "fileDialogImportsUnresolvedAliases", "fileDialogMessage", "fileDialogURLEnabled", "fileExporter",
+                     "fileExporterFilenameLabel", "fileImporter", "fileMover"],
+    "Contact access": ["contactAccessButtonCaption", "contactAccessButtonStyle", "contactAccessPicker"],
+    "live-activities": ["activityBackgroundTint", "activitySystemActionForegroundColor", "dynamicIsland"],
+    # Story #296 (4/6): AccessibilityModifiers split by task. It keeps only rows no doc fits.
+    "Speech": ["speechAdjustedPitch", "speechAlwaysIncludesPunctuation", "speechAnnouncementsQueued", "speechSpellsOutCharacters"],
+    "Accessibility rotors": ["accessibilityRotor", "accessibilityRotorEntry"],
+    "Accessibility actions": ["accessibilityAction", "accessibilityActions", "accessibilityAdjustableAction", "accessibilityScrollAction",
+                              "accessibilityZoomAction", "accessibilityQuickAction"],
+    # Story #296 (5/6): AppearanceModifiers split by the surface each row styles. It keeps only rows no doc fits.
+    "Window behavior": ["windowDismissBehavior", "windowFullScreenBehavior", "windowMinimizeBehavior", "windowResizeAnchor",
+                        "windowResizeBehavior", "windowToolbarFullScreenVisibility", "preferredWindowClippingMargins"],
+    "Redaction and privacy": ["redacted", "unredacted", "privacySensitive", "invalidatableContent", "contentCaptureProtected"],
+    "Spatial appearance": ["spatialOverlay", "spatialOverlayPreferenceValue", "preferredSurroundingsEffect", "breakthroughEffect",
+                           "upperLimbVisibility", "volumeBaseplateVisibility"],
+    # Story #296 (6/6): GraphicsModifiers split by the effect each row applies. It keeps only rows no doc fits.
+    "3D transforms": ["aspectRatio3D", "scaledToFill3D", "scaledToFit3D", "perspectiveRotationEffect", "projectionEffect", "rotation3DEffect",
+                      "rotation3DLayout", "transform3DEffect", "visualEffect3D"],
+    "Shader effects": ["colorEffect", "distortionEffect", "layerEffect", "visualEffect"],
+    "Color adjustments": ["brightness", "contrast", "colorInvert", "colorMultiply", "grayscale", "hueRotation", "luminanceToAlpha", "saturation"],
 }
 
 HEADER = re.compile(r"^// shipquick: (\w+): (.*)$")
@@ -383,9 +579,15 @@ def ios_family(name):
     return name
 
 
-def parse_ios(extract, alternatives=None):
+def parse_ios(extract, alternatives=None, doc_families=None):
     """Every row from the saved extract: each View type and each View modifier (its overloads as one row)."""
     alternatives = IOS_ALTERNATIVES if alternatives is None else alternatives
+    doc_of = {}
+    for fam, names in (IOS_DOC_FAMILY if doc_families is None else doc_families).items():
+        for n in names:
+            if n in doc_of:
+                raise ValueError(f"{n}: mapped to two doc families ({doc_of[n]}, {fam}) in IOS_DOC_FAMILY")
+            doc_of[n] = fam
     rows = []
     for t in extract["types"]:
         name = t["name"]
@@ -411,6 +613,7 @@ def parse_ios(extract, alternatives=None):
     live_names, errs = {r["name"] for r in rows if r["status"] == "-"} | {"none"}, []
     for r in rows:
         r["replacement"], r["detail"] = "", "-"
+        r["doc_family"] = doc_of.get(r["name"], r["family"])
         if r["status"] == "deprecated":
             r["replacement"] = apple_replacement(r["field"]) or ""
             if not r["replacement"]:
@@ -418,12 +621,16 @@ def parse_ios(extract, alternatives=None):
             r["detail"] = f"{r['field']}; replacement: `{r['replacement']}`"
         elif r["status"] == "unavailable-ios":
             alt = alternatives.get(r["name"])
-            if alt is None:
+            alt, _, reason = (alt or "").partition(":")
+            reason = reason.strip()
+            if not alt:
                 errs.append(f"{r['name']}: not on iOS; add its iOS alternative to IOS_ALTERNATIVES")
+            elif alt == "none" and not reason:
+                errs.append(f"{r['name']}: its iOS alternative is none, so it needs a one-line reason (\"none: <why>\")")
             elif alt not in live_names:
                 errs.append(f"{r['name']}: its iOS alternative {alt} is not a live row of the iOS list")
-            r["replacement"] = alt or ""
-            r["detail"] = f"{r['field']}; iOS alternative (ours, Apple names none): `{alt}`"
+            r["replacement"], r["reason"] = alt, reason
+            r["detail"] = f"{r['field']}; iOS alternative (ours, Apple names none): `{alt}`" + (f", because {reason}" if reason else "")
     if errs:
         raise ValueError("; ".join(errs))
     order = {"component": 0, "supporting": 1, "modifier": 2}
@@ -441,7 +648,7 @@ def ios_md(files):
     extract = merge_ios(files)
     rows = parse_ios(extract)
     table = [f"| {i} | `{r['name']}` | {r['kind']} | {r['what']} | {r['family']} | {r['since']} | {r['category']} | "
-             f"{r['status']} | {r['detail']} | {APPLE_PAGE}{r['url']} |" for i, r in enumerate(rows, 1)]
+             f"{r['status']} | {r['detail']} | {APPLE_PAGE}{r['url']} | {r['doc_family']} |" for i, r in enumerate(rows, 1)]
     pins = [f"Saved extract: `docs/research/sources/{k}` sha256 `{sha(v)}`" for k, v in sorted(files.items())]
     return "\n".join([
         "# iOS: the full SwiftUI API list (story #231)",
@@ -465,9 +672,13 @@ def ios_md(files):
         "- iOS since: Apple's `introducedAt` for iOS. For a modifier, the earliest live overload.",
         "- Status and detail: the exact `metadata.platforms` field and value from the row's own Apple page, then the",
         "  replacement from Apple's deprecation message, or for `unavailable-ios` the iOS alternative we chose.",
+        "  When iOS has nothing to use, the alternative is `none` and the detail says why in one line.",
+        "- Doc family: the family of the one doc that may cover a component or modifier row (story #285). It is the",
+        "  Family, or the control doc `IOS_DOC_FAMILY` maps the row to (`sheet` to BottomSheet). A doc's families are",
+        "  the Doc family of its `platforms.ios` row and its `platformApi.ios.family`.",
         "",
-        "| # | Entry | Kind | What | Family | iOS since | Category | Status | Detail | Apple page |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| # | Entry | Kind | What | Family | iOS since | Category | Status | Detail | Apple page | Doc family |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
         *table,
     ]) + "\n"
 
@@ -568,6 +779,107 @@ def fetch_ios():
         path.write_text(json.dumps(body, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+# ---------------------------------------------------------------- framework names (story #288)
+# The public names of each framework package a framework doc names (framework-topics.md). Saved to
+# docs/research/sources/framework-names.json; check_ui_coverage.py checks every framework-doc name against it, and
+# the sha256 pin in framework-topics.md. Android: the api/current.txt of each package at its release commit or tag.
+# Apple: the documentation JSON of each seed page and the topic pages it links (two levels down), symbols of the
+# named module only. The list is not every name of a package: a doc that needs a new one adds a seed page here.
+GLANCE_COMMIT = "17b8d7ee6785d344a04b91207070ce350dc1080f"   # Glance 1.2.0, the latest stable (release notes, 2026-11-09)
+CORE_COMMIT = "ee9b3bd4e15861a649335dca51923b358357b151"     # Core 1.19.1, the latest stable (release notes, 2026-11-09)
+PLATFORM_TAG = "android-16.0.0_r1"                            # Android 16, API level 36, the latest on Google's platforms page
+SUPPORT = "https://android.googlesource.com/platform/frameworks/support/+/"
+ANDROID_PACKAGES = [   # (package, version, current.txt URL, regex a kept name must match)
+    ("androidx.glance:glance", "1.2.0", f"{SUPPORT}{GLANCE_COMMIT}/glance/glance/api/current.txt", r"."),
+    ("androidx.glance:glance-appwidget", "1.2.0", f"{SUPPORT}{GLANCE_COMMIT}/glance/glance-appwidget/api/current.txt", r"."),
+    ("androidx.core:core (androidx.core.app)", "1.19.1", f"{SUPPORT}{CORE_COMMIT}/core/core/api/current.txt", r"^androidx\.core\.app\.[A-Z]"),
+    ("android.app and android.Manifest", f"API level 36 ({PLATFORM_TAG})",
+     f"https://android.googlesource.com/platform/frameworks/base/+/refs/tags/{PLATFORM_TAG}/core/api/current.txt",
+     r"^android\.(app\.[A-Z]|Manifest\b)"),
+]
+APPLE_PACKAGES = [   # (module, the doc URL folder of its symbols, seed pages)
+    ("Charts", "charts", ["charts"]),
+    ("WebKit", "webkit", ["webkit/webkit-for-swiftui", "webkit/wkwebview"]),
+    ("UIKit", "uikit", ["uikit/uicollectionview", "uikit/uicollectionviewcompositionallayout", "uikit/uieditmenuinteraction",
+                        "uikit/uiapplicationshortcutitem"]),
+    ("HealthKitUI", "healthkitui", ["healthkitui"]),
+    ("HealthKit", "healthkit", ["healthkit/hkactivitysummary"]),
+    ("WidgetKit", "widgetkit", ["widgetkit"]),
+    ("SwiftUI (widget and bridge types)", "swiftui", ["swiftui/widget", "swiftui/widgetconfiguration", "swiftui/controlwidget",
+                                           "swiftui/uiviewrepresentable", "swiftui/uiviewcontrollerrepresentable",
+                                           "swiftui/uihostingconfiguration"]),
+    ("ActivityKit", "activitykit", ["activitykit", "activitykit/activity"]),
+    ("UserNotifications", "usernotifications", ["usernotifications"]),
+    ("AppIntents", "appintents", ["appintents"]),
+]
+FW_SRC = SOURCES / "framework-names.json"
+FW_MD = RESEARCH / "framework-topics.md"
+FW_PIN = re.compile(r"^Saved names: `docs/research/sources/framework-names\.json` sha256 `[0-9a-f]{64}`$", re.M)
+
+
+def android_names(text, keep=r"."):
+    """`package.Class`, `package.Outer.Inner`, `package.topLevelFun` (a static method of a `*Kt` class) and
+    `package.Class.FIELD` from an api/current.txt, kept when the name matches `keep`."""
+    names, pkg, cls = set(), "", ""
+    for line in text.splitlines():
+        if m := PACKAGE.match(line):
+            pkg = m.group(1)
+        elif m := CLASS.match(line):
+            cls = m.group(3)
+            if not cls.endswith("Kt"):
+                names.add(f"{pkg}.{cls}")
+        elif line.startswith("    method ") and cls.endswith("Kt") and " static " in line.split("(", 1)[0]:
+            if m := re.search(r"([\w$]+)\(", line):
+                names.add(f"{pkg}.{m.group(1)}")
+        elif m := re.match(r"^    field .*? ([\w$]+)(?: = .*)?;$", line):
+            names.add(f"{pkg}.{cls}.{m.group(1)}")
+    return sorted(n for n in names if re.search(keep, n))
+
+
+def apple_names(page, module, folder):
+    """(`Module.Type` names, topic pages) from one Apple documentation JSON page: symbols under
+    /documentation/<folder>/ whose title is a type name, and the collection pages there it links."""
+    names, groups = set(), []
+    for r in page.get("references", {}).values():
+        url = r.get("url", "")
+        if not url.startswith(f"/documentation/{folder}/"):
+            continue
+        if r.get("role") == "symbol" and re.fullmatch(r"[A-Z_][\w.]*", r.get("title", "")):
+            names.add(f"{module}.{r['title']}")
+        elif r.get("role") == "collectionGroup":
+            groups.append(url)
+    return names, groups
+
+
+def fetch_frameworks():
+    packages = []
+    for package, version, url, keep in ANDROID_PACKAGES:
+        text = base64.b64decode(get(url + "?format=TEXT")).decode("utf-8")
+        packages.append({"platform": "android", "package": package, "version": version, "sources": [f"{sha(text)} {url}"],
+                         "names": android_names(text, keep)})
+    for module, folder, seeds in APPLE_PACKAGES:
+        names, sources, queue = set(), {}, [(f"/documentation/{s}", 0) for s in seeds]
+        while queue:
+            path, depth = queue.pop(0)
+            if f"{APPLE}{path}.json" in sources:
+                continue
+            raw = get(f"{APPLE}{path}.json")
+            sources[f"{APPLE}{path}.json"] = sha(raw)
+            got, groups = apple_names(json.loads(raw), module.split(" ")[0], folder)
+            names |= got
+            queue += [(g, depth + 1) for g in groups if depth < 2]
+        # "<sha256> <url>" lines, as sha256sum prints them: a `"<url>.json": "<hex>"` pair reads as a key to gitleaks.
+        packages.append({"platform": "ios", "package": module, "version": f"Apple's documentation as served on {DATE}",
+                         "sources": [f"{h} {u}" for u, h in sources.items()], "names": sorted(names)})
+    body = json.dumps({"fetched": DATE, "packages": packages}, indent=1, ensure_ascii=False) + "\n"
+    if len(body.encode("utf-8")) > MAX_FILE:
+        raise ValueError(f"{FW_SRC.name}: {len(body)} bytes, over {MAX_FILE}; narrow a keep regex or a seed list")
+    FW_SRC.write_text(body, encoding="utf-8")
+    line = f"Saved names: `docs/research/sources/{FW_SRC.name}` sha256 `{sha(body)}`"
+    md = FW_MD.read_text(encoding="utf-8")
+    FW_MD.write_text(FW_PIN.sub(line, md) if FW_PIN.search(md) else md.replace("\n\n", f"\n\n{line}\n\n", 1), encoding="utf-8")
+
+
 def pinned(md_path):
     text = md_path.read_text(encoding="utf-8") if md_path.is_file() else ""
     return dict(re.findall(r"^Saved extract: `docs/research/sources/([^`]+)` sha256 `([0-9a-f]{64})`$", text, re.M))
@@ -576,6 +888,7 @@ def pinned(md_path):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--fetch", action="store_true", help="download the sources and save the extracts first")
+    ap.add_argument("--fetch-frameworks", action="store_true", help="download only the framework names (story #288)")
     ap.add_argument("--check", action="store_true", help="write nothing; exit 1 when a list or extract is stale")
     ap.add_argument("--sources", type=Path, default=SOURCES)
     ap.add_argument("--out", type=Path, default=RESEARCH)
@@ -584,6 +897,8 @@ def main(argv=None):
         SOURCES.mkdir(parents=True, exist_ok=True)
         fetch_android()
         fetch_ios()
+    if (a.fetch or a.fetch_frameworks) and not a.check:
+        fetch_frameworks()
     jobs = [([a.sources / ANDROID_SRC.name], a.out / ANDROID_MD.name, android_md),
             (sorted(a.sources.glob("ios-swiftui-extract*.json")) or [a.sources / IOS_SRC.name], a.out / IOS_MD.name, ios_md)]
     errs = []

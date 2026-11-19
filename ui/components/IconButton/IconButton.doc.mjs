@@ -88,5 +88,53 @@ export default {
       "description": "The inside, usually one Icon.",
       "required": true
     }
-  ]
+  ],
+  "platformApi": {
+    "android": {
+      "variants": [
+        {
+          "name": "FilledIconButton",
+          "note": "An icon button with a filled container. The strongest look."
+        },
+        {
+          "name": "FilledTonalIconButton",
+          "note": "An icon button with a tonal container. Between filled and outlined."
+        },
+        {
+          "name": "OutlinedIconButton",
+          "note": "An icon button with a border. Medium strength."
+        },
+        {
+          "name": "IconToggleButton",
+          "note": "A standard icon button that is checked or not. Pass checked and onCheckedChange. Use it for an on and off action, like Favourite."
+        },
+        {
+          "name": "FilledIconToggleButton",
+          "note": "A filled icon button that is checked or not. Pass checked and onCheckedChange."
+        },
+        {
+          "name": "FilledTonalIconToggleButton",
+          "note": "A tonal icon button that is checked or not. Pass checked and onCheckedChange."
+        },
+        {
+          "name": "OutlinedIconToggleButton",
+          "note": "An outlined icon button that is checked or not. Pass checked and onCheckedChange."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "IconButtonDefaults",
+          "use": "The default colours, shapes and sizes for every icon button type."
+        },
+        {
+          "name": "IconButtonColors",
+          "use": "The colours of an icon button when it is on or off. Make one with IconButtonDefaults.iconButtonColors() or the colour function of its type."
+        },
+        {
+          "name": "IconToggleButtonColors",
+          "use": "The colours of an icon toggle button, checked and not checked. Make one with IconButtonDefaults.iconToggleButtonColors() or the colour function of its type."
+        }
+      ]
+    }
+  }
 };

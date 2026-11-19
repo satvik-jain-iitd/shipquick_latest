@@ -1,0 +1,39 @@
+{
+  "name": "SwipeToDismissBox",
+  "baseTarget": "root",
+  "types": {},
+  "core": {},
+  "platforms": {
+    "android": {
+      "state": {
+        "type": {
+          "kind": "named",
+          "name": "SwipeToDismissBoxState"
+        }
+      },
+      "backgroundContent": {
+        "type": {
+          "kind": "content"
+        }
+      },
+      "enableDismissFromStartToEnd": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "enableDismissFromEndToStart": {
+        "type": {
+          "kind": "boolean"
+        },
+        "optional": true
+      },
+      "content": {
+        "type": {
+          "kind": "content"
+        }
+      }
+    }
+  },
+  "webOnly": []
+}
