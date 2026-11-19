@@ -2464,3 +2464,15 @@ Scenario: the cheap jobs and checks.yml are not touched
 Scenario: the ADR and the rule page name the trade
   Then ADR-023 and PR_RULES section 17 exist
 ```
+
+## Story #590: the kit's ci.yml reads roles.yml from the base branch
+```gherkin
+Scenario: the roles job reads roles.yml from the base branch
+  Then gh api fetches it with BASE and GH_REPO from env, and every roles.py get has --file
+Scenario: the intent step reads the reviewer list the same way
+  Then no roles.py get in ci.yml is left without --file
+Scenario: a base branch with no roles file fails at once
+  Then both places print "no .shipquick/roles.yml on branch <base>" and the gh error, and exit 1
+Scenario: roles.py is a protected path
+  Then scripts/roles.py is a line of scripts/protected_paths.txt
+```

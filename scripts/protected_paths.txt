@@ -48,3 +48,5 @@ ui/ios/ShipQuickUITests/__Snapshots__/*
 scripts/features*
 # story #454: the list of files adopt.sh writes; check_tdd.py exempts a diff made only of these plus the pin, so a PR must not widen it
 scripts/adopt_files.txt
+# story #590: the kit's CI runs it from the pull request's tree to read the base branch's reviewer list
+scripts/roles.py
