@@ -69,10 +69,9 @@ def test_the_planner_reuses_the_scan_reader_and_pin():
     assert sha is None and "shipquick-call.yml" in why
 
 
-def test_the_script_reads_no_token_and_has_no_apply():
+def test_the_script_has_no_apply():
     src = (ROOT / "scripts" / "child_bump.py").read_text()
-    assert "environ" not in src and "getenv" not in src and "TOKEN" not in src.upper()
-    assert "--apply" not in src
+    assert "--apply" not in src and "write_text" not in src
 
 
 def test_the_fixtures_use_made_up_names_only():
@@ -97,3 +96,56 @@ def test_each_child_costs_two_reads_in_read_pin_and_in_check_child():
     scan.check_child("example-org/child-a", counting, 14, datetime.datetime.now(datetime.timezone.utc))
     assert [c for c in calls if "contents" in c or c == "repos/example-org/child-a"] == calls[:2]
     assert calls[:2].count("repos/example-org/child-a") == 1 and len([c for c in calls if "shipquick-call.yml" in c]) == 1
+
+
+WF = ROOT / ".github" / "workflows" / "child-bump-plan.yml"
+
+
+def test_a_private_child_is_read_with_the_child_token(tmp_path):
+    reg = tmp_path / "children.md"
+    reg.write_text("example-org/child-a private\nexample-org/child-b\n")
+    seen = []
+    inner = fake_fetch({"child-a": OLD, "child-b": OLD})
+
+    def fetch(path, token=None):
+        seen.append((path, token))
+        return inner(path)
+
+    assert cb.run(str(reg), NEW, fetch, token="T0KEN") == 0
+    assert seen and all(t == "T0KEN" for p, t in seen if "child-a" in p)
+    assert all(t is None for p, t in seen if "child-b" in p)
+
+
+def test_the_workflow_runs_the_planner_on_a_release_tag():
+    text = WF.read_text()
+    assert 'tags: ["v*"]' in text and "workflow_dispatch:" in text and "tag:" in text
+    assert "timeout-minutes:" in text and "uses: actions/checkout@" in text
+    assert "python3 scripts/child_bump.py --release-sha" in text
+    assert "${{ inputs.tag" not in text.split("run:", 1)[1]  # the tag goes through env, never into script text
+    assert "SHIPQUICK_CHILD_TOKEN: ${{ secrets.SHIPQUICK_CHILD_TOKEN }}" in text
+
+
+def test_the_workflow_is_read_only_and_writes_nothing():
+    text = WF.read_text()
+    assert "permissions:\n  contents: read\n" in text and "write" not in text.replace("writes", "")
+    for word in ("gh issue", "gh pr", "git push", "upload-artifact", "git branch"):
+        assert word not in text
+
+
+def test_the_workflow_fails_on_a_tag_with_no_commit():
+    text = WF.read_text()
+    assert 'git rev-parse --verify "refs/tags/$TAG^{commit}"' in text
+    assert '-z "$TAG"' in text and "exit 1" in text
+    assert "|| true" not in text and "continue-on-error" not in text
+
+
+def test_the_workflow_step_keeps_the_planner_exit_code():
+    text = WF.read_text()
+    assert "set -o pipefail" in text and "GITHUB_STEP_SUMMARY" in text
+    assert "|| true" not in text and "continue-on-error" not in text
+
+
+def test_the_workflow_step_has_the_workflow_token_for_public_children():
+    # without GH_TOKEN, gh cannot read any public child on a runner and every child is `unread`
+    text = WF.read_text()
+    assert "GH_TOKEN: ${{ github.token }}" in text.split("env:", 1)[1].split("run:", 1)[0]

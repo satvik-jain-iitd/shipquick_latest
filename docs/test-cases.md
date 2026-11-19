@@ -2390,3 +2390,96 @@ Scenario: the script reads no token and has no apply
 Scenario: the fixtures use made-up names only
   Then every child is under example-org
 ```
+
+## Story #587: the child bump plan runs on a release tag
+```gherkin
+Scenario: a private child is read with the child token
+  Then the token reaches the reader for the private child only
+Scenario: the workflow runs the planner on a release tag
+  Then it runs on a v tag and by hand, and passes the tag through env
+Scenario: the workflow is read only and writes nothing
+  Then contents is read and no issue, pull request, push or upload step exists
+Scenario: the workflow fails on a tag with no commit
+  Then an empty or unknown tag exits 1
+Scenario: the workflow step keeps the planner exit code
+  Then pipefail is set and nothing masks a red result
+## Story #586: the coverage ratchet as a local check
+```gherkin
+Scenario: a changed file that dropped below its base report fails
+  Then check_local.sh coverage prints FAIL coverage and names the file
+Scenario: a report path is not set or the file is missing
+  Then it prints FAIL coverage with the reason and never says skip
+Scenario: the check runs no tests
+  Then no pytest and no coverage run is called
+Scenario: a deleted file is not judged
+  Then it is not in the change list
+Scenario: the change list cannot be read
+  Then it prints FAIL coverage with the reason
+Scenario: the feature coverage is off
+  Then it prints skipped: coverage is off and passes
+Scenario: the default list
+  Then coverage is not in it, but is in the usage and unknown-check lines
+## Story #589: checks.yml reads roles.yml from the base branch
+```gherkin
+Scenario: roles and intent-verify read the base branch through the API
+  Then neither job holds project/.shipquick/roles.yml
+Scenario: a set kit branch is read instead, and a missing one fails naming it
+  Then both jobs read the kit branch
+Scenario: neither job checks out the project
+  Then no step runs git fetch
+Scenario: no roles file on the branch fails closed
+  Then roles fails naming the branch and intent-verify passes an empty list
+Scenario: neither job asks for write permission
+  Then the roles job has GH_REPO in its env
+Scenario: the PR's own file is read only on a 404 from the base
+  Then a 500 or a missing token never reads it
+## Story #588: one day's merged PRs as a table (tests/test_sprint_metrics.py)
+```gherkin
+Scenario: a day with two merged PRs prints a table and a totals line
+  Then there is one row per PR and the exit code is 0
+Scenario: the command reads only the five GET paths through the shared reader
+  Then gh_api is issue_notice.gh_api
+Scenario: a PR that cannot be read is a named row and exit 1
+  Then the other rows still print
+Scenario: a failed search prints the reason and no table
+  Then an incomplete search and more than 100 PRs exit 1 too
+Scenario: an empty value prints a dash and adds nothing to the totals
+  Then the totals skip it
+Scenario: a day with no merged PR says so and exits 0
+  Then it prints no merged PRs on the date
+Scenario: the day is read on the clock the offset names
+  Then a bad offset, date or missing repo exits 2 and makes no call
+## Story #592: light CI on a train pull request
+```gherkin
+Scenario: the six heavy jobs do not run on a light run
+  Then each has the light-run if and the phone jobs keep their area test
+Scenario: the light-run rule reads the base branch, never the head
+  Then head_ref is not in the condition
+Scenario: the gate on a light run says so and still fails on a failed job
+  Then the change-map step is skipped and the light run line is printed
+Scenario: the gate on a full run needs test to succeed
+  Then a skipped test fails the gate
+Scenario: the cheap jobs and checks.yml are not touched
+  Then none holds the light-run condition
+Scenario: the ADR and the rule page name the trade
+  Then ADR-023 and PR_RULES section 17 exist
+```
+
+## Story #590: the kit's ci.yml reads roles.yml from the base branch
+```gherkin
+Scenario: the roles job reads roles.yml from the base branch
+  Then gh api fetches it with BASE and GH_REPO from env, and every roles.py get has --file
+Scenario: the intent step reads the reviewer list the same way
+  Then no roles.py get in ci.yml is left without --file
+Scenario: a base branch with no roles file fails at once
+  Then both places print "no .shipquick/roles.yml on branch <base>" and the gh error, and exit 1
+Scenario: roles.py is a protected path
+  Then scripts/roles.py is a line of scripts/protected_paths.txt
+```
+
+## Story #596: rule 4 names the train branch (words only)
+
+- AC-1 `tests/test_rule4_train.py::test_rule_4_names_the_train_and_keeps_its_old_words`: rule 4 in CLAUDE.md names `train/<date>`, points to PR_RULES, and keeps its old words.
+- AC-2 `tests/test_rule4_train.py::test_the_dense_rule_4_names_the_train`: the dense Rule 4 line says the same.
+- AC-3 `tests/test_rule4_train.py::test_pr_rules_lists_the_train_steps_in_order`: PR_RULES section 17 lists the train steps in order.
+- AC-4 `tests/test_rule4_train.py::test_the_rule_copies_check_still_passes`: `check_rule_copies.py` passes for the kit.

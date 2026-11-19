@@ -64,6 +64,7 @@ F4 to F8 of epic #86 land, turning any other flag off changes nothing, so nothin
 | `pre-commit` | Checks before each commit | Runs quick checks on your computer before each commit, so mistakes are caught early. | No checks run before a commit. CI still catches them later. | on |
 | `graph-fresh` | Code graph is fresh | On your computer, checks that the code graph was built from the commit you are on, so searches do not use old answers. | A stale code graph is not reported. A project with no graph is skipped either way. | on |
 | `tests-for-change` | Run only the tests a change names | On your computer, `check_local.sh tests` runs only the Python test files that name the files you changed, or the whole suite when a file is named by no test. It is a name search: a test that reaches a changed file only through another script is not picked, and CI still runs the full suite. | The tests check is skipped. It is not in the default list either way. | on |
+| `coverage` | Coverage ratchet | On your computer, `check_local.sh coverage` compares two coverage reports (`COVERAGE_BASE` and `COVERAGE_CURRENT`) and fails when a changed Python file covers less than it did on the base branch. It runs no tests itself. | The coverage check is skipped. It is not in the default list either way. | on |
 
 ## Always on
 

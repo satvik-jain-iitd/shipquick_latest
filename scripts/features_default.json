@@ -185,6 +185,14 @@
       "default": true,
       "locked": false
     },
+    "coverage": {
+      "name": "Coverage ratchet",
+      "what": "On your computer, `check_local.sh coverage` compares two coverage reports (`COVERAGE_BASE` and `COVERAGE_CURRENT`) and fails when a changed Python file covers less than it did on the base branch. It runs no tests itself.",
+      "if_off": "The coverage check is skipped. It is not in the default list either way.",
+      "group": "Local checks",
+      "default": true,
+      "locked": false
+    },
     "adoption": {
       "name": "Kit is really installed",
       "what": "Checks that the project carries the ShipQuick checks for real, at the version it says. This guards all the others.",
