@@ -237,3 +237,19 @@ def test_local_skip_line_names_intent_verify(tmp_path):
     subprocess.run(["git", "-C", str(repo), "init", "-q", "-b", "feat"], check=True)
     r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=stub_env(tmp_path))
     assert "skip intent-verify:" in r.stdout, (r.stdout, r.stderr)
+
+
+# ---- #555 round 2, point 4: the check has its own feature id, so a child can turn it off (kit CI only) ----
+def test_the_intent_verify_feature_is_on_by_default_and_not_locked():
+    d = json.loads((ROOT / "scripts" / "features_default.json").read_text(encoding="utf-8"))["features"]["intent-verify"]
+    assert d["default"] is True and d["locked"] is False and d["name"] and d["what"] and d["if_off"] and d["group"]
+
+
+def test_turning_intent_verify_off_skips_the_local_check(tmp_path):
+    repo = local_repo(tmp_path)
+    r = subprocess.run(["python3", str(ROOT / "scripts" / "features.py"), "--root", str(repo), "set", "intent-verify", "off"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    env = stub_env(tmp_path, story_issue(comments=[]))
+    r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
+    assert "skipped: intent-verify is off" in r.stdout, (r.stdout, r.stderr)
