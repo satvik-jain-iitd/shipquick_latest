@@ -23,7 +23,7 @@ export default {
         },
         {
           "type": "prose",
-          "text": "Text shows read-only words, one line or many. Apple: \"A view that displays one or more lines of read-only text.\""
+          "text": "Text shows read-only words, one line or many. Apple: \"A view that displays one or more lines of read-only text.\" With the type tokens, Text follows Dynamic Type."
         }
       ]
     },
@@ -50,13 +50,55 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "allowsTightening: `.allowsTightening(_:)`, iOS 13.0. Apple: \"Sets whether text in this view can compress the space between characters when necessary to fit text in a line.\"",
+            "attributedTextFormattingDefinition: `.attributedTextFormattingDefinition(_:)`, iOS 26.0. Apple: \"Apply a text formatting definition to nested views.\"",
+            "baselineOffset: `.baselineOffset(_:)`, iOS 16.0. Apple: \"Sets the vertical offset for the text relative to its baseline in this view.\"",
+            "bold: `.bold(_:)`, iOS 16.0. Apple: \"Applies a bold font weight to the text in this view.\"",
+            "dataDetection: `.dataDetection(_:options:)`, iOS 27.0. Apple: \"Asynchronously detects data in the view’s content and styles them to indicate they are clickable.\"",
+            "dynamicTypeSize: `.dynamicTypeSize(_:)`, iOS 15.0. Apple: \"Sets the Dynamic Type size within the view to the given value.\"",
+            "flipsForRightToLeftLayoutDirection: `.flipsForRightToLeftLayoutDirection(_:)`, iOS 13.0. Apple: \"Sets whether this view mirrors its contents horizontally when the layout direction is right-to-left.\"",
+            "font: `.font(_:)`, iOS 13.0. Apple: \"Sets the default font for text in this view.\"",
+            "fontDesign: `.fontDesign(_:)`, iOS 16.1. Apple: \"Sets the font design of the text in this view.\"",
+            "fontWeight: `.fontWeight(_:)`, iOS 16.0. Apple: \"Sets the font weight of the text in this view.\"",
+            "fontWidth: `.fontWidth(_:)`, iOS 16.0. Apple: \"Sets the font width of the text in this view.\"",
+            "italic: `.italic(_:)`, iOS 16.0. Apple: \"Applies italics to the text in this view.\"",
+            "kerning: `.kerning(_:)`, iOS 16.0. Apple: \"Sets the spacing, or kerning, between characters for the text in this view.\"",
+            "lineHeight: `.lineHeight(_:)`, iOS 26.0. Apple: \"A modifier for the default line height in the view hierarchy.\"",
+            "lineLimit: `.lineLimit(_:)`, iOS 16.0. Apple: \"Sets to a closed range the number of lines that text can occupy in this view.\"",
+            "lineSpacing: `.lineSpacing(_:)`, iOS 13.0. Apple: \"Sets the amount of space between lines of text in this view.\"",
+            "minimumScaleFactor: `.minimumScaleFactor(_:)`, iOS 13.0. Apple: \"Sets the minimum amount that text in this view scales down to fit in the available space.\"",
+            "monospaced: `.monospaced(_:)`, iOS 16.0. Apple: \"Modifies the fonts of all child views to use the fixed-width variant of the current font, if possible.\"",
+            "monospacedDigit: `.monospacedDigit()`, iOS 15.0. Apple: \"Modifies the fonts of all child views to use fixed-width digits, if possible, while leaving other characters proportionally spaced.\"",
+            "multilineTextAlignment: `.multilineTextAlignment(_:)`, iOS 13.0. Apple: \"Sets the alignment of a text view that contains multiple lines of text.\"",
+            "strikethrough: `.strikethrough(_:pattern:color:)`, iOS 16.0. Apple: \"Applies a strikethrough to the text in this view.\"",
+            "textCase: `.textCase(_:)`, iOS 14.0. Apple: \"Sets a transform for the case of the text contained in this view when displayed.\"",
+            "textRenderer: `.textRenderer(_:)`, iOS 18.0. Apple: \"Returns a new view such that any text views within it will use `renderer` to draw themselves.\"",
+            "textScale: `.textScale(_:isEnabled:)`, iOS 17.0. Apple: \"Applies a text scale to text in the view.\"",
+            "textSelection: `.textSelection(_:)`, iOS 15.0. Apple: \"Controls whether people can select text within this view.\"",
+            "textSelectionAffinity: `.textSelectionAffinity(_:)`, iOS 18.0. Apple: \"Sets the direction of a selection or cursor relative to a text character.\"",
+            "tracking: `.tracking(_:)`, iOS 16.0. Apple: \"Sets the tracking for the text in this view.\"",
+            "truncationMode: `.truncationMode(_:)`, iOS 13.0. Apple: \"Sets the truncation mode for lines of text that are too long to fit in the available space.\"",
+            "typesettingLanguage: `.typesettingLanguage(_:isEnabled:)`, iOS 17.0. Apple: \"Specifies the language for typesetting.\"",
+            "underline: `.underline(_:pattern:color:)`, iOS 16.0. Apple: \"Applies an underline to the text in this view.\"",
+            "writingDirection: `.writingDirection(strategy:)`, iOS 26.0. Apple: \"A modifier for the default text writing direction strategy in the view hierarchy.\""
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
           "type": "list",
           "style": "do",
           "items": [
-            "Use the type tokens for font and size, so Dynamic Type still works.",
+            "Use the type tokens for font and size, so the text still grows with the person's text size setting.",
             "Let people select useful text, like an error code, with textSelection(.enabled)."
           ]
         },
@@ -64,7 +106,7 @@ export default {
           "type": "list",
           "style": "dont",
           "items": [
-            "Use Text for words people must edit. Use a TextField instead."
+            "Use Text for words people must edit. Use a text field instead."
           ]
         }
       ]
@@ -76,7 +118,7 @@ export default {
           "type": "list",
           "style": "unordered",
           "items": [
-            "Dynamic Type (1.4.4 Resize Text, 200% text size): Text grows with the person's text size setting. Never fix the font size; use the type tokens.",
+            "Text size (1.4.4 Resize Text, 200% text size): Text grows with the person's text size setting. Never fix the font size; use the type tokens.",
             "Text contrast (1.4.3 Contrast (Minimum), 4.5:1): Body text has at least 4.5:1 contrast with what is behind it."
           ]
         }

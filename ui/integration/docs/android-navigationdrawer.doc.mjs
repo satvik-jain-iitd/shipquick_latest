@@ -67,6 +67,29 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "ModalDrawerSheet: The sheet that holds the items of a ModalNavigationDrawer.",
+            "NavigationDrawerItem: One destination in a drawer sheet: a label, an optional icon and badge, and selected and onClick.",
+            "DismissibleNavigationDrawer: A drawer that pushes the content aside when open, and that the user can close. Use it when the content should stay in view.",
+            "DismissibleDrawerSheet: The sheet that holds the items of a DismissibleNavigationDrawer.",
+            "PermanentNavigationDrawer: A drawer that is always open, beside the content. Use it on large screens only.",
+            "PermanentDrawerSheet: The sheet that holds the items of a PermanentNavigationDrawer.",
+            "DrawerState: Says if the drawer is open or closed. Call open() and close() from a coroutine.",
+            "rememberDrawerState: Creates and keeps a DrawerState, with DrawerValue.Closed or Open as the first value.",
+            "DrawerValue: The two states of a drawer: Closed and Open.",
+            "DrawerDefaults: Default container colours, elevations, shape, maximum width and window insets for drawer sheets, and the scrim colour.",
+            "NavigationDrawerItemDefaults: Default colours and padding for NavigationDrawerItem.",
+            "NavigationDrawerItemColors: The container, icon, text and badge colours of a NavigationDrawerItem, selected and not."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

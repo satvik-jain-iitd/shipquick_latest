@@ -73,6 +73,21 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "NavigationBarItem: One destination in a NavigationBar: an icon, an optional label, and selected and onClick.",
+            "NavigationBarDefaults: Default container colour, elevation and window insets for NavigationBar.",
+            "NavigationBarItemDefaults: Default colours for NavigationBarItem. Make them with NavigationBarItemDefaults.colors().",
+            "NavigationBarItemColors: The icon, text and indicator colours of a NavigationBarItem, selected and not."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

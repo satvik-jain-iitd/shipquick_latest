@@ -279,6 +279,15 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   Google's pages (`docs/research/android-m3-components.md`), and the templates call M3 composables the way Google's guides show.
 - Confidence that nothing fits better: 0.9 (the library is Google's, so there is nothing to find beyond it).
 
+## 9 Nov 2026, story #225: read the kit pin from a kit branch (rule-24 children)
+- Need: read a git submodule pin and config files from another branch in a CI adoption check.
+- Run: `scout.py --need "read a git submodule pin and config files from another branch in a CI adoption check (git show branch:path)"`:
+  no repos found. `gh search repos "topic:git-submodules"`: junhoyeo/vercel-submodules (fetches private submodules at Vercel
+  deploy), sgoudham/update-git-submodules (an Action that bumps submodules to the latest tag), roehling/git-archive-all
+  (archives a repo with its submodules). READMEs read; none checks a pin on another branch.
+- Decision: no tool. Plain git does it: `git fetch origin <b>`, `git rev-parse <b>:knowledge/shipquick_latest`,
+  `git show <b>:.pre-commit-config.yaml`; the scan uses the GitHub contents API (`type: submodule`, `sha`). Built from scratch.
+- Confidence that nothing fits better: 0.85.
 ## 9 Nov 2026, story #216: the UI coverage gate (every counted component has a doc, a contract and a topic)
 - Need: check that every row of a counted component list has one doc, one contract and one served topic, and that no name we serve shadows a core doc.
 - Run: `scout.py --need "check that every component in a counted design-system list has a doc, a contract and a served topic, and no name shadows the upstream library"`: no repos found.
@@ -316,3 +325,487 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
   (we read `conformingTypes` on the `View` page and `metadata.platforms` on each type's page).
 - Decision: build from scratch, about 300 lines of stdlib Python (`scripts/ui_api_lists.py`). No package added.
 - Confidence that nothing fits better: 0.8 (both inputs are vendor formats with no maintained parser for this job).
+
+## 9 Nov 2026, story #260: make a status check required on child repos and report the ones missing it
+- Need: require a GitHub status check on a child repo's default branch and report repos missing it.
+- Run: `scout.py --need "require a GitHub status check on a child repo's default branch and report repos missing it"`: no repos found.
+  `gh search repos --topic=branch-protection --sort=stars`: conventional-branch/conventional-branch, cloudposse/github-status-updater,
+  kunwarVivek/mcp-github-project-manager, warestack/watchflow, benjefferies/branch-protection-bot.
+- Read: the top 3 that fit. github-status-updater (Go CLI) sets commit statuses and can turn on required checks with the
+  classic protection API; one call we can make with `gh api` ourselves. watchflow is a GitHub App rule engine that posts its
+  own check runs; it replaces our gate, it does not require it. branch-protection-bot toggles "include administrators"; not a fit.
+- Borrowed: the idea from github-status-updater of one call that turns on the required check. We use a ruleset instead of
+  the classic PUT, so existing protection and its other checks stay.
+- Decision: about 40 lines added to `scripts/kit_branch.py` (stdlib), reusing its `gh api` protection read. No package added.
+- Confidence that nothing fits better: 0.8 (the job is two GitHub API calls; any tool would still need our gate name).
+
+## 9 Nov 2026, story #242: offline vendor backup of npm and Maven dependencies
+- Need: keep an offline, checksummed copy of the pinned npm tarballs and Compose Maven artifacts, and prove a restore with no registry.
+- Run: `scout.py --need "offline vendor backup of npm and maven dependencies"`: no repos found.
+  `gh search repos "offline maven npm mirror vendoring"`: none. `--topic=npm-mirror` and `--topic=offline-mirror`: shrinkpack
+  (JamieMason), netdoctor-ir, a few site mirrors.
+- Read: shrinkpack stores npm tarballs in the repo and installs offline; it is old (npm 5 era), npm only, no Maven. netdoctor-ir
+  switches mirrors; it keeps no copy. The Gradle docs describe a local file Maven repository with `--offline`; no tool needed.
+- Borrowed: shrinkpack's idea of keeping the tarballs and checking them against the lockfile integrity. npm's own cache does the
+  same today (`npm ci --offline --cache`), so we use that. Maven side: a plain folder in Maven layout.
+- Decision: about 300 lines, `scripts/vendor_backup.py` (stdlib) and `scripts/restore_vendor.sh`; npm and Gradle do the installing.
+- Confidence that nothing fits better: 0.8.
+## 9 Nov 2026, story #217: prove every contract prop compiles against Compose Material 3 and SwiftUI
+- Need: generate a compile-only proof that every UI component contract prop exists in Jetpack Compose Material 3 and SwiftUI, checked in CI.
+- Run: `scout.py --need "generate a compile-only proof that every UI component contract prop exists in Jetpack Compose Material 3 and SwiftUI, checked in CI"`: no repos found.
+  `scout.py --need "compose api compatibility check"`: no repos found.
+  `gh search repos "compose material3 api check"`: none. `gh search repos "swiftui api compile test"`: none.
+  `gh search repos "topic:binary-compatibility kotlin"`: JetBrains/kotlin and unrelated apps, not a fit.
+- Read: no repo fits, so no README fits the job. The tools that do exist (Kotlin's binary-compatibility-validator, metalava)
+  check that a library keeps its own API; they do not check that our docs name a real API.
+- Borrowed: the compiler itself is the checker. Gradle, the Android Gradle Plugin, Kotlin and Xcode are the vendors' own tools
+  (owner yes on #217, 9 Nov 2026), pinned exactly and run on GitHub CI only.
+- Decision: build from scratch, about 300 lines of stdlib Python (`scripts/ui_proof.py`) that writes the two proof files.
+  No package added to the repo.
+- Confidence that nothing fits better: 0.8 (the contracts are our own format; any tool would still need this glue).
+
+## 9 Nov 2026, story #185: lint that refuses hand-drawn UI in a child
+- Need: detekt SwiftLint forbid hand-drawn UI.
+- Run: `scout.py --need "detekt SwiftLint forbid hand-drawn UI"`: no repos found.
+  Read instead: detekt (`ForbiddenImport`), Konsist (`LemonAppDev/konsist`) and SwiftLint (`realm/SwiftLint`, `custom_rules`).
+  The owner said yes to all three on #185 ("Haan, teeno", 9 Nov 2026).
+- Borrowed: all three are used as they are, pinned exactly (detekt 1.23.8, Konsist 0.17.3, SwiftLint 0.65.1) and run on GitHub CI only.
+  No custom detekt rule module. The rules are config and one Kotlin test file.
+- Decision: no new tool. We write two configs, one Konsist test, two fixture apps and a drift test (stdlib Python).
+- Confidence that nothing fits better: 0.8 (the three tools are the usual choice for Compose and SwiftUI; no repo does both).
+## 9 Nov 2026, story #184: one tokens.json to a Compose Theme and SwiftUI Tokens
+- Need: turn `design/tokens.json` into a Compose Material 3 `Theme.kt` and a SwiftUI `Tokens.swift`, checked in CI.
+- Run: `scout.py --need "design tokens json to Compose Theme and SwiftUI Tokens"`: no repos found.
+  `gh search repos "style-dictionary"`: style-dictionary/style-dictionary (about 4.9k stars, pushed 3 Nov 2026).
+  `gh search repos "design tokens compose swiftui"`: none.
+- Read: Style Dictionary is a Node tool. It needs `npm install` and a custom format per target, written by us: one for
+  Compose Material 3 roles and one for SwiftUI. Its stock Android and iOS formats write XML and Objective-C style output,
+  not `ColorScheme`, `Typography` or SwiftUI `Color`. Meta's Astryx has a Swift theme emitter
+  (`packages/native/scripts/swift-ios-theme.mjs`, 839 lines, v0.7.11). It reads CSS custom properties resolved from
+  `defineTheme`, not W3C tokens, so it does not fit. Borrowed ideas only: a generated-file header that names the command,
+  the output committed, a test that fails on drift, and a check for reserved words in names. No file was copied.
+- Decision: build from scratch, one stdlib Python file (`scripts/emit_tokens.py`), the same shape as `scripts/ui_proof.py`.
+  It runs on CI with no install, and the output is the part that needs our own mapping anyway.
+- Confidence that nothing fits better: 0.75 (Style Dictionary would save the JSON walk, but not the mapping, and adds Node).
+## 9 Nov 2026, story #288: save the public names of each framework package
+- Need: save a list of public API names of Android and Apple framework packages to validate names in docs.
+- Run: `scout.py --need "save a list of public API names of Android and Apple framework packages to validate names in docs"`: no repos found.
+  `gh search repos "android api current.txt"`: none. `gh search repos --topic=docc`: DoccZz/docc2html, tayloraswift/swift-biome,
+  JosephDuffy/VaporDocC (and two not a fit).
+- Read: the top 3 READMEs. docc2html builds a static site from a DocC archive. swift-biome serves many Swift packages'
+  docs (superseded by swift-unidoc). VaporDocC serves a DocC archive from a Vapor app. None saves a name list we can check against.
+- Borrowed: nothing new. We reuse our own `scripts/ui_api_lists.py` (its `get`, `sha`, current.txt regexes and the Apple JSON reading).
+- Decision: about 90 lines added to `scripts/ui_api_lists.py` and 30 to `scripts/check_ui_coverage.py` (stdlib). No package added.
+- Confidence that nothing fits better: 0.8 (the job is our own glue on two vendor formats we already parse).
+
+## 9 Nov 2026, story #285: an own-family rule for iOS docs
+- Need: enforce that each API row is documented only in the doc of its own family, mapping SwiftUI modifiers to component docs.
+- Run: `scout.py --need "enforce that each API row is documented only in the doc of its own family, mapping SwiftUI modifiers to component docs"`: no repos found.
+  `gh search repos "swiftui modifiers list"`: none. `gh search repos "swiftui modifiers" --sort stars`: superwall/iOS-Backports,
+  Aeastr/AdaptiveDimensions, ngimelliUW/WiggleAnimationModifier (and two more single-modifier packages).
+- Read: the top 3 READMEs. iOS-Backports adds a `.backport` wrapper for new modifiers. AdaptiveDimensions scales sizes with text
+  size. WiggleAnimationModifier adds one animation. Each is a modifier to use in an app, not a catalog or a gate.
+- Borrowed: nothing. We reuse our own Android rule in `scripts/check_ui_coverage.py` (PR #255) and the generated list.
+- Decision: a `Doc family` column from `scripts/ui_api_lists.py` (one map, `IOS_DOC_FAMILY`) and about 20 lines in the gate. No package added.
+- Confidence that nothing fits better: 0.85 (the rule is about our own docs and our own list).
+
+## 10 Nov 2026, story #186: the component-request gate
+- Need: check that a GitHub issue has an owner-yes comment and an approval label, both by a reviewer account, before a custom component merges.
+- Run: `scout.py --need "check a GitHub issue has an approval label and an approval comment by an allowed account before merge"`: one repo, score 0, ignore (a list, no licence, dead 2004 days).
+  `gh search repos --topic=approval-gate`: agentveil-sdk, renezander030/agent-approval-gate, herdr-telegram-gate. All are runtime approval for AI agents, not a GitHub issue check.
+- Read: the top 3 READMEs. agent-approval-gate is a draft-validate-approve pattern with n8n and email. agentveil-sdk guards agent actions at run time. herdr-telegram-gate sends Telegram approve cards. None reads issue comments and label events.
+- Borrowed: nothing; the idea of a recorded approval step is already our rule 38.
+- Decision: build from scratch, about 100 lines of stdlib Python (`scripts/check_component_request.py`), calling `gh api` for issue events and comments.
+- Confidence that nothing fits better: 0.8.
+## 10 Nov 2026, story #91 (epic ShipQuick Desk): localhost dashboard for one repo
+- Need: a localhost dashboard for one GitHub repo that shows issues, PRs, decisions waiting for the owner and the roadmap, refreshed on a timer, with no server beyond the stdlib.
+- Run: `scout.py --need "localhost dashboard for one GitHub repo: issues, PRs, decisions waiting for the owner, roadmap, refreshed on a timer, no server beyond the stdlib"` found no repos (empty list).
+  Then `gh search repos --topic github-dashboard --sort stars -L 10`. Top hits: `javiertuya/dashgit`, `AKharytonchyk/git-pull-request-dashboard`, `imhamiddev/GitHub-monitor`, then unrelated small repos.
+- Read (top 3 READMEs, GitHub API, tier A for what the repo says, tier C for its own claims):
+  - `javiertuya/dashgit`: browser-only dashboard for many repos and GitLab, hosted on GitHub Pages. Has `dashgit-server-py/server.py`, a stdlib Python server on 127.0.0.1:8080, no Docker, no Node. Tokens kept in browser storage. Multi-repo, so too broad.
+  - `AKharytonchyk/git-pull-request-dashboard`: multi-org PR and issue view with a PAT in the browser, GitHub Pages demo. Built for many repos, not one repo's decisions and roadmap. Does not fit.
+  - `imhamiddev/GitHub-monitor`: Next.js 15 SaaS with a database and GitHub App auth. Far too heavy for a localhost page. Does not fit.
+- Borrowed: the idea of a stdlib Python server bound to 127.0.0.1 (from dashgit `server.py`). Our roadmap engine is reused as is: `roadmap/roadmap.js` and `roadmap/query.graphql`.
+- Verdict: nothing fits the need (one repo, decisions waiting, roadmap). Build from scratch, small, on top of the existing roadmap engine.
+- Confidence that nothing fits: 0.8. Test: the design doc's Option A and B each get a spike; if a tool turns up that covers one repo's decisions, swap the page only.
+
+## 10 Nov 2026, story #310 (A0): the Done when line and the size warning
+- Need: fail a user story issue with no `Done when:` line, and warn on size M, L or XL labels.
+- Run: `scout.py --need "fail a GitHub user story issue with no Done when line and warn on size M L XL labels"`: no repos found.
+  `gh search repos "github issue template size story checker"`: no fit for a check on an existing issue label set.
+- Read: none to read; the search gave no repo that checks story issues.
+- Decision: extend `scripts/check_story.py` (the story-shape check of #155). No new tool: the same issue read, the same skip rule for old stories.
+- Confidence that nothing fits better: 0.7 (a narrow ShipQuick rule; the search was thin).
+- Study of Ponytail and ECC (the epic's source, read in full by the reviewer, 10 Nov 2026): `docs/research/2026-11-10-ponytail-ecc-study.md`.
+## 10 Nov 2026, story #317 (A4a): the review finding shape
+- Need: a short doc that fixes the shape of a code review finding (what this is, problem, fix, if we skip) with a verdict line.
+- Run: `scout.py --need "a short doc that fixes the shape of an AI code review finding (what, problem, fix, if skipped) with a verdict line"`: no repos found.
+  `gh search repos --topic=code-review --limit 5`: alibaba/open-code-review, tirth8205/code-review-graph, The-PR-Agent/pr-agent (and two unrelated).
+- Read: not read in full. These are review tools that run an LLM or build a code graph. The need is a written shape for a finding, not a tool.
+- Borrowed: the shape from our own study, `ponytail-review` (What this is, Problem, Fix, If we skip; Verdict; Not checked) and ECC `code-reviewer` (report only over 80% sure, zero findings is valid, read the callers).
+- Decision: build from scratch, one doc (`docs/REVIEW_SHAPE.md`) and one test. No code, no dependency.
+- Confidence that nothing fits better: 0.8 (a doc, not code; the tools above review code, they do not fix a writing shape).
+
+## 10 Nov 2026, story #326 (A10): adopt.sh checks the Ponytail plugin
+- Need: `adopt.sh --check` fails a child when the Ponytail plugin is not enabled in the Claude settings file, and prints the two install lines.
+- Run: `scout.py --need "adopt script checks a Claude Code plugin is enabled in the user settings file and prints install lines"`: no repos found.
+  `gh search repos --topic=claude-code-plugin --limit 5`: DietrichGebert/ponytail (the plugin itself), thedotmack/claude-mem, career-ops-hq/career-ops, and three unrelated skill repos.
+- Read: the top 3 READMEs. Ponytail: the lazy-dev rules plugin, with install by `/plugin marketplace add` and `/plugin install`. claude-mem: a memory plugin, no settings check of its own. career-ops: a job-search agent that can run as a plugin. None checks another repo's plugin switch.
+- Borrowed: the install lines, taken from the Ponytail install docs (the plugin's own text). The settings key name is the one Claude Code writes (`enabledPlugins`), as read from our own `~/.claude/settings.json`.
+- Decision: extend `scripts/adopt.sh --check` with about 12 lines (a `python3 -c` JSON read, the same style as the kit_branch parser). No new tool, no new dependency.
+- Confidence that nothing fits better: 0.85 (the check is one key in one file; a plugin would only add a second source of truth).
+## 10 Nov 2026, story #316 (A3): rule-copy canary
+- Need: fail a check when a child's copy of the kit rule block drifts from the kit CLAUDE.md, or when a load-bearing phrase is missing from the kit rule file.
+- Run: `scout.py --need "fail a CI check when a copied rule block in a child CLAUDE.md drifts from the kit rules or a load-bearing phrase is missing from a rule file"` found no repos. `gh search repos --topic=rule-drift` and `--topic=prompt-lint` gave only prompt linters (ravikiranpagidi/prompt-lint-py, MIT, a static analyzer for prompt templates, not a copy check). `gh search repos "instruction file drift check CLAUDE.md"` gave `lzy02712-spec/agents-md-drift` (stale paths, npm scripts and size in AGENTS.md) and `petrkindlmann/agents-md-action` (required H2 sections, and a terso emit drift check for per-agent files).
+- Read: the top 3 READMEs. agents-md-drift checks that paths and scripts named in AGENTS.md exist; it does not compare a copied block. agents-md-action checks section names and runs `terso emit --check` (a generator, which we do not use). prompt-lint-py lints prompt text, not rule copies.
+- Borrowed: the idea and the invariant-phrase list of `scripts/check-rule-copies.js` in `dietrichgebert/ponytail` (MIT, read only, pushed 29 Oct 2026). Rewritten in stdlib Python, with the child marker rule instead of a generated file.
+- Decision: build from scratch, about 100 lines, `scripts/check_rule_copies.py`. No tool compares a child's block with the kit's rule text.
+- Confidence that nothing fits better: 0.8. Test: a one-word change in a fixture turns the check red with the file name (tests/test_check_rule_copies.py).
+## 10 Nov 2026, story #327: shortcut ledger for ponytail and shortcut comments
+- Need: list every `shortcut:` or `ponytail:` comment in tracked source, tag the ones with no upgrade trigger, log them once to a follow-ups table.
+- Run: `scout.py --need "find shortcut or ponytail debt comments in a repo that lack an upgrade trigger, and log them"` returned "no repos found". `gh search repos "todo comment tracker missing trigger lint"` returned no rows. Thin search: no read of READMEs (nothing to read).
+- Decision: build from scratch in `scripts/check_shortcuts.py` (stdlib, about 100 lines). Nothing found fits: the ponytail kit's `ponytail-debt` skill is the idea source (study in `docs/research/2026-11-10-ponytail-ecc-study.md`, row A11), not a script to call.
+- Confidence that nothing fits better: 0.5 (the search was thin; a broader search could still find a lint for TODO comments).
+## 10 Nov 2026, story #325 (A7): workflow security lint
+- Need: a stdlib check that fails a GitHub Actions workflow which checks out the PR head under pull_request_target or workflow_run, or runs npm ci or npm install without --ignore-scripts.
+- Run: `scout.py --need "lint GitHub Actions workflows for pull_request_target or workflow_run checkouts of untrusted PR head and npm install without ignore-scripts"` found no repos. Then `gh search repos "github actions workflow security linter pull_request_target"` and `topic:github-actions-security`.
+- Read the top 3 READMEs that fit the need:
+  - `praetorian-inc/trajan` (Apache-2.0, Go, about 200 stars, pushed 2 Nov 2026): a full CI/CD scanner for GitHub, GitLab and Azure. Broad, needs a Go binary or an Action. Does not fit a stdlib check run in CI and in check_local. Idea noted, not copied.
+  - `indoor47/gh-workflow-hardener` (MIT, Python, about 13 stars, last push 28 Feb 2026): pin-by-SHA, permissions and script injection scan. Its scope is wider and it is a pip install. Does not check the head-checkout rule or npm install scripts. Idea noted (rule shape: one finding per line with file and line).
+  - `eliottreich/taskbounty-check` (about 2 stars, last push 21 Jun 2026): npm package, tied to a hosted review offer. Does not fit.
+- Decision: build from scratch, small (about 150 lines, stdlib, no install). Nothing found covers the two exact rules. Confidence that nothing fits: 0.8. Test: fixtures give exit 1, exit 1, exit 0, and the repo's own workflows pass.
+## 10 Nov 2026, story #319 (A15): the TDD evidence check
+- Need: fail a PR that changes code when its body has no `## Red` section, or names a test file that is not in the PR diff.
+- Run: `scout.py --need "fail a pull request whose body has no Red test section, or names a test file that is not in the PR diff (TDD evidence check in CI)"`: no repos found. `gh search repos "pull request body check tdd red test"`: no results. Thin search, said so.
+- Read: none; no repo came back to read.
+- Decision: build `scripts/check_tdd.py` from scratch (stdlib). It reuses the shape of `scripts/check_story.py` (PR body in, reason out) and the diff rule of the pr-size check. Nothing found fits a `## Red` body rule.
+- Confidence that nothing fits: 0.6 (the search was thin; a narrow ShipQuick rule).
+---
+## 10 Nov 2026, story #313 (A2): hook plugin, rules reach every session and subagent
+- Need: a Claude Code plugin whose SessionStart and SubagentStart hooks inject a dense rules file and the mode into every session and subagent.
+- Run: `scout.py --need "Claude Code plugin with SessionStart and SubagentStart hooks that inject a dense rules file and a codebase map into every session and subagent"`: no repos found.
+  `gh search repos "claude code hooks SessionStart SubagentStart plugin"`: no results.
+  `gh search repos "topic:claude-code-plugin hooks"`: DietrichGebert/ponytail (MIT, pushed 29 Oct 2026), thedotmack/claude-mem (memory, not rules), wshobson/agents (plugin packs, no runtime rule injection).
+- Read: ponytail `.claude-plugin/plugin.json`, `hooks/claude-codex-hooks.json`, `hooks/ponytail-subagent.js`, `hooks/ponytail-map.js` (study clone, read only).
+- Decision: adopt ponytail's hook layout (SessionStart + SubagentStart, `hookSpecificOutput.additionalContext`, one hook per script). Rewrite in stdlib Python, the kit's language, with a rules file generated from CLAUDE.md. Ponytail's map and loop guard are later stories (A9, A12).
+## 10 Nov 2026, story #331 (A1a-2): bench cell runner and --rescore
+- Need: a headless `claude -p` runner per task and arm, with a timeout tree-kill and an offline rescore.
+- Run: `scout.py --need "headless claude -p benchmark runner per task and arm with fake claude test and offline rescore"`: no repos found.
+  `gh search repos "claude code benchmark harness headless claude -p arms"`: no results.
+- Read: ponytail `benchmarks/agentic/run.py` (`run_cell`, `_kill_group` via process group, stdout to file, `rescore`), study clone, read only.
+- Decision: adopt ponytail's cell pattern (stdout to a file, `start_new_session`, group kill on timeout, logs outside the scored folder). Written for the kit's bench with stdlib only; the ponytail fixtures, plugin arms and cache warm-up are not borrowed (ShipQuick has no plugin arms yet).
+- Confidence that nothing fits better: 0.7 (the search is thin; ponytail is the only close fit).
+
+## 10 Nov 2026, story #318 (A4b): review shape gate
+- Need: a merge gate that refuses an approving review unless its body has a `Verdict:` line and a `Not checked:` line.
+- Run: `scout.py --need "fail a PR review gate when the approving review body lacks a Verdict line and a Not checked line"`: no repos found.
+  `gh search repos --topic=pr-review-gate`: no match for the need. `gh search repos --topic=code-review-checklist`: checklists only.
+- Read: `gauravs19/ai-pr-gate` (PR template and a CI gate for AI-written PRs: size and completeness, it never reviews or approves; a template, not a review-body check), `mgreiler/code-review-checklist` (a plain checklist of questions, no gate), `n0nuser/goodcodereview` (review cards with PASS, FAIL, N/A lines; a reviewer style, not a merge check).
+- Borrowed: the idea of a fixed verdict word per review (PASS, FAIL, N/A in `n0nuser/goodcodereview`), as the `Verdict:` line name only.
+- Decision: build from scratch. Six lines of bash in `scripts/review_merge.sh`, using the same `refuse()` style and the existing `reviewer_account` lookup. Nothing fits as a gate inside our own merge script.
+- Confidence that nothing fits: 0.7 (the search is thin; the checklists are close in topic but none gates a merge).
+## 10 Nov 2026, story #323 (A8): the Spend column from the Ponytail ledger
+- Need: read a per-project cost CSV and show it as a Spend card on a localhost desk page, with a same-origin check on its JSON API.
+- Run: `scout.py --need "read a per-project CSV cost ledger and show it as a Spend table on a localhost dashboard with same-origin API check"`: no repos found. `gh search repos --topic=ledger-dashboard` and `gh search repos "localhost dashboard csv cost"` gave no fit for a single-repo desk.
+- Read: none. No repo found to read.
+- Borrowed: nothing. The desk already exists (`scripts/desk.py`, #91); the Host check is the pattern for the Origin check. The Ponytail metrics code was not found on this Mac, so the CSV columns are our own. Later read (10 Nov 2026, fix round): the columns now follow upstream `metrics.ts` CSV_HEADER, and the band folder follows upstream `hooks/band/register.tsx` ledgerFile (XDG_CONFIG_HOME, ASCII file-name rule). The assumption wording above is outdated.
+- Decision: extend `scripts/desk.py` and `scripts/desk/index.html`. Stdlib `csv` only.
+- Confidence that nothing fits better: 0.75 (the search was thin; the need is small and tied to our own desk).
+
+## 10 Nov 2026, story #328 (A13): rules split by path, spike
+- Need: move the UI rules (31, 38) into a path-scoped rule file only if Claude Code supports it, and record what the docs say.
+- Run: `scout.py --need "split Claude Code instruction rules into path-scoped rule files using paths frontmatter"`: no repos found.
+  `gh search repos --topic=claude-code-rules --limit 5`: AIPMAndy/AndySoul, omergocmen/vibe-coder-kit, JakeSelby/model-citizen, alex-feel/claude-code-toolbox, luiseiman/dotforge. All are rule templates or config installers, none reads `paths:` frontmatter to scope rules.
+  `gh search repos "claude code rules paths frontmatter" --limit 5`: no further hit that scopes rules by path.
+- Read: the Claude Code docs, not the repos (tier A): https://code.claude.com/docs/en/memory, read 10 Nov 2026. Section "Path-specific rules".
+- Borrowed: nothing. The feature is built into Claude Code; no tool is needed.
+- Decision: use the platform feature. No new code in #328; the move is a separate PR gated by the bench (#312).
+- Confidence that nothing fits better: 0.8 (the topic search is thin, but the docs settle the feature question).
+## 10 Nov 2026, story #324 (A6, epic #309): release gate for `scripts/release.sh vX.Y.Z`
+- Need: tag a release only when `docs/RELEASE_NOTES_vX.Y.Z.md` exists, its version line equals the tag, the tag is new (local and origin), and the `gate` check is SUCCESS on the exact HEAD sha.
+- Run: `scout.py --need "release script that tags a version only after the CI gate passed on the exact commit"`: no repos found (exit 1, empty list).
+  `gh search repos --topic=release-gate --limit 5`: agents-shipgate, frontend-promotion-guard, faultgate, flowreel, hermes-skilleval. None tags a git version. They gate agent tool changes, deploys or traces.
+  `gh search repos --topic=release-automation --limit 5`: release-it, semantic-release, goreleaser, release-drafter, devtron.
+- Read (top 3 README heads, gh API, tier A for what the repo says):
+  - `semantic-release/semantic-release`: publishes npm packages from commit messages. Too big; it decides the version itself. Does not fit.
+  - `release-it/release-it`: bumps package.json, tags, pushes, makes GitHub releases, with hooks. Node tool and a version bump we do not use. Does not fit.
+  - `Reality-JH/frontend-promotion-guard`: promotes Docker deploys after screenshot checks. Different gate. Does not fit.
+  - Study reference (read only): ECC `scripts/ci/verify-release-gates.js` (MIT). Borrowed: read check runs for the exact sha, and refuse a tag that already exists. Ponytail `scripts/check-versions.js` (MIT): versions must agree across files; borrowed as the idea that the notes version line must equal the tag.
+- Borrowed: the two ideas above. Code is our own bash, about 50 lines, using `gh api` and `git`, which the repo already uses (`review_merge.sh`).
+- Verdict: nothing fits (a tag gate with notes and the gate check). Build from scratch in `scripts/release.sh`, small, on top of `gh` and `git`.
+- Confidence that nothing fits better: 0.75 (one scout run found nothing, and the topic search was thin).
+---
+## 10 Nov 2026, story #312 (A1b): bench report, stats and docs
+- Need: a report on bench results: median per task, kit divided by no-kit, geometric mean over tasks, 95% bootstrap interval, as a markdown table.
+- Run: `scout.py --need "bootstrap confidence interval geometric mean ratio report for LLM benchmark arms"`: no repos found. The GitHub search was not repeated: the same need ran in #331 with no fit.
+- Read: ponytail `benchmarks/agentic/compare.py` and `run.py` (study clone, read only): per-task median, a sign test over pairs, no bootstrap and no geometric mean.
+- Decision: write `bench/report.py` (stdlib: `statistics`, `random` with a fixed seed). Borrow the idea of per-task medians; the ratio, geometric mean and bootstrap are not in ponytail.
+- Confidence that nothing fits better: 0.7 (thin search; the stats are a few lines of stdlib).
+## 10 Nov 2026, story #314 (A9): codebase map at session start
+- Need: a short map of top-level functions and classes per folder, inside a 2,000 character budget, that the SessionStart hook appends to the context.
+- Run: `scout.py --need "codebase map of top-level functions and classes per folder for an LLM session start, within a character budget"`: no repos found.
+  `gh search repos --topic=codebase-map`: no results. `gh search repos --topic=repo-map`: ten hits, none is a stdlib script that prints names per folder. Closest: `glincker/stacklit` (Go binary, tree-sitter, writes `stacklit.json`), `Houseofmvps/codesight` (npx package, 30 framework detectors, MCP tools), `fredrikolis/annotated-tree` (Rust, a one-line annotation per file that the team must write).
+- Read: the top 3 READMEs. stacklit: one Go binary, a committed JSON index, needs a Go or npx install and tree-sitter. codesight: a large npm package with MCP tools and framework detectors, far more than a budgeted name list. annotated-tree: needs every file to carry a hand-written annotation. None runs as a plain script in the hook, with no install, under a character budget.
+- Borrowed: the whole method from ponytail `hooks/ponytail-map.js` (MIT, commit 96608e0, study clone, read only): one line per folder, a regex per language, skip tests and vendored code, shared folders first, the budget. Ported to stdlib Python as `plugin/hooks/map.py`. Dropped: the Go, Ruby, Rust and JVM patterns (the kit needs py, js/ts, sh, swift, kt), the `export { }` list pattern, and the `util|lib` path boost (the spec puts scripts/ and plugin/ first).
+- Decision: adopt the idea and port it. No package added. The SessionStart script calls it inside a try block, so a failed map leaves the rules intact.
+- Confidence that nothing fits better: 0.75 (the search was thin; the three close hits solve a bigger problem).
+
+---
+## 10 Nov 2026, story #322 (A5c): scratch markdown warning hook
+- Need: a PreToolUse Write hook that warns when a new NOTES, TODO, SCRATCH, DRAFT, WIP or TEMP markdown file appears outside docs/, .claude/ and .github/, and names the single-source file to use.
+- Run: `scout.py --need "warn when an agent writes a scratch markdown file (NOTES, TODO, SCRATCH, DRAFT, WIP, TEMP .md) outside docs, pointing to the single-source file"`: no repos found. `gh search repos --topic=claude-code-hooks --limit 5`: context-mode, Continuous-Claude-v3, Claude-Code-Quest, deja-vu, oh-my-agent. None is about scratch files.
+- Read: mksglu/context-mode, parcadei/Continuous-Claude-v3 and wesammustafa/Claude-Code-Quest READMEs (hook sections only). Each has hooks for other jobs (output size, ledgers, teaching). None blocks or warns on file names.
+- Decision: build from scratch, about 40 lines of stdlib Python in `plugin/hooks/scratch_md.py`, reusing `read_payload` from `plugin/hooks/common.py`. The hook registration is one new `PreToolUse` entry in `hooks.json`.
+- Confidence that nothing fits better: 0.8 (topic search is thin for this narrow job).
+## 10 Nov 2026, story #321 (A5b): protected path edit warning
+- Need: a Claude Code PreToolUse hook on Edit and Write that warns when the edited file matches a glob in `scripts/protected_paths.txt`, only in auto mode, and never blocks.
+- Run: `scout.py --need "Claude Code PreToolUse hook that warns when an Edit or Write touches a protected path listed in a glob file"`: no repos found. `gh search repos --topic=claude-code-hook --limit 5`: five hook repos, none reads a glob list of protected paths (backthread/add-reasoning-to-prs writes PR text, ymonster/claude_encoding_guard guards file encoding, RainSunMe/cc-vision-hook describes images, nidhinjs/prompt-mini stops vague prompts, jeecgboot/skills is a skill pack). None fits.
+- Read: the top hits' READMEs (tier C, their own claims). The fit is judged on what each does, not on stars.
+- Borrowed: the hook layout already in this plugin (stdin JSON, exit 0, one script per hook, `common.py` for the mode and the git folder) from story #313. The glob rule is the one `scripts/review_merge.sh` uses (bash `[[ == ]]`, mapped to `fnmatch`).
+- Decision: build from scratch as `plugin/hooks/protected_warn.py`, a small script on top of `common.py`. Nothing found fits.
+- Confidence that nothing fits: 0.8 (the topic search is thin; the need is specific to this kit's own list).
+## 10 Nov 2026, story #320 (A5a): block `--no-verify` and `core.hooksPath` in a Bash hook
+- Need: a PreToolUse Bash hook that stops `git commit --no-verify`, `git push --no-verify` and `core.hooksPath` redirects, with no outside tool.
+- Run: `scout.py --need "PreToolUse hook that blocks git commands with --no-verify or core.hooksPath"`: no repos found.
+  `gh search repos --topic=claude-code-hooks --limit 5`: mksglu/context-mode (context window, not git), parcadei/Continuous-Claude-v3 (hooks for state and ledgers, no bypass guard), wesammustafa/Claude-Code-Quest (a guide, no hooks), vshulcz/deja-vu (memory), first-fluke/oh-my-agent (skills and presets). None blocks a git bypass.
+  `gh search repos "block no-verify git hook bypass" --limit 5`: the same unrelated set.
+- Read: the READMEs of mksglu/context-mode, parcadei/Continuous-Claude-v3 and wesammustafa/Claude-Code-Quest (tier C or B, first lines only). None describes a git bypass guard.
+- Borrowed: the idea from ECC `scripts/hooks/block-no-verify.js` (MIT, study clone, read only): a list of bypass flags, a check that the word is a real git call and not text, a split on shell separators, and the `core.hooksPath` redirect. Rewritten in stdlib Python (`plugin/hooks/git_guard.py`), because the kit's plugin hooks are Python.
+- Decision: adopt the idea, build the small Python hook. The ECC file is a Node module with a large shell scanner and a budget; it does not fit a stdlib plugin.
+- Confidence that nothing fits better: 0.7 (the search is thin; ECC is the only close fit and it is a whole plugin, not a single hook).
+## 10 Nov 2026, story #315 (A12): cost and loop guard
+- Need: a Claude Code hook that warns on five identical tool calls in a row and warns or denies when the session cost (from the transcript usage records) is over a line.
+- Run: `scout.py --need "Claude Code hook that detects a repeated identical tool call loop and a session cost ceiling from the transcript usage records"`: no repos found.
+  `gh search repos --topic=claude-code-hooks`, `--topic=claude-code-cost`, `--topic=agent-loop-detection`: context-mode (mksglu/context-mode, tool output and cost), Continuous-Claude-v3 (parcadei, hooks and ledgers), oh-my-agent (first-fluke, budgets and retry limits), claude-cost-monitor and cctally (usage dashboards, no hook).
+- Read: the READMEs of parcadei/Continuous-Claude-v3, mksglu/context-mode and first-fluke/oh-my-agent, searched for loop, cost, budget and repeat (a keyword pass, not a full read). None ships a per-call loop check or a cost deny in a hook. Study of ECC `context-monitor` and `cost-warn` (the source named in the epic): `docs/research/2026-11-10-ponytail-ecc-study.md`.
+- Borrowed: the idea only. ECC's pair of hooks (warn, then block) and the rule that a gate is a cost, not a quality win (GateGuard result in the study). No code copied.
+- Decision: build `plugin/hooks/guard.py` in stdlib Python, using `common.read_payload` from the plugin. Small and boring: one state file per session in a temp folder, prices in one dict.
+- Confidence that nothing fits better: 0.6 (the search is thin for hooks; the ECC hooks were read from the study, not from a clone in this run).
+## 11 Nov 2026, story #188 (S10): Design system board on the canvas
+- Need: draw one board on the design canvas from the component registry JSON, grouped by platform, each row with status and doc link, text colour measured against the fill, regenerated by the layout tool and flagged when stale.
+- Run: `scout.py --need "render a design system component inventory board as HTML from a JSON component registry, grouped by platform, with contrast-checked text"`: no repos found. `gh search repos --topic=design-system-documentation --limit 5`: no results. `gh search repos --topic=component-registry --limit 5`: zwgnr/BaseLayer, fontanaen/vuzeno, Vorlyn/vorlyn, lyse-labs/lyse-registry, iandefined/ui.
+- Read: the READMEs of zwgnr/BaseLayer (React Aria and Tailwind components, a docs site), fontanaen/vuzeno (a Vue design system on Ark UI with a shadcn-style CLI) and Vorlyn/vorlyn (a React boilerplate with a CLI registry). Each is a component library with its own docs site; none draws an inventory board from a registry file into a canvas artboard, and all need Node and a framework.
+- Borrowed: nothing from outside. The board reuses the kit's own `learnings_board` shape in `scripts/canvas_stage.py` (columns on a `bg_html` tile, ink on the fill, 4.5:1 checked by `theme`): about 25 lines of stdlib Python.
+- Decision: build it inside the existing tool. No package added, no new script.
+- Confidence that nothing fits better: 0.8 (the topic searches are thin; the need is specific to this kit's canvas format).
+
+## 11 Nov 2026, story #174 (XS): name a workflow file with zero jobs
+- Need: `scripts/check_timeouts.py` must name a workflow file that yields zero jobs, not pass it silently.
+- Run: `scout.py --need "lint GitHub Actions workflow files for jobs missing timeout-minutes, name files with zero jobs"`: no repos found. `gh search repos --topic=github-actions --limit 5` and `gh search repos "actionlint timeout-minutes" --limit 5`: nektos/act, go-gitea, sdras/awesome-actions, goreleaser. None checks timeout-minutes per job.
+- Read: none. No repo in the search fits a one-line change to this kit's own script.
+- Borrowed: nothing. The check is the kit's own stdlib script (story #154).
+- Decision: build from scratch, a three-line change in `scripts/check_timeouts.py`. Nothing found fits.
+- Confidence that nothing fits better: 0.8 (topic search is thin; the need is a bug in the kit's own check).
+
+## 11 Nov 2026, story #218 (S5c): two-tier SwiftLint runner with a baseline for iOS children
+- Need: lint only the changed Swift files with SwiftLint and a committed baseline, strict in CI and warn-only locally, plus SwiftFormat in lint mode.
+- Run: `scout.py --need "lint only the changed Swift files with SwiftLint and a committed baseline, strict in CI and warn-only locally"`: no repos found. `scout.py --need "swiftlint changed files baseline CI"`: no repos found. `gh search repos --topic=swiftlint --limit 5`: airbnb/swift (a style guide), Idean/sonar-swift (SonarQube plugin), vinhnx/Clendar (an app), messeb/ios-project-template (fastlane and Danger), norio-nomura/action-swiftlint (a Docker action).
+- Read: realm/SwiftLint 0.65.1 `Source/SwiftLintCore/Models/Baseline.swift` and README (tier A, the tool itself): a baseline is a JSON array of violations, so an empty one is `[]`; `--baseline` and `--strict` are lint flags. nicklockwood/SwiftFormat README (tier A): a `.swiftformat` file holds command-line options, `--lint` returns non-zero on a needed change and `--lenient` turns that off. norio-nomura/action-swiftlint README (tier C): lints only the PR's changed files through `DIFF_BASE` and `git diff`, but runs on Linux in Docker with its own SwiftLint build, not the version the kit pins.
+- Borrowed: the changed-files idea from action-swiftlint (a git diff against the base branch) and the baseline format from SwiftLint's own source. The existing job `ui-ios-lint` (story #185) and its fixtures are reused; the rules file is not moved.
+- Decision: build `ui/tool/ios_lint.sh`, about 40 lines of bash (git diff plus untracked files, two tiers by `CI`, the baseline, SwiftFormat `--lint`), and run both tiers through it in CI. No package added; SwiftLint 0.65.1 and SwiftFormat 0.64.6 are fetched by release URL and SHA-256 in CI only.
+- Confidence that nothing fits better: 0.8 (the only action found is Linux-only and unpinned; the runner is a thin wrapper around the two tools).
+
+## 11 Nov 2026, story #223: the Android Button topic follows M3 exactly
+- Need: a machine-readable list of the Compose Material 3 Button parameters, so a test can fail when the generated Android topic shows a prop that is not one of them.
+- Run: `scout.py --need "a machine-readable list of Compose Material 3 Button parameters to check generated component docs against"`: no repos found. `gh search repos --topic=material3 --limit 5`: material-components/material-web, lnkiai/m3e-canvas and three Android apps. `gh search repos --topic=compose-material3 --limit 5`: five Compose apps, no API list.
+- Read: material-components/material-web (Material 3 as web components, no Compose signatures), lnkiai/m3e-canvas (a browser sketch tool that writes prompts), eternaljust/msea-compose (an app). None ships the Compose Button signature as data. The kit's own `docs/research/sources/android-m3-api-extract.txt` names the five composables but its parameter lines are cut off.
+- Borrowed: nothing. The ten parameter names were typed from Google's own page (`https://developer.android.com/develop/ui/compose/components/button`) into `tests/fixtures/m3_button.json`, which names that page as its source.
+- Decision: build from scratch, a 5-line JSON fixture and three tests on the existing `ui_topics.topic()`. No new code in scripts; the contract already has `webOnly` and `platforms.android` for the split.
+- Confidence that nothing fits better: 0.85 (the need is a short list of names from one vendor page; a repo would be more than the job).
+
+## 11 Nov 2026, story #175: the story check reaches children
+- Need: a reusable GitHub Actions job that checks the issues a pull request links carry required lines (`Who does it:`, `Done when:`), with the issue-read permission granted by the caller.
+- Run: `scout.py --need "reusable GitHub Actions workflow that validates linked issue bodies have required fields on a pull request"`: no repos found. `gh search repos --topic=issue-forms --limit 5`: zentered/issue-forms-body-parser, redhat-plumbers-in-action/advanced-issue-labeler, HiDeoo/issue-form-block, edumserrano/github-issue-forms-parser, ShaMan123/gha-populate-form-version. `--topic=issue-template-validation` and `--topic=issue-checker`: nothing.
+- Read: the READMEs of zentered/issue-forms-body-parser (parses one issue-form body into JSON, on the issue event), redhat-plumbers-in-action/advanced-issue-labeler (labels an issue from its form fields) and HiDeoo/issue-form-block (an editor for the form YAML). Tier C, their own claims. All three act on the issue itself, none reads the issues a PR links at PR time, and the kit's check (`scripts/check_story.py`, story #155) already exists.
+- Borrowed: nothing new. The job shape is the kit's own `component-registry` job (job-level `issues: read`, `GH_TOKEN` from `github.token`).
+- Decision: no new tool. Wire the existing script into `checks.yml` as a `story` job and make `adopt.sh --check` read the caller's grant.
+- Confidence that nothing fits better: 0.9 (the need is a wiring of an existing check, not a new component).
+
+## 11 Nov 2026, story #189 (S11): vibe tests, ten fixed screen prompts per platform
+- Need: a fixed prompt set that asks a model to write UI screens on three platforms and a deterministic score for the share of screens with no hand-drawn UI, with no new dependency.
+- Run: `scout.py --need "fixed prompt set that asks an LLM to generate UI screens and scores the share with no hand-drawn UI by regex"`: no repos found. `gh search repos --topic=llm-evaluation --limit 5`: promptfoo/promptfoo, langfuse/langfuse, mlflow/mlflow, comet-ml/opik, ifixai-ai/iFixAi (all general eval platforms, each a service or a large package). `gh search repos --topic=astryx`: ports of Astryx to Svelte, Flutter and Vue, a template gallery; none is a test harness. The upstream itself, `meta/astryx`, has `internal/vibe-tests` (found by code search for "vibe").
+- Read: promptfoo and langfuse READMEs (tier C, their own claims): a CLI or a hosted service with its own config format, providers and an LLM judge; far more than a 60-cell run needs, and a new dependency. opik README: an observability platform. `meta/astryx/internal/vibe-tests/README.md` (tier A, the source the plan names): a prompt battery in JSON (`id`, `category`, `prompt`, `expectedComponents` kept out of the prompt), one fresh sub-agent per prompt, a checker protocol of five fairness rules (same prompts across configs, only the system under test varies, never leak the expected answer, a representative environment, context-free agents). Its runner is a pnpm workspace with `tsc` and an LLM judge.
+- Borrowed: the prompt battery shape and the five fairness rules, as the `_about` note in `bench/vibe_prompts.json` and the arm design (the same task text on every platform; only the agent block differs between arms). No code copied: the upstream runner needs their workspace and a judge; our cell runner is `bench/run.py` (`call_claude`, factored out so both benches share it) and the score is a regex table copied from the kit's own lint rules.
+- Decision: build `bench/vibe.py` (stdlib Python) on top of `bench/run.py`. The regex scorer is a stated shortcut; the real linters replace it when the run folder can be linted on CI.
+- Confidence that nothing fits better: 0.8 (the eval platforms are the wrong size; upstream's own harness is the right idea and was borrowed).
+
+## 11 Nov 2026, story #296 (1/6): split the InputModifiers catch-all doc by task
+- Need: split one catch-all SwiftUI modifier reference doc into per-control and per-task docs (gestures, keyboard, focus, drag and drop, hover) and fail when a catch-all row names a control that has its own doc.
+- Run: `scout.py --need "split a catch-all SwiftUI modifier reference doc into per-control docs by task (gestures, keyboard, focus, drag and drop) and check no row names a control that has its own doc"`: no repos found. `gh search repos --topic=swiftui-modifiers`, `--topic=swiftui-cheatsheet`: nothing. `gh search repos swiftui modifiers list --limit 5`: Geri-Borbas pull-to-refresh, ciaranrobrien/SwiftUIDelayedGesture, thachgiasoft/SwiftUI_Intuition_Library, two demo apps.
+- Read: the READMEs of thachgiasoft/SwiftUI_Intuition_Library (groups modifiers as Events, Gestures, Style, Other), Jinxiansen/SwiftUI (the source the only topic hit translates; groups by Basic View, Layout, State, Gestures) and ciaranrobrien/SwiftUIDelayedGesture (one gesture modifier, not a reference). Tier C, their own tables of contents.
+- Borrowed: the grouping only. Both references put gestures in their own section and leave "Events" and "Other" as the rest, which is the split here (Gestures, Focus, Keyboard, DragAndDrop, Hover; InputModifiers keeps view events and the rest). No code copied; the docs are our own `.doc.mjs` files from Apple's saved extract.
+- Decision: build from scratch: five small docs in the existing doc shape, one map edit in `IOS_DOC_FAMILY`, one test (`tests/test_ui_catch_all.py`) with a per-catch-all stem fixture that later splits extend.
+- Confidence that nothing fits better: 0.8 (no repo checks a doc layout; the references only confirm the grouping).
+
+## 11 Nov 2026, story #92 (XS): CI re-runs when a PR body is edited
+- Need: make GitHub run the PR checks again when only the pull request body is edited, so the team-block, tdd and uat checks read the new body.
+- Run: `scout.py --need "re-run GitHub CI pull_request checks when a pull request body is edited"`: one repo found, Sfedfcv/redesigned-pancake, verdict ignore (no licence, no push for 2005 days, a list, not a tool). `gh search repos "pull_request edited trigger workflow body check"`: no result.
+- Read: none. The scout hit is a list, not a tool, so no README was read.
+- Borrowed: nothing. The fix is one line of YAML: `types:` on the `pull_request` trigger, which GitHub Actions already supports (`edited` is a standard activity type).
+- Decision: build from scratch, one `types:` line in `.github/workflows/ci.yml` and one line in the `scripts/adopt.sh` caller writer.
+- Confidence that nothing fits better: 0.9 (the need is a documented GitHub trigger type, not a library choice).
+
+## 11 Nov 2026, story #133 (S5w): design literals on added web lines
+- Need: a CI check that fails a PR on a hex, `rgb()`, `hsl()` or font-family literal added in CSS, TS, TSX, Astro, Vue or Svelte, Tailwind arbitrary values included, with an allowlist for the token files.
+- Run: `scout.py --need "CI check that fails a pull request on hex, rgb, hsl or font-family colour literals added in CSS, TSX, Vue or Svelte diffs, with a design token allowlist"`: no repos found. `gh search repos --topic=design-tokens --limit 5`: VoltAgent/awesome-design-md (a list), chakra-ui/panda, Shopify/polaris-react-archive (deprecated), system-ui/theme-ui, Manavarya09/design-extract (extracts tokens, no check). `gh search repos --topic=stylelint-plugin --limit 5`: browser-support, a11y, prettier, order and defensive-css plugins; none is about literals. `gh search repos "stylelint declaration-strict-value"`: AndyOGo/stylelint-declaration-strict-value (145 stars, last push Sept 2026).
+- Read: the READMEs of AndyOGo/stylelint-declaration-strict-value, chakra-ui/panda and system-ui/theme-ui (tier C, their own words). declaration-strict-value is the right stylelint rule for "a colour property must use a variable", for CSS only, through a config and a dependency. Panda and Theme UI are whole styling frameworks that make tokens the default; adopting one is a stack choice, not a check.
+- Borrowed: the diff-reading shape of `scripts/check_disable_comments.py` (added lines only, `+++` header skipped) and the one-glob-per-line list of `scripts/protected_paths.txt` for the allowlist. The stylelint step is a plain `npx` call on changed CSS, so a child that already has a stylelint config (with or without declaration-strict-value) gets it run with `--report-needless-disables`, with no new committed dependency.
+- Decision: build `scripts/check_design_literals.py`, about 90 lines of stdlib Python. Nothing found reads a diff, sees TSX inline styles or Tailwind `bg-[#...]`, or runs without a Node dependency in every child.
+- Confidence that nothing fits better: 0.8 (stylelint covers CSS well, but the story names TSX and Tailwind, which no CSS linter sees).
+
+## 11 Nov 2026, story #219 (S5d): snapshot tests and Prefire for ui/ios
+- Need: SwiftUI snapshot tests for a Swift package on a macOS CI runner, light and dark, Dynamic Type sizes and device sizes, reference images recorded on CI.
+- Run: `scout.py --need "SwiftUI snapshot tests for a Swift package on a macOS CI runner, light and dark, Dynamic Type sizes and device sizes, reference images recorded on CI"`: no repos found.
+  `gh search repos --topic=snapshot-testing --limit 5`: pointfreeco/swift-snapshot-testing (4.4k stars, release 1.19.7 on 21 Oct 2026), VerifyTests/Verify (.NET), bUnit-dev/bUnit (Blazor), playbook-ui/playbook-ios (component catalog with snapshots), pointfreeco/pointfreeco.
+  `gh search repos --topic=swiftui-previews --limit 5`: BarredEwe/Prefire (534 stars, release 6.6.0 on 30 Oct 2026), artemnovichkov/xcode-mods, psharanda/NativeBook, yannxou/PreviewResizable, V8tr/SwiftUIPreviewsAtScale.
+- Read: the READMEs of swift-snapshot-testing, Prefire and playbook-ios (tier A for what each does), plus the source of the two we use: `Snapshotting+SwiftUIView.swift` and `View.swift` (the `.device(config:)` layout merges the config traits with the caller's traits, later wins, so a `displayScale: 1` trait shrinks the PNG), `AssertSnapshot.swift` (`SNAPSHOT_TESTING_RECORD` env var: `all`, `failed`, `missing`, `never`), Prefire's `TestedTargetFinder.swift` (the plugin finds the tested target among the test target's own-package dependencies, so the test target must live in the same package) and its own CI (`xcodebuild test -scheme <Name>-Package`, `-skipMacroValidation`). The macos-15 runner image: Xcode 16.4 is default and ships the iOS 18.5 simulator.
+- Borrowed: swift-snapshot-testing and Prefire as named by the story, pinned `exact`. The env-guarded manifest (deps added only when `SHIPQUICK_SNAPSHOTS` is set) is the pattern pointfree's own packages use for test-only tooling, so a child never resolves swift-syntax. Prefire's `-Package` scheme and the record-mode env var passed as `TEST_RUNNER_...`. Nothing from playbook-ios: it is a catalog app, not a CI check.
+- Decision: adopt both packages; our own matrix test is one XCTest per template looping over eight cells. References are recorded on CI through a `workflow_dispatch` input and committed from the artifact (`ui/ios/SNAPSHOTS.md`). No new script.
+- Confidence that nothing fits better: 0.85 (the two packages are the story's constraint and the only maintained Swift options with this reach).
+
+
+## 11 Nov 2026, story #222 (S5g): Swift structs from the component contracts
+- Need: a stdlib Python generator that writes one Swift struct per `ui/components/<Name>/<Name>.contract.json` with a drift check.
+- Run: `scout.py --need "generate Swift structs from JSON component contract files with a drift check, stdlib Python"`: no repos found.
+  `gh search repos --topic=swift-codegen`, `--topic=json-to-swift`, `--topic=code-generation-swift`: two tiny JSON-to-model repos (5 and 4 stars), nothing for a contract schema.
+- Read: the READMEs of glideapps/quicktype (13.9k stars, JSON Schema to Swift types, Node), SwiftGen/SwiftGen (9.5k, resources to Swift, Stencil templates) and krzysztofzablocki/Sourcery (8k, Swift AST templates). All three need Node or a Swift toolchain and read JSON values or Swift sources, not our contract shape (`kind`, `optional`, `platforms`). Also read Astryx `packages/native/src/contract/generateSwift.ts` at the commit in `ui/UPSTREAM.md`: the exact emitter for this contract shape, with a wire layer for a TypeScript core we do not have.
+- Borrowed: Astryx's shape and type map (`<Name>Props`, `String` enum per enum prop, `(...) -> Void` with `@escaping`, content slots not stored, Swift keyword backticks), written in Python; no code copied (`ui/UPSTREAM.md`).
+- Decision: build `scripts/emit_contracts.py` beside `ui_proof.py` and `emit_tokens.py`, which already read the contracts and already have the `--check` drift pattern. Stdlib only, no Node at check time.
+- Confidence that nothing fits better: 0.8 (quicktype would need Node in the Python check path and does not know our contract fields).
+
+## 11 Nov 2026, story #81 (epic #80, S1): port the roadmap tests and a golden fixture to JS
+- Need: run a Python test suite's cases as `node:test` and prove a JS port gives the same model as the reference Python on one fixture, with no new dependency.
+- Run: `scout.py --need "golden fixture test that checks a JavaScript port gives the same model as a Python reference, run with node:test and no dependency"`: no repos found. `gh search repos --topic=golden-testing --limit 5`: stackbuilders/hspec-golden (Haskell), ReplicaTest/REPLica (CLI goldens, nix), alejandrohdezma/tapir-golden-openapi-munit (Scala), ocramz/golds-gym (Haskell benchmarks), Dicklesworthstone/toon_bend (a byte-for-byte port golden-tested against a pinned original). `--topic=snapshot-testing --limit 5`: pointfreeco/swift-snapshot-testing, VerifyTests/Verify (.NET, paid maintenance fee), bUnit, playbook-ios, pointfreeco (none is JS).
+- Read: the READMEs of ReplicaTest/REPLica (a Haskell CLI runner that compares stdout to stored golden values; a new toolchain for one fixture), Dicklesworthstone/toon_bend (its method section: the original is pinned and run as an oracle, goldens are captured never typed, bugs are fixed in the original first) and VerifyTests/Verify (serialise a result, store it next to the test, fail on a diff; .NET only). All tier C, their own claims.
+- Borrowed: the toon_bend rule only. The expected model is captured by running the reference on the fixture (`roadmap/fixtures/expected.py`), never typed by hand, and the fixture is synthetic. No code copied.
+- Decision: build from scratch on `node:test` and `node:assert/strict` (already the kit's roadmap runner). Nothing found runs in Node without a new dependency.
+- Confidence that nothing fits better: 0.8 (golden testing in Node is usually a snapshot library such as jest or vitest, which the kit does not install).
+
+## 11 Nov 2026, story #296 (2/6): split the TechnologyModifiers catch-all doc by framework
+- Need: split one catch-all doc of SwiftUI modifiers that come from other Apple frameworks into per-framework docs (StoreKit, MapKit, TipKit, PassKit, Image Playground) and fail when a catch-all row names a framework that has its own doc.
+- Run: `scout.py --need "split a catch-all SwiftUI technology modifier reference doc into per-framework docs (StoreKit in-app purchase, MapKit, TipKit, PassKit Apple Pay, Image Playground) and check no catch-all row names a framework that has its own doc"`: no repos found. `gh search repos --topic=storekit`, `--topic=mapkit`, `--topic=tipkit`: SDKs and demo apps (RevenueCat/purchases-ios, russell-archer/StoreHelper, efremidze/Cluster, mlbonniec/OnBoardingKit), plus dpearson2699/swift-ios-skills, one agent skill per Apple framework.
+- Read: the READMEs of dpearson2699/swift-ios-skills (86 skills, grouped by framework: SwiftUI, App Experience, Data and Service, Hardware), russell-archer/StoreHelper (StoreKit 2 wrapper, its own views) and RevenueCat/purchases-ios (a purchase server SDK). Tier C, their own tables of contents. None is a reference of SwiftUI's framework modifiers.
+- Borrowed: the grouping only. swift-ios-skills keeps one unit per Apple framework, which is the split here (InAppPurchase, Map, Tips, Wallet, ImagePlayground), with each row's framework read from its own Apple documentation page (`metadata.modules`), not guessed from the name: `transactionTask` is SecureElementCredential, not StoreKit, so it stays. No code copied.
+- Decision: build from scratch: five small docs in the existing doc shape, one map edit in `IOS_DOC_FAMILY`, one fixture entry in `tests/test_ui_catch_all.py`. A framework with one or two modifiers (HealthKit, WorkoutKit, MusicKit, RealityKit, the sensor anchors) stays in the catch-all; a doc of two rows is not worth a folder.
+- Confidence that nothing fits better: 0.8 (no repo checks a doc layout; the module field of Apple's own page is the ground truth for the grouping).
+
+## 11 Nov 2026, story #215: shared props move into the contract core
+- Need: a lint rule in the existing stdlib contract checker that fails when a prop with the same name and spec sits under both `platforms.android` and `platforms.ios` instead of in `core`.
+- Run: `scout.py --need "lint a cross-platform component contract so a prop shared by android and ios lives in core"`: no repos found.
+  `gh search repos --topic=design-tokens --limit 5`: VoltAgent/awesome-design-md (a list), chakra-ui/panda (CSS-in-JS), Shopify/polaris-react-archive (archived), system-ui/theme-ui (React themes), Manavarya09/design-extract (token extraction).
+- Read: the READMEs of Manavarya09/design-extract, chakra-ui/panda and system-ui/theme-ui (tier C, first lines). None checks a per-platform prop contract.
+- Borrowed: the core-versus-platform split from Astryx `packages/native` (already in `ui/schema/contract/types.ts`); the check is a few lines in `scripts/check_ui_docs.py`, beside the other contract rules.
+- Decision: add the rule to `check_ui_docs.py`; no new script. Nothing found fits.
+- Confidence that nothing fits better: 0.85 (the rule is specific to this kit's contract shape).
+## 11 Nov 2026, story #296 (3/6): split the PresentationModifiers catch-all doc by the screen it presents
+- Need: split one catch-all doc of SwiftUI modifiers that present system screens into per-screen docs (Photos picker, file dialogs, contact access) and fail when a catch-all row names a screen that has its own doc.
+- Run: `scout.py --need "split a catch-all SwiftUI presentation modifier reference doc into per-screen docs (PhotosPicker, file importer and exporter dialogs, contact access picker) and check no catch-all row names a screen that has its own doc"`: no repos found. `gh search repos --topic=photospicker`, `--topic=fileimporter`, `--topic=contactsui`: demo apps and one wrapper (josue-lubaki/Paws, cuadros-code/Project-13-SwiftUI-instafilter, edonv/SwiftUIContacts).
+- Read: the READMEs of edonv/SwiftUIContacts (a SwiftUI wrapper of the contact picker), josue-lubaki/Paws (a demo app using PhotosPicker) and dpearson2699/swift-ios-skills (one skill per Apple framework). Tier C, their own pages. None is a reference of SwiftUI's presentation modifiers or checks a doc layout.
+- Borrowed: the grouping only. Each system screen is its own unit (Photos picker, file dialogs, contact access), as in swift-ios-skills. StoreKit sheets join InAppPurchase, the Live Activity tints join live-activities, the document launch rows join DocumentLaunchView. No code copied; a wrapper is the opposite of library first.
+- Decision: build from scratch: three small docs in the existing doc shape, rows added to three existing docs, one map edit in `IOS_DOC_FAMILY`, one fixture entry in `tests/test_ui_catch_all.py`. A screen with one or two modifiers (Quick Look, translation, certificate, Family Controls, Game Center, MusicKit, recording editor) stays in the catch-all.
+- Confidence that nothing fits better: 0.8 (no repo checks a doc layout).
+
+## 11 Nov 2026, story #296 (4/6): split the AccessibilityModifiers catch-all doc by task
+- Need: split the SwiftUI accessibility modifier doc into task docs (speech output, rotors, custom actions) and fail when a catch-all row names a control that has its own doc.
+- Run: same method as 3/6 (radar run for the sibling split found no repo that checks a doc layout); the need only changes the topic. Reused, not rerun: the 3/6 record above, same result.
+- Borrowed: the grouping only, by task, as Apple's Accessibility page groups its modifiers. No code copied.
+- Decision: build from scratch: three small docs in the existing doc shape, rows added to DragAndDrop and Focus, one map edit in `IOS_DOC_FAMILY`, one fixture entry. `accessibilityChartDescriptor` stays: the swift-charts doc has no variants list.
+- Confidence that nothing fits better: 0.8.
+
+## 11 Nov 2026, story #296 (5/6, 6/6): split the AppearanceModifiers and GraphicsModifiers catch-all docs
+- Need: split two SwiftUI modifier docs into per-surface and per-effect docs, and fail when a catch-all row names a surface that has its own doc.
+- Run: same method as 3/6 and 4/6 (no repo checks a doc layout); only the topic changed. Reused, not rerun.
+- Borrowed: the grouping only (windows, redaction, visionOS space, widgets; 3D transforms, shaders, color adjustments), as Apple's own pages group them. No code copied.
+- Decision: build from scratch: six small docs in the existing doc shape, seven rows added to widgets, one map edit and two fixture entries.
+- Confidence that nothing fits better: 0.8.
+## 11 Nov 2026, story #82 (epic #80, S1): roadmap data, times, parent, milestones, Needs
+- Need: read GitHub issue milestones with due dates, the sub-issue parent, the `doing` label event time and `Needs: #n, #m` dependency lines from GraphQL into a roadmap model, in plain Node with no dependency.
+- Run: `scout.py --need "read GitHub issue milestones, sub-issue parent, label event times and Needs dependency lines from GraphQL into a roadmap model in plain Node with no dependency"`: no repos found. `gh search repos --topic=github-graphql --limit 5`: react-graphql-github-apollo, GitTrends, THIS_REPO_HAS_n_STARS, metrics.tamino.dev, react-apollo-graphql-github-example (clients and star counters, none builds a roadmap model). `gh search repos --topic=roadmap --topic=github-issues --limit 5`: issues-for-github, mmyslin/sideboard, aryeko/planpilot, claude-ticket-gen, deskwork-skill.
+- Read: the READMEs of mmyslin/sideboard (a kanban from issues; dependency chains live in a committed sidecar file, not in the issue body), aryeko/planpilot (writes epics, stories, sub-issue links and blocked-by relations into GitHub from JSON; the opposite direction to this story) and tamino-martinius/metrics.tamino.dev (commit statistics over GraphQL, no issues). All tier C, their own claims.
+- Borrowed: nothing. planpilot confirms the sub-issue `parent` field and blocked-by relations are first-class in GitHub's GraphQL; the kit keeps `Needs:` lines in the body because a child can write them with no project board.
+- Decision: extend `roadmap/render.js` and `roadmap/query.graphql` (about 15 lines): `milestone { title dueOn }`, `timelineItems(itemTypes: [LABELED_EVENT])` for the first `doing` time, `createdAt`, and four small helpers (priority label, Needs lines, Started fallback, minutes). Nothing found reads these into a model in Node.
+- Confidence that nothing fits better: 0.8 (the topic searches are thin; the one close fit, sideboard, stores dependencies outside the issues).
+## 11 Nov 2026, story #83 (epic #80, S1): roadmap render part (a), board, timeline, You are here, Next, older work
+- Need: render a static HTML roadmap page with a timeline grouped by close day in a given timezone, a "You are here" marker, a Next order and folded older work, from GitHub issues, in plain Node with no dependency.
+- Run: `scout.py --need "render a static HTML roadmap timeline grouped by close day in a timezone from GitHub issues"`: no repos found. `gh search repos --topic=roadmap --limit 5`: developer-roadmap, llm-course, awesome-cto, AI-Expert-Roadmap, DevOps-Roadmap (learning paths, not project pages). `--topic=github-issues --topic=timeline`: none. `--topic=public-roadmap --limit 5`: flexstack/Roadmap, jonth93/acsmon-roadmap, featbit/roadmap, flowdence/public-roadmap, hartemyaakoub/liqaa-roadmap.
+- Read: the READMEs of jonth93/acsmon-roadmap (a hand-written Markdown list synced from the product repo on each release; shipped items struck through), featbit/roadmap (links to a GitHub Projects board; no page of its own) and hartemyaakoub/liqaa-roadmap (Now and Next by quarter, written by hand, "updated quarterly"). All tier C, their own claims.
+- Borrowed: nothing. All three are hand-maintained, which rule 21 forbids; none groups by close day or shows cycle time.
+- Decision: extend `roadmap/render.js` (about 40 lines). `Intl.DateTimeFormat` with `timeZone` does the day and clock maths, so no date library is needed.
+- Confidence that nothing fits better: 0.8 (generated public roadmaps exist inside paid tools; no open one renders from issues alone).
+## 11 Nov 2026, story #83 (epic #80, S1): roadmap render part (b), dependency map with measured crossings
+- Need: count arc crossings in a one-line dependency diagram of milestones and keep the node order with the fewest, drawn as inline SVG, in plain Node with no dependency.
+- Run: `scout.py --need "count arc crossings in a one-line dependency diagram and pick the node order with the fewest"`: no repos found. `gh search repos --topic=arc-diagram --limit 5`: gastonstat/arcdiagram (R), depwire/depwire (refactoring context, not a diagram), adotg/arcus, carterenyi/emviz (MIDI), justinmimbs/elm-arc-diagram (Elm). `gh search repos "crossing minimization" --limit 5`: VisDunneRight/layered-crossing-minimization, pauljngr/PACE2024, mfms-ncsu/Crossing-Minimization, sasatasas/PACE-2024, loridge/Crossing-Minimization-in-k-layered-Hierarchical-Graphs.
+- Read: the READMEs of justinmimbs/elm-arc-diagram (an arc diagram for acyclic digraphs, Elm only, two examples), gastonstat/arcdiagram (an R plotting function, no ordering search) and pauljngr/PACE2024 (an exact branch-and-cut solver for one-sided crossing minimisation; needs Cbc and CMake). All tier C, their own claims.
+- Borrowed: the method of the reference roadmap the story ports (read only, never copied): arcs on one side of a stack of boxes, two arcs cross only when they interleave, a forward arrow that repeats a longer path is hidden. The order search is new: every order up to 7 milestones, else the due order.
+- Decision: extend `roadmap/render.js` (about 70 lines). A solver like PACE2024 is far bigger than a page with a handful of milestones needs.
+- Confidence that nothing fits better: 0.8 (crossing minimisation tools target layered graphs with hundreds of nodes and native builds).
+## 11 Nov 2026, story #84 (epic #80): roadmap HTML and Cloudflare Pages inputs
+- Need: a reusable GitHub Actions workflow step that deploys a static HTML folder to Cloudflare Pages only when an optional token is given.
+- Run: `scout.py --need "GitHub Actions reusable workflow step that deploys a static HTML folder to Cloudflare Pages with an optional token"`: no repos found. `gh search repos --topic=cloudflare-pages --topic=github-actions --limit 5`: angular-schule/angular-cli-ghpages, flemay/3musketeers, ZhangShengFan/Pakr, andykenward/github-actions-cloudflare-pages, arddluma/cloudflare-pages-slack-notification. Also cloudflare/wrangler-action (the vendor's own action).
+- Read: the READMEs of cloudflare/wrangler-action (runs a pinned `wranglerVersion` with `apiToken` and `accountId`; tier A, the vendor), andykenward/github-actions-cloudflare-pages (wraps wrangler, waits for the deploy and fails the step if it is not live; needs GitHub Environments and `deployments: write`) and angular-schule/angular-cli-ghpages (pushes build output to a branch that Cloudflare Pages can serve; Angular only). Tier C except the vendor.
+- Borrowed: the vendor's shape: a pinned wrangler version, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in the environment, `pages deploy <dir> --project-name`. No code copied.
+- Decision: call the wrangler CLI directly with `npx --yes --ignore-scripts wrangler@<exact>`. A third-party action adds a moving part and more token rights (`deployments: write`); `check_workflow_security.py` and the exact pin keep the CLI path safe.
+- Confidence that nothing fits better: 0.8 (wrangler-action would fit too; the CLI is one line and needs no extra pinned action).
+## 11 Nov 2026, story #220 (S5e): XCUITest accessibility audit per iOS screen
+- Need: run XCUITest `performAccessibilityAudit()` on each SwiftUI template of a Swift package, on a macOS CI runner.
+- Run: `scout.py --need "run XCUITest performAccessibilityAudit on SwiftUI screens from a Swift package in CI"`: no repos found.
+  `scout.py --need "xcodegen generate xcode project ui test target"`: no repos found.
+  `gh search repos --topic=accessibility-testing --language=swift --limit 5`: cashapp/AccessibilitySnapshot, banksalad/AXSnapshot, Sherlouk/AccessibilitySnapshot-SnapshotTesting (archived).
+  `gh search repos --topic=xcodegen --limit 5`: sweetpad-dev/sweetpad, UnlockAgency/Natrium, ZhgChgLi/XCFolder and two apps; XcodeGen itself (yonaskolb/XcodeGen, release 2.45.4 on 14 Apr 2026) read directly.
+- Read: the READMEs of cashapp/AccessibilitySnapshot (snapshots of the accessibility tree, needs a host app), banksalad/AXSnapshot (a text snapshot of what VoiceOver reads) and yonaskolb/XcodeGen (makes an Xcode project from a YAML spec). Tier A for what each does.
+- Borrowed: XcodeGen as a CI tool only (pinned release and SHA-256, like SwiftLint), because `performAccessibilityAudit()` needs an app and a UI test target and a Swift package can have neither. Nothing from the two snapshot libraries: they record the accessibility tree, they do not run Apple's audit, and the story names Apple's audit.
+- Decision: a tiny host app and one XCUITest per template, generated into a project on CI and never committed. No new script, no committed dependency.
+- Confidence that nothing fits better: 0.8 (Apple's own audit is the story's constraint; XcodeGen is the common way to get an app target without a committed project file).
+## 11 Nov 2026, story #190 (S12): MCP search and get over the component registries, and llms.txt
+- Need: an MCP server exposing a design system component registry (search and get), plus an llms.txt made from it.
+- Run: `scout.py --need "MCP server exposing a design system component registry"`: no repos found. `scout.py --need "design system MCP server component search"`: no repos found. `gh search repos --topic mcp-server "design system components"`: carbon-design-system/carbon-mcp, shayan-m81/layerwright. `gh search repos "component library MCP"`: vasyl-bilous/component-library-mcp, ZuriJabari/component-library-mcp, balrajkumarmbd/component-library-mcp, Bongbetic/bongdesign.
+- Read: the READMEs of carbon-design-system/carbon-mcp (a hosted server with `docs_search`, `code_search`, `code_audit`; tier A for its own tools, closed hosted service), vasyl-bilous/component-library-mcp (Node, scans React and Vue sources, `search_components` ranked by token overlap and Levenshtein, returns `content` plus `structuredContent`; tier C) and Bongbetic/bongdesign (no README; repo page only). Also the kit's own `scripts/ui.sh search`, which runs the pinned Astryx CLI and needs Node and `ui/tool/node_modules`.
+- Borrowed: the shape of vasyl-bilous/component-library-mcp: a search tool ranked by token overlap, a get tool, and both text and `structuredContent` in every reply. No code copied (its parser reads React and Vue sources; ours are JSON docs).
+- Decision: a stdlib Python stdio server (`scripts/ui_mcp.py`) over the docs `scripts/check_ui_docs.py` already reads, reusing its `read_doc`. No MCP SDK is a dependency under `ui/tool/`, and the Astryx CLI search needs Node, so neither is reused at run time.
+- Confidence that nothing fits better: 0.75 (Carbon's server fits the idea but serves only Carbon and is hosted).
+
+## 11 Nov 2026, story #446: preflight a child's bump like its CI (hooks installed, commit subjects, environments)
+- Need: check that a project's git hooks are installed, that no commit subject is over 72 characters, and that the Dev and Production links are filled, before a bump branch is pushed.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "check git hooks are installed and commit subject length before pushing a bump branch"` printed `no repos found`.
+- Reused: the `pre-commit` framework the kit already adopts (we only call `pre-commit install`) and the rule of `scripts/check_commit_msg.py` (72 characters) and `scripts/check_environments.sh`. Nothing new in the checks themselves; `plugin/hooks/hooks_state.py` is the one new file (a state check, about 60 lines).
+- Decision: build the small state check ourselves; no repo fits the "hooks configured but not installed" question.
+- Confidence that nothing fits better: 0.7.
+
+## 12 Nov 2026, story #479 (feedback #478): the hook config and gate files on every branch
+- Need: keep the pre-commit hook config and the other gate files on every branch of a repository whose kit lives on one branch, and check they are present and equal.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "keep pre-commit hook config and quality gate files on every branch of a git repository, check they are present"` printed `no repos found`. `scout.py --need "pre-commit config missing on branch hooks fail multi-branch repository"` printed `no repos found`. `gh search repos --topic pre-commit "config sync branches"` returned nothing.
+- Reused: the `pre-commit` framework as it is (a per-hook `fail_fast` for the kit guard) and git itself (`git checkout <branch> -- <path>`, `git ls-files -s`) for the copy and the compare. `plugin/hooks/git_guard.py` (story #320, idea from ECC) is extended for story #480, not rebuilt.
+- Decision: a list file and about 40 lines in `adopt.sh`; no repo fits. ADR-017.
+- Confidence that nothing fits better: 0.7.
+## 13 Nov 2026, story #484: skip the phone jobs on a ci.yml-only PR, cancel a replaced run
+- Need: skip macOS jobs when only the workflow file changed, and cancel a PR run that a newer run replaced.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "GitHub Actions skip macOS jobs when workflow file changes, cancel superseded pull request runs"` printed `no repos found`.
+- Reused: GitHub's own `concurrency` key with `cancel-in-progress` (the platform feature), and the path rule the `ui-changes` job already has. No new code: one block and two shorter patterns.
+- Decision: no repo needed; no ADR (no change of architecture or scope, the gate is untouched).
+- Confidence that nothing fits better: 0.9.
+
+## 13 Nov 2026, story #485: one change map for the slow CI jobs
+- Need: decide which CI jobs must run from the changed paths of a pull request, fail closed, one map file read by CI and local checks.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "decide which CI jobs must run from the changed paths of a pull request, fail closed, one map file read by CI and local checks"` printed `no repos found`. GitHub topic search (`github-actions`, `path-filter`) found `step-security/paths-filter` (a fork of dorny) and `chainguard-actions/dorny-paths-filter` (a fork).
+- Read: dorny/paths-filter (MIT, pushed 27 Sep 2026, not archived; filters may be a file, base rules per event, a boolean per filter) and step-security/paths-filter (MIT, a fork, pushed 9 Nov 2026, the same text).
+- Borrowed: the filter file idea and the base rule per event. Not borrowed: the action itself, which runs only inside a workflow and adds a third-party action to a protected file.
+- Decision: a stdlib reader over one JSON map, used by CI, the gate and (PR 4) check_local.sh. ADR-018.
+- Confidence that nothing fits better: 0.8.
+## 13 Nov 2026, story #504: the kit's CI walks a sample child through the whole path
+- Need: run a tool end to end against a generated sample project in CI.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "run a tool end to end against a generated sample project in CI"` printed `no repos found`. A second run with `--need "generate a sample project and run a CLI tool end to end in CI" --out docs/research/repo-radar.md` printed the same. GitHub topic search `--topic github-actions --topic end-to-end-testing` and the query "sample project end-to-end CI smoke test" were read by title and description. Top hits: `vasu31dev/playwright-ts-template` (139 stars), `vasu31dev/playwright-ts` (106), `MikeBild/serverless-aws-cdk-ecommerce` (51), `filipsnastins/testcontainers-github-actions` (20), `hamc/blastproof` (11).
+- Read: the top hits are UI test frameworks or demo apps. None generates a child project and walks a kit's own scripts (adopt, bump, gate files, hooks, checks) through its CI. The README of `hamc/blastproof` is an AI PR tool that picks tests; it does not generate a child.
+- Reused: the kit's own child-repo fixture in `tests/test_adopt.py` (`child` fixture, `adopt()`, `FAKE_PRECOMMIT`, fake submodule) and the scratch-repo helper in `tests/test_protected_warn.py` (`make_child_repo`).
+- Decision: build from scratch as one test file. No repo fits the walk. Confidence that nothing fits better: 0.8.
+## 13 Nov 2026, story #496: the merge script counts only the PR's own, newest runs
+- Need: a merge gate that reads only the pull_request workflow runs of a head commit and ignores check rows from runs a newer run replaced.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "merge gate reads only the pull_request workflow runs of a head commit and ignores check runs from superseded or cancelled runs"` printed `no repos found`. GitHub search (`github required status checks latest workflow run`) found nothing; the topic search (`github-actions`, `merge-queue`) found `Forward-Future/DeployBot`, `berkayturanci/keel` and `oborchers/claude-gh-status`.
+- Read: the READMEs of the three. DeployBot (a hosted merge service) matches a check to workflow name, base branch, head SHA, event, status and conclusion, and coalesces superseded runs. `keel` is an agent workflow from issue to merge with no run selection. `claude-gh-status` shows runs in a pane and merges nothing.
+- Borrowed: the idea to match a check to its exact workflow, head SHA and event, and to let a newer run replace an older one. Not borrowed: the service; it cannot run inside `review_merge.sh`.
+- Decision: build from scratch as one stdlib helper, `scripts/check_pr_runs.py`, called by the existing merge script. Confidence that nothing fits better: 0.8.
+## 13 Nov 2026, story #497: a nightly full run on dev with one issue when it is red
+- Need: a scheduled CI run on a branch that opens one GitHub issue when red and comments on it on later red nights.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "scheduled nightly CI run on a branch that opens one GitHub issue when red and comments on it on later red nights"` printed `no repos found`. GitHub topic search (`github-actions` and `nightly`) found only nightly build repos; a second search found `JasonEtco/create-an-issue`.
+- Read: the README of `JasonEtco/create-an-issue`: it creates an issue from a template and, with `update_existing`, edits the open issue with the same title. It does not comment, and it is a third-party action inside a protected workflow.
+- Reused: the issue-opening code of `scripts/adoption_scan.py` (find the open issue by a key in its title, comment, else create), moved into `scripts/issue_notice.py` and used by both scripts.
+- Decision: build the dispatch, wait and verdict as one stdlib script; reuse the adoption scan's issue code. Confidence that nothing fits better: 0.8.

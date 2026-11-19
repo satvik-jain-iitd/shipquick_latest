@@ -5,37 +5,15 @@
   "core": {},
   "platforms": {
     "android": {
-      "hostState": {
+      "snackbarData": {
         "type": {
           "kind": "named",
-          "name": "SnackbarHostState"
+          "name": "SnackbarData"
         }
       },
-      "message": {
-        "type": {
-          "kind": "string"
-        }
-      },
-      "actionLabel": {
-        "type": {
-          "kind": "string"
-        },
-        "optional": true
-      },
-      "withDismissAction": {
+      "actionOnNewLine": {
         "type": {
           "kind": "boolean"
-        },
-        "optional": true
-      },
-      "duration": {
-        "type": {
-          "kind": "enum",
-          "values": [
-            "Short",
-            "Long",
-            "Indefinite"
-          ]
         },
         "optional": true
       }

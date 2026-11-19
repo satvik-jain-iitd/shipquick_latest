@@ -110,5 +110,32 @@ export default {
       "description": "Words that say what loads. VoiceOver reads them.",
       "platform": "ios"
     }
-  ]
+  ],
+  "platformApi": {
+    "ios": {
+      "variants": [
+        {"name": "progressViewStyle", "note": "`.progressViewStyle(_:)`, iOS 14.0. Apple: \"Sets the style for progress views in this view.\""}
+      ],
+      "supporting": [
+        {"name": "DefaultDateProgressLabel", "use": "iOS 16.0. Apple: \"The default type of the current value label when used by a date-relative progress view.\""},
+        {"name": "ProgressViewStyleConfiguration.CurrentValueLabel", "use": "iOS 14.0. Apple: \"A type-erased label that describes the current value of a progress view.\""},
+        {"name": "ProgressViewStyleConfiguration.Label", "use": "iOS 14.0. Apple: \"A type-erased label describing the task represented by the progress view.\""}
+      ]
+    },
+    "android": {
+      "family": "ProgressIndicator",
+      "variants": [
+        {
+          "name": "CircularProgressIndicator",
+          "note": "A spinning or filling circle. Use it in small places, like a button or a card. Pass progress for a known amount; leave it out when the time is not known."
+        }
+      ],
+      "supporting": [
+        {
+          "name": "ProgressIndicatorDefaults",
+          "use": "Default colours, track colours, stroke widths, stroke caps, gap sizes, the stop mark and the progress animation for both indicators."
+        }
+      ]
+    }
+  }
 };

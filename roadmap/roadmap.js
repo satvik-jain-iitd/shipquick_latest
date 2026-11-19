@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // ROADMAP.md from GitHub data (story #49, docs/LIVE_ROADMAP.md). The reusable workflow .github/workflows/roadmap.yml runs this.
 //   node roadmap/roadmap.js <github-answer.json> <roadmap.json> [ROADMAP.md]     (no third argument: print the page)
+//   node roadmap/roadmap.js <github-answer.json> <roadmap.json> site/index.html  (an .html name gets render.js's HTML page, story #84)
 // The page has no clock inside, so an unchanged project makes no new commit. render.js (the HTML page) stays as it is; this file only writes Markdown.
 const fs = require('node:fs');
-const { build, fromGraphql, MAX_NODES } = require('./render.js');
+const { build, fromGraphql, page, MAX_NODES } = require('./render.js');
 
 // Text from GitHub is data: neutralise every character that Markdown or HTML would act on (a link, a tag, a table cell).
 const esc = (t) => String(t == null ? '' : t).replace(/\s+/g, ' ').replace(/[\\`*_[\]()|<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] || '\\' + c));
@@ -52,7 +53,9 @@ ${next || 'Nothing is queued.'}
 function run(respFile, settingsFile, outFile, env) {
   const settings = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
   for (const f of ['title', 'vision']) if (typeof settings[f] !== 'string' || !settings[f].trim()) throw new Error(`${settingsFile}: "${f}" is missing. roadmap.json needs a title and a vision line.`);
-  const text = markdown(JSON.parse(fs.readFileSync(respFile, 'utf8')), { title: settings.title, vision: settings.vision, repo: (env || process.env).GITHUB_REPOSITORY });
+  const resp = JSON.parse(fs.readFileSync(respFile, 'utf8'));
+  const text = /\.html$/.test(outFile || '') ? page(resp, { title: settings.title, vision: settings.vision, timezone: settings.timezone }, new Date())   // the HTML page has a clock: the time it was made
+    : markdown(resp, { title: settings.title, vision: settings.vision, repo: (env || process.env).GITHUB_REPOSITORY });
   if (outFile) fs.writeFileSync(outFile, text); else process.stdout.write(text);   // the page is built before anything is written: an error leaves the old file alone
 }
 

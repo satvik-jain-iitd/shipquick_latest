@@ -67,6 +67,28 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "SearchBarDefaults.InputField: The text field of a search bar: query, onSearch, and leading and trailing icons. Pass it as the bar's inputField.",
+            "TopSearchBar: A search bar at the top of the screen that can scroll away with the content. Pass a SearchBarScrollBehavior.",
+            "ExpandedFullScreenSearchBar: The full-screen view a SearchBar opens into, with the results. Use it on phones.",
+            "DockedSearchBar: A search bar whose results open in a box under it, not over the whole screen. Use it on tablets and wide screens.",
+            "ExpandedDockedSearchBar: The box under a search bar that shows results, for wide screens. It goes with a collapsed SearchBar and the same SearchBarState.",
+            "SearchBarState: Says if the bar is collapsed or expanded. Call animateToExpanded(), animateToCollapsed() or snapTo() from a coroutine.",
+            "rememberSearchBarState: Creates and keeps a SearchBarState across recompositions.",
+            "SearchBarValue: The two states of a search bar: Collapsed and Expanded.",
+            "SearchBarScrollBehavior: Links a TopSearchBar to a scrolling list, so the bar scrolls away and back. Make one with SearchBarDefaults.enterAlwaysSearchBarScrollBehavior().",
+            "SearchBarDefaults: Default colours, shapes, elevation, window insets, the InputField and the scroll behaviour for search bars.",
+            "SearchBarColors: The container, divider and input field colours of a search bar. Make one with SearchBarDefaults.colors()."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {

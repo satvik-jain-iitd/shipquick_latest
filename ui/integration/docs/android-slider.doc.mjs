@@ -79,6 +79,33 @@ export default {
       ]
     },
     {
+      "title": "Variants and supporting API",
+      "content": [
+        {
+          "type": "list",
+          "style": "unordered",
+          "items": [
+            "RangeSlider: A slider with two thumbs, for a start and an end value, like a price range.",
+            "SliderDefaults.Thumb: The default thumb. Pass it to the thumb slot to change only its colours or size.",
+            "SliderDefaults.Track: The default track, with its stop and tick marks. Pass it to the track slot to change only its colours.",
+            "SliderDefaults: Default colours, Thumb, Track, tick size and stop mark size for sliders. Make colours with SliderDefaults.colors().",
+            "SliderColors: The thumb, track and tick colours of a slider, active and inactive, on and off.",
+            "SliderState: Holds a slider's value, valueRange, steps and onValueChangeFinished. Pass it to the Slider that takes a state.",
+            "rememberSliderState: Creates and keeps a SliderState across recompositions.",
+            "RangeSliderState: Holds a range slider's activeRangeStart, activeRangeEnd, valueRange and steps.",
+            "rememberRangeSliderState: Creates and keeps a RangeSliderState across recompositions."
+          ]
+        },
+        {
+          "type": "list",
+          "style": "dont",
+          "items": [
+            "Do not use: SliderPositions. Use SliderState (Google: \"Not necessary with the introduction of Slider state\")."
+          ]
+        }
+      ]
+    },
+    {
       "title": "Do and do not",
       "content": [
         {
