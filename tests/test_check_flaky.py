@@ -79,3 +79,10 @@ def test_json_output_valid(tmp_path):
     import json as _j
     d = _j.loads(r.stdout)
     assert d["ok"] is True
+
+
+def test_the_entry_dates_follow_today_so_the_suite_has_no_time_bomb():
+    """#562 review point 1: a literal expiry date in entry() fails the whole suite on that day. Dates come from today."""
+    body = Path(__file__).read_text(encoding="utf-8").split("def entry(", 1)[1].split("\ndef test_", 1)[0]
+    assert "date.today()" in body and "timedelta" in body, body
+    assert "2026" not in body and "2025" not in body, body
