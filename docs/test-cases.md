@@ -2370,6 +2370,8 @@ Scenario: a changed file that is not in the current report
   Then it fails
 Scenario: no changed files
   Then it passes, but only after both reports were read
+```
+
 ## Story #580: the child bump planner, a dry run
 ```gherkin
 Scenario: a pin that differs from the release is a bump
