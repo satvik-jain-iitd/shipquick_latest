@@ -278,3 +278,14 @@ def test_a_multi_line_comment_with_windows_line_endings_counts(tmp_path):
 def test_a_proof_line_ending_in_a_carriage_return_counts(tmp_path):
     r = run_pr(tmp_path, story_issue(comments=[comment("qa-login", PROOF + "\r")]))
     assert r.returncode == 0, r.stdout
+
+
+# ---- #555 round 3, point 2: the author and reviewer-list checks fire only for a gated story, never for a push with no link ----
+def test_a_push_with_no_linked_story_passes_without_an_author_or_a_reviewer_list(tmp_path):
+    r = run_pr(tmp_path, None, author="", reviewers="", body="## What\nNo link.\n")
+    assert r.returncode == 0, (r.stdout, r.stderr)
+
+
+def test_a_push_with_no_linked_story_and_no_author_variable_passes(tmp_path):
+    r = run_pr(tmp_path, None, author=None, reviewers="", body="## What\nNo link.\n")
+    assert r.returncode == 0, (r.stdout, r.stderr)
