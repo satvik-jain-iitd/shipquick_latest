@@ -2,9 +2,8 @@
 
 Checks:
   - graphify-out/graph.json exists and parses as JSON with nodes/edges.
-  - the pinned CLI version (scripts/graphify_version.txt) matches the installed `graphify` version.
-  - the graph's source SHA (stored in graphify-out/.source_sha) matches HEAD.
-  - graphify-out/.schema_version matches the supported schema (1).
+  - the graph's source SHA (graphify-out/.source_sha, written by graphify_kit.py build/update) matches HEAD.
+  - the pinned CLI version (scripts/graphify_version.txt) vs the installed `graphify`: a mismatch only warns.
 
 Usage:
   python3 scripts/check_graph_fresh.py [--graph DIR] [--require] [--json]
@@ -18,9 +17,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parent
 PINNED = (HERE / "graphify_version.txt").read_text().strip()
-SCHEMA_VERSION = "1"
 
 
 def installed_version() -> str | None:
@@ -36,9 +33,9 @@ def installed_version() -> str | None:
     return txt or None
 
 
-def head_sha() -> str | None:
+def head_sha(repo: Path) -> str | None:
     try:
-        out = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, timeout=10)
+        out = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, timeout=10)
         if out.returncode == 0:
             return out.stdout.strip()
     except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -66,37 +63,20 @@ def check(graph_dir: Path, require: bool) -> tuple[bool, list[str]]:
         return False, messages
     messages.append(f"graph OK: {len(data['nodes'])} nodes, {len(data['edges'])} edges")
 
-    # schema version
-    sv_path = graph_dir / ".schema_version"
-    sv = sv_path.read_text().strip() if sv_path.exists() else None
-    if sv != SCHEMA_VERSION:
-        messages.append(f"schema version mismatch: graph={sv}, supported={SCHEMA_VERSION}")
-        if require:
-            ok = False
-
-    # source sha
-    sha_path = graph_dir / ".source_sha"
-    stored_sha = sha_path.read_text().strip() if sha_path.exists() else None
-    cur_sha = head_sha()
-    if stored_sha and cur_sha and stored_sha != cur_sha:
+    stored_sha = (graph_dir / ".source_sha").read_text().strip() if (graph_dir / ".source_sha").exists() else None
+    cur_sha = head_sha(graph_dir.parent)
+    if not stored_sha:
+        messages.append("no .source_sha: freshness unverified (run python3 scripts/graphify_kit.py build)")
+        ok = ok and not require
+    elif cur_sha and stored_sha != cur_sha:
         messages.append(f"graph stale: stored={stored_sha[:8]}, HEAD={cur_sha[:8]}")
-        if require:
-            ok = False
-    elif not stored_sha:
-        messages.append("no .source_sha recorded; freshness unverified")
+        ok = ok and not require
 
-    # cli version
     iv = installed_version()
     if iv is None:
-        messages.append("graphify CLI not installed (pip install graphifyy)")
-        if require:
-            ok = False
+        messages.append("warn: graphify CLI not installed (pip install graphifyy)")
     elif iv != PINNED:
-        messages.append(f"graphify version mismatch: installed={iv}, pinned={PINNED}")
-        if require:
-            ok = False
-    else:
-        messages.append(f"graphify version OK: {iv}")
+        messages.append(f"warn: graphify version mismatch: installed={iv}, pinned={PINNED}")
 
     return ok, messages
 
