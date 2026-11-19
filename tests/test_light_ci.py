@@ -70,4 +70,34 @@ def test_a_light_run_never_makes_a_check_named_gate():
     # dev's branch protection reads a check named exactly `gate` by commit; a light result must not carry that name
     name = re.search(r"^    name: (.*)$", _job("gate"), re.M).group(1)
     assert LIGHT in name and "'gate-light'" in name and "'gate'" in name
-    assert name.index("'gate-light'") < name.index("|| 'gate'")
+    assert name.index("'gate-light'") < name.index("'gate'")
+
+
+def _gate_name(event, base):
+    """Evaluate the gate job's name expression the way Actions does (&&, || return the operand), for one run."""
+    expr = re.search(r"^    name: \$\{\{ (.*) \}\}$", _job("gate"), re.M).group(1)
+    py = (expr.replace("github.event_name", repr(event)).replace("github.base_ref", repr(base))
+          .replace("&&", " and ").replace("||", " or "))
+    py = re.sub(r"startsWith\(('[^']*'), ('[^']*')\)", r"\1.startswith(\2)", py)
+    return eval(py)  # the expression holds only string compares, and/or and startswith
+
+
+def test_the_name_gate_exists_only_for_dev_and_main():
+    assert _gate_name("pull_request", "dev") == "gate"
+    assert _gate_name("pull_request", "main") == "gate"
+    for event in ("push", "workflow_dispatch", "schedule"):
+        assert _gate_name(event, "") == "gate", event
+
+
+def test_a_pr_into_any_other_base_is_named_gate_other():
+    assert _gate_name("pull_request", "train/2026-11-20") == "gate-light"
+    for base in ("feat/x", "release/v1", "dev2", "main-old", "train", "Dev", ""):
+        assert _gate_name("pull_request", base) == "gate-other", base
+
+
+def test_the_docs_name_the_two_other_gate_names():
+    for doc in ("docs/PR_RULES.md", "docs/decisions/ADR-023.md"):
+        text = (ROOT / doc).read_text(encoding="utf-8")
+        assert "`gate-light`" in text and "`gate-other`" in text, doc
+    adr21 = (ROOT / "docs" / "decisions" / "ADR-021.md").read_text(encoding="utf-8")
+    assert "cannot add its own login" not in adr21 and "picks its base" in adr21
