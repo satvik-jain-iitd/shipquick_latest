@@ -143,3 +143,19 @@ def test_the_intent_field_is_not_promised_in_the_protocol_or_the_adr():
     for rel in ("docs/TEAM_PROTOCOL.md", "docs/decisions/ADR-021.md"):
         text = (ROOT / rel).read_text(encoding="utf-8")
         assert "`Intent:`" not in text and "Intent:` field" not in text, f"{rel} still promises an Intent: field"
+
+
+# ---- fix 4 (#523 review): ADR-021 says who types the confirmation and what is still not stopped ----
+def adr_last_section():
+    text = (ROOT / "docs" / "decisions" / "ADR-021.md").read_text(encoding="utf-8")
+    return text.split("## What this does not stop", 1)[1]
+
+
+def test_the_adr_says_qa_types_the_confirmation_on_the_issue_not_dev_in_the_body():
+    section = adr_last_section()
+    assert "recorded by Dev" not in section and "Owner yes" not in section
+    assert "QA" in section and "comment" in section and "not the PR author" in section
+
+
+def test_the_adr_says_what_is_still_not_stopped():
+    assert "does not read the say-back" in adr_last_section()
