@@ -94,6 +94,11 @@ check_story() {
   rm -f "$tmp"
   report story "$rc"
 }
+check_graph_fresh() {
+  [ -f graphify-out/graph.json ] || { echo "skip graph-fresh: no graphify-out/graph.json (run graphify extract . --code-only)"; return 0; }
+  python3 "$HERE/check_graph_fresh.py" --require
+  report graph-fresh $?
+}
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
   gitleaks git --no-banner --no-color --redact --verbose .
@@ -120,7 +125,8 @@ for c in "${checks[@]}"; do
     frontend-design) check_frontend_design ;;
     disable-comments) check_disable_comments ;;
     story) check_story ;;
-    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story secrets secrets-staged)"; exit 2 ;;
+    graph-fresh) check_graph_fresh ;;
+    *) echo "unknown check: $c (sizes markers md-blocks ui-docs ui-topics ui-coverage timeouts commits pr-size frontend-design disable-comments story graph-fresh secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ "$failed" -eq 0 ] && echo "check_local: all passed"
