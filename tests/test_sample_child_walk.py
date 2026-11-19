@@ -52,7 +52,7 @@ NAMED = {
     "ui-coverage": "needs the kit's own ui/ folder; a child has none",
     "story": "needs gh logged in to read the linked stories; CI runs it on GitHub",
     "intent-verify": "needs gh logged in to read the linked stories; CI runs it on GitHub",
-    "graph-fresh": "skips unless the child has built a graphify-out graph; the walk builds none",
+    "graph-fresh": "warn only (like shortcuts): it prints an ok, skip or warn line and never fails, and the walk builds no graph",
     "shortcuts": "warn only: it prints a count and never passes or fails, so no 'ok' line exists to assert",
     "secrets": "needs gitleaks, which the CI test job does not install; the pre-commit job runs it on every commit",
     "secrets-staged": "the pre-commit stage; the walk's commits pass through it, but its gitleaks run is not asserted",

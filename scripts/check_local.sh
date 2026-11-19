@@ -129,8 +129,11 @@ check_story() {
 }
 check_graph_fresh() {
   [ -f graphify-out/graph.json ] || { echo "skip graph-fresh: no graphify-out/graph.json (run python3 scripts/graphify_kit.py build)"; return 0; }
-  python3 "$HERE/check_graph_fresh.py" --require
-  report graph-fresh $?
+  # warn only, like shortcuts: HEAD moves after every commit, so a hard fail here would fail every push. CI may use --require.
+  local out
+  out="$(python3 "$HERE/check_graph_fresh.py" --require 2>&1)" \
+    && echo "ok   graph-fresh" \
+    || echo "warn graph-fresh: $(printf '%s' "$out" | grep -v '^graph NOT fresh' | tr '\n' ';')"
 }
 check_workflow_security() { python3 "$HERE/check_workflow_security.py"; report workflow-security $?; }   # story #325
 check_design_tokens() {   # story #133: the same two steps as the design-tokens CI job
