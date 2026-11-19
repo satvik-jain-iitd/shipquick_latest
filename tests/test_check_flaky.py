@@ -86,3 +86,11 @@ def test_the_entry_dates_follow_today_so_the_suite_has_no_time_bomb():
     body = Path(__file__).read_text(encoding="utf-8").split("def entry(", 1)[1].split("\ndef test_", 1)[0]
     assert "date.today()" in body and "timedelta" in body, body
     assert "2026" not in body and "2025" not in body, body
+
+
+@pytest.mark.parametrize("status", ["active", "expired"])
+def test_statuses_nobody_can_explain_are_rejected(tmp_path, status):
+    """#562 review point 4: keep quarantined and fixed; active and expired are not defined anywhere."""
+    f = tmp_path / "r.json"; f.write_text(json.dumps([entry(status=status)]))
+    r = run("--file", str(f))
+    assert r.returncode == 1 and "invalid status" in r.stdout, r.stdout
