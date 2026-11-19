@@ -253,3 +253,16 @@ def test_turning_intent_verify_off_skips_the_local_check(tmp_path):
     env = stub_env(tmp_path, story_issue(comments=[]))
     r = subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "intent-verify"], cwd=repo, capture_output=True, text=True, env=env)
     assert "skipped: intent-verify is off" in r.stdout, (r.stdout, r.stderr)
+
+
+# ---- #555 round 2, points 2, 4 and 5: the docs say the reviewer list decides, the check is kit CI only, and the old-issue gap ----
+@pytest.mark.parametrize("rel", ("docs/decisions/ADR-021.md", "docs/TEAM_PROTOCOL.md"))
+def test_the_docs_say_reviewer_list_and_kit_ci_only(rel):
+    text = (ROOT / rel).read_text(encoding="utf-8")
+    assert "reviewer list" in text and "kit CI only" in text, rel
+    assert "cannot tell a QA login" not in text, rel
+
+
+def test_the_adr_names_the_old_or_unlabelled_issue_gap():
+    section = adr_last_section()
+    assert "old or unlabelled issue" in section and "not checked" in section
