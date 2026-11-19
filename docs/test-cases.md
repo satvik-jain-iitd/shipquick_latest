@@ -2476,3 +2476,10 @@ Scenario: a base branch with no roles file fails at once
 Scenario: roles.py is a protected path
   Then scripts/roles.py is a line of scripts/protected_paths.txt
 ```
+
+## Story #596: rule 4 names the train branch (words only)
+
+- AC-1 `tests/test_rule4_train.py::test_rule_4_names_the_train_and_keeps_its_old_words`: rule 4 in CLAUDE.md names `train/<date>`, points to PR_RULES, and keeps its old words.
+- AC-2 `tests/test_rule4_train.py::test_the_dense_rule_4_names_the_train`: the dense Rule 4 line says the same.
+- AC-3 `tests/test_rule4_train.py::test_pr_rules_lists_the_train_steps_in_order`: PR_RULES section 17 lists the train steps in order.
+- AC-4 `tests/test_rule4_train.py::test_the_rule_copies_check_still_passes`: `check_rule_copies.py` passes for the kit.
