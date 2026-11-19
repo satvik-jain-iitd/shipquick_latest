@@ -817,3 +817,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: both READMEs. Both run only inside a workflow, filter by path at run time, and have no gate that proves a needed job ran or fails closed on a doubt.
 - Reused: the kit's own reader from story #485 (ADR-018); only its arguments change.
 - Decision: no new tool; give the reader `--ci`, `--guard` and `--decision-job`. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #568: one row of numbers per pull request
+- Need: a pure function that turns `gh pr view`, `gh run list` and `gh issue view` JSON into one row of numbers (story to PR minutes, PR to merge minutes, CI runs, failed, cancelled, review rounds).
+- Run: the radar scout script is not at its documented path on this Mac (`~/Documents/AGI/plugins/radar/scripts/scout.py` is missing), so the run is a GitHub topic search (`github-metrics`, `pull-requests`). It found `tonypiazza/gh-metrics`, `git-pulse/tools` and `w3c/pulse-snapshots`.
+- Read: the READMEs of `tonypiazza/gh-metrics` and `git-pulse/tools`. `gh-metrics` computes repo-wide merge rate, cycle time and review timing by shelling out to `gh`; it has no per-PR row with CI runs and no story link. `git-pulse` shows monthly committer and issue/PR counts.
+- Borrowed: the idea to keep one fixed definition of each metric, so every run measures the same way. Not borrowed: the code; it shells out to `gh` and the story wants a pure function with no network.
+- Decision: build from scratch as one small stdlib function. Confidence that nothing fits better: 0.8.
