@@ -396,7 +396,7 @@ jobs:
     # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
     # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.android != 'false'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.android != 'false' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -422,7 +422,7 @@ jobs:
   ui-ios-compile:
     # Story #217: compile every template and the generated proof/ApiProof.swift for iOS. Compile only.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ios != 'false'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.ios != 'false' }}
     runs-on: macos-15
     timeout-minutes: 30
     permissions:
@@ -444,7 +444,7 @@ jobs:
     # bad one must fail with every rule named. detekt 1.23.8, Konsist 0.17.3, Gradle from the pin in ui/android. CI only.
     # Gradle checks every downloaded jar and pom against tests/fixtures/android/gradle/verification-metadata.xml; a missing or wrong sum fails the build.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.android != 'false'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.android != 'false' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -500,7 +500,7 @@ jobs:
     # Story #218: both tiers run through ui/tool/ios_lint.sh (CI=1 strict, else warn-only) with the committed baseline
     # ui/ios/lint/swiftlint-baseline.json, and SwiftFormat 0.64.6 (pinned the same way) checks the format in lint mode.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ios != 'false'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.ios != 'false' }}
     runs-on: macos-15
     timeout-minutes: 20
     permissions:
@@ -553,7 +553,7 @@ jobs:
     # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
     needs: [ui-changes]
     # A fail-safe exit above writes only decision={"all":true}, so snapshot is unset; an unset output runs the job too.
-    if: needs.ui-changes.outputs.snapshot != 'false'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.snapshot != 'false' }}
     runs-on: macos-15
     timeout-minutes: 45
     permissions:
@@ -661,6 +661,7 @@ jobs:
       - name: No pull_request_target or workflow_run checks out the PR head, and every npm install skips scripts (story #325)
         run: python3 scripts/check_workflow_security.py
   test:
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [pre-commit]
@@ -706,6 +707,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Every phone job matches the change map (story #485, the gate proves it)
+        if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) }}
         env:
           DECISION: ${{ needs.ui-changes.outputs.decision }}
           NEEDS: ${{ toJSON(needs) }}
@@ -713,6 +715,17 @@ jobs:
           printf '%s' "$DECISION" > "$RUNNER_TEMP/decision.json"
           printf '%s' "$NEEDS" > "$RUNNER_TEMP/needs.json"
           python3 scripts/change_map.py gate --decision "$RUNNER_TEMP/decision.json" --needs "$RUNNER_TEMP/needs.json" --map scripts/change_map.json
+      - name: Light run or full run (story #592)
+        env:
+          LIGHT: ${{ github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/') }}
+          TEST_RESULT: ${{ needs.test.result }}
+        run: |
+          if [[ "$LIGHT" == "true" ]]; then
+            echo "light run: the heavy jobs did not run; they run on the train pull request into dev"
+          elif [[ "$TEST_RESULT" != "success" ]]; then
+            echo "full run: test must be success, it was $TEST_RESULT"
+            exit 1
+          fi
       - name: Check all job results
         run: |
           echo "pre-commit: ${{ needs.pre-commit.result }}"
