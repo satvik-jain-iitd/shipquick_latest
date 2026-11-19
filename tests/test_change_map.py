@@ -238,7 +238,7 @@ def test_s485_a_change_to_a_phone_job_s_own_steps_turns_its_area_on(tmp_path):
 
 def test_s485_a_change_to_another_part_of_ci_yml_turns_nothing_on(tmp_path):
     repo = make_repo(tmp_path)
-    edit_ci(repo, "  gate:\n    name: gate\n", "  gate:\n    name: gate\n    # a comment in the gate job\n")
+    edit_ci(repo, "  gate:\n    name: ${{", "  gate:\n    # a comment in the gate job\n    name: ${{")
     assert on(decide(repo)) == {"android": False, "ios": False, "snapshot": False}
 
 

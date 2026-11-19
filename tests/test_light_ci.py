@@ -32,7 +32,7 @@ def test_the_six_heavy_jobs_do_not_run_on_a_light_run():
 def test_the_light_run_rule_reads_the_base_branch_never_the_head():
     assert "head_ref" not in LIGHT
     assert all("head_ref" not in ln for ln in CI.splitlines() if "train/" in ln)
-    assert CI.count(LIGHT) == 8  # six heavy jobs, the gate change-map step, the gate LIGHT env
+    assert CI.count(LIGHT) == 9  # six heavy jobs, the gate change-map step, the gate LIGHT env, the gate name
 
 
 def test_the_gate_on_a_light_run_says_so_and_still_fails_on_a_failed_job():
@@ -64,3 +64,10 @@ def test_the_adr_and_the_rule_page_name_the_trade():
     for word in ("What gets weaker", "How to undo", "What stays safe"):
         assert word in adr
     assert "## 17. Light CI and the train" in (ROOT / "docs/PR_RULES.md").read_text(encoding="utf-8")
+
+
+def test_a_light_run_never_makes_a_check_named_gate():
+    # dev's branch protection reads a check named exactly `gate` by commit; a light result must not carry that name
+    name = re.search(r"^    name: (.*)$", _job("gate"), re.M).group(1)
+    assert LIGHT in name and "'gate-light'" in name and "'gate'" in name
+    assert name.index("'gate-light'") < name.index("|| 'gate'")
