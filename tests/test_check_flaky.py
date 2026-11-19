@@ -101,3 +101,29 @@ def test_no_aliased_json_import_and_a_neutral_owner_in_the_test_entry():
     for rel in ("scripts/check_flaky.py", "tests/test_check_flaky.py"):
         assert needle not in (ROOT / rel).read_text(encoding="utf-8"), rel
     assert entry()["owner"] == "example-owner"
+
+
+# ---- #562 review point 2: the check runs before a push, from check_local.sh, on the repo's own registry ----
+def local_flaky(tmp_path, entries=None):
+    repo = tmp_path / "repo"; repo.mkdir()
+    subprocess.run(["git", "-C", str(repo), "init", "-q", "-b", "dev"], check=True)
+    if entries is not None:
+        (repo / ".shipquick").mkdir()
+        (repo / ".shipquick" / "flaky-tests.json").write_text(json.dumps(entries), encoding="utf-8")
+    return subprocess.run(["bash", str(ROOT / "scripts" / "check_local.sh"), "flaky"], cwd=repo, capture_output=True, text=True)
+
+
+def test_check_local_flaky_passes_a_valid_registry_of_the_repo(tmp_path):
+    r = local_flaky(tmp_path, [entry()])
+    assert r.returncode == 0 and "ok   flaky" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_check_local_flaky_fails_an_expired_quarantine_of_the_repo(tmp_path):
+    r = local_flaky(tmp_path, [entry(expires_on="2020-01-01")])
+    assert r.returncode == 1 and "FAIL flaky" in r.stdout, (r.stdout, r.stderr)
+
+
+def test_check_local_flaky_passes_when_the_repo_has_no_registry(tmp_path):
+    """A child has no registry file: a missing file is a pass, never a read of the kit's own file."""
+    r = local_flaky(tmp_path)
+    assert r.returncode == 0 and "ok   flaky" in r.stdout, (r.stdout, r.stderr)
