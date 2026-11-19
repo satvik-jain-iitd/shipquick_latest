@@ -809,3 +809,9 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: the README of `JasonEtco/create-an-issue`: it creates an issue from a template and, with `update_existing`, edits the open issue with the same title. It does not comment, and it is a third-party action inside a protected workflow.
 - Reused: the issue-opening code of `scripts/adoption_scan.py` (find the open issue by a key in its title, comment, else create), moved into `scripts/issue_notice.py` and used by both scripts.
 - Decision: build the dispatch, wait and verdict as one stdlib script; reuse the adoption scan's issue code. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #579: coverage ratchet, pass or fail per changed file
+- Need: a script that reads two coverage reports (baseline and current) and says pass or fail for each changed file, failing closed on any bad report.
+- Run: the radar scout script is not at its documented path on this Mac, so the run is a GitHub topic search (`coverage`, `ratchet`) plus the two tools the story names. The search found `Koleok/jest-coverage-ratchet` and `GetJobber/jest-a-coverage-slip-detector`.
+- Read: the README of `Bachmann1234/diff_cover` (`diff-cover` reports the coverage of the changed lines of a diff and can fail under one percent; it has no per-file baseline), the `coverage report --fail-under` option of coverage.py (one total for the whole run, no per-file baseline), and the two ratchet repos (both are JavaScript, for jest).
+- Borrowed: the idea of a ratchet, a number that may only go up. Not borrowed: any code; none is Python, none compares two coverage.py JSON reports per file, and none fails closed on a bad report.
+- Decision: build from scratch as one stdlib script. Confidence that nothing fits better: 0.8.
