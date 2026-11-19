@@ -172,3 +172,6 @@ def test_the_doc_names_the_optional_fields_and_where_it_runs():
     for field in ("tier", "last_failure", "run_url"):
         assert f"`{field}`" in text, field
     assert "before a push and in CI" in text
+    assert "how bad the flake is" not in text
+    for tier in ("pr", "post-merge", "nightly", "manual"):
+        assert f"`{tier}`" in text, tier
