@@ -105,6 +105,14 @@
       "default": true,
       "locked": false
     },
+    "ac-trace": {
+      "name": "Every acceptance line has a test",
+      "what": "Checks that each AC-n line of a story a pull request closes is mapped on a Tests line to path::test_name, and that the file exists in the tree and holds that name.",
+      "if_off": "A pull request may close a story whose acceptance lines map to no test, or to a test that does not exist.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
     "disable-comments": {
       "name": "No quiet switch-offs",
       "what": "Fails a pull request that adds a comment turning a check off, unless it names the decision that allows it.",
@@ -157,6 +165,14 @@
       "name": "Checks before each commit",
       "what": "Runs quick checks on your computer before each commit, so mistakes are caught early.",
       "if_off": "No checks run before a commit. CI still catches them later.",
+      "group": "Local checks",
+      "default": true,
+      "locked": false
+    },
+    "graph-fresh": {
+      "name": "Code graph is fresh",
+      "what": "On your computer, checks that the code graph was built from the commit you are on, so searches do not use old answers.",
+      "if_off": "A stale code graph is not reported. A project with no graph is skipped either way.",
       "group": "Local checks",
       "default": true,
       "locked": false
