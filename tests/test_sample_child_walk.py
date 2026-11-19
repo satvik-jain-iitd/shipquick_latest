@@ -75,6 +75,7 @@ CHECKS_YML = {
     "rule-copies": "a GitHub job; the local check is walked",
     "commit-subjects": "a GitHub job; the local check is walked",
     "story": "a GitHub job; the local check needs gh, see NAMED",
+    "intent-verify": "a GitHub job; the local check needs gh, see NAMED; the job reads the reviewer list from roles.yml",
     "gate": "a GitHub job; the required check that a PR merges through, not a step a child runs",
 }
 
