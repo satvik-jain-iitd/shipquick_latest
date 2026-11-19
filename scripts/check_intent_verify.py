@@ -17,7 +17,8 @@ import sys
 
 from close_linked_issues import LINK   # one rule for "this body links an issue"
 
-PROOF = re.compile(r"^[\s>*_-]*intent verified by qa[*_]*\s*:[*_]*\s*(\d{4}-\d{2}-\d{2})\b", re.I | re.M)
+# the line starts the comment's own line (no quote mark) and ends after the date; bold marks and spaces are allowed
+PROOF = re.compile(r"^[ \t*_]*intent verified by qa[*_]*[ \t]*:[*_]*[ \t]*(\d{4}-\d{2}-\d{2})[*_ \t]*$", re.I | re.M)
 RULE_DATE = "2026-11-19"   # stories made before the rule are skipped, never failed
 
 
