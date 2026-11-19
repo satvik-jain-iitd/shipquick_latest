@@ -522,11 +522,42 @@ jobs:
           reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file "$roles_file" || true)
           printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
           python3 .shipquick/scripts/check_intent_verify.py --pr-body-file "$RUNNER_TEMP/pr-body.md" --reviewers "$reviewers"
+  ac-trace:
+    # Story #577: every AC of a linked user story maps to a real test in the child's own tree (check_ac_trace.py, #544).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['ac-trace']
+    permissions:
+      contents: read
+      issues: read
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+          persist-credentials: false
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check every AC of a linked user story maps to a real test (story #577)
+        run: |
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          python3 .shipquick/scripts/check_ac_trace.py --pr-body-file "$RUNNER_TEMP/pr-body.md" --root project
   gate:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [adoption, features, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, commit-subjects, story, intent-verify]
+    needs: [adoption, features, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, commit-subjects, story, intent-verify, ac-trace]
     if: always()
     steps:
       - name: Check all job results (story #131 -- review_merge.sh requires this exact check to be SUCCESS)
@@ -546,6 +577,7 @@ jobs:
           echo "commit-subjects: ${{ needs.commit-subjects.result }}"
           echo "story: ${{ needs.story.result }}"
           echo "intent-verify: ${{ needs.intent-verify.result }}"
+          echo "ac-trace: ${{ needs.ac-trace.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"
             exit 1
