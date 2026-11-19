@@ -597,7 +597,7 @@ def test_s498_the_kit_ci_yml_passes_its_own_values_explicitly():
 
 def test_s498_the_unmapped_path_message_names_the_childs_own_map(tmp_path):
     repo = make_repo(tmp_path, CHILD_FILES)
-    change(repo, "other/x.txt")
+    change(repo, "other/x.txt", text="x\n")
     d = child_decide(repo, *CHILD_ARGS)
     msg = " ".join(d["reasons"])
     assert d["all"] is True and ".shipquick/change_map.json" in msg and "scripts/change_map.json" not in msg, d["reasons"]

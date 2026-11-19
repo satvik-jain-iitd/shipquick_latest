@@ -127,7 +127,7 @@ def decide(base, head, event, map_path, ci_paths=None, guard=None, decision_job=
             continue
         if matches(n, free):
             continue
-        return all_on(every, f"{n}: no row in scripts/change_map.json names this path; add a row (an area, or free if it needs no slow job)")
+        return all_on(every, f"{n}: no row in {map_path} names this path; add a row (an area, or free if it needs no slow job)")
     try:
         base_ci = {c: git("show", f"{mb}:{c}") for c in ci_paths}
         head_ci = {c: git("show", f"{head}:{c}") for c in ci_paths}
