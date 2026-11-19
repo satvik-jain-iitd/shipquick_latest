@@ -259,6 +259,14 @@ jobs:
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           reviewers="$(python3 scripts/roles.py get reviewer)"
           python3 scripts/check_intent_verify.py --pr-body-file /tmp/pr-body.md --reviewers "$reviewers"
+      - name: Check every AC of a linked user story maps to a real test (#544)
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/check_ac_trace.py --pr-body-file /tmp/pr-body.md --root .
       - name: Check every linked user story is XS or S (ADR-020)
         env:
           GH_TOKEN: ${{ github.token }}

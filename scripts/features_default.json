@@ -105,6 +105,14 @@
       "default": true,
       "locked": false
     },
+    "ac-trace": {
+      "name": "Every acceptance line has a test",
+      "what": "Checks that each AC-n line of a story a pull request closes is mapped on a Tests line to path::test_name, and that the file exists in the tree and holds that name.",
+      "if_off": "A pull request may close a story whose acceptance lines map to no test, or to a test that does not exist.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
     "disable-comments": {
       "name": "No quiet switch-offs",
       "what": "Fails a pull request that adds a comment turning a check off, unless it names the decision that allows it.",
