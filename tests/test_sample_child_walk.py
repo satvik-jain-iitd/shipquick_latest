@@ -74,6 +74,7 @@ CHECKS_YML = {
     "commit-subjects": "a GitHub job; the local check is walked",
     "story": "a GitHub job; the local check needs gh, see NAMED",
     "intent-verify": "a GitHub job; the local check needs gh, see NAMED; the job reads the reviewer list from roles.yml",
+    "ac-trace": "a GitHub job; the local check needs gh, see NAMED; the job reads the child's own tree",
     "gate": "a GitHub job; the required check that a PR merges through, not a step a child runs",
 }
 
