@@ -25,7 +25,7 @@ It is a name search, not a parse. The check opens the file and looks for the nam
 ## Where it runs
 
 - Before a push: `scripts/check_local.sh ac-trace`. It reads the linked stories with `gh`, and the test files from your own repo tree.
-- On a pull request: a CI step, only on pull requests. It is kit CI only: a child gets the check from its own copy of the kit.
+- On a pull request: a CI step, only on pull requests. A child's CI runs it too, through checks.yml (job `ac-trace`), on the child's own tree.
 - To turn it off: the feature `ac-trace` (see `docs/FEATURES.md`).
 
 The loop that finds the linked stories is `scripts/linked_stories.py`. The other story checks still carry their own copy; moving them onto it is a separate story.

@@ -488,3 +488,124 @@ def test_s499_a_force_push_turns_every_area_on(tmp_path):
     d = decide(repo, event="push", base=side)
     assert on(d) == {"android": True, "ios": True, "snapshot": True}, d
     assert any("force push" in r for r in d["reasons"]), d["reasons"]
+
+
+# ---- story #498, PR A: a child reads its own map with the kit's reader ----
+CHILD_MAP = json.dumps({"areas": {"app": {"jobs": ["app-tests"], "paths": ["app/**"]}}, "free": ["docs/**", "*.md", ".github/**"]})
+CHILD_CI = """name: child
+on: pull_request
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo decide
+  app-tests:
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo test
+"""
+CHILD_FILES = {".shipquick/change_map.json": CHILD_MAP, ".github/workflows/build.yml": CHILD_CI, "docs/a.md": "d\n",
+               "app/main.py": "m\n", "knowledge/shipquick_latest": "pin1\n"}
+CHILD_ARGS = ["--ci", ".github/workflows/build.yml", "--guard", ".shipquick/change_map.json", "--guard", "knowledge/shipquick_latest",
+              "--decision-job", "changes"]
+
+
+def child_decide(repo, *args, map=".shipquick/change_map.json"):
+    r = subprocess.run([sys.executable, str(READER), "decide", "--base", "origin/dev", "--head", "HEAD", "--event", "pull_request",
+                        "--map", map, *args], cwd=repo, capture_output=True, text=True)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    return json.loads(r.stdout)
+
+
+def test_s498_a_child_doc_change_leaves_its_area_off(tmp_path):
+    repo = make_repo(tmp_path, CHILD_FILES)
+    change(repo, "docs/a.md")
+    d = child_decide(repo, *CHILD_ARGS)
+    assert d["app"] is False and d["all"] is False, d
+
+
+def test_s498_a_child_change_under_the_area_path_turns_it_on(tmp_path):
+    repo = make_repo(tmp_path, CHILD_FILES)
+    change(repo, "app/main.py")
+    assert child_decide(repo, *CHILD_ARGS)["app"] is True
+
+
+def test_s498_a_kit_bump_turns_every_area_on_in_a_child(tmp_path):
+    repo = make_repo(tmp_path, CHILD_FILES)
+    change(repo, "knowledge/shipquick_latest", "pin2\n")
+    d = child_decide(repo, *CHILD_ARGS)
+    assert d["all"] is True and d["app"] is True, d
+
+
+def test_s498_a_change_to_the_childs_own_map_turns_every_area_on(tmp_path):
+    repo = make_repo(tmp_path, CHILD_FILES)
+    change(repo, ".shipquick/change_map.json", CHILD_MAP.replace("app/**", "src/**"))
+    assert child_decide(repo, *CHILD_ARGS)["all"] is True
+
+
+def test_s498_a_change_to_the_decision_job_turns_every_area_on(tmp_path):
+    repo = make_repo(tmp_path, CHILD_FILES)
+    change(repo, ".github/workflows/build.yml", CHILD_CI.replace("echo decide", "echo other"))
+    assert child_decide(repo, *CHILD_ARGS)["all"] is True
+
+
+def test_s498_a_decision_job_in_no_head_workflow_turns_every_area_on(tmp_path):
+    """Round 2: a wrong --decision-job name (here the kit's ui-changes, which a child does not have) must not weaken the guard silently."""
+    repo = make_repo(tmp_path, CHILD_FILES)
+    change(repo, ".github/workflows/build.yml", CHILD_CI.replace("echo decide", "echo other"))
+    args = [a for a in CHILD_ARGS if a not in ("--decision-job", "changes")]
+    d = child_decide(repo, *args)
+    assert d["all"] is True and any("ui-changes" in r and "not in" in r for r in d["reasons"]), d
+
+
+def test_s498_ci_can_be_given_twice_and_a_job_may_live_in_the_second_file(tmp_path):
+    files = dict(CHILD_FILES, **{".github/workflows/build.yml": CHILD_CI.replace("  app-tests:\n    needs: changes\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo test\n", ""),
+                                 ".github/workflows/more.yml": "name: more\non: pull_request\njobs:\n  app-tests:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo test\n"})
+    repo = make_repo(tmp_path, files)
+    change(repo, ".github/workflows/more.yml", files[".github/workflows/more.yml"].replace("echo test", "echo test2"))
+    d = child_decide(repo, *CHILD_ARGS, "--ci", ".github/workflows/more.yml")
+    assert d["app"] is True and d["all"] is False, d
+
+
+def test_s498_a_job_missing_from_every_given_workflow_turns_everything_on(tmp_path):
+    repo = make_repo(tmp_path, dict(CHILD_FILES, **{".shipquick/change_map.json": CHILD_MAP.replace("app-tests", "gone")}))
+    change(repo, "docs/a.md")
+    assert child_decide(repo, *CHILD_ARGS)["all"] is True
+
+
+def test_s498_without_guard_arguments_the_kit_paths_stay_guarded(tmp_path):
+    repo = make_repo(tmp_path)
+    change(repo, "scripts/change_map.py")
+    assert decide(repo)["all"] is True
+
+
+def test_s498_a_guard_replaces_the_kit_defaults(tmp_path):
+    """A child that passes its own --guard is not turned on by a file that only the kit guards (here a free path of the child)."""
+    free_map = CHILD_MAP.replace('"docs/**"', '"docs/**", "scripts/**"')
+    repo = make_repo(tmp_path, dict(CHILD_FILES, **{".shipquick/change_map.json": free_map, "scripts/change_map.py": "x\n"}))
+    change(repo, "scripts/change_map.py")
+    d = child_decide(repo, *CHILD_ARGS)
+    assert d["all"] is False and d["app"] is False, d
+
+
+def test_s498_the_kit_ci_yml_passes_its_own_values_explicitly():
+    step = CI[CI.index("Which slow jobs must run"):]
+    step = step[:step.index("\n      - name:")] if "\n      - name:" in step else step
+    for want in ("--ci .github/workflows/ci.yml", "--guard scripts/change_map.json", "--guard scripts/change_map.py", "--decision-job ui-changes"):
+        assert want in step, want
+
+
+def test_s498_the_unmapped_path_message_does_not_print_a_map_path(tmp_path):
+    repo = make_repo(tmp_path, CHILD_FILES)
+    change(repo, "other/x.txt", text="x\n")
+    d = child_decide(repo, *CHILD_ARGS)
+    msg = " ".join(d["reasons"])
+    assert d["all"] is True and "no row in the change map names this path" in msg and "change_map.json" not in msg, d["reasons"]
+
+
+def test_a_flaky_list_change_wakes_no_phone_job(tmp_path):
+    """Story #569, AC-2: a row added to the flaky list is not UI work."""
+    repo = make_repo(tmp_path)
+    change(repo, ".shipquick/flaky-tests.json", text="[]\n")
+    assert on(decide(repo)) == {"android": False, "ios": False, "snapshot": False}

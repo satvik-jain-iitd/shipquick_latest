@@ -48,7 +48,7 @@ F4 to F8 of epic #86 land, turning any other flag off changes nothing, so nothin
 | `team-block` | Handoff block | Asks every pull request to end with a short note for the reviewer saying what is needed. | Pull requests need no reviewer note. | on |
 | `roles` | Who builds, who reviews | Checks that the account that writes a change is not the one that approves it. | The same account may write and approve a change. | on |
 | `story` | Story needs a who and a done | Checks that each story a pull request closes says who does it and when it is done. | A pull request may close a story that says neither. | on |
-| `intent-verify` | Intent confirmed by QA first | Checks that a reviewer confirmed the coder's say-back on each story a pull request closes, in a comment on the story. | A pull request may close a story no reviewer confirmed. Kit CI only: a child gets this check from its own copy of the kit, and the kit's CI still runs it. | on |
+| `intent-verify` | Intent confirmed by QA first | Checks that a reviewer confirmed the coder's say-back on each story a pull request closes, in a comment on the story. | A pull request may close a story no reviewer confirmed. A child's CI runs this check too, through checks.yml, and so does the kit's own CI. | on |
 | `ac-trace` | Every acceptance line has a test | Checks that each AC-n line of a story a pull request closes is mapped on a Tests line to path::test_name, and that the file exists in the tree and holds that name. | A pull request may close a story whose acceptance lines map to no test, or to a test that does not exist. | on |
 | `disable-comments` | No quiet switch-offs | Fails a pull request that adds a comment turning a check off, unless it names the decision that allows it. | A check may be turned off with a comment and nobody is asked. | on |
 | `frontend-design` | Design first for screens | Asks that every change to a screen names the approved design it follows, and shows the real screen next to it. | Screen changes need no approved design. | on |
@@ -63,6 +63,7 @@ F4 to F8 of epic #86 land, turning any other flag off changes nothing, so nothin
 |---|---|---|---|---|
 | `pre-commit` | Checks before each commit | Runs quick checks on your computer before each commit, so mistakes are caught early. | No checks run before a commit. CI still catches them later. | on |
 | `graph-fresh` | Code graph is fresh | On your computer, checks that the code graph was built from the commit you are on, so searches do not use old answers. | A stale code graph is not reported. A project with no graph is skipped either way. | on |
+| `tests-for-change` | Run only the tests a change names | On your computer, `check_local.sh tests` runs only the Python test files that name the files you changed, or the whole suite when a file is named by no test. It is a name search: a test that reaches a changed file only through another script is not picked, and CI still runs the full suite. | The tests check is skipped. It is not in the default list either way. | on |
 
 ## Always on
 

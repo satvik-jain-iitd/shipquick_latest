@@ -159,7 +159,7 @@ A fast model can misread a QA delegation and start coding the wrong thing. To st
 3. QA records the confirmation as a comment on the story issue: `Intent verified by QA: <YYYY-MM-DD>`, from a login on the reviewer list (`scripts/roles.py get reviewer`) that is not the PR author. The PR body does not count.
 4. `scripts/check_intent_verify.py` fails a dev PR (linked to a user-story issue created on or after 2026-11-19) that has no such comment.
 
-The check is kit CI only: a child gets it from its own copy of the kit. The comment is an audit line, not a signature. The reviewer list decides who may confirm. A confirmation from the PR author never passes. A login with write access can still edit a comment after QA posts it, and a QA that confirms without reading the say-back passes; the date and the say-back in the session make a false line easy to spot later.
+The check runs in the kit's CI, and through checks.yml (job `intent-verify`) in a child's CI too, from the child's own copy of the kit. The comment is an audit line, not a signature. The reviewer list decides who may confirm. A confirmation from the PR author never passes. A login with write access can still edit a comment after QA posts it, and a QA that confirms without reading the say-back passes; the date and the say-back in the session make a false line easy to spot later.
 
 ## How a child project inherits this
 

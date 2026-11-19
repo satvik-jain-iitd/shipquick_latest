@@ -259,9 +259,10 @@ def test_turning_intent_verify_off_skips_the_local_check(tmp_path):
 
 # ---- #555 round 2, points 2, 4 and 5: the docs say the reviewer list decides, the check is kit CI only, and the old-issue gap ----
 @pytest.mark.parametrize("rel", ("docs/decisions/ADR-021.md", "docs/TEAM_PROTOCOL.md"))
-def test_the_docs_say_reviewer_list_and_kit_ci_only(rel):
+def test_the_docs_say_reviewer_list_and_a_childs_ci_runs_it(rel):
     text = (ROOT / rel).read_text(encoding="utf-8")
-    assert "reviewer list" in text and "kit CI only" in text, rel
+    assert "reviewer list" in text and "child's CI" in text, rel
+    assert "kit CI only" not in text, rel
     assert "cannot tell a QA login" not in text, rel
 
 

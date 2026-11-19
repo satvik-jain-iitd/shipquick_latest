@@ -809,3 +809,37 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Read: the README of `JasonEtco/create-an-issue`: it creates an issue from a template and, with `update_existing`, edits the open issue with the same title. It does not comment, and it is a third-party action inside a protected workflow.
 - Reused: the issue-opening code of `scripts/adoption_scan.py` (find the open issue by a key in its title, comment, else create), moved into `scripts/issue_notice.py` and used by both scripts.
 - Decision: build the dispatch, wait and verdict as one stdlib script; reuse the adoption scan's issue code. Confidence that nothing fits better: 0.8.
+
+## 13 Nov 2026, story #498: a child reads its own change map
+
+- Need: a child project skips slow CI jobs from the changed paths with its own map, fail closed, one reader shared with the kit.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "a child project skips slow CI jobs from the changed paths with its own map, fail closed, one reader shared with the kit"` printed `no repos found`. GitHub topic search found `dorny/paths-filter` and `tj-actions/changed-files`.
+- Read: both READMEs. Both run only inside a workflow, filter by path at run time, and have no gate that proves a needed job ran or fails closed on a doubt.
+- Reused: the kit's own reader from story #485 (ADR-018); only its arguments change.
+- Decision: no new tool; give the reader `--ci`, `--guard` and `--decision-job`. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #568: one row of numbers per pull request
+- Need: a pure function that turns `gh pr view`, `gh run list` and `gh issue view` JSON into one row of numbers (story to PR minutes, PR to merge minutes, CI runs, failed, cancelled, review rounds).
+- Run: the radar scout script is not at its documented path on this Mac (`~/Documents/AGI/plugins/radar/scripts/scout.py` is missing), so the run is a GitHub topic search (`github-metrics`, `pull-requests`). It found `tonypiazza/gh-metrics`, `git-pulse/tools` and `w3c/pulse-snapshots`.
+- Read: the READMEs of `tonypiazza/gh-metrics` and `git-pulse/tools`. `gh-metrics` computes repo-wide merge rate, cycle time and review timing by shelling out to `gh`; it has no per-PR row with CI runs and no story link. `git-pulse` shows monthly committer and issue/PR counts.
+- Borrowed: the idea to keep one fixed definition of each metric, so every run measures the same way. Not borrowed: the code; it shells out to `gh` and the story wants a pure function with no network.
+- Decision: build from scratch as one small stdlib function. Confidence that nothing fits better: 0.8.
+
+## 19 Nov 2026, story #570: check_local.sh tests runs only the tests a change names
+
+- Need: pick the Python test files a change can break, from the changed file names, fail closed to the full suite.
+- Run: GitHub search `gh search repos --topic pytest --topic test-selection` (the scout script path in the docs is stale) found `Igorxp5/pytest-ekstazi`, `gigaverse-app/pytest-selective`, `DiffCI/core`.
+- Read: the READMEs of `pytest-ekstazi` and `pytest-selective`. Ekstazi runs the whole suite once, records per-test file dependencies in a json file, and needs a pytest plugin and a stored map. `pytest-selective` follows imports through the code and falls back to the full suite when unsure. Both need an installed plugin and a dependency map or import graph.
+- Reused: the fail-closed idea (when unsure, run everything). Not borrowed: the plugins; the kit has no pytest plugin set-up and the earlier big selector PRs #558 to #560 are replaced.
+- Decision: build the small agreed rule as one stdlib script, `scripts/tests_for_change.py` (a test that names the changed file's base name is picked). Confidence that nothing fits better: 0.75.
+## 19 Nov 2026, story #579: coverage ratchet, pass or fail per changed file
+- Need: a script that reads two coverage reports (baseline and current) and says pass or fail for each changed file, failing closed on any bad report.
+- Run: the radar scout script is not at its documented path on this Mac, so the run is a GitHub topic search (`coverage`, `ratchet`) plus the two tools the story names. The search found `Koleok/jest-coverage-ratchet` and `GetJobber/jest-a-coverage-slip-detector`.
+- Read: the README of `Bachmann1234/diff_cover` (`diff-cover` reports the coverage of the changed lines of a diff and can fail under one percent; it has no per-file baseline), the `coverage report --fail-under` option of coverage.py (one total for the whole run, no per-file baseline), and the two ratchet repos (both are JavaScript, for jest).
+- Borrowed: the idea of a ratchet, a number that may only go up. Not borrowed: any code; none is Python, none compares two coverage.py JSON reports per file, and none fails closed on a bad report.
+- Decision: build from scratch as one stdlib script. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #580: a dry-run planner that says which child pins an old kit commit
+- Need: a read-only list of which child repos pin a kit commit other than a given release commit.
+- Run: the scout script path is stale on this Mac, so no scout run. GitHub topic search (`dependency-update` and `github-actions`) found only `sgash708/mise-bump-action`; named tools checked: `renovatebot/renovate` and `dependabot/dependabot-core`.
+- Read: the READMEs of `mise-bump-action`, Renovate and Dependabot. All three open update PRs in a repo they own; none reads a registry of other repos and prints a plan, and each needs write credentials.
+- Reused: `read_children` and `gh_api` from `scripts/adoption_scan.py`, and the pin lines of `check_child`, moved into one `read_pin`.
+- Decision: build from scratch as one small stdlib script, `scripts/child_bump.py`, since the story is a dry run with no writes. Confidence that nothing fits better: 0.8.

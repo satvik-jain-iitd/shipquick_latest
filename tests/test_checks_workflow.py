@@ -142,3 +142,85 @@ def test_s175_the_gate_needs_the_story_job_and_echoes_its_result():
     needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
     assert "story" in [n.strip() for n in needs.split(",")]
     assert 'echo "story: ${{ needs.story.result }}"' in gate
+
+
+# ---- story #576: the intent gate reaches children ----
+def test_checks_yml_runs_the_intent_gate_on_a_childs_pr():
+    job = _job_block(CHECKS, "intent-verify")
+    assert "if: github.event_name == 'pull_request'" in job
+    assert "timeout-minutes:" in job
+    assert "check_intent_verify.py --pr-body-file" in job and '--reviewers "$reviewers"' in job
+    assert "PR_AUTHOR: ${{ github.event.pull_request.user.login }}" in job
+    assert "PR_BODY: ${{ github.event.pull_request.body }}" in job
+    assert "GH_TOKEN: ${{ github.token }}" in job and "GH_REPO: ${{ github.repository }}" in job
+    assert "roles.py get reviewer --file" in job
+
+
+def test_the_intent_job_reads_its_own_flag_and_the_gate_waits_for_it():
+    job = _job_block(CHECKS, "intent-verify")
+    assert "needs: [features]" in job
+    assert "fromJSON(needs.features.outputs.flags)['intent-verify']" in job
+    assert "['roles']" not in job   # the roles feature can be off in a child
+    gate = CHECKS.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "intent-verify" in [n.strip() for n in needs.split(",")]
+    assert 'echo "intent-verify: ${{ needs.intent-verify.result }}"' in gate
+
+
+def test_the_intent_job_reads_reviewers_from_the_kit_branch():
+    job = _job_block(CHECKS, "intent-verify")
+    assert "KIT_BRANCH: ${{ inputs.kit_branch }}" in job
+    assert "TARGET: ${{ github.base_ref }}" in job
+    assert '"$KIT_BRANCH" != "$TARGET"' in job
+    assert 'git -C project show "origin/$KIT_BRANCH:.shipquick/roles.yml"' in job
+    assert "kit branch $KIT_BRANCH not found" in job
+
+
+def test_a_missing_roles_file_gives_the_intent_job_an_empty_reviewer_list():
+    job = _job_block(CHECKS, "intent-verify")
+    assert 'reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file "$roles_file" || true)' in job
+    assert "exit 1" in job.split("not found", 1)[1].split("\n", 1)[0]   # a missing kit branch still fails
+    after = job.split("roles_file=", 1)[1]
+    assert "no .shipquick/roles.yml" not in after.split("roles.py get reviewer", 1)[1]   # no hard exit on a missing file
+
+
+def test_the_intent_job_asks_for_issues_read_only():
+    job = _job_block(CHECKS, "intent-verify")
+    perms = job.split("permissions:", 1)[1].split("env:", 1)[0]
+    assert "issues: read" in perms and "contents: read" in perms
+    assert "write" not in perms
+
+
+def test_the_intent_flag_words_say_a_child_runs_it():
+    for f in ("scripts/features_default.json", "docs/FEATURES.md", "docs/decisions/ADR-021.md"):
+        text = (ROOT / f).read_text(encoding="utf-8")
+        assert "Kit CI only" not in text and "The check is kit CI only" not in text, f
+        assert "child's CI" in text, f
+
+
+# ---- story #577: the AC trace reaches children ----
+def test_checks_yml_runs_the_ac_trace_on_the_childs_own_tree():
+    job = _job_block(CHECKS, "ac-trace")
+    assert "if: github.event_name == 'pull_request'" in job
+    assert "timeout-minutes:" in job
+    assert "check_ac_trace.py --pr-body-file" in job and "--root project" in job
+    assert "path: project" in job and "persist-credentials: false" in job
+    assert "path: .shipquick" in job
+
+
+def test_the_ac_trace_job_reads_its_own_flag_and_the_gate_waits_for_it():
+    job = _job_block(CHECKS, "ac-trace")
+    assert "needs: [features]" in job
+    assert "fromJSON(needs.features.outputs.flags)['ac-trace']" in job
+    gate = CHECKS.split("\n  gate:\n", 1)[1]
+    needs = re.search(r"needs: \[([^\]]*)\]", gate).group(1)
+    assert "ac-trace" in [n.strip() for n in needs.split(",")]
+    assert 'echo "ac-trace: ${{ needs.ac-trace.result }}"' in gate
+
+
+def test_the_ac_trace_job_asks_for_issues_read_only():
+    job = _job_block(CHECKS, "ac-trace")
+    perms = job.split("permissions:", 1)[1].split("env:", 1)[0]
+    assert "issues: read" in perms and "contents: read" in perms and "write" not in perms
+    assert "GH_TOKEN: ${{ github.token }}" in job and "GH_REPO: ${{ github.repository }}" in job
+    assert "PR_BODY: ${{ github.event.pull_request.body }}" in job

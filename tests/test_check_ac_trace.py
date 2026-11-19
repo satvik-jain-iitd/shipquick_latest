@@ -244,4 +244,9 @@ def test_the_doc_says_the_test_check_is_a_name_search_not_a_parse():
 
 def test_the_doc_says_where_it_runs_and_how_to_turn_it_off():
     text = ac_doc()
-    assert "`ac-trace`" in text and "scripts/check_local.sh ac-trace" in text and "kit CI only" in text
+    assert "`ac-trace`" in text and "scripts/check_local.sh ac-trace" in text
+
+
+def test_the_doc_says_a_childs_ci_runs_it():
+    text = ac_doc()
+    assert "child's CI" in text and "kit CI only" not in text

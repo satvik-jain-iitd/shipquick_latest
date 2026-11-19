@@ -28,6 +28,8 @@ The same verdict runs locally and before a commit ever reaches GitHub: `bash kno
 
 Layer 1 only fires once a child is wired enough to have the caller running. A child that never ran `adopt.sh`, or deleted the caller, has no CI of its own to fail. `docs/children.md` is the registry (one `owner/repo` per line, optionally followed by `private`); `scripts/adoption_scan.py`, run daily by `.github/workflows/adoption-scan.yml`, reads it and opens one `feedback` issue **in this repo** for any child whose default branch has no `shipquick-call.yml`, or pins a ShipQuick commit more than 14 days old. It reuses an existing open issue (comments instead of opening a second one) for the same child.
 
+To see which children need a new pin after a release, run `python3 scripts/child_bump.py --release-sha <40 hex>`. It is a dry run: one line per child (`bump`, `current` or `unread`) and a summary; it exits 1 if any child is unread (story #580).
+
 **Private children.** The workflow's own `github.token` can only ever read this repo, never someone else's private one. A line in `docs/children.md` marked `private` is read instead with the `SHIPQUICK_CHILD_TOKEN` secret — a fine-grained GitHub PAT, scoped to that repo only, with `Contents: read` and `Metadata: read` and nothing else. Set it once: `gh secret set SHIPQUICK_CHILD_TOKEN -R satvik-jain-iitd/shipquick_latest` (same build account, pasting the fine-grained PAT). With no secret set, or when the token gets a 404 or 403, a private child files nothing — that answer would otherwise look exactly like "not adopted," and a false feedback issue is worse than a skip. But a skip is never silent (story #260): the run ends with `summary: <n> skipped` and one line per child, `skipped <repo>: private, no token (...)` or `skipped <repo>: private, cannot read it with SHIPQUICK_CHILD_TOKEN (404 or 403)`.
 
 ## The story job (story #175)
@@ -169,6 +171,95 @@ The walk does not run the GitHub jobs of `checks.yml` (follow-up row, 13 Nov 202
 
 To run the walk against an old kit, set `WALK_KIT_SHA=<sha>`. It shows the step where that kit failed.
 
+## A child skips its slow jobs with its own map (story #498, ADR-019)
+
+A child with a slow job (a device build, an end-to-end run) can skip it when the change cannot reach it. The child writes a map, the kit's
+reader decides, and a last job proves it. `adopt.sh` writes none of this: the child's build jobs and its map are the child's own.
+
+1. Write `.shipquick/change_map.json`: each area names its jobs and the paths that turn it on, and `free` lists the paths that need no slow job.
+   A path no row names turns every area on, so a new folder is never skipped by mistake.
+2. Copy the workflow below into the child's build workflow. Add one `if:` to each slow job, and name every slow job in the `gate` job's `needs`.
+3. Run `adopt.sh <child> --check`. It tells you when the caller has no concurrency block (one run per PR).
+
+Every area turns on when: the map, the workflow's `changes` job or its header changed in the PR, the pin `knowledge/shipquick_latest` moved
+(a kit bump), the event is not a pull request or a push, or anything cannot be read. The map is read from the base branch, so a PR cannot
+weaken the rule it is judged by. The reader runs from the kit at the pinned commit, so a bump is always a full run. The `gate` job fails when a job of
+an area that is on did not succeed, and when a needed job is missing.
+
+```yaml
+name: Build
+on:
+  pull_request:
+  push:
+    branches: [main]
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.map.outputs.app }}
+      decision: ${{ steps.map.outputs.decision }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          submodules: true
+      - id: map
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "push" ]; then
+            base="$BEFORE"
+          else
+            base="origin/${BASE:-main}"
+            git fetch -q origin "${BASE:-main}" 2>/dev/null || true
+          fi
+          mkdir -p "$RUNNER_TEMP/map"
+          if git show "$base:.shipquick/change_map.json" > "$RUNNER_TEMP/map/change_map.json" 2>/dev/null \
+              && python3 knowledge/shipquick_latest/scripts/change_map.py decide --base "$base" --head HEAD --event "$EVENT" \
+                --map "$RUNNER_TEMP/map/change_map.json" --outputs "$GITHUB_OUTPUT" \
+                --ci .github/workflows/build.yml --guard .shipquick/change_map.json --guard knowledge/shipquick_latest --decision-job changes; then
+            exit 0
+          fi
+          printf 'decision={"all":true}\n' >> "$GITHUB_OUTPUT"
+  app-tests:
+    needs: [changes]
+    if: needs.changes.outputs.app != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: echo "the child's slow job goes here"
+  gate:
+    needs: [changes, app-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - env:
+          DECISION: ${{ needs.changes.outputs.decision }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          printf '%s' "$DECISION" > "$RUNNER_TEMP/decision.json"
+          printf '%s' "$NEEDS" > "$RUNNER_TEMP/needs.json"
+          python3 knowledge/shipquick_latest/scripts/change_map.py gate --decision "$RUNNER_TEMP/decision.json" --needs "$RUNNER_TEMP/needs.json" --map .shipquick/change_map.json
+```
+
+A map for it:
+
+```json
+{"areas": {"app": {"jobs": ["app-tests"], "paths": ["app/**"]}}, "free": ["docs/**", "*.md", ".github/**"]}
+```
+
+`tests/test_child_map_doc.py` runs the commands of this snippet, and the sample child walk runs it in a generated child.
+
 ## Checklist for each child
 
 Do these in order, in the child repo. One step at a time.
@@ -180,6 +271,7 @@ Do these in order, in the child repo. One step at a time.
 5. If the caller names a kit branch, protect that branch and require pull request reviews there.
 6. A private child: add a fine-grained token that can read it to ShipQuick's `SHIPQUICK_CHILD_TOKEN`, or the daily scan names it as skipped.
 7. Wait for one PR whose `shipquick-checks / gate` is green. Then run `adopt.sh . --check`. It must print `adopted`.
+8. An existing child must run `adopt.sh` again after the kit bump (step 2), because `adopt.sh --check` now asks for the concurrency block in the caller (story #498).
 
 ## Run `adopt.sh . --check` before you push a bump (story #446)
 
