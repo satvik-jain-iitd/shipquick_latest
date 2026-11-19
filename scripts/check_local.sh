@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky tests secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky tests coverage secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
@@ -234,6 +234,19 @@ check_tests() {   # story #570: not in the default list; the picked files are pr
   echo "tests picked:"; printf '%s\n' "${picked[@]}"
   python3 -m pytest -q "${picked[@]}"; report tests $?
 }
+check_coverage() {   # story #586: not in the default list; judges two reports it is given, runs no tests and no coverage
+  local list rc=0 out
+  [ -n "${COVERAGE_BASE:-}" ] && [ -f "$COVERAGE_BASE" ] || { echo "FAIL coverage: COVERAGE_BASE is not set or the file is missing"; failed=1; return; }
+  [ -n "${COVERAGE_CURRENT:-}" ] && [ -f "$COVERAGE_CURRENT" ] || { echo "FAIL coverage: COVERAGE_CURRENT is not set or the file is missing"; failed=1; return; }
+  list="$(mktemp)" || { echo "FAIL coverage: cannot make a temp file"; failed=1; return; }
+  if git diff --name-only --diff-filter=d "origin/$BASE...HEAD" > "$list" 2>/dev/null; then
+    python3 "$HERE/check_coverage.py" --baseline "$COVERAGE_BASE" --current "$COVERAGE_CURRENT" --changed "$list" || rc=$?
+    report coverage "$rc"
+  else
+    echo "FAIL coverage: cannot read the changed files (no origin/$BASE?)"; failed=1
+  fi
+  rm -f "$list"
+}
 check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
@@ -252,6 +265,7 @@ feature_of() {   # feature_of <check> -- the feature id that switches the check,
     roadmap) echo roadmap ;;
     graph-fresh) echo graph-fresh ;;
     tests) echo tests-for-change ;;
+    coverage) echo coverage ;;
     ui-registry) echo component-registry ;;
   esac
 }
@@ -297,11 +311,12 @@ for c in "${checks[@]}"; do
     story-size) check_story_size ;;
     shortcuts) check_shortcuts ;;
     tests) check_tests ;;
+    coverage) check_coverage ;;
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
     flaky) check_flaky ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky tests secrets secrets-staged)"; exit 2 ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky tests coverage secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts
