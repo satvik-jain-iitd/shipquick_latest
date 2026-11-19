@@ -58,6 +58,8 @@ jobs:
             echo "Merge conflict markers found"
             exit 1
           fi
+      - name: Flaky registry, no expired quarantine (story #569; the same check runs before a push)
+        run: python3 scripts/check_flaky.py --file .shipquick/flaky-tests.json
       - name: Check markdown code blocks
         run: |
           python3 -c "
