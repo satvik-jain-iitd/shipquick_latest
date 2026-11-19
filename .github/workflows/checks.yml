@@ -477,11 +477,56 @@ jobs:
         run: |
           printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
           python3 .shipquick/scripts/check_story.py --pr-body-file "$RUNNER_TEMP/pr-body.md"
+  intent-verify:
+    # Story #576: a coder cannot close a story no reviewer confirmed (ADR-021, check_intent_verify.py). Shell copied from the
+    # roles job; its output is not reused, because the roles feature can be off in a child.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [features]
+    if: github.event_name == 'pull_request' && needs.features.result == 'success' && fromJSON(needs.features.outputs.flags)['intent-verify']
+    permissions:
+      contents: read
+      issues: read
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check out the project
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: project
+      - name: Check out the ShipQuick scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ inputs.shipquick_repo }}
+          ref: ${{ inputs.shipquick_ref }}
+          path: .shipquick
+          sparse-checkout: scripts
+          persist-credentials: false
+      - name: Check a reviewer confirmed the intent of every linked story (ADR-021, story #576)
+        env:
+          KIT_BRANCH: ${{ inputs.kit_branch }}
+          TARGET: ${{ github.base_ref }}
+        run: |
+          roles_file=project/.shipquick/roles.yml
+          # a rule-24 child keeps roles.yml on its kit branch; a PR into another branch reads it from there.
+          if [ -n "$KIT_BRANCH" ] && [ "$KIT_BRANCH" != "$TARGET" ]; then
+            git -C project fetch -q --depth=1 origin "+refs/heads/$KIT_BRANCH:refs/remotes/origin/$KIT_BRANCH" || { echo "kit branch $KIT_BRANCH not found in this repo (the caller's kit_branch)."; exit 1; }
+            git -C project show "origin/$KIT_BRANCH:.shipquick/roles.yml" > "$RUNNER_TEMP/roles.yml" 2>/dev/null || rm -f "$RUNNER_TEMP/roles.yml"
+            roles_file="$RUNNER_TEMP/roles.yml"
+          fi
+          # No roles file: roles.py prints the reason and the list stays empty, so check_intent_verify.py fails a PR that
+          # links a gated story and passes one that links none. Never a skip of the job.
+          reviewers=$(python3 .shipquick/scripts/roles.py get reviewer --file "$roles_file" || true)
+          printf '%s\n' "$PR_BODY" > "$RUNNER_TEMP/pr-body.md"
+          python3 .shipquick/scripts/check_intent_verify.py --pr-body-file "$RUNNER_TEMP/pr-body.md" --reviewers "$reviewers"
   gate:
     name: gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [adoption, features, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, commit-subjects, story]
+    needs: [adoption, features, disable-comments, design-tokens, roles, team-block, frontend-design, uat-on-main, freeze-on-main, environments, component-registry, rule-copies, commit-subjects, story, intent-verify]
     if: always()
     steps:
       - name: Check all job results (story #131 -- review_merge.sh requires this exact check to be SUCCESS)
@@ -500,6 +545,7 @@ jobs:
           echo "rule-copies: ${{ needs.rule-copies.result }}"
           echo "commit-subjects: ${{ needs.commit-subjects.result }}"
           echo "story: ${{ needs.story.result }}"
+          echo "intent-verify: ${{ needs.intent-verify.result }}"
           if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
             echo "One or more jobs failed or were cancelled"
             exit 1
