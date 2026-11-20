@@ -17,7 +17,7 @@ Tag `v0.15.0`, "gates that run for a child too, and light CI on a train". Notes:
 
 ### Added
 - One change map decides which slow CI jobs run (PR #499, story #495, ADR-018); a child reads its own map with the kit's reader (PR #515).
-- Intent gate (ADR-021, PR #555) and story-size gate (ADR-020, PR #554): a story made on or after 2026-11-19 needs a reviewer's `Intent verified by QA: <date>` comment before its PR passes. It runs in the kit's CI, locally, and, as job `intent-verify` of `checks.yml`, in a child's CI (story #576).
+- Story-size gate (ADR-020, PR #554): only XS and S stories may be planned; a larger one must be split first. Intent gate (ADR-021, PR #555): a story made on or after 2026-11-19 needs a reviewer's `Intent verified by QA: <date>` comment before its PR passes. It runs in the kit's CI, locally, and, as job `intent-verify` of `checks.yml`, in a child's CI (story #576).
 - AC trace (`scripts/check_ac_trace.py`, PR #564): every AC of a linked story names a real test. A child gets it as job `ac-trace` of `checks.yml` (story #577).
 - Graphify pin, wrapper and freshness check (ADR-022; PRs #553, #556): `check_local.sh graph-fresh` warns on a stale code graph; the nightly run has a `graph-health` job (story #578).
 - Flaky-test registry with expiry (`scripts/check_flaky.py`, PR #562); the list is checked in CI and wakes no phone job (PR #573).

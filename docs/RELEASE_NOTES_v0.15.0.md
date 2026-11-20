@@ -26,7 +26,7 @@ A minor release (`pm/agile/RELEASE_GUIDE.md`). It brings the team's new gates to
 
 1. Run `bash knowledge/shipquick_latest/scripts/adopt.sh . --ref v0.15.0`, then take the new rule block into `CLAUDE.md`.
 2. Make sure the base branch has `.shipquick/roles.yml`.
-3. For a story made after 2026-11-19, ask the reviewer to write the intent comment before the PR.
+3. For a story made on or after 2026-11-19, ask the reviewer to write the intent comment before the PR.
 
 ## Not yet
 
