@@ -714,12 +714,28 @@ jobs:
           name: test-results
           path: logs/
   gate:
-    name: ${{ github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/') && 'gate-light' || 'gate' }}
+    name: ${{ github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/') && 'gate-light' || (github.event_name != 'pull_request' || github.base_ref == 'dev' || github.base_ref == 'main') && 'gate' || 'gate-other' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, design-tokens, shortcut-ledger, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, ui-ios-snapshots, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
+      - name: Refuse a base branch that differs from dev, main or train/ only by case (story #601)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          lower=$(printf '%s' "$BASE" | tr '[:upper:]' '[:lower:]')
+          exact=0
+          case "$BASE" in dev|main|train/*) exact=1 ;; esac
+          case "$lower" in
+            dev|main|train/*)
+              if [ "$exact" = 0 ]; then
+                echo "the base branch differs from dev, main or train/ only by case: $BASE"
+                exit 1
+              fi
+              ;;
+          esac
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Every phone job matches the change map (story #485, the gate proves it)
         if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) }}

@@ -2483,3 +2483,14 @@ Scenario: roles.py is a protected path
 - AC-2 `tests/test_rule4_train.py::test_the_dense_rule_4_names_the_train`: the dense Rule 4 line says the same.
 - AC-3 `tests/test_rule4_train.py::test_pr_rules_lists_the_train_steps_in_order`: PR_RULES section 17 lists the train steps in order.
 - AC-4 `tests/test_rule4_train.py::test_the_rule_copies_check_still_passes`: `check_rule_copies.py` passes for the kit.
+
+## Story #601: the check named gate exists only on a PR into dev or main
+
+- AC-1 `tests/test_light_ci.py::test_the_name_gate_exists_only_for_dev_and_main`: the gate job's name expression gives `gate` for a non-PR run and a PR into dev or main.
+- AC-2 `tests/test_light_ci.py::test_a_pr_into_any_other_base_is_named_gate_other`: a train base gives `gate-light`; any other or empty base gives `gate-other`.
+- AC-3 `tests/test_light_ci.py::test_the_docs_name_the_two_other_gate_names`: PR_RULES and ADR-023 name both, and ADR-021 no longer says a PR cannot add its own login without the name rule.
+
+## Story #601 (AC-4, AC-5): a base that differs only by case, and the name for a non-PR run
+
+- AC-4 `tests/test_light_ci.py::test_a_base_that_differs_only_by_case_fails_the_gate`: the gate job's first step, run as bash, fails for `Dev`, `MAIN`, `Train/x` and the like, and passes for exact names and other branches.
+- AC-5 `tests/test_light_ci.py::test_the_docs_say_a_non_pr_run_is_named_gate_too`: PR_RULES and ADR-021 say a push and a manual run are named `gate`.
