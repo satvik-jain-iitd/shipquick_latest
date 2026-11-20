@@ -783,3 +783,69 @@ Runs: `scout.py --need "lay out design artboards on an infinite canvas from a ma
 - Reused: GitHub's own `concurrency` key with `cancel-in-progress` (the platform feature), and the path rule the `ui-changes` job already has. No new code: one block and two shorter patterns.
 - Decision: no repo needed; no ADR (no change of architecture or scope, the gate is untouched).
 - Confidence that nothing fits better: 0.9.
+
+## 13 Nov 2026, story #485: one change map for the slow CI jobs
+- Need: decide which CI jobs must run from the changed paths of a pull request, fail closed, one map file read by CI and local checks.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "decide which CI jobs must run from the changed paths of a pull request, fail closed, one map file read by CI and local checks"` printed `no repos found`. GitHub topic search (`github-actions`, `path-filter`) found `step-security/paths-filter` (a fork of dorny) and `chainguard-actions/dorny-paths-filter` (a fork).
+- Read: dorny/paths-filter (MIT, pushed 27 Sep 2026, not archived; filters may be a file, base rules per event, a boolean per filter) and step-security/paths-filter (MIT, a fork, pushed 9 Nov 2026, the same text).
+- Borrowed: the filter file idea and the base rule per event. Not borrowed: the action itself, which runs only inside a workflow and adds a third-party action to a protected file.
+- Decision: a stdlib reader over one JSON map, used by CI, the gate and (PR 4) check_local.sh. ADR-018.
+- Confidence that nothing fits better: 0.8.
+## 13 Nov 2026, story #504: the kit's CI walks a sample child through the whole path
+- Need: run a tool end to end against a generated sample project in CI.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "run a tool end to end against a generated sample project in CI"` printed `no repos found`. A second run with `--need "generate a sample project and run a CLI tool end to end in CI" --out docs/research/repo-radar.md` printed the same. GitHub topic search `--topic github-actions --topic end-to-end-testing` and the query "sample project end-to-end CI smoke test" were read by title and description. Top hits: `vasu31dev/playwright-ts-template` (139 stars), `vasu31dev/playwright-ts` (106), `MikeBild/serverless-aws-cdk-ecommerce` (51), `filipsnastins/testcontainers-github-actions` (20), `hamc/blastproof` (11).
+- Read: the top hits are UI test frameworks or demo apps. None generates a child project and walks a kit's own scripts (adopt, bump, gate files, hooks, checks) through its CI. The README of `hamc/blastproof` is an AI PR tool that picks tests; it does not generate a child.
+- Reused: the kit's own child-repo fixture in `tests/test_adopt.py` (`child` fixture, `adopt()`, `FAKE_PRECOMMIT`, fake submodule) and the scratch-repo helper in `tests/test_protected_warn.py` (`make_child_repo`).
+- Decision: build from scratch as one test file. No repo fits the walk. Confidence that nothing fits better: 0.8.
+## 13 Nov 2026, story #496: the merge script counts only the PR's own, newest runs
+- Need: a merge gate that reads only the pull_request workflow runs of a head commit and ignores check rows from runs a newer run replaced.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "merge gate reads only the pull_request workflow runs of a head commit and ignores check runs from superseded or cancelled runs"` printed `no repos found`. GitHub search (`github required status checks latest workflow run`) found nothing; the topic search (`github-actions`, `merge-queue`) found `Forward-Future/DeployBot`, `berkayturanci/keel` and `oborchers/claude-gh-status`.
+- Read: the READMEs of the three. DeployBot (a hosted merge service) matches a check to workflow name, base branch, head SHA, event, status and conclusion, and coalesces superseded runs. `keel` is an agent workflow from issue to merge with no run selection. `claude-gh-status` shows runs in a pane and merges nothing.
+- Borrowed: the idea to match a check to its exact workflow, head SHA and event, and to let a newer run replace an older one. Not borrowed: the service; it cannot run inside `review_merge.sh`.
+- Decision: build from scratch as one stdlib helper, `scripts/check_pr_runs.py`, called by the existing merge script. Confidence that nothing fits better: 0.8.
+## 13 Nov 2026, story #497: a nightly full run on dev with one issue when it is red
+- Need: a scheduled CI run on a branch that opens one GitHub issue when red and comments on it on later red nights.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "scheduled nightly CI run on a branch that opens one GitHub issue when red and comments on it on later red nights"` printed `no repos found`. GitHub topic search (`github-actions` and `nightly`) found only nightly build repos; a second search found `JasonEtco/create-an-issue`.
+- Read: the README of `JasonEtco/create-an-issue`: it creates an issue from a template and, with `update_existing`, edits the open issue with the same title. It does not comment, and it is a third-party action inside a protected workflow.
+- Reused: the issue-opening code of `scripts/adoption_scan.py` (find the open issue by a key in its title, comment, else create), moved into `scripts/issue_notice.py` and used by both scripts.
+- Decision: build the dispatch, wait and verdict as one stdlib script; reuse the adoption scan's issue code. Confidence that nothing fits better: 0.8.
+
+## 13 Nov 2026, story #498: a child reads its own change map
+
+- Need: a child project skips slow CI jobs from the changed paths with its own map, fail closed, one reader shared with the kit.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "a child project skips slow CI jobs from the changed paths with its own map, fail closed, one reader shared with the kit"` printed `no repos found`. GitHub topic search found `dorny/paths-filter` and `tj-actions/changed-files`.
+- Read: both READMEs. Both run only inside a workflow, filter by path at run time, and have no gate that proves a needed job ran or fails closed on a doubt.
+- Reused: the kit's own reader from story #485 (ADR-018); only its arguments change.
+- Decision: no new tool; give the reader `--ci`, `--guard` and `--decision-job`. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #568: one row of numbers per pull request
+- Need: a pure function that turns `gh pr view`, `gh run list` and `gh issue view` JSON into one row of numbers (story to PR minutes, PR to merge minutes, CI runs, failed, cancelled, review rounds).
+- Run: the radar scout script is not at its documented path on this Mac (`~/Documents/AGI/plugins/radar/scripts/scout.py` is missing), so the run is a GitHub topic search (`github-metrics`, `pull-requests`). It found `tonypiazza/gh-metrics`, `git-pulse/tools` and `w3c/pulse-snapshots`.
+- Read: the READMEs of `tonypiazza/gh-metrics` and `git-pulse/tools`. `gh-metrics` computes repo-wide merge rate, cycle time and review timing by shelling out to `gh`; it has no per-PR row with CI runs and no story link. `git-pulse` shows monthly committer and issue/PR counts.
+- Borrowed: the idea to keep one fixed definition of each metric, so every run measures the same way. Not borrowed: the code; it shells out to `gh` and the story wants a pure function with no network.
+- Decision: build from scratch as one small stdlib function. Confidence that nothing fits better: 0.8.
+
+## 19 Nov 2026, story #570: check_local.sh tests runs only the tests a change names
+
+- Need: pick the Python test files a change can break, from the changed file names, fail closed to the full suite.
+- Run: GitHub search `gh search repos --topic pytest --topic test-selection` (the scout script path in the docs is stale) found `Igorxp5/pytest-ekstazi`, `gigaverse-app/pytest-selective`, `DiffCI/core`.
+- Read: the READMEs of `pytest-ekstazi` and `pytest-selective`. Ekstazi runs the whole suite once, records per-test file dependencies in a json file, and needs a pytest plugin and a stored map. `pytest-selective` follows imports through the code and falls back to the full suite when unsure. Both need an installed plugin and a dependency map or import graph.
+- Reused: the fail-closed idea (when unsure, run everything). Not borrowed: the plugins; the kit has no pytest plugin set-up and the earlier big selector PRs #558 to #560 are replaced.
+- Decision: build the small agreed rule as one stdlib script, `scripts/tests_for_change.py` (a test that names the changed file's base name is picked). Confidence that nothing fits better: 0.75.
+## 19 Nov 2026, story #579: coverage ratchet, pass or fail per changed file
+- Need: a script that reads two coverage reports (baseline and current) and says pass or fail for each changed file, failing closed on any bad report.
+- Run: the radar scout script is not at its documented path on this Mac, so the run is a GitHub topic search (`coverage`, `ratchet`) plus the two tools the story names. The search found `Koleok/jest-coverage-ratchet` and `GetJobber/jest-a-coverage-slip-detector`.
+- Read: the README of `Bachmann1234/diff_cover` (`diff-cover` reports the coverage of the changed lines of a diff and can fail under one percent; it has no per-file baseline), the `coverage report --fail-under` option of coverage.py (one total for the whole run, no per-file baseline), and the two ratchet repos (both are JavaScript, for jest).
+- Borrowed: the idea of a ratchet, a number that may only go up. Not borrowed: any code; none is Python, none compares two coverage.py JSON reports per file, and none fails closed on a bad report.
+- Decision: build from scratch as one stdlib script. Confidence that nothing fits better: 0.8.
+## 19 Nov 2026, story #580: a dry-run planner that says which child pins an old kit commit
+- Need: a read-only list of which child repos pin a kit commit other than a given release commit.
+- Run: the scout script path is stale on this Mac, so no scout run. GitHub topic search (`dependency-update` and `github-actions`) found only `sgash708/mise-bump-action`; named tools checked: `renovatebot/renovate` and `dependabot/dependabot-core`.
+- Read: the READMEs of `mise-bump-action`, Renovate and Dependabot. All three open update PRs in a repo they own; none reads a registry of other repos and prints a plan, and each needs write credentials.
+- Reused: `read_children` and `gh_api` from `scripts/adoption_scan.py`, and the pin lines of `check_child`, moved into one `read_pin`.
+- Decision: build from scratch as one small stdlib script, `scripts/child_bump.py`, since the story is a dry run with no writes. Confidence that nothing fits better: 0.8.
+## 20 Nov 2026, story #588: one day's merged PRs as a table of numbers
+- Need: print one day's merged pull requests as a table (story to PR minutes, PR to merge minutes, CI runs, failed, cancelled, review rounds) with a totals line.
+- Run: `python3 ~/Documents/AGI/plugins/radar/scripts/scout.py --need "table of one day's merged GitHub PRs with CI and review counts"` failed: `can't open file` (the scout script is not at its documented path on this Mac). So the run is `gh search repos --topic pull-requests --topic metrics`, which returned `kortirso/pullmetry`, `figify/gh-metrics`, `jenkinsci/pull-request-monitoring-plugin`, `maxgregaabig/ReviewTide`, `Alessandro-Schmidt/Silverback-Dashboard`. Also checked: `gh pr list --search` (lists PRs but gives no review rounds or CI run counts) and this repo's own `scripts/sprint_metrics.py` (`pr_row`, story #568) and `scripts/issue_notice.py` (`gh_api`).
+- Read: the descriptions of the five repos. `gh-metrics` and `pullmetry` are repo-wide stats (a dashboard or averages), `ReviewTide` reads git logs and PR exports, none prints one row per PR for one day on a chosen clock with the kit's fixed metric definitions.
+- Reused: `pr_row` for the numbers, `issue_notice.gh_api` for every read, `close_linked_issues.LINK` for the story link.
+- Decision: a small `main()` in `scripts/sprint_metrics.py`, no new file or tool. Confidence that nothing fits better: 0.8.

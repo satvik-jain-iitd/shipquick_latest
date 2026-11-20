@@ -33,6 +33,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import issue_notice  # noqa: E402  (story #497: the one issue-opening helper)
 import kit_branch  # noqa: E402  (the one kit_branch parser, shared with adopt.sh and review_merge.sh)
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -54,29 +55,37 @@ def read_children(path) -> list[tuple[str, bool]]:
     return out
 
 
-def gh_api(path, token=None):
-    env = dict(os.environ)
-    if token:
-        env["GH_TOKEN"] = token
-    r = subprocess.run(["gh", "api", path], capture_output=True, text=True, env=env)
-    if r.returncode != 0:
-        return None
-    try:
-        return json.loads(r.stdout)
-    except json.JSONDecodeError:
-        return None
+gh_api = issue_notice.gh_api   # story #497: the one gh reader, shared with scripts/nightly_full_run.py
+
+
+def read_caller(child: str, fetch):
+    """The one reader: two fetch calls per child. (branch, caller file text, "") or (None, None, the reason)."""
+    info = fetch(f"repos/{child}")
+    if info is None:
+        return None, None, f"cannot read {child} (gh api failed)"
+    branch = info["default_branch"]
+    call = fetch(f"repos/{child}/contents/.github/workflows/shipquick-call.yml?ref={branch}")
+    if call is None:
+        return None, None, f"{child}: no .github/workflows/shipquick-call.yml on {branch}"
+    return branch, base64.b64decode(call["content"]).decode("utf-8", "replace"), ""
+
+
+def read_pin(child: str, fetch) -> tuple[str | None, str]:
+    """(the 40-letter kit commit the child's caller pins, "") or (None, the reason it could not be read)."""
+    branch, body, why = read_caller(child, fetch)
+    if body is None:
+        return None, why
+    m = PIN.search(body)
+    if not m:
+        return None, f"{child}: shipquick-call.yml on {branch} has no shipquick_ref pin"
+    return m.group(1), ""
 
 
 def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str | None:
     """None when adopted and fresh; otherwise one line naming the gap."""
-    info = fetch(f"repos/{child}")
-    if info is None:
-        return f"cannot read {child} (gh api failed)"
-    branch = info["default_branch"]
-    call = fetch(f"repos/{child}/contents/.github/workflows/shipquick-call.yml?ref={branch}")
-    if call is None:
-        return f"{child}: no .github/workflows/shipquick-call.yml on {branch}"
-    body = base64.b64decode(call["content"]).decode("utf-8", "replace")
+    branch, body, why = read_caller(child, fetch)
+    if body is None:
+        return why
     m = PIN.search(body)
     if not m:
         return f"{child}: shipquick-call.yml on {branch} has no shipquick_ref pin"
@@ -108,18 +117,9 @@ def check_child(child: str, fetch, days: int, today: datetime.datetime) -> str |
 
 
 def open_or_comment(child: str, why: str, dry_run: bool) -> None:
-    low_child = child.lower()
-    existing = gh_api(f"repos/{REPO}/issues?labels=feedback&state=open") or []
-    match = next((i for i in existing if low_child in i.get("title", "").lower()), None)
     title = f"feedback: {child}: not adopted"
     body = f"Project: {child}\n\n{why}\n\nFound by the scheduled adoption scan (scripts/adoption_scan.py)."
-    if dry_run:
-        print(f"[dry-run] would {'comment on #' + str(match['number']) if match else 'open'}: {why}")
-        return
-    if match:
-        subprocess.run(["gh", "issue", "comment", str(match["number"]), "-R", REPO, "--body", body], check=False)
-    else:
-        subprocess.run(["gh", "issue", "create", "-R", REPO, "--label", "feedback", "--title", title, "--body", body], check=False)
+    issue_notice.open_or_comment(REPO, "feedback", title, body, child, dry_run, api=gh_api, note=why)
 
 
 def main() -> int:
@@ -132,6 +132,7 @@ def main() -> int:
     today = datetime.datetime.now(datetime.timezone.utc)
     child_token = os.environ.get(CHILD_TOKEN_ENV)
     skipped = []   # story #260: a skip is never silent; each one is named again in the summary
+    unreported = []   # story #497: children whose issue could not be read or opened; the run ends red
     for child, is_private in read_children(args.children):
         token = child_token if is_private else None
         fetch = (lambda path, t=token: gh_api(path, token=t))
@@ -144,13 +145,19 @@ def main() -> int:
         why = check_child(child, fetch, args.days, today)
         if why:
             print(why)
-            open_or_comment(child, why, args.dry_run)
+            try:
+                open_or_comment(child, why, args.dry_run)
+            except issue_notice.IssueError as e:   # story #497: a report that did not land is never silent, and never stops the scan
+                print(f"could not report {child}: {e}")
+                unreported.append(child)
         else:
             print(f"{child}: adopted and fresh")
     print(f"summary: {len(skipped)} skipped")
     for line in skipped:
         print(line)
-    return 0
+    if unreported:
+        print(f"summary: {len(unreported)} could not be reported: {', '.join(unreported)}")
+    return 1 if unreported else 0
 
 
 if __name__ == "__main__":

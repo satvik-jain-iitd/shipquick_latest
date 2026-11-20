@@ -196,4 +196,3 @@ def test_the_live_fetch_returns_the_title_labels_events_and_comments_with_a_stub
     assert set(data) >= {"title", "labels", "events", "comments"}
     assert data["title"] == "Stepper: a slider with steps"
     assert c.check_row(ROW, c.gh_fetch("owner/child", runner=runner), REV) is None
-

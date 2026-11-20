@@ -13,7 +13,8 @@ FEATURES = ROOT / "scripts" / "features.py"
 IDS = json.loads((ROOT / "scripts" / "features_default.json").read_text(encoding="utf-8"))["features"]
 JOB_FLAG = {"disable-comments": "disable-comments", "design-tokens": "design-tokens", "roles": "roles", "team-block": "team-block",
             "frontend-design": "frontend-design", "uat-on-main": "uat-on-main", "freeze-on-main": "freeze",
-            "environments": "environments", "component-registry": "component-registry", "rule-copies": "rule-copies", "story": "story"}
+            "environments": "environments", "component-registry": "component-registry", "rule-copies": "rule-copies", "story": "story",
+            "intent-verify": "intent-verify", "ac-trace": "ac-trace"}
 
 
 def job(name):

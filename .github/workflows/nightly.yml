@@ -1,0 +1,56 @@
+# Story #497 (epic #485 item 7): the net under the change map. Once a night every CI job runs on dev.
+# A scheduled run uses the workflow files of the default branch, so this file is only a timer: the script dispatches
+# ci.yml on `dev` itself (every job checks out dev), waits for it, and opens or comments on one issue when it is red.
+name: Nightly full run
+
+on:
+  schedule:
+    - cron: "23 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+# One night at a time: a manual start beside the timer waits for the running one and never cancels it, so two nights cannot
+# open two issues.
+concurrency:
+  group: nightly-full-run
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 190
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Dispatch ci.yml on dev, wait for it, open or comment on one issue when it is red
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: python3 scripts/nightly_full_run.py --repo "$REPO" --ref dev
+
+  # Story #578: the code graph is built and checked here only, never in a PR workflow. A red job is the report; its log
+  # holds the reason. Actions are pinned to the same commits ci.yml uses. No token, no artifact, no issue.
+  graph-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: dev
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install the graph tool at the pinned version
+        run: |
+          test -s scripts/graphify_version.txt
+          pip install "graphifyy==$(tr -d '[:space:]' < scripts/graphify_version.txt)"
+      - name: Build the graph
+        run: python3 scripts/graphify_kit.py build .
+      - name: Check the graph is fresh
+        run: python3 scripts/graphify_kit.py check .

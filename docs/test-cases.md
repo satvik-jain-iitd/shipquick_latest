@@ -564,6 +564,15 @@ Scenario: every public UI entry of Compose Material 3 and SwiftUI is a row, and 
 ```
 Tests: `tests/test_ui_api_lists.py`, `tests/test_ui_coverage.py` and `tests/test_ui_topics.py` (s231). CI: pytest. Local: `python3 scripts/ui_api_lists.py --check`.
 
+**S0.17 Story size gate (ADR-020).**
+```gherkin
+Scenario: a story sized M, L or XL is refused at Ready
+  Given a user-story issue created on or after 2026-11-19
+  When it has no Size line, or Size is M, L or XL
+  Then check_story_size.py exits 1 and names the size
+  And a Size of XS or S passes
+```
+Tests: `tests/test_check_story_size.py` (ADR-020). CI: pytest. Local: `python3 scripts/check_story_size.py`.
 ## Story #260: a child can enforce ShipQuick
 ```gherkin
 Scenario: the gate is a required check on the child's default branch
@@ -1110,7 +1119,7 @@ Scenario: --write logs each shortcut once and never edits an old row
 Scenario: check_local warns with the count and the CI job never gates
   Given scripts/check_local.sh and .github/workflows/ci.yml
   When the shortcut check is wired in
-  Then check_local prints the count as a warning and the shortcut-ledger job is not in the gate needs
+  Then check_local prints the count as a warning; the shortcut-ledger job is warn-only and, since story #496, in the gate needs
 ```
 Tests: `test_s327_one_good_and_one_no_trigger_comment_are_listed_and_only_the_second_is_tagged`, `test_s327_write_appends_one_row_per_shortcut_once_and_never_edits_old_rows`, `test_s327_the_real_repo_scan_runs_and_prints_the_count`, `test_s327_check_local_warns_with_the_count_and_never_fails`, `test_s327_ci_job_is_warn_only_and_not_in_the_gate`.
 ## Story #325 (A7): workflow security lint
@@ -2211,6 +2220,28 @@ Scenario: the gate
 ```
 Tests: `tests/test_ios_snapshots.py` (`test_s484_a_pr_that_only_edits_ci_yml_gets_ui_false_and_ios_false`, `test_s484_every_other_row_of_the_two_path_rules_stays`, `test_s484_one_run_per_pr_and_a_new_run_cancels_the_old_one`, `test_s484_the_gate_always_runs_and_fails_on_a_cancelled_job`), `tests/test_ui_proof.py` (`test_s217_the_ui_filter_covers_what_decides_the_compile_and_nothing_unrelated`, changed).
 
+## Story #485 (PR 1): one change map decides the slow jobs, and the gate proves it
+```gherkin
+Scenario: the table of today's paths
+  Then every path that turned a phone job on before still does (ci.yml aside), and no path that was free turns one on
+Scenario: an Android-only PR does not wait on iOS
+  When only ui/android/ changes
+  Then the android area is on and the ios area is off
+Scenario: fail closed
+  Given the event is not a pull request, the diff cannot be read, the map is missing, empty or broken, or the map or the reader changed
+  Then every area is on
+Scenario: a path no row names
+  Then every area is on and the reason names the path and the row to add
+Scenario: a rename
+  Then the old path and the new path both count
+Scenario: a job's own steps
+  When a phone job's steps change in ci.yml
+  Then that job's area is on; a change elsewhere in ci.yml turns nothing on
+Scenario: the gate proves it
+  Then a job of an on area must succeed, a job of an off area may be skipped, and a missing result fails
+  And a PR that sets a job's if: to false fails the gate
+```
+Tests: `tests/test_change_map.py` (`test_s485_every_path_that_turned_a_job_on_before_still_turns_it_on_ci_yml_aside`, `test_s485_no_path_that_was_free_before_turns_a_job_on`, `test_s485_an_android_only_change_leaves_ios_off`, `test_s485_fail_closed_*`, `test_s485_a_renamed_file_counts_under_its_old_path_and_its_new_path`, `test_s485_a_change_to_a_phone_job_s_own_steps_turns_its_area_on`, `test_s485_gate_*`, `test_s485_a_pr_that_sets_a_job_if_to_false_fails_the_gate`); `tests/test_ui_proof.py` (`test_s485_the_change_map_step_fails_closed_and_reads_the_reader_from_the_base_branch`); `tests/test_ios_snapshots.py` (`test_s219_ci_runs_the_snapshot_tests_on_a_pinned_xcode_and_simulator_with_a_timeout`, changed to the ios output). The grep-form tests of stories #217, #219 and #484 are replaced by these.
 ## Story #491 (feedback #490): a gate-files PR is exempt from the tdd check, from the lists
 ```gherkin
 Scenario: a PR that only copies the gate files of a kit-branch child
@@ -2236,3 +2267,230 @@ Scenario: the name list
   Then one list in scripts/check_tdd.py holds each runner, and a sample of each name matches one of its lines
 ```
 Tests: `tests/test_check_tdd.py` (`test_s502_a_known_test_file_name_in_red_passes`, `test_s502_a_typescript_red_test_that_is_not_in_the_diff_still_fails`, `test_s502_a_fixture_in_a_tests_folder_is_not_a_test_and_says_so`, `test_s502_the_name_list_is_one_line_per_runner_in_the_script`).
+
+## Story #496 (epic #485 items 15 and 16): the merge script counts only the PR's own, newest runs
+```gherkin
+Scenario: a manual run with a green gate cannot replace a red PR result
+  Given a red tdd and a red gate in the pull_request run of the head
+  And a later workflow_dispatch run of the same head with tdd skipped and gate green
+  Then review_merge.sh refuses, because the rows of a workflow_dispatch run are dropped
+Scenario: a push run on the same head is not counted either
+  Then a red gate in the pull_request run still refuses
+Scenario: a check row from a run that a newer run replaced is not counted
+  Given a run cancelled before the test matrix expanded left a check named test (cancelled)
+  And the next run of the same workflow and event on the same head named the job test (3.12) and passed
+  Then review_merge.sh merges, with no new commit needed
+Scenario: the newest run still counts when it is red
+  Then an older green gate does not hide a newer red gate
+Scenario: a newest run with no rows yet leaves no gate
+  Then the merge is refused with "no required check"
+Scenario: a red check of another workflow is not replaced by a newer run of this workflow
+  Then the merge is refused and names the check
+Scenario: a red row of another event (pull_request_target) still refuses
+  Then the rows of that run count as before the story
+Scenario: another PR on the same head
+  Given a pull_request run whose pull_requests list holds another PR, alone or beside this one
+  Then the merge is refused with "two pull requests share this head"
+Scenario: a pull_request run with an empty pull_requests list (a fork PR)
+  Then it is not counted, and with no other gate row the merge is refused
+Scenario: a row with no run id (a commit status from another app)
+  Then it counts as before
+Scenario: the run list cannot be read, or a row names a run the list does not hold
+  Then the merge is refused
+Scenario: every job of ci.yml is in the needs of gate, or named as exempt
+  Then a job left out fails the test, a job key with a trailing comment is still a job, and shortcut-ledger is in the list
+Scenario: shortcut-ledger is warn-only on its check row too
+  Then continue-on-error is on the step, not on the job
+```
+Tests: `tests/test_review_merge.py` (`test_s496_*`), `tests/test_gate_needs.py`, `tests/test_check_shortcuts.py` (`test_s327_ci_job_is_warn_only_and_since_496_in_the_gate_needs`).
+
+## Story #497 (epic #485 item 7): a nightly full run of every CI job on dev
+```gherkin
+Scenario: a green night opens nothing
+  Given the dispatched ci.yml run on dev ends green
+  Then no issue is opened and no comment is posted
+Scenario: the first red night opens one issue that names the job
+  Given the run is red and no nightly issue is open
+  Then one issue opens with the title "nightly: the full CI run on dev is red", the run link and each bad job
+Scenario: the second red night comments on the open issue
+  Given the run is red and the nightly issue is open
+  Then one comment is posted on it and no second issue opens
+Scenario: the issue says whether a job failed or never got a machine
+  Given one job failed after its steps ran and one job was still queued with no runner
+  Then the body says "failed" for the first and "never got a machine" for the second
+Scenario: the wait
+  Then the script stops waiting as soon as the run is completed, and at the deadline a job still queued never got a machine
+Scenario: a run that never appears
+  Then it is one problem, not a green night
+Scenario: dry run
+  Then nothing is dispatched and nothing is opened or commented
+Scenario: the timer stays thin
+  Then nightly.yml holds a schedule and one call to the script, with no condition of its own
+Scenario: the adoption scan and the nightly share one issue helper
+  Then both open or comment through scripts/issue_notice.py
+```
+Tests: `tests/test_nightly_full_run.py` (`test_s497_*`).
+
+### Story #497, second review of #514: a night the script cannot read or report ends red
+```gherkin
+Scenario: gh issue create or gh issue comment fails
+  Then the night ends red (exit 1), not "opened"
+Scenario: the list of open issues cannot be read
+  Then the helper raises and no second issue opens; an empty list is a normal read
+Scenario: the run list or the jobs list cannot be read
+  Then the night ends red and no issue is opened; an empty run list is "no run yet"
+Scenario: the adoption scan cannot report one child
+  Then it still scans the next child and ends red at the end
+Scenario: a completed job with no runner
+  Then it is "cancelled before it started"; only a job still queued or waiting at the deadline never got a machine
+Scenario: the gate and another job both failed
+  Then only the other job is listed
+Scenario: a manual start beside the timer
+  Then the concurrency group makes it wait and never cancels the running night
+```
+
+Scenario: a child passes its own workflow, guard and decision job to the reader (story #498)
+  Then a docs-only change leaves its area off, a path of the area turns it on, a change to its map, its decision job or the kit pin turns every area on
+Scenario: a child caller has no concurrency block
+  Then adopt.sh --check says so and names the fix
+Scenario: the snippet in docs/ADOPTION.md is run as written
+  Then docs only is off, an area path is on, and a skipped job of an on area fails the child's gate
+## Story #579: coverage ratchet (tests/test_check_coverage.py)
+
+```gherkin
+Scenario: a drop below the baseline
+  Then the file fails and the line names both numbers
+Scenario: a file at or above its baseline
+  Then it passes
+Scenario: a current report or a baseline that is missing, unreadable or malformed
+  Then the run exits 1 with the reason and nothing is skipped or read as empty
+Scenario: a changed file that is not in the baseline
+  Then it must reach the new-file floor and is never given a baseline of 0
+Scenario: a changed file that is not in the current report
+  Then it fails
+Scenario: no changed files
+  Then it passes, but only after both reports were read
+```
+
+## Story #580: the child bump planner, a dry run
+```gherkin
+Scenario: a pin that differs from the release is a bump
+  Then the row says bump and shows both commits
+Scenario: a pin equal to the release is current
+  Then the row says current
+Scenario: an unread child is named and the run exits 1
+  Then every line and the summary are printed first
+Scenario: a missing or empty registry exits 1
+  Then the missing file is named
+  And a bad release sha exits 2
+Scenario: the planner reuses the scan reader and pin
+  Then child_bump.py has no parser of its own
+Scenario: the script reads no token and has no apply
+  Then it writes nothing
+Scenario: the fixtures use made-up names only
+  Then every child is under example-org
+```
+
+## Story #587: the child bump plan runs on a release tag
+```gherkin
+Scenario: a private child is read with the child token
+  Then the token reaches the reader for the private child only
+Scenario: the workflow runs the planner on a release tag
+  Then it runs on a v tag and by hand, and passes the tag through env
+Scenario: the workflow is read only and writes nothing
+  Then contents is read and no issue, pull request, push or upload step exists
+Scenario: the workflow fails on a tag with no commit
+  Then an empty or unknown tag exits 1
+Scenario: the workflow step keeps the planner exit code
+  Then pipefail is set and nothing masks a red result
+## Story #586: the coverage ratchet as a local check
+```gherkin
+Scenario: a changed file that dropped below its base report fails
+  Then check_local.sh coverage prints FAIL coverage and names the file
+Scenario: a report path is not set or the file is missing
+  Then it prints FAIL coverage with the reason and never says skip
+Scenario: the check runs no tests
+  Then no pytest and no coverage run is called
+Scenario: a deleted file is not judged
+  Then it is not in the change list
+Scenario: the change list cannot be read
+  Then it prints FAIL coverage with the reason
+Scenario: the feature coverage is off
+  Then it prints skipped: coverage is off and passes
+Scenario: the default list
+  Then coverage is not in it, but is in the usage and unknown-check lines
+## Story #589: checks.yml reads roles.yml from the base branch
+```gherkin
+Scenario: roles and intent-verify read the base branch through the API
+  Then neither job holds project/.shipquick/roles.yml
+Scenario: a set kit branch is read instead, and a missing one fails naming it
+  Then both jobs read the kit branch
+Scenario: neither job checks out the project
+  Then no step runs git fetch
+Scenario: no roles file on the branch fails closed
+  Then roles fails naming the branch and intent-verify passes an empty list
+Scenario: neither job asks for write permission
+  Then the roles job has GH_REPO in its env
+Scenario: the PR's own file is read only on a 404 from the base
+  Then a 500 or a missing token never reads it
+## Story #588: one day's merged PRs as a table (tests/test_sprint_metrics.py)
+```gherkin
+Scenario: a day with two merged PRs prints a table and a totals line
+  Then there is one row per PR and the exit code is 0
+Scenario: the command reads only the five GET paths through the shared reader
+  Then gh_api is issue_notice.gh_api
+Scenario: a PR that cannot be read is a named row and exit 1
+  Then the other rows still print
+Scenario: a failed search prints the reason and no table
+  Then an incomplete search and more than 100 PRs exit 1 too
+Scenario: an empty value prints a dash and adds nothing to the totals
+  Then the totals skip it
+Scenario: a day with no merged PR says so and exits 0
+  Then it prints no merged PRs on the date
+Scenario: the day is read on the clock the offset names
+  Then a bad offset, date or missing repo exits 2 and makes no call
+## Story #592: light CI on a train pull request
+```gherkin
+Scenario: the six heavy jobs do not run on a light run
+  Then each has the light-run if and the phone jobs keep their area test
+Scenario: the light-run rule reads the base branch, never the head
+  Then head_ref is not in the condition
+Scenario: the gate on a light run says so and still fails on a failed job
+  Then the change-map step is skipped and the light run line is printed
+Scenario: the gate on a full run needs test to succeed
+  Then a skipped test fails the gate
+Scenario: the cheap jobs and checks.yml are not touched
+  Then none holds the light-run condition
+Scenario: the ADR and the rule page name the trade
+  Then ADR-023 and PR_RULES section 17 exist
+```
+
+## Story #590: the kit's ci.yml reads roles.yml from the base branch
+```gherkin
+Scenario: the roles job reads roles.yml from the base branch
+  Then gh api fetches it with BASE and GH_REPO from env, and every roles.py get has --file
+Scenario: the intent step reads the reviewer list the same way
+  Then no roles.py get in ci.yml is left without --file
+Scenario: a base branch with no roles file fails at once
+  Then both places print "no .shipquick/roles.yml on branch <base>" and the gh error, and exit 1
+Scenario: roles.py is a protected path
+  Then scripts/roles.py is a line of scripts/protected_paths.txt
+```
+
+## Story #596: rule 4 names the train branch (words only)
+
+- AC-1 `tests/test_rule4_train.py::test_rule_4_names_the_train_and_keeps_its_old_words`: rule 4 in CLAUDE.md names `train/<date>`, points to PR_RULES, and keeps its old words.
+- AC-2 `tests/test_rule4_train.py::test_the_dense_rule_4_names_the_train`: the dense Rule 4 line says the same.
+- AC-3 `tests/test_rule4_train.py::test_pr_rules_lists_the_train_steps_in_order`: PR_RULES section 17 lists the train steps in order.
+- AC-4 `tests/test_rule4_train.py::test_the_rule_copies_check_still_passes`: `check_rule_copies.py` passes for the kit.
+
+## Story #601: the check named gate exists only on a PR into dev or main
+
+- AC-1 `tests/test_light_ci.py::test_the_name_gate_exists_only_for_dev_and_main`: the gate job's name expression gives `gate` for a non-PR run and a PR into dev or main.
+- AC-2 `tests/test_light_ci.py::test_a_pr_into_any_other_base_is_named_gate_other`: a train base gives `gate-light`; any other or empty base gives `gate-other`.
+- AC-3 `tests/test_light_ci.py::test_the_docs_name_the_two_other_gate_names`: PR_RULES and ADR-023 name both, and ADR-021 no longer says a PR cannot add its own login without the name rule.
+
+## Story #601 (AC-4, AC-5): a base that differs only by case, and the name for a non-PR run
+
+- AC-4 `tests/test_light_ci.py::test_a_base_that_differs_only_by_case_fails_the_gate`: the gate job's first step, run as bash, fails for `Dev`, `MAIN`, `Train/x` and the like, and passes for exact names and other branches.
+- AC-5 `tests/test_light_ci.py::test_the_docs_say_a_non_pr_run_is_named_gate_too`: PR_RULES and ADR-021 say a push and a manual run are named `gate`.

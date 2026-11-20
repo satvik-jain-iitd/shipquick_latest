@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # The CI hygiene checks, run on this Mac before a push (rule 29, story #43). Same rules as .github/workflows/ci.yml.
 # Usage: scripts/check_local.sh [check ...]
-#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged   (no argument = all but secrets-staged)
+#   checks: sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky tests coverage secrets secrets-staged   (no argument = all but secrets-staged)
 #   roadmap (story #81): `node --test roadmap/*.test.js`, the same line as ci.yml; skipped when node is missing
 #   rule-copies (story #316): the kit CLAUDE.md carries its load-bearing rule phrases; a child is checked with check_rule_copies.py --child
 #   design-tokens (story #133): no hex, rgb(), hsl() or font-family literal on an added web style line (check_design_literals.py); then stylelint on changed css per package root (run_stylelint_changed.sh), only when npx and a stylelint config exist
 #   story (story #155): every `user-story` issue a commit message since $BASE links (Closes #n) must carry `Who does it:`; needs gh
 #   tdd (story #319): the `## Red` section with the test path must be in a commit body before a push; CI reads the real PR body
+#   tests (story #570): runs pytest on only the test files the change names (scripts/tests_for_change.py; "full suite" when a file is named by no test); python tests only; not in the default list
 #   shortcuts (story #327): warn only, prints the count of shortcut:/ponytail: comments; runs after the checks when no argument is given
 #   frontend-design (story #121): scans the commit messages since $BASE for "Design board:" / "no screen change" (a PR body is not there yet before a push)
 #   BASE=dev   the branch to compare with (origin/$BASE); a check that needs it is skipped when it is missing. Not set: dev, or the caller's kit_branch when the branch descends from it (story #469)
@@ -127,6 +128,14 @@ check_story() {
   rm -f "$tmp"
   report story "$rc"
 }
+check_graph_fresh() {
+  [ -f graphify-out/graph.json ] || { echo "skip graph-fresh: no graphify-out/graph.json (run python3 scripts/graphify_kit.py build)"; return 0; }
+  # warn only, like shortcuts: HEAD moves after every commit, so a hard fail here would fail every push. CI may use --require.
+  local out
+  out="$(python3 "$HERE/check_graph_fresh.py" --require 2>&1)" \
+    && echo "ok   graph-fresh" \
+    || echo "warn graph-fresh: $(printf '%s' "$out" | grep -v '^graph NOT fresh' | tr '\n' ';')"
+}
 check_workflow_security() { python3 "$HERE/check_workflow_security.py"; report workflow-security $?; }   # story #325
 check_design_tokens() {   # story #133: the same two steps as the design-tokens CI job
   have_base design-tokens || return 0
@@ -144,6 +153,49 @@ check_tdd() {   # story #319 (A15): the commit log stands in for the PR body bef
   rc=$?
   rm -f "$tmp"
   report tdd "$rc"
+}
+check_story_size() {
+  have_base story || return 0
+  command -v gh >/dev/null || { echo "skip story-size: gh is not installed"; return 0; }
+  gh auth status >/dev/null 2>&1 || { echo "skip story-size: gh is not logged in (gh auth login); CI still checks it"; return 0; }
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  python3 "$HERE/check_story_size.py" --pr-body-file "$tmp"
+  rc=$?
+  rm -f "$tmp"
+  report story-size "$rc"
+}
+check_intent_verify() {
+  have_base intent-verify || return 0
+  command -v gh >/dev/null || { echo "skip intent-verify: gh is not installed"; return 0; }
+  gh auth status >/dev/null 2>&1 || { echo "skip intent-verify: gh is not logged in (gh auth login); CI still checks it"; return 0; }
+  local tmp rc
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  # locally there is no PR yet: a PR_AUTHOR already set in the environment wins, else the author of this branch is the
+  # logged-in gh login (the same proof rule as CI, ADR-021)
+  local author
+  author="$(printf '%s' "${PR_AUTHOR:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+  [ -n "$author" ] || author="$(gh api user --jq .login 2>/dev/null || true)"
+  PR_AUTHOR="$author" python3 "$HERE/check_intent_verify.py" --pr-body-file "$tmp" \
+    --reviewers "$(python3 "$HERE/roles.py" get reviewer 2>/dev/null || true)"
+  rc=$?
+  rm -f "$tmp"
+  report intent-verify "$rc"
+}
+check_ac_trace() {   # #544: every AC id of each linked story maps to a real test in THIS repo's tree (never the kit's)
+  have_base ac-trace || return 0
+  command -v gh >/dev/null || { echo "skip ac-trace: gh is not installed"; return 0; }
+  gh auth status >/dev/null 2>&1 || { echo "skip ac-trace: gh is not logged in (gh auth login); CI still checks it"; return 0; }
+  local tmp rc root
+  tmp="$(mktemp)"
+  git log "origin/$BASE..HEAD" --format=%B > "$tmp"
+  root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  python3 "$HERE/check_ac_trace.py" --pr-body-file "$tmp" --root "$root"
+  rc=$?
+  rm -f "$tmp"
+  report ac-trace "$rc"
 }
 check_secrets() {
   command -v gitleaks >/dev/null || { echo "skip secrets: gitleaks is not installed (brew install gitleaks)"; return 0; }
@@ -164,6 +216,37 @@ check_roadmap() {   # story #81: the roadmap's node:test files, the same command
   node --test roadmap/*.test.js
   report roadmap $?
 }
+check_flaky() {   # #540: the flaky-test registry of THIS repo (a missing file passes: a child has none); never the kit's own file
+  local root
+  root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  python3 "$HERE/check_flaky.py" --file "$root/.shipquick/flaky-tests.json"
+  report flaky $?
+}
+check_tests() {   # story #570: not in the default list; the picked files are printed, then pytest runs on them
+  local out rc=0 l
+  local -a picked=()
+  out="$(python3 "$HERE/tests_for_change.py" --base "$BASE")" || rc=$?
+  [ "$rc" -eq 3 ] && { echo "skip tests: no python test files in this repo"; return 0; }
+  [ "$rc" -eq 0 ] || { echo "FAIL tests: $out"; failed=1; return; }
+  printf '%s\n' "$out" | grep '^full suite' || true
+  while IFS= read -r l; do picked+=("$l"); done < <(printf '%s\n' "$out" | grep '^tests/')
+  [ "${#picked[@]}" -gt 0 ] || { echo "ok   tests: no test file to run"; return 0; }
+  echo "tests picked:"; printf '%s\n' "${picked[@]}"
+  python3 -m pytest -q "${picked[@]}"; report tests $?
+}
+check_coverage() {   # story #586: not in the default list; judges two reports it is given, runs no tests and no coverage
+  local list rc=0 out
+  [ -n "${COVERAGE_BASE:-}" ] && [ -f "$COVERAGE_BASE" ] || { echo "FAIL coverage: COVERAGE_BASE is not set or the file is missing"; failed=1; return; }
+  [ -n "${COVERAGE_CURRENT:-}" ] && [ -f "$COVERAGE_CURRENT" ] || { echo "FAIL coverage: COVERAGE_CURRENT is not set or the file is missing"; failed=1; return; }
+  list="$(mktemp)" || { echo "FAIL coverage: cannot make a temp file"; failed=1; return; }
+  if git diff --name-only --diff-filter=d "origin/$BASE...HEAD" > "$list" 2>/dev/null; then
+    python3 "$HERE/check_coverage.py" --baseline "$COVERAGE_BASE" --current "$COVERAGE_CURRENT" --changed "$list" || rc=$?
+    report coverage "$rc"
+  else
+    echo "FAIL coverage: cannot read the changed files (no origin/$BASE?)"; failed=1
+  fi
+  rm -f "$list"
+}
 check_shortcuts() {   # story #327: warn only, never sets failed
   echo "warn shortcuts: $(python3 "$HERE/check_shortcuts.py" 2>&1 | tail -1)"
 }
@@ -177,7 +260,12 @@ feature_of() {   # feature_of <check> -- the feature id that switches the check,
     design-tokens) echo design-tokens ;;
     frontend-design) echo frontend-design ;;
     story) echo story ;;
+    intent-verify) echo intent-verify ;;
+    ac-trace) echo ac-trace ;;
     roadmap) echo roadmap ;;
+    graph-fresh) echo graph-fresh ;;
+    tests) echo tests-for-change ;;
+    coverage) echo coverage ;;
     ui-registry) echo component-registry ;;
   esac
 }
@@ -192,7 +280,7 @@ feature_skip() {   # feature_skip <check>: returns 0 when the check must be skip
   esac
 }
 checks=("$@")
-[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story tdd roadmap workflow-security secrets)
+[ $# -eq 0 ] && checks=(sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap workflow-security graph-fresh flaky secrets)
 for c in "${checks[@]}"; do
   feature_skip "$c" && continue
   [ $? -eq 2 ] && continue
@@ -217,11 +305,18 @@ for c in "${checks[@]}"; do
     disable-comments) check_disable_comments ;;
     design-tokens) check_design_tokens ;;
     story) check_story ;;
+    graph-fresh) check_graph_fresh ;;
+    intent-verify) check_intent_verify ;;
+    ac-trace) check_ac_trace ;;
+    story-size) check_story_size ;;
     shortcuts) check_shortcuts ;;
+    tests) check_tests ;;
+    coverage) check_coverage ;;
     workflow-security) check_workflow_security ;;
     tdd) check_tdd ;;
     roadmap) check_roadmap ;;
-    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story tdd roadmap shortcuts secrets secrets-staged)"; exit 2 ;;
+    flaky) check_flaky ;;
+    *) echo "unknown check: $c (sizes markers md-blocks rule-copies ui-docs ui-registry ui-topics ui-llms ui-proof ui-contracts ui-tokens ui-coverage workflow-security timeouts features-wiring commits commit-subjects pr-size frontend-design disable-comments design-tokens story intent-verify ac-trace tdd roadmap shortcuts graph-fresh flaky tests coverage secrets secrets-staged)"; exit 2 ;;
   esac
 done
 [ $# -eq 0 ] && check_shortcuts

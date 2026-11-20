@@ -97,6 +97,22 @@
       "default": true,
       "locked": false
     },
+    "intent-verify": {
+      "name": "Intent confirmed by QA first",
+      "what": "Checks that a reviewer confirmed the coder's say-back on each story a pull request closes, in a comment on the story.",
+      "if_off": "A pull request may close a story no reviewer confirmed. A child's CI runs this check too, through checks.yml, and so does the kit's own CI.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
+    "ac-trace": {
+      "name": "Every acceptance line has a test",
+      "what": "Checks that each AC-n line of a story a pull request closes is mapped on a Tests line to path::test_name, and that the file exists in the tree and holds that name.",
+      "if_off": "A pull request may close a story whose acceptance lines map to no test, or to a test that does not exist.",
+      "group": "Checks on every pull request",
+      "default": true,
+      "locked": false
+    },
     "disable-comments": {
       "name": "No quiet switch-offs",
       "what": "Fails a pull request that adds a comment turning a check off, unless it names the decision that allows it.",
@@ -149,6 +165,30 @@
       "name": "Checks before each commit",
       "what": "Runs quick checks on your computer before each commit, so mistakes are caught early.",
       "if_off": "No checks run before a commit. CI still catches them later.",
+      "group": "Local checks",
+      "default": true,
+      "locked": false
+    },
+    "graph-fresh": {
+      "name": "Code graph is fresh",
+      "what": "On your computer, checks that the code graph was built from the commit you are on, so searches do not use old answers.",
+      "if_off": "A stale code graph is not reported. A project with no graph is skipped either way.",
+      "group": "Local checks",
+      "default": true,
+      "locked": false
+    },
+    "tests-for-change": {
+      "name": "Run only the tests a change names",
+      "what": "On your computer, `check_local.sh tests` runs only the Python test files that name the files you changed, or the whole suite when a file is named by no test. It is a name search: a test that reaches a changed file only through another script is not picked, and CI still runs the full suite.",
+      "if_off": "The tests check is skipped. It is not in the default list either way.",
+      "group": "Local checks",
+      "default": true,
+      "locked": false
+    },
+    "coverage": {
+      "name": "Coverage ratchet",
+      "what": "On your computer, `check_local.sh coverage` compares two coverage reports (`COVERAGE_BASE` and `COVERAGE_CURRENT`) and fails when a changed Python file covers less than it did on the base branch. It runs no tests itself.",
+      "if_off": "The coverage check is skipped. It is not in the default list either way.",
       "group": "Local checks",
       "default": true,
       "locked": false

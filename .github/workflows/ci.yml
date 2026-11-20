@@ -58,6 +58,8 @@ jobs:
             echo "Merge conflict markers found"
             exit 1
           fi
+      - name: Flaky registry, no expired quarantine (story #569; the same check runs before a push)
+        run: python3 scripts/check_flaky.py --file .shipquick/flaky-tests.json
       - name: Check markdown code blocks
         run: |
           python3 -c "
@@ -178,12 +180,12 @@ jobs:
           BASE="${{ github.base_ref }}"
           bash scripts/run_stylelint_changed.sh "origin/$BASE"
   shortcut-ledger:
-    continue-on-error: true   # warn only: a crash here must not block a merge (review_merge.sh refuses any non-SUCCESS check)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Shortcut ledger, warn only (story #327): never fails the build, not in the gate
+      - name: Shortcut ledger, warn only (story #327): never fails the build; in the gate needs since story #496
+        continue-on-error: true   # warn only: the step may fail, the job and its check row end green
         run: python3 scripts/check_shortcuts.py
   tdd:
     runs-on: ubuntu-latest
@@ -213,15 +215,23 @@ jobs:
     env:
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BASE: ${{ github.base_ref }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check the PR author and every commit author is a coder account (story #140, the #114 case)
         run: |
+          if ! err=$(gh api -H "Accept: application/vnd.github.raw" "repos/$GH_REPO/contents/.shipquick/roles.yml?ref=$BASE" 2>&1 > "$RUNNER_TEMP/roles.yml"); then
+            rm -f "$RUNNER_TEMP/roles.yml"
+            echo "no .shipquick/roles.yml on branch $BASE"
+            echo "$err"
+            exit 1
+          fi
           commit_authors=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits" --paginate --jq '.[] | "\(.author.login):\(.parents | length):\([.commit.message | capture("(?m)^Built-by:\\s*(?<s>\\S+)"; "g").s][-1] // "")"' | paste -sd, -)
-          coders=$(python3 scripts/roles.py get coder)
-          reviewers=$(python3 scripts/roles.py get reviewer)
-          owner=$(python3 scripts/roles.py get owner)
-          coder_sessions=$(python3 scripts/roles.py get coder_sessions)
+          coders=$(python3 scripts/roles.py get coder --file "$RUNNER_TEMP/roles.yml")
+          reviewers=$(python3 scripts/roles.py get reviewer --file "$RUNNER_TEMP/roles.yml")
+          owner=$(python3 scripts/roles.py get owner --file "$RUNNER_TEMP/roles.yml")
+          coder_sessions=$(python3 scripts/roles.py get coder_sessions --file "$RUNNER_TEMP/roles.yml")
           python3 scripts/check_roles.py --author "$PR_AUTHOR" --commit-authors "$commit_authors" --coders "$coders" --reviewers "$reviewers" --owner "$owner" --coder-sessions "$coder_sessions"
   team-block:
     runs-on: ubuntu-latest
@@ -249,6 +259,38 @@ jobs:
         run: |
           printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
           python3 scripts/check_story.py --pr-body-file /tmp/pr-body.md
+      - name: Check every linked user story has intent verified by QA (ADR-021)
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE: ${{ github.base_ref }}
+        run: |
+          if ! err=$(gh api -H "Accept: application/vnd.github.raw" "repos/$GH_REPO/contents/.shipquick/roles.yml?ref=$BASE" 2>&1 > "$RUNNER_TEMP/roles.yml"); then
+            rm -f "$RUNNER_TEMP/roles.yml"
+            echo "no .shipquick/roles.yml on branch $BASE"
+            echo "$err"
+            exit 1
+          fi
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          reviewers="$(python3 scripts/roles.py get reviewer --file "$RUNNER_TEMP/roles.yml")"
+          python3 scripts/check_intent_verify.py --pr-body-file /tmp/pr-body.md --reviewers "$reviewers"
+      - name: Check every AC of a linked user story maps to a real test (#544)
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/check_ac_trace.py --pr-body-file /tmp/pr-body.md --root .
+      - name: Check every linked user story is XS or S (ADR-020)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.md
+          python3 scripts/check_story_size.py --pr-body-file /tmp/pr-body.md
   uat-checklist:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -323,48 +365,53 @@ jobs:
           bash scripts/ui.sh docs android-button --dense | grep -q "androidx.compose.material3.Button"
           bash scripts/ui.sh docs ios-button --json | grep -q '"type": "docs.detail"'
   ui-changes:
-    # Story #217: the two compile jobs below run only when ui/** changes. A skipped job is not a failure,
-    # so the gate still passes on a PR that does not touch ui/.
+    # Story #485 (ADR-018): one change map (scripts/change_map.json) decides which slow jobs run. The reader is read from the
+    # base branch, so a PR cannot weaken the rule it is judged by; a PR that changes the map or the reader turns every area on.
+    # Any doubt (not a pull request, a diff that cannot be read, a missing or broken map) turns every area on: fail closed.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
     outputs:
-      ui: ${{ steps.diff.outputs.ui }}
+      android: ${{ steps.diff.outputs.android }}
       ios: ${{ steps.diff.outputs.ios }}
+      snapshot: ${{ steps.diff.outputs.snapshot }}
+      decision: ${{ steps.diff.outputs.decision }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Did ui/** change?
+      - name: Which slow jobs must run? (story #485, one map)
         id: diff
         env:
           EVENT: ${{ github.event_name }}
           BASE: ${{ github.base_ref }}
           BEFORE: ${{ github.event.before }}
         run: |
-          if [ "$EVENT" = "pull_request" ]; then
-            git fetch -q origin "$BASE" || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
-            range="origin/$BASE...HEAD"
-          elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            range="$BEFORE..HEAD"
+          # a pull request is judged against its base branch; a push against the commit before it (github.event.before)
+          if [ "$EVENT" = "push" ]; then
+            base="$BEFORE"
           else
-            echo "ui=true" >> "$GITHUB_OUTPUT"; echo "ios=true" >> "$GITHUB_OUTPUT"; exit 0   # first push of a branch: compile to be safe
+            base="origin/${BASE:-dev}"
+            git fetch -q origin "${BASE:-dev}" 2>/dev/null || true
           fi
-          # Captured first: a failing git diff inside the `if` below would have written ui=false. --no-renames lists the old path of a move.
-          names=$(git diff --name-only --no-renames "$range") || { echo ui=true >> "$GITHUB_OUTPUT"; exit 0; }
-          # Story #484: this file is not in either rule. A PR that only edits ci.yml waited 40 minutes for a macOS machine it did
-          # not need. Known gap: an edit to the steps of a ui-* job no longer runs that job, on the PR or on the push to dev. The
-          # reviewer asks for one manual run (workflow_dispatch), reads it on its own run page, and a PR-event run must be the last
-          # run before approval: a manual run skips the PR-only jobs and would show a green gate (docs/PR_RULES.md section 14).
-          if grep -qE '^(ui/|tests/fixtures/|scripts/ui_proof\.py|scripts/emit_contracts\.py|scripts/emit_tokens\.py|design/)' <<< "$names"; then echo "ui=true"; else echo "ui=false"; fi >> "$GITHUB_OUTPUT"
-          # Story #219 (#375 review): the macOS snapshot job waits on `ios`, not on `ui`, so an Android-only or fixture-only PR never runs it.
-          if grep -qE '^(ui/ios/|design/|scripts/emit_tokens\.py)' <<< "$names"; then echo "ios=true"; else echo "ios=false"; fi >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/change-map"
+          for f in change_map.py change_map.json; do
+            git show "$base:scripts/$f" > "$RUNNER_TEMP/change-map/$f" 2>/dev/null || rm -f "$RUNNER_TEMP/change-map/$f"
+          done
+          if [ -f "$RUNNER_TEMP/change-map/change_map.py" ] && python3 "$RUNNER_TEMP/change-map/change_map.py" decide \
+              --base "$base" --head HEAD --event "$EVENT" --map "$RUNNER_TEMP/change-map/change_map.json" --outputs "$GITHUB_OUTPUT" \
+              --ci .github/workflows/ci.yml --guard scripts/change_map.json --guard scripts/change_map.py --decision-job ui-changes; then
+            exit 0
+          fi
+          echo "the change map could not run here, so every slow job runs (fails closed)"
+          # every output unset = every job runs: a job runs unless the decision says false (story #499)
+          printf 'decision={"all":true}\n' >> "$GITHUB_OUTPUT"
   ui-android-compile:
     # Story #217: compile every template and the generated proof/ApiProof.kt against Compose Material 3 1.4.0.
     # Compile only; nothing runs. All downloads happen on this runner (owner, #217).
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.android != 'false' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -390,7 +437,7 @@ jobs:
   ui-ios-compile:
     # Story #217: compile every template and the generated proof/ApiProof.swift for iOS. Compile only.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.ios != 'false' }}
     runs-on: macos-15
     timeout-minutes: 30
     permissions:
@@ -412,7 +459,7 @@ jobs:
     # bad one must fail with every rule named. detekt 1.23.8, Konsist 0.17.3, Gradle from the pin in ui/android. CI only.
     # Gradle checks every downloaded jar and pom against tests/fixtures/android/gradle/verification-metadata.xml; a missing or wrong sum fails the build.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.android != 'false' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -468,7 +515,7 @@ jobs:
     # Story #218: both tiers run through ui/tool/ios_lint.sh (CI=1 strict, else warn-only) with the committed baseline
     # ui/ios/lint/swiftlint-baseline.json, and SwiftFormat 0.64.6 (pinned the same way) checks the format in lint mode.
     needs: [ui-changes]
-    if: needs.ui-changes.outputs.ui == 'true'
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.ios != 'false' }}
     runs-on: macos-15
     timeout-minutes: 20
     permissions:
@@ -516,12 +563,12 @@ jobs:
   ui-ios-snapshots:
     # Story #219: swift-snapshot-testing and Prefire compare every template with its reference images (light and dark,
     # smallest and largest Dynamic Type, iPhone SE and Pro Max) on one pinned simulator. Runs only when ui/ios/**, design/**,
-    # or scripts/emit_tokens.py changes (ui-changes.outputs.ios), never for an Android-only PR or a ci.yml-only PR (story #484). SHIPQUICK_SNAPSHOTS adds the test
+    # or scripts/emit_tokens.py changes (ui-changes.outputs.snapshot), never for an Android-only PR or a ci.yml-only PR (story #484). SHIPQUICK_SNAPSHOTS adds the test
     # target and its two packages to Package.swift; a child never resolves them. A workflow_dispatch run with record=true
     # writes new references and uploads them as the artifact `ios-snapshots`; how to commit them: ui/ios/SNAPSHOTS.md.
     needs: [ui-changes]
-    # ios is empty after a fail-safe exit above (only ui=true is written), so the job runs then too.
-    if: needs.ui-changes.outputs.ios != 'false'
+    # A fail-safe exit above writes only decision={"all":true}, so snapshot is unset; an unset output runs the job too.
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) && needs.ui-changes.outputs.snapshot != 'false' }}
     runs-on: macos-15
     timeout-minutes: 45
     permissions:
@@ -629,6 +676,7 @@ jobs:
       - name: No pull_request_target or workflow_run checks out the PR head, and every npm install skips scripts (story #325)
         run: python3 scripts/check_workflow_security.py
   test:
+    if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [pre-commit]
@@ -666,12 +714,49 @@ jobs:
           name: test-results
           path: logs/
   gate:
-    name: gate
+    name: ${{ github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/') && 'gate-light' || (github.event_name != 'pull_request' || github.base_ref == 'dev' || github.base_ref == 'main') && 'gate' || 'gate-other' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, design-tokens, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, ui-ios-snapshots, secret-scan, dependency-review, workflow-security, test, tdd]
+    needs: [pre-commit, commit-msg, rule-copies, pr-size, frontend-design, disable-comments, design-tokens, shortcut-ledger, roles, team-block, uat-checklist, freeze, ui-docs, ui-registry, ui-cli, ui-changes, ui-android-compile, ui-ios-compile, ui-android-lint, ui-ios-lint, ui-ios-snapshots, secret-scan, dependency-review, workflow-security, test, tdd]
     if: always()
     steps:
+      - name: Refuse a base branch that differs from dev, main or train/ only by case (story #601)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          lower=$(printf '%s' "$BASE" | tr '[:upper:]' '[:lower:]')
+          exact=0
+          case "$BASE" in dev|main|train/*) exact=1 ;; esac
+          case "$lower" in
+            dev|main|train/*)
+              if [ "$exact" = 0 ]; then
+                echo "the base branch differs from dev, main or train/ only by case: $BASE"
+                exit 1
+              fi
+              ;;
+          esac
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Every phone job matches the change map (story #485, the gate proves it)
+        if: ${{ !(github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/')) }}
+        env:
+          DECISION: ${{ needs.ui-changes.outputs.decision }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          printf '%s' "$DECISION" > "$RUNNER_TEMP/decision.json"
+          printf '%s' "$NEEDS" > "$RUNNER_TEMP/needs.json"
+          python3 scripts/change_map.py gate --decision "$RUNNER_TEMP/decision.json" --needs "$RUNNER_TEMP/needs.json" --map scripts/change_map.json
+      - name: Light run or full run (story #592)
+        env:
+          LIGHT: ${{ github.event_name == 'pull_request' && startsWith(github.base_ref, 'train/') }}
+          TEST_RESULT: ${{ needs.test.result }}
+        run: |
+          if [[ "$LIGHT" == "true" ]]; then
+            echo "light run: the heavy jobs did not run; they run on the train pull request into dev"
+          elif [[ "$TEST_RESULT" != "success" ]]; then
+            echo "full run: test must be success, it was $TEST_RESULT"
+            exit 1
+          fi
       - name: Check all job results
         run: |
           echo "pre-commit: ${{ needs.pre-commit.result }}"
@@ -681,6 +766,7 @@ jobs:
           echo "frontend-design: ${{ needs.frontend-design.result }}"
           echo "disable-comments: ${{ needs.disable-comments.result }}"
           echo "design-tokens: ${{ needs.design-tokens.result }}"
+          echo "shortcut-ledger: ${{ needs.shortcut-ledger.result }}"
           echo "roles: ${{ needs.roles.result }}"
           echo "team-block: ${{ needs.team-block.result }}"
           echo "uat-checklist: ${{ needs.uat-checklist.result }}"

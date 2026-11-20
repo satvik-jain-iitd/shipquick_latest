@@ -40,3 +40,10 @@ account on the reviewer row (GoServe: `klickbae8yt-star` builds, `satvik-jain-ii
 - Each session has its own folder: the coder in the main checkout, the reviewer in a git worktree. Never edit the other's folder.
 - Parallel work (owner, 26 Oct 2026): one reviewer session and up to 3 coder sessions (`<project>-dev`, `<project>-dev2`, `<project>-dev3`), one per lane, each in its own git worktree. The lanes come from `pm/agile/templates/sprint-lanes.md`. The reviewer reviews every lane.
 - Live example: job-search (`job-search-dev` and `job-search-qa`), GoServe (`GoServe-dev` and `GoServe-qa`).
+
+## Intent-verification gate (ADR-021)
+
+QA runs on a larger reasoning model, Dev on a faster implementation model. Before Dev starts any
+QA-delegated work, Dev sends a say-back (understanding + planned approach + "am I doing this right?")
+and waits for QA's "confirmed". The confirmation is recorded as a comment on the story issue,
+`Intent verified by QA: <YYYY-MM-DD>`, from a login on the reviewer list (`scripts/roles.py get reviewer`) that is not the PR author (checked by `scripts/check_intent_verify.py`).

@@ -27,6 +27,9 @@ case "$1" in
         merge) echo "GH_TOKEN=$GH_TOKEN $*" >> "$STUB_DIR/merge.log"; exit 0 ;;
       esac ;;
   api) case "$*" in
+         *actions/runs*)
+           [ -f "$STUB_DIR/runs_unreadable" ] && { echo "gh: rate limited" >&2; exit 1; }
+           [ -f "$STUB_DIR/runs.ndjson" ] && { cat "$STUB_DIR/runs.ndjson"; exit 0; }; exit 0 ;;
          *protection*) [ -f "$STUB_DIR/protection.json" ] && { jq -r ".required_linear_history.enabled" "$STUB_DIR/protection.json"; exit 0; }; exit 1 ;;
          *contents/CLAUDE.md*)
            case "$*" in *" -f "*|*" -F "*) echo "stub: -f/-F on a GET turns gh api into a POST, GitHub 404s" >&2; exit 1 ;; esac
@@ -79,9 +82,14 @@ def env(tmp_path):
     (stub / "gh").write_text(STUB, encoding="utf-8"); (stub / "gh").chmod(0o755)
     e = {**os.environ, "PATH": f"{stub}:{os.environ['PATH']}", "STUB_DIR": str(stub), "GH_TOKEN": "not-used"}
 
-    def go(pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False, screens=None, caller=None, features=None):
+    def go(runs=None, runs_unreadable=False, pr=None, th=None, mode="auto", args=("12",), fail_close=False, linear=None, dev_link=None, claude_md_unreadable=False, freeze=None, pr_files=None, freeze_unreadable=False, roles=None, roles_unreadable=False, screens=None, caller=None, features=None):
         (stub / "merge.log").unlink(missing_ok=True)
         (stub / "calls.log").unlink(missing_ok=True)
+        (stub / "runs.ndjson").unlink(missing_ok=True); (stub / "runs_unreadable").unlink(missing_ok=True)
+        if runs is not None:   # story #496: the workflow runs of the head, one JSON object per line, as `gh api --jq .workflow_runs[]` prints them
+            (stub / "runs.ndjson").write_text("".join(json.dumps(r) + "\n" for r in runs), encoding="utf-8")
+        if runs_unreadable:
+            (stub / "runs_unreadable").write_text("1", encoding="utf-8")
         if caller is not None:   # story #225: the PR's own repo's shipquick-call.yml on its base; None = none (404)
             (stub / "caller_b64").write_text(base64.b64encode(caller.encode()).decode(), encoding="utf-8")
         else:
@@ -825,3 +833,118 @@ def test_s424_a_local_features_file_saying_off_is_never_read(env, tmp_path):
 def test_s424_an_unreadable_or_broken_base_features_file_refuses(env):
     refused(*env(features="rate"), "features")
     refused(*env(features="{oops"), "features")
+
+
+# ---- story #496 (epic #485 items 15 and 16): only the PR's own, newest run of each workflow counts ----
+def row(name, run, concl="SUCCESS", started="2026-11-13T10:00:00Z"):
+    return {"name": name, "status": "COMPLETED", "conclusion": concl, "startedAt": started,
+            "detailsUrl": f"https://github.com/o/r/actions/runs/{run}/job/{run}1"}
+
+
+def wf_run(run_id, event="pull_request", workflow=1, number=1, prs=(12,)):
+    """One workflow run of the head. `prs` are the numbers of the pull requests the run names (the tests merge PR 12)."""
+    return {"id": run_id, "event": event, "workflow_id": workflow, "run_number": number, "head_sha": "abc123",
+            "pull_requests": [{"number": n} for n in prs]}
+
+
+def test_s496_a_manual_run_with_a_green_gate_cannot_replace_a_red_pr_result(env):
+    """Epic #485 item 15. The manual run skips the PR-only jobs and starts later, so its green gate used to win."""
+    pr = good()
+    pr["statusCheckRollup"] = [
+        row("tdd", 100, "FAILURE", "2026-11-13T10:00:00Z"), row("gate", 100, "FAILURE", "2026-11-13T10:05:00Z"),
+        row("tdd", 101, "SKIPPED", "2026-11-13T11:00:00Z"), row("gate", 101, "SUCCESS", "2026-11-13T11:05:00Z"),
+    ]
+    runs = [wf_run(100, "pull_request", 1, 1), wf_run(101, "workflow_dispatch", 1, 2)]
+    refused(*env(pr=pr, runs=runs), "is not SUCCESS")   # the PR run is red on tdd and on gate; the first by name is named
+
+
+def test_s496_a_push_run_on_the_same_head_is_not_counted_either(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100, "FAILURE"), row("gate", 101, "SUCCESS", "2026-11-13T11:00:00Z")]
+    runs = [wf_run(100, "pull_request", 1, 1), wf_run(101, "push", 1, 2)]
+    refused(*env(pr=pr, runs=runs), "check gate is not SUCCESS")
+
+
+def test_s496_a_check_row_from_a_run_that_a_newer_run_replaced_is_not_counted(env):
+    """The #509 case: a run cancelled before the test matrix expanded left a check named `test` (cancelled). The next run
+    on the same head named the job `test (3.12)` and passed. The old row belongs to a replaced run, so it is not counted."""
+    pr = good()
+    pr["statusCheckRollup"] = [
+        row("test", 100, "CANCELLED", "2026-11-13T10:00:00Z"),
+        row("test (3.12)", 102, "SUCCESS", "2026-11-13T10:10:00Z"), row("gate", 102, "SUCCESS", "2026-11-13T10:12:00Z"),
+    ]
+    runs = [wf_run(100, "pull_request", 1, 1), wf_run(102, "pull_request", 1, 3)]
+    r, merged = env(pr=pr, runs=runs)
+    assert r.returncode == 0, (r.stdout, r.stderr)
+    assert merged != "", "the gate must merge: the cancelled row is from a replaced run"
+
+
+def test_s496_the_newest_run_of_a_workflow_still_counts_when_it_is_red(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100, "SUCCESS"), row("gate", 102, "FAILURE", "2026-11-13T10:10:00Z")]
+    runs = [wf_run(100, "pull_request", 1, 1), wf_run(102, "pull_request", 1, 3)]
+    refused(*env(pr=pr, runs=runs), "check gate is not SUCCESS")
+
+
+def test_s496_a_run_of_another_workflow_is_not_replaced_by_a_newer_run_of_this_one(env):
+    """The replacing rule is per workflow and event: a red check of another workflow still blocks the merge."""
+    pr = good()
+    pr["statusCheckRollup"] = [row("lint-docs", 200, "FAILURE"), row("gate", 102, "SUCCESS", "2026-11-13T10:10:00Z")]
+    runs = [wf_run(200, "pull_request", 2, 1), wf_run(102, "pull_request", 1, 3)]
+    refused(*env(pr=pr, runs=runs), "check lint-docs is not SUCCESS")
+
+
+def test_s496_an_unreadable_run_list_refuses(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100)]
+    refused(*env(pr=pr, runs_unreadable=True), "cannot read the workflow runs")
+
+
+def test_s496_a_check_from_a_run_the_list_does_not_name_refuses(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100)]
+    refused(*env(pr=pr, runs=[wf_run(999, "pull_request", 1, 1)]), "not in the workflow runs")
+
+
+def test_s496_a_pull_request_run_of_another_pr_on_the_same_head_is_not_counted(env):
+    """Second review of #513: two PRs can share one head commit. The newest pull_request run of the head may belong to
+    the other PR, so only a run whose pull_requests list names this PR counts."""
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100, "FAILURE"), row("gate", 101, "SUCCESS", "2026-11-13T11:00:00Z")]
+    runs = [wf_run(100, "pull_request", 1, 1, prs=(12,)), wf_run(101, "pull_request", 1, 2, prs=(99,))]
+    refused(*env(pr=pr, runs=runs), "two pull requests share this head")
+
+
+def test_s496_a_run_that_names_this_pr_and_another_refuses(env):
+    """Second review of #513: `pull_requests` lists every open PR on the head, so (12, 99) is two PRs on one head."""
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100)]
+    refused(*env(pr=pr, runs=[wf_run(100, "pull_request", 1, 1, prs=(12, 99))]), "two pull requests share this head")
+
+
+def test_s496_a_pull_request_run_that_names_no_pull_request_is_not_counted(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100, "SUCCESS")]
+    refused(*env(pr=pr, runs=[wf_run(100, "pull_request", 1, 1, prs=())]), "no required check")
+
+
+def test_s496_a_red_row_of_another_event_still_refuses(env):
+    """Second review of #513, point 1: only push and workflow_dispatch rows and replaced pull_request rows are dropped.
+    A red row of a pull_request_target run counts as before this story."""
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100), row("security", 101, "FAILURE", "2026-11-13T11:00:00Z")]
+    runs = [wf_run(100, "pull_request", 1, 1), wf_run(101, "pull_request_target", 2, 1, prs=())]
+    refused(*env(pr=pr, runs=runs), "check security is not SUCCESS")
+
+
+def test_s496_a_row_with_no_run_id_passes_through(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100), {"name": "external", "status": "COMPLETED", "conclusion": "FAILURE"}]
+    refused(*env(pr=pr, runs=[wf_run(100, "pull_request", 1, 1)]), "check external is not SUCCESS")
+
+
+def test_s496_a_newest_run_with_no_rows_yet_leaves_no_gate_and_refuses(env):
+    pr = good()
+    pr["statusCheckRollup"] = [row("gate", 100)]
+    runs = [wf_run(100, "pull_request", 1, 1), wf_run(102, "pull_request", 1, 3)]   # run 102 is queued: no rows yet
+    refused(*env(pr=pr, runs=runs), "no required check")

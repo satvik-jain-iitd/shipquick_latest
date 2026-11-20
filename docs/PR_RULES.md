@@ -163,8 +163,8 @@ its own gate off from inside itself:
 ## 14. CI runs what a change can break (story #484)
 
 - `ci.yml` has one run per PR. A new run of the same PR (a push, an edited body) cancels the old one. A push run on `dev` or `main` and a manual run are never cancelled.
-- The phone jobs (`ui-android-*`, `ui-ios-*`) run only when a path in the two rules of the `ui-changes` job changes. `ci.yml` itself is not in those rules, so a PR that only edits `ci.yml` does not wait for a macOS machine.
-- Known gap: a PR that edits the steps of a `ui-*` job inside `ci.yml` no longer runs that job by itself. The push run on `dev` after the merge skips the phone jobs too. On such a PR the reviewer asks for one manual full run (Actions, "shipquick_latest CI", Run workflow, on the PR branch). Nothing enforces this manual run; it is the reviewer's own step. The change-map story (#485) closes this gap.
+- The phone jobs (`ui-android-*`, `ui-ios-*`) run only when their area of `scripts/change_map.json` is on (story #485, ADR-018); the reader is `scripts/change_map.py`, and the gate checks every result against it. `ci.yml` itself is not in those rules, so a PR that only edits `ci.yml` does not wait for a macOS machine.
+- A PR that edits the steps of a `ui-*` job inside `ci.yml` turns that job's area on (story #485, ADR-018 rule 4). A push is decided from its own diff: the base is `github.event.before`, and only a manual run, a schedule or an unreadable `before` turns every area on (story #485, ADR-018). The manual full run asked of the reviewer in #484 is no longer needed.
 - How to read the manual run: on its own run page, never on the PR's checks list. A manual run puts checks with the same names on the head commit, skips every PR-only job (`tdd`, `roles`, `team-block` and others) and starts later, so on the PR it can show a green `gate` over a red PR run. So after the manual run, a PR-event run (a push or a body edit) must be the last run before the approval, and `scripts/review_merge.sh` then reads that one.
 - The `gate` job keeps `if: always()` and fails on a cancelled job. GitHub counts a skipped required check as passed, so a gate that did not run would let a run with a cancelled job look green.
 
@@ -179,3 +179,41 @@ The tdd check (`scripts/check_tdd.py`) accepts a `## Red` path only when its fil
 - swift (XCTest): `*Test.swift`, `*Tests.swift`
 
 The pytest `::test_name` form still works. A path in the diff that no name accepts (a fixture, a JSON file) fails with a line that says so. To add a runner, add one line to `TEST_NAMES`; a project config file is not read.
+
+## 15. The merge script counts the PR's own, newest runs (story #496, epic #485 items 15 and 16)
+
+- `scripts/review_merge.sh` reads the workflow runs of the PR head (`gh api repos/<repo>/actions/runs?head_sha=<sha>`) and `scripts/check_pr_runs.py --pr <number>` decides which check rows count. The run of a row is in its `detailsUrl`.
+- A `pull_request` run counts only when its `pull_requests` list is exactly this PR. The list holds every open PR on the head, so another PR in it (alone or beside this one) refuses with "two pull requests share this head". An empty list (a pull request from a fork, or a run after the merge) names nobody and is not counted. A fork PR is therefore not merged by the script: the owner merges it.
+- The rows of a `push` or a `workflow_dispatch` run are dropped. Such a run skips the PR-only jobs and starts later, so its green `gate` can never replace a red PR result. Rows of every other event (for example `pull_request_target`) count as before.
+- Of the `pull_request` runs of one workflow, only the newest (highest `run_number`) counts. A run that a newer run of the same workflow and event replaced leaves stale rows (a `test` cancelled before the matrix expanded, next to `test (3.12)` of the next run, seen on #509); they are not counted, so a new commit is no longer needed to clear them. The newest run still counts when it is red or cancelled, and a newest run with no rows yet leaves no `gate`, so the merge is refused.
+- A row with no run id (a commit status from another app) counts as before. A run list that cannot be read, or a row whose run the list does not name, refuses the merge.
+- Every job of `ci.yml` is in the `needs` of `gate`, or is named as exempt in `tests/test_gate_needs.py`. `shortcut-ledger` is in the list. It stays warn-only through `continue-on-error` on its step, so the job and its check row end green.
+
+## 16. The nightly full run on dev (story #497, epic #485 item 7)
+
+- The change map skips slow jobs by path (section 14). Once a night every job runs on `dev`, so a hole in the map shows within a day. `.github/workflows/nightly.yml` is only a timer (01:23 UTC) and one call to `scripts/nightly_full_run.py`; the decision lives in the script and its tests (`tests/test_nightly_full_run.py`).
+- A scheduled run uses the workflow files of the default branch, not `dev`. So the script dispatches `ci.yml` on `dev` itself (`gh api -X POST .../workflows/ci.yml/dispatches -f ref=dev`): every job checks out `dev`. The change map already turns every area on for an event that is not a pull request or a push, so there is no second rule. The PR-only jobs (`tdd`, `roles`, `team-block` and the rest) are skipped on such a run, as on any manual run.
+- A green night opens nothing. A red night opens one issue (label `nightly`, title "nightly: the full CI run on dev is red") that names each bad job and says, for each, whether it **failed**, **never got a machine** (only a job still queued or waiting at the deadline) or was **cancelled before it started** (a completed job no runner took, cancelled together with its run). The `gate` job is not listed beside the real job it failed for. A second red night comments on the same open issue. The reviewer closes the issue when `dev` is green; the next red night then opens a new one. The label is created by the script when it is missing.
+- The script waits up to 150 minutes for the run. A job still queued at the deadline never got a machine; a job still running at the deadline failed. A dispatched run that does not appear in ten minutes is one problem, not a green night.
+- **A night the script cannot read or report ends red** (exit 1), so GitHub shows it to someone: a failed dispatch, run list, run state (three reads in a row), jobs list or issue list, or an issue or comment that did not land. A failed read is never taken for "no run yet" or "no open issue" (that would report a red night that may be green, or open a second issue). The adoption scan follows the same rule: it reports every child, then ends red when a report did not land. A failed `gh label create` alone is a warning; the issue create fails when the label is really missing.
+- `nightly.yml` has a `concurrency` group (`nightly-full-run`, never cancelling), so a manual start beside the timer waits and cannot open two issues.
+- `python3 scripts/nightly_full_run.py --dry-run` dispatches nothing and changes nothing: it reads the latest dispatched run and prints what it would do.
+- The timer file runs from the default branch, so the nightly starts only once `nightly.yml` is on `main` (the next `dev` to `main` promotion). It is a protected path (`.github/workflows/*`): the owner merges the PR.
+- Issue opening is one helper, `scripts/issue_notice.py`, used by this script and by `scripts/adoption_scan.py`.
+
+## 17. Light CI and the train (story #592, ADR-023)
+
+- A pull request whose **base** branch starts with `train/` is a light run: the six heavy jobs (`test` and the five phone jobs) are skipped and the check is named `gate-light` (it is green when no job failed; it is never named `gate`). A pull request into any base other than `dev`, `main` or a `train/` branch gets the check name `gate-other`, never `gate`: the check named `gate` exists only on a run that is not a pull request (a push or a manual run is named `gate` too) or on a PR into exactly `dev` or `main` (story #601). GitHub compares branch names without regard to case, so a PR whose base differs from `dev`, `main` or `train/` only by case fails the gate with a named step. Every other run is a full run. The rule reads `github.event_name` and `github.base_ref` only, never the head branch.
+- On a light run the gate skips the change-map step and prints `light run: the heavy jobs did not run; they run on the train pull request into dev`. On a full run the gate fails unless `test` is `success`.
+- A feature PR is opened into the train branch; the train PR into `dev` runs everything. Run `scripts/check_local.sh` and `scripts/check_local.sh tests` before pushing a feature branch.
+
+The steps of a train, in order:
+
+1. The coder makes the branch `train/<date>` from `dev`.
+2. Each feature PR targets the train branch and gets a light run.
+3. The reviewer approves each feature PR.
+4. The coder merges the approved branches into the train with `git merge --no-ff` and pushes once.
+5. The coder opens one PR from the train into `dev` with a `Closes #N` line for every story on it. CI runs once, in full, on that PR.
+6. The reviewer checks the union and asks a second reviewer.
+7. The owner's yes.
+8. The merge goes through `scripts/review_merge.sh`. Who runs it depends on the mode and on protected paths (section 13); a train that touches `.shipquick/*` is the owner's own merge.
