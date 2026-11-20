@@ -12,13 +12,27 @@ See `pm/agile/RELEASE_GUIDE.md` for the release steps.
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-20
+Tag `v0.15.0`, "gates that run for a child too, and light CI on a train". Notes: `docs/RELEASE_NOTES_v0.15.0.md`.
+
 ### Added
+- One change map decides which slow CI jobs run (PR #499, story #495, ADR-018); a child reads its own map with the kit's reader (PR #515).
+- Intent gate (ADR-021, PR #555) and story-size gate (ADR-020, PR #554): a story made on or after 2026-11-19 needs a reviewer's `Intent verified by QA: <date>` comment before its PR passes. It runs in the kit's CI, locally, and, as job `intent-verify` of `checks.yml`, in a child's CI (story #576).
+- AC trace (`scripts/check_ac_trace.py`, PR #564): every AC of a linked story names a real test. A child gets it as job `ac-trace` of `checks.yml` (story #577).
+- Graphify pin, wrapper and freshness check (ADR-022; PRs #553, #556): `check_local.sh graph-fresh` warns on a stale code graph; the nightly run has a `graph-health` job (story #578).
+- Flaky-test registry with expiry (`scripts/check_flaky.py`, PR #562); the list is checked in CI and wakes no phone job (PR #573).
+- `check_local.sh tests` runs only the Python tests a change names (PR #574); `check_local.sh coverage` judges two coverage reports with `scripts/check_coverage.py` (stories #579, #586). Coverage in CI is not in this release.
+- Sprint metrics: one row of numbers per merged PR (PR #571) and `scripts/sprint_metrics.py --repo --date` prints one day's merged PRs as a table (story #588).
+- Child bump plan: `scripts/child_bump.py` prints which children pin another kit commit (story #580); `.github/workflows/child-bump-plan.yml` prints it on every `v` tag, read-only (story #587).
+- Light CI (ADR-023, story #592): a feature PR opened into a `train/<date>` branch skips `test` and the five phone jobs; the train PR into `dev` runs everything. Rule 4 names the train (story #596) and `docs/PR_RULES.md` section 17 lists its steps.
+- The check named `gate` exists only on a run that is not a pull request or on a PR into exactly `dev` or `main`; it is `gate-light` on a train base and `gate-other` elsewhere; a base that differs only by case fails the gate by name (story #601).
 - `scripts/change_map.py` takes `--ci`, `--guard` and `--decision-job`, so a child reads its own map with the kit's reader (story #498, ADR-019); `docs/ADOPTION.md` has a tested snippet; the caller `adopt.sh` writes has a `concurrency` block and `adopt.sh --check` says when it is missing.
 - `tests/test_sample_child_walk.py`: the kit's CI walks a generated child (TypeScript-style test names, the kit on its own branch, a screens list, its own workflow) through `adopt.sh`, the bump, `--gate-files`, the real hooks and `check_local.sh`. It runs in the Python test job in under a minute. A new check must be named in the walk (story #504, ADOPTION.md).
 - `.github/workflows/nightly.yml` and `scripts/nightly_full_run.py` (story #497, epic #485 item 7): once a night the script dispatches `ci.yml` on `dev`, waits for it, and opens one issue (label `nightly`) that names each bad job and says whether it failed or never got a machine; a later red night comments on the same issue, a green night opens nothing. The timer runs from the default branch, so it starts after the next promotion to `main`. `scripts/issue_notice.py` is the one issue-opening helper, now shared with `scripts/adoption_scan.py`.
 
 ### Changed
 - `scripts/review_merge.sh` counts only the PR's own, newest run of each workflow (story #496, epic #485 items 15 and 16): a manual or push run on the same head can no longer replace a red PR result, and a pull_request run counts only when its list names exactly this PR (two PRs on one head refuse), a stale row from a run a newer run replaced (a `test` cancelled before the matrix expanded, seen on #509) is not counted. The new helper is `scripts/check_pr_runs.py`. `shortcut-ledger` is in the `needs` of `gate` (still warn-only), and `tests/test_gate_needs.py` fails when a job of `ci.yml` is in neither the needs nor the exempt list.
+- The reviewer list is read from the base branch, never from the pull request, in `checks.yml` jobs `roles` and `intent-verify` (story #589) and in the kit's `ci.yml` (story #590); `scripts/roles.py` is a protected path.
 
 ## [0.14.2] - 2026-11-13
 Tag `v0.14.2`, "the tdd check reads other runners' test names, and the screens wiring example runs the check". Notes: `docs/RELEASE_NOTES_v0.14.2.md`.
