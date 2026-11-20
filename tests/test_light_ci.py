@@ -73,13 +73,27 @@ def test_a_light_run_never_makes_a_check_named_gate():
     assert name.index("'gate-light'") < name.index("'gate'")
 
 
+class _NoCase(str):
+    """GitHub expressions compare strings without regard to case (== and startsWith); so does this."""
+    def __eq__(self, other):
+        return self.lower() == str(other).lower()
+
+    def __ne__(self, other):
+        return not self == other
+
+    def startswith(self, prefix):
+        return self.lower().startswith(prefix.lower())
+
+    __hash__ = str.__hash__
+
+
 def _gate_name(event, base):
-    """Evaluate the gate job's name expression the way Actions does (&&, || return the operand), for one run."""
+    """Evaluate the gate job's name expression the way Actions does (&&, || return the operand, compares ignore case)."""
     expr = re.search(r"^    name: \$\{\{ (.*) \}\}$", _job("gate"), re.M).group(1)
-    py = (expr.replace("github.event_name", repr(event)).replace("github.base_ref", repr(base))
+    py = (expr.replace("github.event_name", "event").replace("github.base_ref", "base")
           .replace("&&", " and ").replace("||", " or "))
-    py = re.sub(r"startsWith\(('[^']*'), ('[^']*')\)", r"\1.startswith(\2)", py)
-    return eval(py)  # the expression holds only string compares, and/or and startswith
+    py = re.sub(r"startsWith\(base, ('[^']*')\)", r"base.startswith(\1)", py)
+    return eval(py, {"event": _NoCase(event), "base": _NoCase(base)})  # string compares, and/or and startswith only
 
 
 def test_the_name_gate_exists_only_for_dev_and_main():
@@ -91,7 +105,7 @@ def test_the_name_gate_exists_only_for_dev_and_main():
 
 def test_a_pr_into_any_other_base_is_named_gate_other():
     assert _gate_name("pull_request", "train/2026-11-20") == "gate-light"
-    for base in ("feat/x", "release/v1", "dev2", "main-old", "train", "Dev", ""):
+    for base in ("feat/x", "release/v1", "dev2", "main-old", "train", ""):
         assert _gate_name("pull_request", base) == "gate-other", base
 
 
@@ -101,3 +115,42 @@ def test_the_docs_name_the_two_other_gate_names():
         assert "`gate-light`" in text and "`gate-other`" in text, doc
     adr21 = (ROOT / "docs" / "decisions" / "ADR-021.md").read_text(encoding="utf-8")
     assert "cannot add its own login" not in adr21 and "picks its base" in adr21
+
+
+CASE_STEP = "Refuse a base branch that differs from dev, main or train/ only by case (story #601)"
+
+
+def _case_step():
+    job = _job("gate")
+    assert CASE_STEP in job
+    step = job.split(f"- name: {CASE_STEP}", 1)[1].split("\n      - ", 1)[0]
+    assert "if: github.event_name == 'pull_request'" in step
+    assert "BASE: ${{ github.base_ref }}" in step and "${{" not in step.split("run: |", 1)[1]
+    return step.split("run: |\n", 1)[1]
+
+
+def _run_case_step(base):
+    import subprocess
+    sh = "\n".join(line[10:] if line.startswith(" " * 10) else line for line in _case_step().splitlines())
+    return subprocess.run(["bash", "-c", sh], env={"BASE": base, "PATH": "/usr/bin:/bin"}, capture_output=True, text=True)
+
+
+def test_the_expression_compares_without_case_so_dev_by_case_is_named_gate():
+    # why the step is needed: Actions names a PR into `Dev` or `MAIN` gate
+    assert _gate_name("pull_request", "Dev") == "gate" and _gate_name("pull_request", "MAIN") == "gate"
+    assert _gate_name("pull_request", "Train/x") == "gate-light"
+
+
+def test_a_base_that_differs_only_by_case_fails_the_gate():
+    for base in ("Dev", "DEV", "MAIN", "Main", "Train/x", "TRAIN/2026-11-20", "tRaIn/a"):
+        r = _run_case_step(base)
+        assert r.returncode == 1, base
+        assert "the base branch differs from dev, main or train/ only by case" in r.stdout + r.stderr, base
+    for base in ("dev", "main", "train/x", "feat/x", "Feature/X", "release/v1", "devx", ""):
+        assert _run_case_step(base).returncode == 0, base
+
+
+def test_the_docs_say_a_non_pr_run_is_named_gate_too():
+    for doc in ("docs/PR_RULES.md", "docs/decisions/ADR-021.md"):
+        text = (ROOT / doc).read_text(encoding="utf-8")
+        assert "a push" in text and "manual run" in text and "named `gate`" in text, doc
