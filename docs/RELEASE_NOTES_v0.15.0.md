@@ -5,7 +5,7 @@ A minor release (`pm/agile/RELEASE_GUIDE.md`). It brings the team's new gates to
 ## What a child gains
 
 - **The intent gate runs in a child's CI.** Job `intent-verify` of `checks.yml` checks that a reviewer wrote `Intent verified by QA: <date>` on a story before its PR passes (ADR-021, story #576). The check is strict only for stories made on or after 2026-11-19. Older stories, and PRs that link no story, pass as before.
-- **The AC trace runs in a child's CI.** Job `ac-trace` checks that every AC of a linked story names a real test (story #577). It is strict for stories made on or after 2026-11-19 too.
+- **The AC trace runs in a child's CI.** Job `ac-trace` fails a story with no `AC-n:` lines at all, a story with no `Tests:` line, and a story with an AC that no `Tests:` line maps to a test (story #577). It is strict for stories made on or after 2026-11-19 too.
 - **The reviewer list is read from the base branch.** In `checks.yml` the jobs `roles` and `intent-verify` read `.shipquick/roles.yml` from the branch a PR goes into, through the API, so a PR cannot add its own login to the list that judges it (story #589). The first PR that adds `roles.yml`, when the base branch has none, reads its own.
 - **A child reads its own change map** with the kit's reader (PR #515).
 - **Local checks.** `check_local.sh tests` runs only the tests a change names. `check_local.sh coverage` judges two coverage reports you give it. `check_local.sh graph-fresh` warns when the code graph is old. A flaky-test list with an expiry date is checked.
@@ -18,9 +18,11 @@ A minor release (`pm/agile/RELEASE_GUIDE.md`). It brings the team's new gates to
 
 ## What breaks for children on the bump
 
-- A child PR that links a story made on or after 2026-11-19 with no intent comment, or with an AC that names no test, now fails `checks.yml`.
+- A child PR that links a story made on or after 2026-11-19 now fails `checks.yml` when the story has no intent comment from a reviewer-list login, when the reviewer list is empty (nobody can confirm), or when the AC trace fails (no `AC-n:` lines, no `Tests:` line, or an AC no `Tests:` line maps to a test).
+- The same gates fail on your Mac too. `check_local.sh` with no argument runs `intent-verify`, `ac-trace`, `flaky` and `graph-fresh` (the last only warns locally), and the pre-push hook that `adopt.sh` writes runs it that way on every push.
+- `adopt.sh --check` says "not adopted" when the caller `shipquick-call.yml` has no `concurrency` block; run `adopt.sh` again to add it.
 - Rule 4 in `CLAUDE.md` has a new sentence. A child whose copy of the rule block is older fails its own rule-copies check after the bump (`docs/ADOPTION.md` says how a child takes the new block).
-- A child that has no `.shipquick/roles.yml` on its base branch fails the `roles` job, as it did when the file was missing before.
+- The `roles` job now reads `.shipquick/roles.yml` from the base branch through the API (before, it read the PR's own tree). It fails only when neither the base branch nor the PR has the file: the first PR that adds the file reads its own.
 
 ## What a child does after the bump
 
@@ -31,7 +33,7 @@ A minor release (`pm/agile/RELEASE_GUIDE.md`). It brings the team's new gates to
 ## Not yet
 
 - **Coverage in CI is not in this release.** `check_local.sh coverage` is local only. The CI step and the number for a new file come in a later story.
-- The workflow `child-bump-plan.yml` has not run on GitHub yet. After the release, the owner starts it once by hand with the tag.
+- The workflow `child-bump-plan.yml` has not run on GitHub yet. It starts by itself on the push of a `v` tag, so the first run is this release's tag; it can also be started by hand with the tag. The run is red when any child is `unread` (`child_bump.py` exits 1), so a red first run may only mean a private child could not be read.
 - Light CI has run for real only on the kit's own feature PRs into a train. A child with no heavy jobs keeps opening PRs into `dev`; nothing changes for it.
 - The gate name rule is for the kit's `ci.yml`. A child's own check (`shipquick-checks / gate`) has the same class of gap and needs its own story.
 - The second review of train #603 found follow-ups; they are written as one story after this release.
